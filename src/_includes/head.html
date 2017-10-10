@@ -1,0 +1,66 @@
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    {% if page.title == "Home" %}
+      {{ site.title }} &middot; {{ site.tagline }}
+    {% else %}
+      {{ page.title }} &middot; {{ site.title }}
+    {% endif %}
+  </title>
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ site.baseurl }}assets/sfcta-logo-144.png">
+  <link rel="shortcut icon" href="http://www.sfcta.org/sites/all/themes/sfcta/favicon.ico" type="image/vnd.microsoft.icon" />
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- LEAFLET -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+  <!-- VUE -->
+  <script src="https://unpkg.com/vue"></script>
+
+  <!-- MAPBOX GL -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.css' rel='stylesheet' />
+
+  <!-- SEMANTIC UI -->
+  <link rel="stylesheet" type="text/css" href="/assets/semantic/semantic.min.css">
+  <script
+    src="https://code.jquery.com/jquery-3.1.1.min.js"
+    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    crossorigin="anonymous"></script>
+  <script src="/assets/semantic/semantic.min.js"></script>
+
+  <!-- MORRIS CHARTS -->
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+  
+  <!-- IONICONS -->
+  <link rel="stylesheet" href="{{ site.baseurl }}assets/ionicons/ionicons.min.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}assets/ionicons/leaflet.awesome-markers.css">
+  <script src="{{ site.baseurl }}assets/ionicons/leaflet.awesome-markers.min.js"></script>
+
+  <!-- Site CSS -->
+  <link rel="stylesheet" href="{{ site.baseurl }}assets/css/poole.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}assets/css/syntax.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}assets/css/sfcta.css">
+
+  <!-- Page CSS -->
+  {% if page.css %}
+    <link rel="stylesheet" href="{{ page.css }}">
+  {% endif %}
+
+  <!-- Google fonts -->
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans|PT+Sans:400,400italic,700">
+  <link href="https://fonts.googleapis.com/css?family=Alegreya+SC:900i|Merriweather|Oleo+Script+Swash+Caps:700" rel="stylesheet">
+
+</head>
