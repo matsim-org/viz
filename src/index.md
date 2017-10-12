@@ -3,9 +3,9 @@ layout: default
 title: Home
 ---
 
-### WELCOME TO PROSPECTOR.
+### WELCOME TO MATSIM-VIZ.
 
-You've found the SFCTA "Prospector" data visualization website. Pick a dataset to explore from those below. More to come!
+You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
 
 ### DATASETS
 
@@ -36,4 +36,5 @@ You've found the SFCTA "Prospector" data visualization website. Pick a dataset t
 
 ### ABOUT THIS SITE
 
-You probably want to know stuff. Someone here might know something about things. Add that stuff here!  Like contact info or future plans or something.
+You can find out more about MATSim at [http://matsim.org](http://matsim.org)
+

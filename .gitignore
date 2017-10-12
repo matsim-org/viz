@@ -1,7 +1,13 @@
-# Ignore docs files
-_gh_pages
+# Ignore folders
 build
 .ruby-version
+node_modules
+bundles
+_site
+_gh_pages
+
+# Files
+.jekyll-metadata
 
 # Numerous always-ignore extensions
 *.diff
@@ -27,16 +33,3 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 .idea
-
-# Komodo
-*.komodoproject
-.komodotools
-
-# grunt-html-validation
-validation-status.json
-validation-report.json
-
-# Folders to ignore
-node_modules
-bundles
-_site

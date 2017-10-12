@@ -1,20 +1,20 @@
 {
-  "name": "sfcta-prospector",
+  "name": "matsim-viz",
   "version": "0.0.1",
-  "description": "SFCTA Prospector data portal",
+  "description": "MATSim Visualizer",
   "authors": [
     {
       "name": "Billy Charlton",
-      "email": "billy@okbecause.com"
+      "email": "charlton@tu-berlin.de"
     }
   ],
-  "license": "ISC",
-  "repository": "https://github.com/sfcta/prospector.git",
+  "license": "TBD",
+  "repository": "https://gitlab.tubit.tu-berlin.de/billyc/matsim-viz",
   "scripts": {
     "packit": "webpack --watch",
     "cleanbuild": "bundle exec jekyll build",
     "tracebuild": "bundle exec jekyll build --trace",
-    "prospector": "concurrently \"webpack --watch\" \"bundle exec jekyll serve --incremental\""
+    "viz": "concurrently \"webpack --watch\" \"bundle exec jekyll serve --incremental\""
   },
   "devDependencies": {
     "babel-cli": "^6.0.0",

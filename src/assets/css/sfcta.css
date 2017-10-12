@@ -269,7 +269,7 @@ a.sidebar-nav-item:focus {
 /* ------ SFCTA ------ */
 
 .theme-base-01 .sidebar {
-  background-color: #f4f4f4;
+  background-color: #eee;
 }
 .theme-base-01 .content a,
 .theme-base-01 .related-posts li a:hover {
@@ -332,7 +332,7 @@ h2,h3 {
   display: block;
   text-align:center;
   margin: auto;
-  width: 72px;
+  width: 150px;
 }
 
 .lead {
