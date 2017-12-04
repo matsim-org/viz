@@ -14,7 +14,7 @@
     "packit": "webpack --watch",
     "cleanbuild": "bundle exec jekyll build",
     "tracebuild": "bundle exec jekyll build --trace",
-    "viz": "concurrently \"webpack --watch\" \"bundle exec jekyll serve --incremental\""
+    "devserver": "concurrently \"webpack --watch\" \"bundle exec jekyll serve --incremental\""
   },
   "devDependencies": {
     "babel-cli": "^6.0.0",
