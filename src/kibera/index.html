@@ -1,0 +1,74 @@
+---
+layout: page
+title: 3. Accessibility Measures
+thumbnail: scrnshot.png
+css: main.css
+---
+
+<div class="ui modal">
+
+      <i class="close icon"></i>
+      <div class="header">
+        Accessibility Units
+      </div>
+      <div class="image content">
+        <div class="ui medium image">
+          <img src="kibera.thumb.jpg">
+        </div>
+        <div class="description">
+          <div class="ui header">Accessibility units are the expected maximum utility (EMU) in Euros or other monetary units.</div>
+          <p>In easier terms: The color of a tile/origin tells you how plentiful (land-use aspect) and reachable (transport aspect) facilities/opportunities of a given type are from this location by a given mode of transport.</p>
+          <p>For an explanation of the computation procedure, data acquisition, and interpretation of the measure, see the paper labeled <b>VSP-WP 17-03</b> at the <a href="https://www.vsp.tu-berlin.de/publications/vspwp">VSP Publication Site.</a></p>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ui positive right labeled icon button">
+          Okay
+          <i class="checkmark icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-content">
+
+    <div id="titlebar">
+      <h2>
+        <div class="ui dropdown">
+          <div class="text">
+            <div v-cloak>
+              ${DATASETS[0].city}: ${DATASETS[0].name}
+            </div>
+          </div>
+          <i class="dropdown icon"></i>
+          <div class="menu">
+
+            <div v-for="(dataset,index) in DATASETS"
+                 class="item"
+                 @click="clickedDataset(index)">
+              <!--<img :src="city.thumbnail"/> -->
+              ${dataset.city}: ${dataset.name}
+            </div>
+          </div>
+        </div>
+      </h2>
+
+      <div id="description-panel"><div v-cloak>
+        ${selectedDataset.description}
+      </div></div>
+
+      <button v-for="item of alternatives"
+              class="ui right floated button grey"
+              v-bind:class="{ active: item==selectedAlt, green: item==selectedAlt }"
+              @click="clickedAlternative(item)">
+              ${item}
+      </button>
+
+    </div>
+
+    <div id="mymap" class="fill"></div>
+
+
+  </div>
+
+<script type="application/javascript"
+          src="/bundles/kibera.js"></script>

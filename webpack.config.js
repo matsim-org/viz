@@ -2,11 +2,11 @@ const path = require('path');
 
 const sfcta_components = [
      'cmp',
+     'network',
+     'kibera',
      'walkskims',
      'tnc',
      'matsim',
-     //'viz-template',
-	 //'cmp-v0', 
 ];
 
 module.exports = {

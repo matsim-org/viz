@@ -5,9 +5,11 @@ title: Home
 
 ### WELCOME TO MATSIM-VIZ.
 
-You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
+You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
 
-### DATASETS
+Pick a dataset to explore from those below. More to come!
+
+### SAMPLE VISUALIZATIONS
 
 <div class="posts">
   <!-- Counter so we have rows of  three thumbnails -->

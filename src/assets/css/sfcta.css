@@ -32,7 +32,7 @@
  */
 
 html {
-  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-family: "Oswald", "Open Sans", Helvetica, Arial, sans-serif;
 }
 @media (min-width: 48em) {
   html {
@@ -57,10 +57,10 @@ html {
   text-align: center;
   padding: 1rem 0.8rem;
   color: #666;
-  background-color: #202020;
+  background-color: #000;
   border-style: solid;
   border-width: 0 1px 0 0;
-  border-color: #ddf;
+  border-color: #224;
 
 }
 @media (min-width: 48em) {
@@ -76,7 +76,7 @@ html {
 
 /* Sidebar links */
 .sidebar a {
-  color: #6666ff;
+  color: #448;
   text-decoration: none;
 }
 
@@ -84,7 +84,7 @@ html {
 .sidebar-about h1 {
   color: #6666ff;
   margin-top: 0;
-  font-family: "Alegreya SC", serif;
+  font-family: "Oswald", sans-serif;
   font-size: 1.8rem;
   text-shadow: 4px 4px 4px #ccc;
   text-align: center;
@@ -105,10 +105,10 @@ html {
   min-height:3rem;
   border-style: solid;
   border-width: 1px 0 0 0;
-  border-color: #e0e0e0;
+  border-color: #ccd;
 }
 .sidebar-nav-item:hover {
-  background:#dde;
+  background:#ccc;
 }
 
 
@@ -269,7 +269,9 @@ a.sidebar-nav-item:focus {
 /* ------ SFCTA ------ */
 
 .theme-base-01 .sidebar {
-  background-color: #eee;
+  background-color: #bbb;
+  border-right-width: 1.5px;
+  border-color: #777;
 }
 .theme-base-01 .content a,
 .theme-base-01 .related-posts li a:hover {
@@ -283,21 +285,26 @@ a.sidebar-nav-item:focus {
   padding: 0 0 0.5rem 0;
   width: 20rem;
   height:100%;
-  border-radius: 4px;
-  box-shadow: 2px 2px 5px rgba(0,0,0, 0.3);
-}
+  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
+  background-color: #fff;
+  border-style: solid;
+  border-width: 1px 1px;
+  border-color: #aaa;
+ }
 
 .dataset-thumbnail:hover {
   background-color: #fff;
   opacity: 0.90;
-  box-shadow: 5px 5px 10px rgba(0,0,0, 0.4);
-  transition: all ease 0.15s;
+  box-shadow: 3px 3px 10px rgba(0,0,80, 0.4);
+  transition: all ease 0.2s;
+  transform: translateY(-1px);
+  border-color: #999;
 }
 
 .dataset-thumbnail:active {
-  background-color: #99f;
   opacity: 1.0;
-  box-shadow: 6px 6px 10px rgba(0,0,0, 0.5);
+  box-shadow: 3px 3px 6px rgba(0,0,80, 0.6);
+  transform: translateY(1px);
 }
 
 .thumbnail-image {
@@ -337,8 +344,8 @@ h2,h3 {
 
 .lead {
   text-align:center;
-  color:#666;
-  font-family: "Oleo Script Swash Caps", cursive;
+  color:#555;
+  font-family: "Oswald", sans-serif;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
