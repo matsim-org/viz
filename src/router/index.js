@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import MyStreet from '@/components/MyStreet'
-import ProjectPage from '@/components/ProjectPage'
+
+import StartPage from '@/components/StartPage'
 
 Vue.use(Router)
 
@@ -10,18 +10,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'MyStreet',
-      component: MyStreet,
-    },
-    {
-      path: '/projects/:id',
-      name: 'ProjectPage',
-      component: ProjectPage,
-    },
-    { // catch-all for mispelled URLs. Maybe add a 404 page...
-      path: '*',
-      name: 'MyStreet',
-      component: MyStreet,
+      name: 'StartPage',
+      component: StartPage,
     },
   ]
 })
