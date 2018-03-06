@@ -269,9 +269,9 @@ a.sidebar-nav-item:focus {
 /* ------ SFCTA ------ */
 
 .theme-base-01 .sidebar {
-  background-color: #bbb;
+  background-color: #ddd;
   border-right-width: 1.5px;
-  border-color: #777;
+  border-color: #bbb;
 }
 .theme-base-01 .content a,
 .theme-base-01 .related-posts li a:hover {
@@ -353,4 +353,3 @@ a:hover,
 a:focus {
   text-decoration: none;
 }
-
