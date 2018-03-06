@@ -1,13 +1,13 @@
-# Ignore folders
-build
-.ruby-version
-node_modules
-bundles
-_site
 _gh_pages
+build
+dist
+_dist
+/semantic
 
-# Files
-.jekyll-metadata
+.ruby-version
+.pug-cache
+
+projects*.yml
 
 # Numerous always-ignore extensions
 *.diff
@@ -33,3 +33,12 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 .idea
+
+# Folders to ignore
+node_modules
+bundles
+
+# Build artifacts
+bundle.js
+.jekyll-metadata
+*bundle.js*
