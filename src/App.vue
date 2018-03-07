@@ -1,7 +1,7 @@
 <template lang="pug">
 #app
   // global app sidebar
-  matsim-sidebar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
+  side-bar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
 
   // vue-router replaces this element with the correct page contents
   // see src/router/index.js to view/add route definitions
@@ -18,7 +18,7 @@
 'use strict';
 
 import { BigStore } from './shared-store.js';
-import MatsimSidebar from '@/components/MatsimSidebar.vue'
+import SideBar from '@/components/SideBar.vue'
 
 let store = {
   sharedState: BigStore.state,
@@ -26,7 +26,7 @@ let store = {
 
 export default {
   name: 'App',
-  components: { MatsimSidebar },
+  components: { SideBar },
   data () {
     return store
   },
@@ -81,11 +81,11 @@ body,p,h1,h2,h3,h4,h5,h6 {
 }
 
 .shrunken {
-  margin-left: -293px;
+  margin-left: -300px;
 }
 
 #btn-toggle-sidepanel {
-  background-color: #eeeee9;
+  background-color: #eeeee980;
   border-radius: 0px 4px 0px 0px;
   padding: 4px 2px 4px 4px;
   grid-column: 1 / 3;

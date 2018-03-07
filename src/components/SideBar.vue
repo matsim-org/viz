@@ -36,7 +36,7 @@ let store = {
 
 // this export is the Vue Component itself
 export default {
-  name: 'MatsimSidebar',
+  name: 'SideBar',
   data () {
     return store
   },
