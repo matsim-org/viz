@@ -16,11 +16,13 @@ import { BigStore } from '../shared-store.js';
 import MatsimSidebar from '@/components/MatsimSidebar.vue'
 import StartPage from '@/components/StartPage.vue'
 
+// store is the component data store -- the state of the component.
 let store = {
   visualizations: [],
   sharedState: BigStore.state,
 }
 
+// this export is the Vue Component itself
 export default {
   name: 'AppFrame',
   components: { MatsimSidebar, StartPage },
@@ -37,6 +39,7 @@ export default {
   },
 }
 
+// mounted is called by Vue after this component is installed on the page
 function mounted () {
 }
 
@@ -91,74 +94,8 @@ function toggleSidePanel () {
   z-index: 1;
 }
 
-.dataset-thumbnail {
-  display: table-cell;
-  vertical-align:top;
-  background: #dde8ff;
-  padding: 0 0 0.5rem 0;
-  width: 20rem;
-  height:100%;
-  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
-  background-color: #fff;
-  border-style: solid;
-  border-width: 1px 1px;
-  border-color: #aaa;
- }
-
-.dataset-thumbnail:hover {
-  background-color: #fff;
-  opacity: 0.90;
-  box-shadow: 3px 3px 10px rgba(0,0,80, 0.4);
-  transition: all ease 0.2s;
-  transform: translateY(-1px);
-  border-color: #999;
-}
-
-.dataset-thumbnail:active {
-  opacity: 1.0;
-  box-shadow: 3px 3px 6px rgba(0,0,80, 0.6);
-  transform: translateY(1px);
-}
-
-.thumbnail-image {
-  vertical-align:top;
-  margin-bottom: 5px;
-}
-
-.thumbnail-title {
-  color: #3333aa;
-  margin-top: 0px;
-  padding-bottom: 10px;
-  padding-left: 5px;
-  padding-right: 2px;
-}
-
-.posts {
-  display: table;
-  border-spacing: 1.5rem 1.5rem;
-
-}
-
-.posts-row {
-  display: table-row;
-  background: #fff;
-}
-
 h2,h3 {
   color: #6666ff;
-}
-
-.sidebar-logo {
-  display: block;
-  text-align:center;
-  margin: auto;
-  width: 150px;
-}
-
-.lead {
-  text-align:center;
-  color:#555;
-  font-family: "Oswald", sans-serif;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */

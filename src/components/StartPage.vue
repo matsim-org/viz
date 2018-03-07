@@ -18,7 +18,7 @@
 
   h3 ABOUT THIS SITE
   p You can find out more about MATSim at&nbsp;
-    a(link="https://matsim.org") http://matsim.org
+    a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
 
 <script>
@@ -26,9 +26,11 @@
 
 import { BigStore } from '../shared-store.js';
 
+// store is the component data store -- the state of the component.
 let store = {
 }
 
+// this export is the Vue Component itself
 export default {
   name: 'StartPage',
   components: {},
@@ -44,6 +46,7 @@ export default {
   },
 }
 
+// mounted is called by Vue after this component is installed on the page
 function mounted () {
 }
 

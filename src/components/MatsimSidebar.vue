@@ -27,10 +27,12 @@
 
 import { BigStore } from '../shared-store.js';
 
+// store is the component data store -- the state of the component.
 let store = {
   sharedStore: BigStore.state,
 }
 
+// this export is the Vue Component itself
 export default {
   name: 'MatsimSidebar',
   data () {
@@ -45,6 +47,7 @@ export default {
   },
 }
 
+// mounted is called by Vue after this component is installed on the page
 function mounted () {
 }
 
