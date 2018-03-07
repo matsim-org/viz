@@ -1,6 +1,6 @@
 <template lang="pug">
 #container
-  Sidebar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
+  matsim-sidebar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
 
   .main-content
     h3 WELCOME TO MATSIM-VIZ.
@@ -29,7 +29,7 @@
 'use strict';
 
 import { BigStore } from '../shared-store.js';
-import Sidebar from '@/components/matsim-sidebar.vue'
+import MatsimSidebar from '@/components/MatsimSidebar.vue'
 
 let store = {
   visualizations: [],
@@ -38,7 +38,7 @@ let store = {
 
 export default {
   name: 'StartPage',
-  components: { Sidebar },
+  components: { MatsimSidebar },
   data () {
     return store
   },

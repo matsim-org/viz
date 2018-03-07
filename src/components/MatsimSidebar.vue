@@ -6,13 +6,17 @@
   br
 
   .sidebar-content
-    h3 Datasets:
+    h3
+      i.cloud.download.icon
+      | &nbsp;Datasets
     br
     p [ to be added ] -- need to decide how to add, organize, choose available datasets.
     br
     br
 
-    h3 Visualizations:
+    h3
+      i.chart.area.alternate.icon
+      | &nbsp;Visualizations
     br
     nav.sidebar-nav
       a.sidebar-nav-item(href="/") Home
@@ -28,7 +32,7 @@ let store = {
 }
 
 export default {
-  name: 'Sidebar',
+  name: 'MatsimSidebar',
   data () {
     return store
   },
