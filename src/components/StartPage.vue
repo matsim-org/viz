@@ -1,44 +1,37 @@
 <template lang="pug">
-#container
-  matsim-sidebar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
+.main-content
+  h3 WELCOME TO MATSIM-VIZ.
 
-  .main-content
-    h3 WELCOME TO MATSIM-VIZ.
-    p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
-    p Pick a dataset to explore from those below. More to come!
+  p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
 
-    h3 SAMPLE VISUALIZATIONS
+  p Pick a dataset to explore from those below. More to come!
 
-    .posts
-      .post(v-for="viz in visualizations")
-        .viz-thumbnail
-          a(v-bind:href="viz.url")
-            img.thumbnail-image(v-if="viz.thumbnail" v-bind:src="viz.url+viz.thumbnail")
-            img.thumbnail-image(v-else v-bind:src="baseurl + assets/Wat.png")
-            h5.thumbnail-title {{ node.title }}
+  h3 SAMPLE VISUALIZATIONS
 
-    h3 ABOUT THIS SITE
-    p You can find out more about MATSim at [http://matsim.org](http://matsim.org)
+  .posts
+    .post(v-for="viz in visualizations")
+      .viz-thumbnail
+        a(v-bind:href="viz.url")
+          img.thumbnail-image(v-if="viz.thumbnail" v-bind:src="viz.url+viz.thumbnail")
+          img.thumbnail-image(v-else v-bind:src="baseurl + assets/Wat.png")
+          h5.thumbnail-title {{ node.title }}
 
-  #btn-toggle-sidepanel
-    button.ui.tiny.blue.icon.button(v-on:click="toggleSidePanel")
-      i.angle.white.double.icon(v-bind:class="{left: sharedState.isSidePanelExpanded, right: !sharedState.isSidePanelExpanded }")
+  h3 ABOUT THIS SITE
+  p You can find out more about MATSim at&nbsp;
+    a(link="https://matsim.org") http://matsim.org
 </template>
 
 <script>
 'use strict';
 
 import { BigStore } from '../shared-store.js';
-import MatsimSidebar from '@/components/MatsimSidebar.vue'
 
 let store = {
-  visualizations: [],
-  sharedState: BigStore.state,
 }
 
 export default {
   name: 'StartPage',
-  components: { MatsimSidebar },
+  components: {},
   data () {
     return store
   },
@@ -46,7 +39,6 @@ export default {
     mounted();
   },
   methods: {
-    toggleSidePanel: toggleSidePanel,
   },
   watch: {
   },
@@ -55,56 +47,9 @@ export default {
 function mounted () {
 }
 
-function toggleSidePanel () {
-  BigStore.toggleSidePanel();
-}
-
 </script>
 
 <style scoped>
-
-#container {
-  background-color: white;
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  grid-template-rows: 1fr auto;
-  height: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
-  overflow: hidden;
-}
-
-.sidebar {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  height: 100%;
-  margin-left: 0px;
-  position: relative;
-  width: 300px;
-  transition: margin 0.3s;
-}
-
-.shrunken {
-  margin-left: -293px;
-}
-
-#btn-toggle-sidepanel {
-  background-color: #eeeee9;
-  border-radius: 0px 4px 0px 0px;
-  padding: 4px 2px 4px 4px;
-  grid-column: 1 / 3;
-  grid-row: 2 / 3;
-  position: relative;
-  z-index: 1005;
-  margin-right: 0px;
-}
-
-.main-content {
-  grid-column: 2 / 4;
-  grid-row: 1 / 3;
-  position: relative;
-  z-index: 1;
-}
 
 /* this is the initial start page layout */
 .main-content {
@@ -153,26 +98,10 @@ function toggleSidePanel () {
   padding-right: 2px;
 }
 
-.posts {
-  display: table;
-  border-spacing: 1.5rem 1.5rem;
-
-}
-
-.posts-row {
-  display: table-row;
-  background: #fff;
-}
-
 h2,h3 {
   color: #6666ff;
-}
-
-.sidebar-logo {
-  display: block;
-  text-align:center;
-  margin: auto;
-  width: 150px;
+  margin-top: 15px;
+  margin-bottom: 3px;
 }
 
 .lead {
