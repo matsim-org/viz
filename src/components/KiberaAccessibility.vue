@@ -1,68 +1,42 @@
-<template>
-<div id="container">
-  <div class="ui modal">
-      <i class="close icon"></i>
-      <div class="header">
+<template lang="pug">
+#container
+  .ui.modal
+      i.close.icon
+      .header
         Accessibility Units
-      </div>
-      <div class="image content">
-        <div class="ui medium image">
-          <img src="kibera.thumb.jpg">
-        </div>
-        <div class="description">
-          <div class="ui header">Accessibility units are the expected maximum utility (EMU) in Euros or other monetary units.</div>
-          <p>In easier terms: The color of a tile/origin tells you how plentiful (land-use aspect) and reachable (transport aspect) facilities/opportunities of a given type are from this location by a given mode of transport.</p>
-          <p>For an explanation of the computation procedure, data acquisition, and interpretation of the measure, see the paper labeled <b>VSP-WP 17-03</b> at the <a href="https://www.vsp.tu-berlin.de/publications/vspwp">VSP Publication Site.</a></p>
-        </div>
-      </div>
-      <div class="actions">
-        <div class="ui positive right labeled icon button">
+      .image.content
+        .ui.medium.image
+          img(src="kibera.thumb.jpg")
+        .description
+          .ui.header Accessibility units are the expected maximum utility (EMU) in Euros or other monetary units.
+          p In easier terms: The color of a tile/origin tells you how plentiful (land-use aspect) and reachable (transport aspect) facilities/opportunities of a given type are from this location by a given mode of transport.
+          p For an explanation of the computation procedure, data acquisition, and interpretation of the measure, see the paper labeled
+            b VSP-WP 17-03
+            | at the
+            a(href="https://www.vsp.tu-berlin.de/publications/vspwp") VSP Publication Site.
+      .actions
+        .ui.positive.right.labeled.icon.button
           Okay
-          <i class="checkmark icon"></i>
-        </div>
-      </div>
-  </div>
+          i.checkmark.icon
 
-  <div id="page-content">
+  #page-content
+    #titlebar
+      h2
+        .ui.dropdown
+          .text
+            div(v-cloak) {{DATASETS[0].city}}: {{DATASETS[0].name}}
+          i.dropdown.icon
+          .menu
+            .item(v-for="(dataset,index) in DATASETS"
+                :key="index"
+                @click="clickedDataset(index)") {{dataset.city}}: {{dataset.name}}
+      #description-panel: div(v-cloak) {{selectedDataset.description}}
 
-    <div id="titlebar">
-      <h2>
-        <div class="ui dropdown">
-          <div class="text">
-            <div v-cloak>
-              {{DATASETS[0].city}}: {{DATASETS[0].name}}
-            </div>
-          </div>
-          <i class="dropdown icon"></i>
-          <div class="menu">
-
-            <div v-for="(dataset,index) in DATASETS"
-                 :key="index"
-                 class="item"
-                 @click="clickedDataset(index)">
-              {{dataset.city}}: {{dataset.name}}
-            </div>
-          </div>
-        </div>
-      </h2>
-
-      <div id="description-panel"><div v-cloak>
-        {{selectedDataset.description}}
-      </div></div>
-
-      <button v-for="item of alternatives"
+      button.ui.right.floated.grey.button(v-for="item of alternatives"
               :key="item"
-              class="ui right floated button grey"
               :class="{ active: item==selectedAlt, green: item==selectedAlt }"
-              @click="clickedAlternative(item)">
-              {{item}}
-      </button>
-
-    </div>
-    <div id="mymap"></div>
-  </div>
-</div>
-
+              @click="clickedAlternative(item)") {{item}}
+    #mymap
 </template>
 
 <script>
@@ -89,7 +63,6 @@ let _activeDataset = {alternatives: []};
 let _chosenCity;
 let _popup;
 
-let app;
 let mymap;
 
 let COLORS = {};
@@ -128,7 +101,7 @@ async function mounted () {
 
   _activeDataset = store.DATASETS[0];
   store.selectedDataset = _activeDataset;
-  store.alternatives = Object.keys(_activeDataset.alternatives).reverse(),
+  store.alternatives = Object.keys(_activeDataset.alternatives).reverse()
 
   mymap = new mapboxgl.Map({
     bearing: 0,
