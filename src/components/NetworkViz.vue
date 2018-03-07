@@ -1,28 +1,8 @@
 <template lang="pug">
 .main-content
-  h3 WELCOME TO MATSIM-VIZ.
-
-  p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
-
-  p Pick a dataset to explore from those below. More to come!
-
-  h3 SAMPLE VISUALIZATIONS
-
-  .posts
-    .post(v-for="viz in visualizations")
-      .viz-thumbnail
-        a(v-bind:href="viz.url")
-          img.thumbnail-image(v-if="viz.thumbnail" v-bind:src="viz.url+viz.thumbnail")
-          img.thumbnail-image(v-else v-bind:src="baseurl + assets/Wat.png")
-          h5.thumbnail-title {{ node.title }}
-
-  router-link(:to="'network'") LINK TO TEST 'NETWORK-VIZ' PAGE
-
+  h3 NETWORK VIZ
   br
-  br
-  h3 ABOUT THIS SITE
-  p You can find out more about MATSim at&nbsp;
-    a(href="https://matsim.org" target="_blank") https://matsim.org
+  p it worked!
 </template>
 
 <script>
@@ -32,12 +12,11 @@
 
 // store is the component data store -- the state of the component.
 let store = {
-  visualizations: [],
 }
 
 // this export is the Vue Component itself
 export default {
-  name: 'StartPage',
+  name: 'NetworkViz',
   components: {},
   data () {
     return store

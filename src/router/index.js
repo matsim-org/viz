@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import AppFrame from '@/components/AppFrame'
+import StartPage from '@/components/StartPage'
+import NetworkViz from '@/components/NetworkViz'
 
 Vue.use(Router)
 
@@ -10,8 +11,13 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'AppFrame',
-      component: AppFrame,
+      name: 'StartPage',
+      component: StartPage,
+    },
+    {
+      path: '/network',
+      name: 'NetworkViz',
+      component: NetworkViz,
     },
   ]
 })
