@@ -18,8 +18,10 @@
       i.chart.area.alternate.icon
       | &nbsp;Visualizations
     br
+
     nav.sidebar-nav
-      a.sidebar-nav-item(href="/") Home
+      router-link.sidebar-nav-item(:to="'/'") HOME
+      router-link.sidebar-nav-item(:to="'network'") NETWORK-LINKS Test
 </template>
 
 <script>

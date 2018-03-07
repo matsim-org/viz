@@ -5,7 +5,8 @@
 
   // vue-router replaces this element with the correct page contents
   // see src/router/index.js to view/add route definitions
-  router-view
+
+  router-view.main-content
 
   // our cute hide/show button
   #btn-toggle-sidepanel

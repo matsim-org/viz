@@ -8,7 +8,7 @@ export const EventBus = new Vue();
 // Shared common state storage. state object should ONLY be read.
 // Use methods to modify state.
 export const BigStore = {
-  debug: false,
+  debug: true,
   state: {
     isSidePanelExpanded: true,
   },
@@ -16,6 +16,8 @@ export const BigStore = {
   toggleSidePanel () {
     this.state.isSidePanelExpanded = !this.state.isSidePanelExpanded;
     if (this.debug) console.log('Show Side Panel:', this.state.isSidePanelExpanded);
+
+    EventBus.$emit('sidebar-toggled', this.state.isSidePanelExpanded);
   },
 }
 
