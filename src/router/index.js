@@ -1,8 +1,9 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import StartPage from '@/components/StartPage'
+import KiberaAccessibility from '@/components/KiberaAccessibility'
 import NetworkViz from '@/components/NetworkViz'
+import StartPage from '@/components/StartPage'
 
 Vue.use(Router)
 
@@ -18,6 +19,11 @@ export default new Router({
       path: '/network',
       name: 'NetworkViz',
       component: NetworkViz,
+    },
+    {
+      path: '/accessibility',
+      name: 'KiberaAccessibility',
+      component: KiberaAccessibility,
     },
   ]
 })

@@ -6,8 +6,7 @@
   p Pick a dataset to explore from those below. More to come!
 
   h3 SAMPLE VISUALIZATIONS
-
-  .posts
+  .visualizations
     .post(v-for="viz in visualizations")
       .viz-thumbnail
         router-link(:to="viz.url")
@@ -30,6 +29,10 @@ let store = {
     { title: '1. Network Links',
       url: '/network',
       thumbnail: '/static/network-viz/scrnshot.png'
+    },
+    { title: '2. Accessibility',
+      url: '/accessibility',
+      thumbnail: '/static/kibera-accessibility/scrnshot.png'
     },
   ],
 }
@@ -71,7 +74,7 @@ function mounted () {
   border-color: #aaa;
   display: table-cell;
   height:100%;
-  opacity: 0.94;
+  opacity: 0.9;
   padding: 0 0 0.5rem 0;
   box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
   vertical-align:top;
@@ -124,5 +127,11 @@ a:hover,
 a:focus {
   text-decoration: none;
 }
+
+.visualizations {
+  margin-top: 10px;
+}
+
+.post {margin-top: 20px;}
 
 </style>

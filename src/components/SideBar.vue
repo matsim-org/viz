@@ -21,7 +21,8 @@
 
     nav.sidebar-nav
       router-link.sidebar-nav-item(:to="'/'") HOME
-      router-link.sidebar-nav-item(:to="'network'") NETWORK-LINKS Test
+      router-link.sidebar-nav-item(:to="'network'") NETWORK-LINKS test
+      router-link.sidebar-nav-item(:to="'accessibility'") KIBERA Accessbility test
 </template>
 
 <script>
