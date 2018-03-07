@@ -3,7 +3,6 @@
   h3 WELCOME TO MATSIM-VIZ.
 
   p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
-
   p Pick a dataset to explore from those below. More to come!
 
   h3 SAMPLE VISUALIZATIONS
@@ -11,13 +10,9 @@
   .posts
     .post(v-for="viz in visualizations")
       .viz-thumbnail
-        a(v-bind:href="viz.url")
-          img.thumbnail-image(v-if="viz.thumbnail" v-bind:src="viz.url+viz.thumbnail")
-          img.thumbnail-image(v-else v-bind:src="baseurl + assets/Wat.png")
-          h5.thumbnail-title {{ node.title }}
-
-  router-link(:to="'network'") LINK TO TEST 'NETWORK-VIZ' PAGE
-
+        router-link(:to="viz.url")
+          img.thumbnail-image(:src="viz.thumbnail")
+          h5.thumbnail-title {{ viz.title }}
   br
   br
   h3 ABOUT THIS SITE
@@ -29,10 +24,14 @@
 'use strict';
 
 // import { BigStore } from '../shared-store.js';
-
 // store is the component data store -- the state of the component.
 let store = {
-  visualizations: [],
+  visualizations: [
+    { title: '1. Network Links',
+      url: '/network',
+      thumbnail: '/static/network-viz/scrnshot.png'
+    },
+  ],
 }
 
 // this export is the Vue Component itself
@@ -64,37 +63,39 @@ function mounted () {
   padding: 20px;
 }
 
-.dataset-thumbnail {
-  display: table-cell;
-  vertical-align:top;
+.viz-thumbnail {
   background: #dde8ff;
-  padding: 0 0 0.5rem 0;
-  width: 20rem;
-  height:100%;
-  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
   background-color: #fff;
   border-style: solid;
   border-width: 1px 1px;
   border-color: #aaa;
+  display: table-cell;
+  height:100%;
+  opacity: 0.94;
+  padding: 0 0 0.5rem 0;
+  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
+  vertical-align:top;
+  width: 20rem;
  }
 
-.dataset-thumbnail:hover {
+.viz-thumbnail:hover {
   background-color: #fff;
-  opacity: 0.90;
-  box-shadow: 3px 3px 10px rgba(0,0,80, 0.4);
+  opacity: 1.0;
+  box-shadow: 3px 3px 10px rgba(0,0,80, 0.3);
   transition: all ease 0.2s;
   transform: translateY(-1px);
   border-color: #999;
 }
 
-.dataset-thumbnail:active {
+.viz-thumbnail:active {
   opacity: 1.0;
-  box-shadow: 3px 3px 6px rgba(0,0,80, 0.6);
+  box-shadow: 3px 3px 6px rgba(0,0,80, 0.4);
   transform: translateY(1px);
 }
 
 .thumbnail-image {
   vertical-align:top;
+  width: 20rem;
   margin-bottom: 5px;
 }
 

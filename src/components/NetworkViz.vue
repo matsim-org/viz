@@ -53,13 +53,13 @@ function setupEventListeners () {
   EventBus.$on('sidebar-toggled', isVisible => {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
-    for (let delay of [100,200,300]) {
+    for (let delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function () { map.resize() }, delay);
     }
   });
 }
 
-let filename = '/static/networkWGS84.geo.json';
+let filename = '/static/network-viz/networkWGS84.geo.json';
 
 mapboxgl.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
