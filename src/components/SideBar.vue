@@ -61,6 +61,8 @@ function mounted () {
   overflow-x: hidden;
   color: #666;
   background-color: #eeeee9;
+  border-right: 1px solid;
+  border-color: #ccc;
   z-index: 100;
 }
 
