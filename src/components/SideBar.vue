@@ -1,7 +1,7 @@
 <template lang="pug">
 .sidebar
   .sidebar-about
-    img.sidebar-logo(src="../assets/matsim-logo-blue.png")
+    router-link(to="/"): img.sidebar-logo(src="../assets/matsim-logo-blue.png")
   br
   br
 

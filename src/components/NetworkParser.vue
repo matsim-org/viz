@@ -1,22 +1,24 @@
 <template lang="pug">
 .main-content
-  h3 WELCOME TO MATSIM-VIZ.
+  h3 NETWORK PARSER
 
-  p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
-  p Pick a dataset to explore from those below. More to come!
+  button.ui.large.red.button(@click="doIt") DO IT!
 
-  h3 SAMPLE VISUALIZATIONS
-  .visualizations
-    .post(v-for="viz in visualizations")
-      .viz-thumbnail
-        router-link(:to="viz.url")
-          img.thumbnail-image(:src="viz.thumbnail")
-          h5.thumbnail-title {{ viz.title }}
   br
   br
-  h3 ABOUT THIS SITE
-  p You can find out more about MATSim at&nbsp;
-    a(href="https://matsim.org" target="_blank") https://matsim.org
+
+  p {{msg}}
+
+  br
+  br
+
+  h5 NODES: {{nodes.length}}
+
+  br
+  br
+
+  h5 LINKS: {{links.length}}
+  // p.node-row(v-for="link in links") {{link}}
 </template>
 
 <script>
@@ -25,25 +27,14 @@
 // import { BigStore } from '../shared-store.js';
 // store is the component data store -- the state of the component.
 let store = {
-  visualizations: [
-    { title: '1. Network Links',
-      url: '/network',
-      thumbnail: '/static/network-viz/scrnshot.png'
-    },
-    { title: '2. Accessibility',
-      url: '/accessibility',
-      thumbnail: '/static/kibera-accessibility/scrnshot.png'
-    },
-    { title: '3. Cottbus Network Loader',
-      url: '/cottbus',
-      thumbnail: '/static/network-viz/scrnshot.png'
-    },
-  ],
+  nodes: [],
+  links: [],
+  msg: '',
 }
 
 // this export is the Vue Component itself
 export default {
-  name: 'StartPage',
+  name: 'NetworkParser',
   components: {},
   data () {
     return store
@@ -52,6 +43,7 @@ export default {
     mounted();
   },
   methods: {
+    doIt: doIt,
   },
   watch: {
   },
@@ -61,6 +53,36 @@ export default {
 function mounted () {
 }
 
+async function doIt () {
+  let pako = require('pako')
+
+  let sax = require('sax')
+  let saxparser = sax.parser(true); // strict
+
+  store.msg = 'GO!';
+
+  saxparser.onopentag = function (tag) {
+    if (tag.name === 'node') store.nodes.push(tag.attributes);
+    if (tag.name === 'link') store.links.push(tag.attributes);
+  }
+
+  try {
+    let url = '/static/data-cottbus/network.xml.gz'
+    let resp = await fetch(url)
+    let blob = await resp.blob()
+
+    // get the blob data
+    let readBlob = require('read-blob')
+    readBlob.arraybuffer(blob).then(content => {
+      let xml = pako.inflate(content, { to: 'string' });
+      saxparser.write(xml)
+    })
+  } catch (e) {
+    store.msg = 'ERR>>'
+    console.log(e)
+  }
+}
+
 </script>
 
 <style scoped>
@@ -68,6 +90,7 @@ function mounted () {
 /* this is the initial start page layout */
 .main-content {
   padding: 20px;
+  overflow-y: auto;
 }
 
 .viz-thumbnail {

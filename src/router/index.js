@@ -4,6 +4,7 @@ import Router from 'vue-router'
 import KiberaAccessibility from '@/components/KiberaAccessibility'
 import NetworkViz from '@/components/NetworkViz'
 import StartPage from '@/components/StartPage'
+import NetworkParser from '@/components/NetworkParser'
 
 Vue.use(Router)
 
@@ -24,6 +25,11 @@ export default new Router({
       path: '/accessibility',
       name: 'KiberaAccessibility',
       component: KiberaAccessibility,
+    },
+    {
+      path: '/cottbus',
+      name: 'NetworkParser',
+      component: NetworkParser,
     },
   ]
 })
