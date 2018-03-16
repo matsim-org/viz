@@ -118,9 +118,9 @@ nSQL('events').config({mode: 'TEMP'}).model([
 ])
 nSQL().connect()
 
-async function testQuery() {
-  console.log("START QUERY")
-  nSQL("events").query("select").where(["time", "BETWEEN", [23499,23550]]).exec().then(function(rows, db) {
+async function testQuery () {
+  console.log('START QUERY')
+  nSQL('events').query('select').where(['time', 'BETWEEN', [23499, 23550]]).exec().then(function (rows, db) {
     console.log({QUERY_RESULTS_LEN: rows.length, QUERY_RESULTS: rows})
   })
 }
@@ -151,12 +151,12 @@ async function readEventsFile () {
     console.log('START CONVERTING INDEX', events.length, 'events')
     let z = []
     for (let id in time_idx) {
-      z.push({id:id, rows:time_idx[id]})
+      z.push({id: id, rows: time_idx[id]})
     }
 
     console.log('START RAW EVENT DB IMPORT', events.length, 'events')
     nSQL().rawImport({
-    	events: events,
+      events: events,
       _events_idx_time: z
     }).then(() => {
       console.log('DONE EVENTS')

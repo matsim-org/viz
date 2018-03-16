@@ -38,6 +38,10 @@ let store = {
       url: '/cottbus',
       thumbnail: '/static/data-cottbus/scrnshot.jpg'
     },
+    { title: '4. Cottbus Traffic Animation',
+      url: '/animation-cottbus',
+      thumbnail: '/static/janek-viz/scrnshot.png'
+    },
   ],
 }
 

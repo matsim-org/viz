@@ -1,121 +1,133 @@
----
-layout: page
-title: 2. Traffic Animation
-thumbnail: scrnshot.png
-css: []
----
+<template lang="pug">
+#main
+  #fill
+    canvas#canvas
+  #row(style="height: 2em")
+    button#btnPlayPause Play
+    button#btnDecrSpeed -
+    input#inputPlaybackSpeed(name="inputPlaybackSpeed" type="number" min="0.05" max="10" step="0.05" value="1.0" readonly)
+    button#btnIncrSpeed +
+    input#inputTimeSlider.flex(type="range")
+    input#inputTimestep(type="text" readonly)
+    input#inputIsFetchingData(type="text" value="not loading" readonly)
+    input#inputAgentNumber(type="text" value="0" readonly)
+    button#btnReload reload
+</template>
 
-<!doctype html>
+<script>
 
-<html lang="en">
+import { Webvis } from '../../static/janek-viz/webvis.js';
 
-<head>
-  <meta charset="utf-8">
-  <title>webvis client</title>
-  <meta name="description" content="Testpage for matsim.webvis">
-  <meta name="author" content="Janek">
-  <script src="js/webvis.thirdparty.js" type="text/javascript"></script>
-  <script src="js/webvis.js" type="text/javascript"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', start);
-    let webvis;
-    let timeslider, txtTimestep, txtNumberOfAgents;
-    let isPlaying = false;
-    let isSliderMouseDown = false;
+let webvis;
+let timeslider, txtTimestep, txtNumberOfAgents;
+let isPlaying = false;
+let isSliderMouseDown = false;
 
-    function start() {
-      loadWebvis();
+let store = {}
 
-      subscribeEvents();
+// this export is the Vue Component itself
+export default {
+  name: 'JanekViz',
+  components: {},
+  data () {
+    return store
+  },
+  mounted: function () {
+    mounted();
+  },
+  methods: {
+  },
+  watch: {
+  },
+}
 
-      document.getElementById('btnReload').addEventListener('click', function (e) {
-        webvis.destroy();
-        webvis = null;
+function mounted() {
+  loadWebvis();
 
-        loadWebvis();
-      });
+  subscribeEvents();
+
+  document.getElementById('btnReload').addEventListener('click', function (e) {
+    webvis.destroy();
+    webvis = null;
+
+    loadWebvis();
+  });
+}
+
+function loadWebvis () {
+  webvis = new Webvis.Webvis({ canvasId: 'canvas' });
+  webvis.onServerConfigChanged = handleConfigLoaded;
+  webvis.onTimestepChanged = handleTimestepChanged;
+  webvis.onFetchingData = handleFetchingData;
+}
+
+function handleConfigLoaded () {
+  timeslider = document.getElementById('inputTimeSlider');
+  txtTimestep = document.getElementById('inputTimestep');
+  txtFetching = document.getElementById('inputIsFetchingData');
+  txtNumberOfAgents = document.getElementById('inputAgentNumber');
+  timeslider.min = webvis.firstTimestep;
+  timeslider.max = webvis.lastTimestep;
+  timeslider.value = webvis.firstTimestep;
+  timeslider.step = webvis.timestepSize;
+  txtTimestep.value = webvis.firstTimestep;
+
+  timeslider.oninput = function (e) {
+    txtTimestep.value = timeslider.value;
+  }
+  timeslider.onchange = function (e) {
+    webvis.seekTimestep(parseFloat(timeslider.value));
+  }
+  timeslider.onmousedown = function (e) {
+    isSliderMouseDown = true;
+  }
+  timeslider.onmouseup = function (e) {
+    isSliderMouseDown = false;
+  }
+}
+
+function handleTimestepChanged (timestep) {
+  if (!isSliderMouseDown) {
+    timeslider.value = timestep;
+    txtTimestep.value = timestep;
+    let snapshot = webvis.playback.getSnapshotForCurrentTimestep();
+    txtNumberOfAgents.value = snapshot.position.length / 3;
+  }
+}
+
+function handleFetchingData (isFetching) {
+  if (isFetching) {
+    txtFetching.value = 'loading...';
+  } else {
+    txtFetching.value = 'not loading';
+  }
+}
+
+function subscribeEvents () {
+  document.getElementById('btnPlayPause').addEventListener('click', function (e) {
+    if (isPlaying) {
+      webvis.stopPlayback();
+      isPlaying = false;
+      document.getElementById('btnPlayPause').innerHTML = 'Play';
+    } else {
+      webvis.startPlayback();
+      isPlaying = true;
+      document.getElementById('btnPlayPause').innerHTML = 'Pause';
     }
+  });
+  document.getElementById('btnDecrSpeed').addEventListener('click', function (e) {
+    webvis.setPlaybackSpeed(webvis.playbackSpeedFactor / 2);
+    document.getElementById('inputPlaybackSpeed').value = webvis.playbackSpeedFactor;
+  });
 
-    function loadWebvis() {
-      webvis = new Webvis.Webvis({ canvasId: 'canvas' });
-      webvis.onServerConfigChanged = handleConfigLoaded;
-      webvis.onTimestepChanged = handleTimestepChanged;
-      webvis.onFetchingData = handleFetchingData;
+  document.getElementById('btnIncrSpeed').addEventListener('click', function (e) {
+    webvis.setPlaybackSpeed(webvis.playbackSpeedFactor * 2);
+    document.getElementById('inputPlaybackSpeed').value = webvis.playbackSpeedFactor;
+  });
+}
+</script>
 
-    }
-
-    function handleConfigLoaded() {
-      timeslider = document.getElementById('inputTimeSlider');
-      txtTimestep = document.getElementById('inputTimestep');
-      txtFetching = document.getElementById('inputIsFetchingData');
-      txtNumberOfAgents = document.getElementById('inputAgentNumber');
-      timeslider.min = webvis.firstTimestep;
-      timeslider.max = webvis.lastTimestep;
-      timeslider.value = webvis.firstTimestep;
-      timeslider.step = webvis.timestepSize;
-      txtTimestep.value = webvis.firstTimestep;
-
-      timeslider.oninput = function (e) {
-        txtTimestep.value = timeslider.value;
-      }
-      timeslider.onchange = function (e) {
-        webvis.seekTimestep(parseFloat(timeslider.value));
-      }
-      timeslider.onmousedown = function (e) {
-        isSliderMouseDown = true;
-      }
-      timeslider.onmouseup = function (e) {
-        isSliderMouseDown = false;
-      }
-    }
-
-    function handleTimestepChanged(timestep) {
-      if (!isSliderMouseDown) {
-        timeslider.value = timestep;
-        txtTimestep.value = timestep;
-        let snapshot = webvis.playback.getSnapshotForCurrentTimestep();
-        txtNumberOfAgents.value = snapshot.position.length / 3;
-      }
-    }
-
-    function handleFetchingData(isFetching) {
-
-      if (isFetching) {
-        txtFetching.value = 'loading...';
-      }
-      else {
-        txtFetching.value = 'not loading';
-      }
-    }
-
-    function subscribeEvents() {
-
-
-
-      document.getElementById('btnPlayPause').addEventListener('click', function (e) {
-        if (isPlaying) {
-          webvis.stopPlayback();
-          isPlaying = false;
-          document.getElementById('btnPlayPause').innerHTML = 'Play';
-        }
-        else {
-          webvis.startPlayback();
-          isPlaying = true;
-          document.getElementById('btnPlayPause').innerHTML = 'Pause';
-        }
-      });
-      document.getElementById('btnDecrSpeed').addEventListener('click', function (e) {
-        webvis.setPlaybackSpeed(webvis.playbackSpeedFactor / 2);
-        document.getElementById('inputPlaybackSpeed').value = webvis.playbackSpeedFactor;
-      });
-
-      document.getElementById('btnIncrSpeed').addEventListener('click', function (e) {
-        webvis.setPlaybackSpeed(webvis.playbackSpeedFactor * 2);
-        document.getElementById('inputPlaybackSpeed').value = webvis.playbackSpeedFactor;
-      });
-    }
-  </script>
-  <style>
+<style scoped>
     html {
       height: 100%;
     }
@@ -166,26 +178,4 @@ css: []
       padding-top: 5px;
       padding-bottom: 60px;
     }
-
-  </style>
-</head>
-
-<body>
-  <main>
-    <div class="fill">
-      <canvas id="canvas"></canvas>
-    </div>
-    <div class="row" style="height: 2em">
-      <button id="btnPlayPause">Play</button>
-      <button id="btnDecrSpeed">-</button>
-      <input id="inputPlaybackSpeed" name="inputPlaybackSpeed" type="number" min="0.05" max="10" step="0.05" value="1.0" readonly>
-      <button id="btnIncrSpeed">+</button>
-      <input id="inputTimeSlider" type="range" class="flex">
-      <input id="inputTimestep" type="text" readonly>
-      <input id="inputIsFetchingData" type="text" value="not loading" readonly>
-      <input id="inputAgentNumber" type="text" value="0" readonly>
-      <button id="btnReload">reload</button>
-    </div>
-
-  </main>
-</body>
+</style>
