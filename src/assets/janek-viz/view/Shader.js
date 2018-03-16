@@ -1,7 +1,6 @@
 class Shader {
-
-    static interpolatePositionsVertexShader() {
-        return `
+  static interpolatePositionsVertexShader () {
+    return `
                 attribute vec3 nextPosition;
                 attribute float shouldInterpolate;
                 attribute float id;
@@ -67,10 +66,10 @@ class Shader {
                     gl_Position = projectionMatrix * modelViewMatrix * vec4(interpolated, 1.0);
                 }
         `;
-    }
+  }
 
-    static interpolatePositionsFragmentShader() {
-        return `
+  static interpolatePositionsFragmentShader () {
+    return `
                 uniform vec3 color;
                 uniform vec3 selectedColor;
                 uniform float timestepFraction;
@@ -118,7 +117,7 @@ class Shader {
                     if ( gl_FragColor.a < ALPHATEST ) discard;
                 }
         `;
-    }
+  }
 }
 
 export { Shader };

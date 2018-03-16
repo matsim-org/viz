@@ -15,8 +15,9 @@
 </template>
 
 <script>
+'use strict'
 
-import { Webvis } from '../../static/janek-viz/webvis.js';
+let Webvis = require('@/assets/janek-viz/Webvis.js')
 
 let webvis;
 let timeslider, txtTimestep, txtNumberOfAgents;
@@ -41,9 +42,8 @@ export default {
   },
 }
 
-function mounted() {
+function mounted () {
   loadWebvis();
-
   subscribeEvents();
 
   document.getElementById('btnReload').addEventListener('click', function (e) {
