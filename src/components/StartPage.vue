@@ -36,7 +36,7 @@ let store = {
     },
     { title: '3. Cottbus Network Loader',
       url: '/cottbus',
-      thumbnail: '/static/network-viz/scrnshot.png'
+      thumbnail: '/static/data-cottbus/scrnshot.jpg'
     },
   ],
 }
@@ -68,6 +68,7 @@ function mounted () {
 /* this is the initial start page layout */
 .main-content {
   padding: 20px;
+  overflow-y: auto;
 }
 
 .viz-thumbnail {

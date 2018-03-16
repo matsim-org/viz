@@ -20,9 +20,10 @@
     br
 
     nav.sidebar-nav
-      router-link.sidebar-nav-item(:to="'/'") HOME
-      router-link.sidebar-nav-item(:to="'network'") NETWORK-LINKS test
-      router-link.sidebar-nav-item(:to="'accessibility'") KIBERA Accessbility test
+      router-link.sidebar-nav-item(to="/") HOME
+      router-link.sidebar-nav-item(to="network") NETWORK-LINKS test
+      router-link.sidebar-nav-item(to="accessibility") KIBERA Accessbility test
+      router-link.sidebar-nav-item(to="cottbus") COTTBUS Network test
 </template>
 
 <script>

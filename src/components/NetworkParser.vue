@@ -2,15 +2,20 @@
 .main-content
   #mymap
   .controls
-    h3 NETWORK PARSER &nbsp;
-      button.ui.large.red.button(@click="doIt") DO IT!
+    button.ui.tiny.red.button(@click="doIt" :class="{shrunken: !sharedStore.isSidePanelExpanded}") DO IT!
 </template>
 
 <script>
 'use strict';
 
-import { EventBus } from '../shared-store.js';
+import { BigStore, EventBus } from '../shared-store.js';
 import mapboxgl from 'mapbox-gl';
+import { nSQL } from 'nano-sql';
+
+let pako = require('pako')
+let sax = require('sax')
+let readBlob = require('read-blob')
+let proj4 = require('proj4').default
 
 let L = require('leaflet');
 
@@ -20,6 +25,7 @@ let store = {
   nodes: {},
   links: {},
   msg: '',
+  sharedStore: BigStore.state,
 }
 
 // this export is the Vue Component itself
@@ -49,7 +55,7 @@ function mounted () {
 
   let url =
     'https://api.mapbox.com/styles/v1/mapbox/' +
-    'light' +
+    'outdoors' +
     '-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}';
   let token =
     'pk.eyJ1IjoicHNyYyIsImEiOiJjaXFmc2UxanMwM3F6ZnJtMWp3MjBvZHNrIn0._Dmske9er0ounTbBmdRrRQ';
@@ -81,31 +87,14 @@ function setupEventListeners () {
   });
 }
 
-function addNodesToMap () {
-  for (let id in store.nodes) {
-    try {
-      let node = store.nodes[id]
-      L.circle([node.y, node.x], {
-        color: 'blue',
-        fillColor: 'blue',
-        fillOpacity: 0.5,
-        weight: 1,
-        radius: 4,
-      }).addTo(mymap);
-    } catch (e) {
-      console.log(e)
-    }
-  }
-}
-
 function addLinksToMap () {
   for (let id in store.links) {
     let link = store.links[id]
     let fromNode = store.nodes[link.from]
     let toNode = store.nodes[link.to]
 
-    let width = link.permlanes * link.permlanes
-    let color = 'green'
+    let width = 2; // link.permlanes * link.permlanes
+    let color = '#00996680'
     if (parseInt(link.capacity) > '1000') color = 'blue'
 
     L.polyline([
@@ -115,14 +104,87 @@ function addLinksToMap () {
   }
 }
 
-async function doIt () {
-  let pako = require('pako')
-  let sax = require('sax')
-  let readBlob = require('read-blob')
+nSQL('events').config({mode: 'TEMP'}).model([
+  {key: 'id', type: 'int', props: ['pk']},
+  {key: 'time', type: 'int', props: ['idx']},
+  {key: 'actType', type: 'string'},
+  {key: 'person', type: 'string'},
+  {key: 'type', type: 'string'},
+  {key: 'link', type: 'string'},
+  {key: 'vehicle', type: 'string', props: ['idx']},
+  {key: 'networkMode', type: 'string', props: ['idx']},
+  {key: 'legMode', type: 'string', props: []},
+  {key: 'relativePosition', type: 'string', props: []},
+])
+nSQL().connect()
 
+async function testQuery() {
+  console.log("START QUERY")
+  nSQL("events").query("select").where(["time", "BETWEEN", [23499,23550]]).exec().then(function(rows, db) {
+    console.log({QUERY_RESULTS_LEN: rows.length, QUERY_RESULTS: rows})
+  })
+}
+
+async function readEventsFile () {
+  let events = []
+  let time_idx = {}
+
+  let id_auto_inc = 0;
   let saxparser = sax.parser(true); // strictmode=true
 
-  store.msg = 'GO!';
+  saxparser.onopentag = function (tag) {
+    if (tag.name === 'event') {
+      let attr = tag.attributes
+
+      attr.id = ++id_auto_inc;
+      let key = parseInt(attr.time)
+      attr.time = key
+      events.push(attr)
+
+      // create index, too
+      if (!time_idx[key]) time_idx[key] = []
+      time_idx[key].push(attr.id)
+    }
+  }
+
+  saxparser.onend = function () {
+    console.log('START CONVERTING INDEX', events.length, 'events')
+    let z = []
+    for (let id in time_idx) {
+      z.push({id:id, rows:time_idx[id]})
+    }
+
+    console.log('START RAW EVENT DB IMPORT', events.length, 'events')
+    nSQL().rawImport({
+    	events: events,
+      _events_idx_time: z
+    }).then(() => {
+      console.log('DONE EVENTS')
+      testQuery();
+    })
+  }
+
+  console.log('Start EVENTS')
+
+  try {
+    let url = '/static/data-cottbus/events.xml.gz'
+    // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
+    // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
+    let resp = await fetch(url, {mode: 'no-cors'})
+    let blob = await resp.blob()
+    // get the blob data
+    readBlob.arraybuffer(blob).then(content => {
+      let xml = pako.inflate(content, { to: 'string' });
+      saxparser.write(xml).close()
+    })
+  } catch (e) {
+    store.msg = 'ERR>>'
+    console.log(e)
+  }
+}
+
+async function readNetworkFile () {
+  let saxparser = sax.parser(true); // strictmode=true
 
   saxparser.onopentag = function (tag) {
     let attr = tag.attributes
@@ -139,17 +201,16 @@ async function doIt () {
   }
 
   saxparser.onend = function () {
-    convertCoords('+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ')
+    convertCoords('+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
     addLinksToMap();
-    // addNodesToMap();
   }
 
   try {
     let url = '/static/data-cottbus/network.xml.gz'
-    // let url = 'https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
+    // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
+    // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
     let resp = await fetch(url, {mode: 'no-cors'})
     let blob = await resp.blob()
-
     // get the blob data
     readBlob.arraybuffer(blob).then(content => {
       let xml = pako.inflate(content, { to: 'string' });
@@ -159,6 +220,11 @@ async function doIt () {
     store.msg = 'ERR>>'
     console.log(e)
   }
+}
+
+async function doIt () {
+  readNetworkFile()
+  readEventsFile()
 }
 
 // MapBox requires long/lat
@@ -193,17 +259,18 @@ function convertCoords (projection) {
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   overflow: hidden;
-  background: #222;
+  background: #eee;
 }
 
 .controls {
-  padding-left: 50px;
-  padding-bottom: 10px;
+  padding: 4px 10px 4px 5px;
   grid-row: 2 / 3;
   grid-column: 1 / 2;
   border-top: solid 1px;
   border-color: #ddd;
 }
+
+.shrunken { margin-left: 35px;}
 
 .viz-thumbnail {
   background: #dde8ff;
