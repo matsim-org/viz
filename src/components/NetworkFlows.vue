@@ -3,6 +3,16 @@
   #mymap
   .controls
     vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
+    .clock-labels
+      .hour 00
+      .hour 3:00
+      .hour 6:00
+      .hour 9:00
+      .hour 12:00
+      .hour 15:00
+      .hour 18:00
+      .hour 21:00
+      .hour 24
     button.ui.tiny.red.button(@click="doIt" :class="{shrunken: !sharedStore.isSidePanelExpanded}") DO IT!
   h1#clock {{clockTime}}
 </template>
@@ -23,19 +33,19 @@ let proj4 = require('proj4').default
 let L = require('leaflet');
 
 let mySlider = {
-  width: "100%",
+  disabled: false,
+  dotSize: 20,
   height: 10,
-  dotSize: 16,
   min: 0,
   max: 86399,
-  disabled: false,
+  piecewise: false,
   show: true,
   tooltip: "always",
+  width: "100%",
   tooltipDir: [
     "bottom",
     "top"
   ],
-  piecewise: false,
   sliderStyle: [
     {
       "backgroundColor": "#f05b72"
@@ -456,5 +466,15 @@ a:focus {
 
 .post {margin-top: 20px;}
 
-.time-slider {margin-top: 30px; margin-left: 5px;}
+.time-slider {margin-top: 30px;}
+
+.clock-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
+  grid-template-rows: auto;
+  width: 100%;
+  margin-bottom: 5px;
+  margin-top: -10px;
+}
+
 </style>
