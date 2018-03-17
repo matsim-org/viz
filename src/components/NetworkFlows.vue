@@ -2,7 +2,9 @@
 .main-content
   #mymap
   .controls
+    vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
     button.ui.tiny.red.button(@click="doIt" :class="{shrunken: !sharedStore.isSidePanelExpanded}") DO IT!
+  h1#clock {{clockTime}}
 </template>
 
 <script>
@@ -11,6 +13,7 @@
 import { BigStore, EventBus } from '../shared-store.js';
 import mapboxgl from 'mapbox-gl';
 import { nSQL } from 'nano-sql';
+import vueSlider from 'vue-slider-component';
 
 let pako = require('pako')
 let sax = require('sax')
@@ -19,20 +22,98 @@ let proj4 = require('proj4').default
 
 let L = require('leaflet');
 
+let mySlider = {
+  width: "100%",
+  height: 10,
+  dotSize: 16,
+  min: 0,
+  max: 86399,
+  disabled: false,
+  show: true,
+  tooltip: "always",
+  tooltipDir: [
+    "bottom",
+    "top"
+  ],
+  piecewise: false,
+  sliderStyle: [
+    {
+      "backgroundColor": "#f05b72"
+    },
+    {
+      "backgroundColor": "#3498db"
+    }
+  ],
+  tooltipStyle: [
+    {
+      "backgroundColor": "#f05b72",
+      "borderColor": "#f05b72"
+    },
+    {
+      "backgroundColor": "#3498db",
+      "borderColor": "#3498db"
+    }
+  ],
+  bgStyle: {
+    "backgroundImage": "-webkit-linear-gradient(left, #fff,#fff,#fff,#fff,#fff,#fff,#205b72, #fff,#fff,#fff, #3498db, #fff)",
+    "boxShadow": "inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)"
+  },
+  processStyle: {
+    backgroundColor: "#ffff8844",
+    "borderColor": "#f05b72"
+  },
+  formatter: function(index) {
+    return convertSecondsToRoundClockTime(index);
+  },
+}
+
+function convertSecondsToRoundClockTime(index) {
+  let segment = Math.floor(index / 900)
+  let hour = Math.floor(segment/4)
+  let minutes = 15 * (segment - hour * 4)
+  minutes = ("00" + minutes).slice (-2)
+  return `${hour}:${minutes}`
+}
+
+function convertSecondsToClockTime(index) {
+  let segment = Math.floor(index / 900)
+  let hour = Math.floor(segment/4)
+  let minutes = Math.floor((index - hour * 3600) / 60)
+  minutes = ("00" + minutes).slice (-2)
+  return `${hour}:${minutes}`
+}
+
+/* const hourLabels = ['0:00','1 AM','2 AM',
+                  '3 AM','4 AM','5 AM','6 AM','7 AM',
+                  '8 AM','9 AM','10 AM','11 AM',
+                  'Noon','1 PM','2 PM','3 PM',
+                  '4 PM','5 PM','6 PM','7 PM',
+                  '8 PM','9 PM','10 PM','11 PM']
+*/
+
 // store is the component data store -- the state of the component.
 let store = {
+  sharedStore: BigStore.state,
   nodes: {},
   links: {},
   flows: {},
   flowSummary: new Array(96).fill(0),
   msg: '',
-  sharedStore: BigStore.state,
+  timeSlider: mySlider,
+  timeSliderValue: 0,
 }
 
 // this export is the Vue Component itself
 export default {
   name: 'NetworkFlows',
-  components: {},
+  components: {
+    vueSlider,
+  },
+  computed: {
+      clockTime: function () {
+        return convertSecondsToClockTime(store.timeSliderValue)
+      }
+  },
   data () {
     return store
   },
@@ -274,7 +355,7 @@ function convertCoords (projection) {
 /* this is the initial start page layout */
 .main-content {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
   height: 100%;
   padding: 0px;
@@ -284,15 +365,23 @@ function convertCoords (projection) {
   height: 100%;
   width: 100%;
   grid-row: 1 / 2;
-  grid-column: 1 / 2;
+  grid-column: 1 / 3;
   overflow: hidden;
   background: #eee;
+}
+
+#clock {
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  color: #f00;
+  z-index: 5000;
+  margin: 20px 20px 0px 0px;
 }
 
 .controls {
   padding: 4px 10px 4px 5px;
   grid-row: 2 / 3;
-  grid-column: 1 / 2;
+  grid-column: 1 / 3;
   border-top: solid 1px;
   border-color: #ddd;
 }
@@ -367,4 +456,5 @@ a:focus {
 
 .post {margin-top: 20px;}
 
+.time-slider {margin-top: 30px; margin-left: 5px;}
 </style>
