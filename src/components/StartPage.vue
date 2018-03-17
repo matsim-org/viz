@@ -21,10 +21,11 @@
 
 <script>
 'use strict';
+import { BigStore } from '../shared-store.js';
 
-// import { BigStore } from '../shared-store.js';
 // store is the component data store -- the state of the component.
 let store = {
+  shared: BigStore.state,
   visualizations: [
     { title: '1. Network Links',
       url: '/network',
@@ -34,8 +35,8 @@ let store = {
       url: '/accessibility',
       thumbnail: '/static/kibera-accessibility/scrnshot.png'
     },
-    { title: '3. Cottbus Network Loader',
-      url: '/cottbus',
+    { title: '3. Cottbus Network Flows',
+      url: '/flows',
       thumbnail: '/static/data-cottbus/scrnshot.jpg'
     },
     { title: '4. Cottbus Traffic Animation',

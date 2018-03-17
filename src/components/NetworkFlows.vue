@@ -19,18 +19,19 @@ let proj4 = require('proj4').default
 
 let L = require('leaflet');
 
-// import { BigStore } from '../shared-store.js';
 // store is the component data store -- the state of the component.
 let store = {
   nodes: {},
   links: {},
+  flows: {},
+  flowSummary: new Array(96).fill(0),
   msg: '',
   sharedStore: BigStore.state,
 }
 
 // this export is the Vue Component itself
 export default {
-  name: 'NetworkParser',
+  name: 'NetworkFlows',
   components: {},
   data () {
     return store
@@ -109,7 +110,7 @@ nSQL('events').config({mode: 'TEMP'}).model([
   {key: 'time', type: 'int', props: ['idx']},
   {key: 'actType', type: 'string'},
   {key: 'person', type: 'string'},
-  {key: 'type', type: 'string'},
+  {key: 'type', type: 'string', props: ['idx']},
   {key: 'link', type: 'string'},
   {key: 'vehicle', type: 'string', props: ['idx']},
   {key: 'networkMode', type: 'string', props: ['idx']},
@@ -117,6 +118,23 @@ nSQL('events').config({mode: 'TEMP'}).model([
   {key: 'relativePosition', type: 'string', props: []},
 ])
 nSQL().connect()
+
+async function aggregate15minutes () {
+  console.log('START 15-MIN AGGREGATION')
+  nSQL('events').query('select')
+    .where(['type', 'IN', ['left link','vehicle leaves traffic']])
+    .exec().then(function (rows, db) {
+      console.log('got so many rows:',rows.length)
+      for (let row of rows) {
+        let period = Math.floor(row.time / 900)
+        if (!store.flows[row.link]) store.flows[row.link] = []
+        if (!store.flows[row.link][period]) store.flows[row.link][period] = 0
+        store.flows[row.link][period]++
+        store.flowSummary[period]++
+      }
+      console.log({flows: store.flowSummary})
+  })
+}
 
 async function testQuery () {
   console.log('START QUERY')
@@ -128,6 +146,7 @@ async function testQuery () {
 async function readEventsFile () {
   let events = []
   let time_idx = {}
+  let type_idx = {}
 
   let id_auto_inc = 0;
   let saxparser = sax.parser(true); // strictmode=true
@@ -141,26 +160,34 @@ async function readEventsFile () {
       attr.time = key
       events.push(attr)
 
-      // create index, too
+      // create indices, too
       if (!time_idx[key]) time_idx[key] = []
       time_idx[key].push(attr.id)
+      if (!type_idx[attr.type]) type_idx[attr.type] = []
+      type_idx[attr.type].push(attr.id)
     }
   }
 
   saxparser.onend = function () {
     console.log('START CONVERTING INDEX', events.length, 'events')
-    let z = []
+    let z_time = []
     for (let id in time_idx) {
-      z.push({id: id, rows: time_idx[id]})
+      z_time.push({id: id, rows: time_idx[id]})
+    }
+    let z_type = []
+    for (let id in type_idx) {
+      z_type.push({id: id, rows: type_idx[id]})
     }
 
     console.log('START RAW EVENT DB IMPORT', events.length, 'events')
     nSQL().rawImport({
       events: events,
-      _events_idx_time: z
+      _events_idx_time: z_time,
+      _events_idx_type: z_type,
     }).then(() => {
       console.log('DONE EVENTS')
-      testQuery();
+      // testQuery();
+      aggregate15minutes()
     })
   }
 
@@ -184,7 +211,7 @@ async function readEventsFile () {
 }
 
 async function readNetworkFile () {
-  let saxparser = sax.parser(true); // strictmode=true
+  let saxparser = sax.parser(true) // strictmode=true
 
   saxparser.onopentag = function (tag) {
     let attr = tag.attributes
@@ -196,13 +223,13 @@ async function readNetworkFile () {
     }
 
     if (tag.name === 'link') {
-      store.links[attr.id] = attr;
+      store.links[attr.id] = attr
     }
   }
 
   saxparser.onend = function () {
     convertCoords('+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
-    addLinksToMap();
+    addLinksToMap()
   }
 
   try {

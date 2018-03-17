@@ -21,9 +21,10 @@
 
     nav.sidebar-nav
       router-link.sidebar-nav-item(to="/") HOME
-      router-link.sidebar-nav-item(to="network") NETWORK-LINKS test
-      router-link.sidebar-nav-item(to="accessibility") KIBERA Accessbility test
-      router-link.sidebar-nav-item(to="cottbus") COTTBUS Network test
+      br
+      router-link.sidebar-nav-item(to="flows") NETWORK FLOWS in Cottbus
+      router-link.sidebar-nav-item(to="accessibility") ACCESSIBILITY: Kibera
+      router-link.sidebar-nav-item(to="network") NETWORK LINKS: GeoJson
 </template>
 
 <script>

@@ -5,7 +5,7 @@ import JanekViz from '@/components/JanekViz'
 import KiberaAccessibility from '@/components/KiberaAccessibility'
 import NetworkViz from '@/components/NetworkViz'
 import StartPage from '@/components/StartPage'
-import NetworkParser from '@/components/NetworkParser'
+import NetworkFlows from '@/components/NetworkFlows'
 
 Vue.use(Router)
 
@@ -28,9 +28,9 @@ export default new Router({
       component: KiberaAccessibility,
     },
     {
-      path: '/cottbus',
-      name: 'NetworkParser',
-      component: NetworkParser,
+      path: '/flows',
+      name: 'NetworkFlows',
+      component: NetworkFlows,
     },
     {
       path: '/animation-cottbus',
