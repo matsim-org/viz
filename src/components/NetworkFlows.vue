@@ -2,18 +2,19 @@
 .main-content
   #mymap
   .controls
-    vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
-    .clock-labels
-      .hour 00
-      .hour 3:00
-      .hour 6:00
-      .hour 9:00
-      .hour 12:00
-      .hour 15:00
-      .hour 18:00
-      .hour 21:00
-      .hour 24
     button.ui.tiny.red.button(@click="doIt" :class="{shrunken: !sharedStore.isSidePanelExpanded}") DO IT!
+    .slider-things
+      vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
+      .clock-labels
+        .hour 0
+        .hour 3:00
+        .hour 6:00
+        .hour 9:00
+        .hour 12:00
+        .hour 15:00
+        .hour 18:00
+        .hour 21:00
+        .hour 24
   h1#clock {{clockTime}}
 </template>
 
@@ -34,7 +35,7 @@ let L = require('leaflet');
 
 let mySlider = {
   disabled: false,
-  dotSize: 20,
+  dotSize: 24,
   height: 10,
   min: 0,
   max: 86399,
@@ -42,25 +43,16 @@ let mySlider = {
   show: true,
   tooltip: "always",
   width: "100%",
-  tooltipDir: [
-    "bottom",
-    "top"
-  ],
+  tooltipDir: [],
   sliderStyle: [
-    {
-      "backgroundColor": "#f05b72"
-    },
-    {
-      "backgroundColor": "#3498db"
-    }
+    {"backgroundColor": "#f05b72"},
+    {"backgroundColor": "#3498db"}
   ],
   tooltipStyle: [
-    {
-      "backgroundColor": "#f05b72",
-      "borderColor": "#f05b72"
+    {"backgroundColor": "#f05b72",
+     "borderColor": "#f05b72"
     },
-    {
-      "backgroundColor": "#3498db",
+    {"backgroundColor": "#3498db",
       "borderColor": "#3498db"
     }
   ],
@@ -69,11 +61,11 @@ let mySlider = {
     "boxShadow": "inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)"
   },
   processStyle: {
-    backgroundColor: "#ffff8844",
-    "borderColor": "#f05b72"
+    backgroundColor: "#00bb5588",
+    borderColor: "#f05b72"
   },
   formatter: function(index) {
-    return convertSecondsToRoundClockTime(index);
+    return convertSecondsToClockTime(index);
   },
 }
 
@@ -104,6 +96,7 @@ function convertSecondsToClockTime(index) {
 // store is the component data store -- the state of the component.
 let store = {
   sharedStore: BigStore.state,
+  currentTimeSegment: 0,
   nodes: {},
   links: {},
   flows: {},
@@ -111,6 +104,9 @@ let store = {
   msg: '',
   timeSlider: mySlider,
   timeSliderValue: 0,
+  setTimeSegment: function (segment) {
+    this.currentTimeSegment = segment;
+  }
 }
 
 // this export is the Vue Component itself
@@ -134,10 +130,26 @@ export default {
     doIt: doIt,
   },
   watch: {
+    timeSliderValue: sliderChangedEvent
   },
 }
 
 let mymap;
+
+function sliderChangedEvent (seconds) {
+  updateFlowsForTimeValue(seconds)
+}
+
+function updateFlowsForTimeValue(seconds) {
+  let segment = Math.floor(seconds/900); // 15 minutes
+  store.setTimeSegment(segment)
+
+  _linkLayers.eachLayer(function (layer) {
+    layer.setStyle(calculateColorFromVolume(layer.linkID))
+    layer.redraw()
+  });
+  console.log('done')
+}
 
 // mounted is called by Vue after this component is installed on the page
 function mounted () {
@@ -179,21 +191,36 @@ function setupEventListeners () {
   });
 }
 
+let _linkLayers;
+
 function addLinksToMap () {
+  _linkLayers = L.featureGroup().addTo(mymap);
+
   for (let id in store.links) {
     let link = store.links[id]
     let fromNode = store.nodes[link.from]
     let toNode = store.nodes[link.to]
 
-    let width = 2; // link.permlanes * link.permlanes
-    let color = '#00996680'
-    if (parseInt(link.capacity) > '1000') color = 'blue'
-
-    L.polyline([
+    let layer = L.polyline([
       [fromNode.y, fromNode.x],
       [toNode.y, toNode.x]
-    ], {color: color, weight: width}).addTo(mymap);
+    ], calculateColorFromVolume(id))
+
+    layer.linkID = id;
+    _linkLayers.addLayer(layer)
   }
+}
+
+function calculateColorFromVolume (id) {
+  let volume = store.flows[id] ?
+    (store.flows[id][store.currentTimeSegment] ?
+      store.flows[id][store.currentTimeSegment] : 0) : 0;
+
+  if (volume > 100) return { color: '#f66', weight: 4}
+  if (volume > 20) return { color: '#fc6', weight: 3}
+  if (volume > 1) return { color: '#69f', weight: 3}
+
+  return { color: '#ddd', weight: 2}
 }
 
 nSQL('events').config({mode: 'TEMP'}).model([
@@ -218,7 +245,7 @@ async function aggregate15minutes () {
       console.log('got so many rows:',rows.length)
       for (let row of rows) {
         let period = Math.floor(row.time / 900)
-        if (!store.flows[row.link]) store.flows[row.link] = []
+        if (!store.flows[row.link]) store.flows[row.link] = {}
         if (!store.flows[row.link][period]) store.flows[row.link][period] = 0
         store.flows[row.link][period]++
         store.flowSummary[period]++
@@ -383,20 +410,29 @@ function convertCoords (projection) {
 #clock {
   grid-row: 1 / 2;
   grid-column: 2 / 3;
-  color: #f00;
+  color: #c00;
   z-index: 5000;
-  margin: 20px 20px 0px 0px;
+  margin: 10px 10px 0px 0px;
 }
 
 .controls {
-  padding: 4px 10px 4px 5px;
-  grid-row: 2 / 3;
-  grid-column: 1 / 3;
+  display: flex;
   border-top: solid 1px;
   border-color: #ddd;
+  grid-row: 2 / 3;
+  grid-column: 1 / 3;
+  padding: 4px 28px 4px 5px;
+  width: 100%;
+
 }
 
-.shrunken { margin-left: 35px;}
+.slider-things {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.shrunken { margin-left: 38px;}
 
 .viz-thumbnail {
   background: #dde8ff;
@@ -466,15 +502,15 @@ a:focus {
 
 .post {margin-top: 20px;}
 
-.time-slider {margin-top: 30px;}
+.time-slider {}
 
 .clock-labels {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
   grid-template-rows: auto;
   width: 100%;
-  margin-bottom: 5px;
-  margin-top: -10px;
+  margin-bottom: 0px;
+  margin-top: -6px;
 }
 
 </style>
