@@ -57,8 +57,8 @@ let mySlider = {
     }
   ],
   bgStyle: {
-    "backgroundImage": "-webkit-linear-gradient(left, #fff,#fff,#fff,#fff,#fff,#fff,#205b72, #fff,#fff,#fff, #3498db, #fff)",
-    "boxShadow": "inset 0.5px 0.5px 3px 1px rgba(0,0,0,.36)"
+    "backgroundImage": "-webkit-linear-gradient(left, #eee, #eee)",
+    "boxShadow": "1px 1px 2px 1px rgba(0,0,0,.36)"
   },
   processStyle: {
     backgroundColor: "#00bb5588",
@@ -146,9 +146,28 @@ function updateFlowsForTimeValue(seconds) {
 
   _linkLayers.eachLayer(function (layer) {
     layer.setStyle(calculateColorFromVolume(layer.linkID))
-    layer.redraw()
   });
   console.log('done')
+}
+
+function updateTimeSliderSegmentColors (segments) {
+  let gradient = '-webkit-linear-gradient(left'
+  let total = segments.reduce((sum, current) => sum + current)
+
+  for (let segment of segments) {
+    console.log(segment)
+    let percent = 100.0 * segment / total
+    let color = ',#eee'
+    if (percent > 50) color = ',#04f'
+    else if (percent > 20) color = ',#33c'
+    else if (percent > 10) color = ',#669'
+    else if (percent > 5)  color = ',#99c'
+    else if (percent > 0)  color = ',#aaf'
+    gradient += color
+  }
+  gradient += ')'
+
+  store.timeSlider.bgStyle.backgroundImage = gradient
 }
 
 // mounted is called by Vue after this component is installed on the page
@@ -159,7 +178,7 @@ function mounted () {
 
   let url =
     'https://api.mapbox.com/styles/v1/mapbox/' +
-    'outdoors' +
+    'light' +
     '-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}';
   let token =
     'pk.eyJ1IjoicHNyYyIsImEiOiJjaXFmc2UxanMwM3F6ZnJtMWp3MjBvZHNrIn0._Dmske9er0ounTbBmdRrRQ';
@@ -220,7 +239,7 @@ function calculateColorFromVolume (id) {
   if (volume > 20) return { color: '#fc6', weight: 3}
   if (volume > 1) return { color: '#69f', weight: 3}
 
-  return { color: '#ddd', weight: 2}
+  return { color: '#ccc', weight: 2}
 }
 
 nSQL('events').config({mode: 'TEMP'}).model([
@@ -251,6 +270,7 @@ async function aggregate15minutes () {
         store.flowSummary[period]++
       }
       console.log({flows: store.flowSummary})
+      updateTimeSliderSegmentColors(store.flowSummary)
   })
 }
 
