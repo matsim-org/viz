@@ -6,12 +6,11 @@
   p Pick a dataset to explore from those below. More to come!
 
   h3 SAMPLE VISUALIZATIONS
-  .visualizations
-    .post(v-for="viz in visualizations")
-      .viz-thumbnail
-        router-link(:to="viz.url")
-          img.thumbnail-image(:src="viz.thumbnail")
-          h5.thumbnail-title {{ viz.title }}
+  ul.visualizations
+    li.viz-thumbnail(v-for="viz in visualizations")
+      router-link(:to="viz.url")
+        img.thumbnail-image(:src="viz.thumbnail")
+        h5.thumbnail-title {{ viz.title }}
   br
   br
   h3 ABOUT THIS SITE
@@ -27,19 +26,19 @@ import { BigStore } from '../shared-store.js';
 let store = {
   shared: BigStore.state,
   visualizations: [
-    { title: '1. Network Links',
-      url: '/network',
-      thumbnail: '/static/network-viz/scrnshot.png'
-    },
-    { title: '2. Accessibility',
-      url: '/accessibility',
-      thumbnail: '/static/kibera-accessibility/scrnshot.png'
-    },
-    { title: '3. Cottbus Network Flows',
+    { title: 'Cottbus Network Flows',
       url: '/flows',
       thumbnail: '/static/data-cottbus/scrnshot.jpg'
     },
-    { title: '4. Cottbus Traffic Animation',
+    { title: 'Network Links',
+      url: '/network',
+      thumbnail: '/static/network-viz/scrnshot.png'
+    },
+    { title: 'Accessibility',
+      url: '/accessibility',
+      thumbnail: '/static/kibera-accessibility/scrnshot.png'
+    },
+    { title: 'Cottbus Traffic Animation',
       url: '/animation-cottbus',
       thumbnail: '/static/janek-viz/scrnshot.png'
     },
@@ -110,6 +109,7 @@ function mounted () {
   vertical-align:top;
   width: 20rem;
   margin-bottom: 5px;
+  padding-right: 2px;
 }
 
 .thumbnail-title {
@@ -139,9 +139,12 @@ a:focus {
 }
 
 .visualizations {
-  margin-top: 10px;
+  display: grid;
+  grid-gap: 20px;
+  grid-template-columns: repeat(auto-fill,20rem);
+  list-style: none;
+  margin-top: 20px;
+  padding-left: 0px;
 }
-
-.post {margin-top: 20px;}
 
 </style>
