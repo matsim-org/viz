@@ -6,7 +6,7 @@
     .slider-things
       vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
       .clock-labels
-        .hour 0
+        .hour &nbsp;
         .hour 3:00
         .hour 6:00
         .hour 9:00
@@ -14,8 +14,9 @@
         .hour 15:00
         .hour 18:00
         .hour 21:00
-        .hour 24
-  h1#clock {{clockTime}}
+        .hour &nbsp;
+  .right-overlay
+    h1#clock {{clockTime}}
 </template>
 
 <script>
@@ -26,6 +27,7 @@ import mapboxgl from 'mapbox-gl';
 import { nSQL } from 'nano-sql';
 import vueSlider from 'vue-slider-component';
 
+let timeConvert = require('convert-seconds')
 let pako = require('pako')
 let sax = require('sax')
 let readBlob = require('read-blob')
@@ -65,24 +67,21 @@ let mySlider = {
     borderColor: "#f05b72"
   },
   formatter: function(index) {
-    return convertSecondsToClockTime(index);
+    return convertSecondsToClockTimeMinutes(index);
   },
 }
 
-function convertSecondsToRoundClockTime(index) {
-  let segment = Math.floor(index / 900)
-  let hour = Math.floor(segment/4)
-  let minutes = 15 * (segment - hour * 4)
-  minutes = ("00" + minutes).slice (-2)
-  return `${hour}:${minutes}`
+function convertSecondsToClockTimeMinutes(index) {
+  let hms = timeConvert(index)
+  let minutes = ("00" + hms.minutes).slice (-2)
+  return `${hms.hours}:${minutes}`
 }
 
 function convertSecondsToClockTime(index) {
-  let segment = Math.floor(index / 900)
-  let hour = Math.floor(segment/4)
-  let minutes = Math.floor((index - hour * 3600) / 60)
-  minutes = ("00" + minutes).slice (-2)
-  return `${hour}:${minutes}`
+  let hms = timeConvert(index)
+  let minutes = ("00" + hms.minutes).slice (-2)
+  let seconds = ("00" + hms.seconds).slice (-2)
+  return `${hms.hours}:${minutes}:${seconds}`
 }
 
 /* const hourLabels = ['0:00','1 AM','2 AM',
@@ -174,7 +173,7 @@ function updateTimeSliderSegmentColors (segments) {
 function mounted () {
   mymap = L.map('mymap', { zoomSnap: 0.5 });
   mymap.fitBounds([[51.72, 14.3], [51.82, 14.4]]);
-  mymap.zoomControl.setPosition('bottomright');
+  mymap.zoomControl.setPosition('bottomright')
 
   let url =
     'https://api.mapbox.com/styles/v1/mapbox/' +
@@ -427,12 +426,18 @@ function convertCoords (projection) {
   background: #eee;
 }
 
-#clock {
-  grid-row: 1 / 2;
+.right-overlay {
+  grid-row: 1 / 3;
   grid-column: 2 / 3;
-  color: #c00;
   z-index: 5000;
-  margin: 10px 10px 0px 0px;
+  pointer-events: none;
+}
+
+#clock {
+  color: #c00;
+  background-color: #fffc;
+  margin: 10px 10px;
+  padding: 0px 10px;
 }
 
 .controls {
@@ -529,8 +534,11 @@ a:focus {
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
   grid-template-rows: auto;
   width: 100%;
+  font-size: 10px;
   margin-bottom: 0px;
-  margin-top: -6px;
+  margin-top: -27px;
+  pointer-events: none;
+  z-index: 2;
 }
 
 </style>
