@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import JanekViz from '@/components/JanekViz'
 import KiberaAccessibility from '@/components/KiberaAccessibility'
 import NetworkViz from '@/components/NetworkViz'
 import StartPage from '@/components/StartPage'
@@ -31,11 +30,6 @@ export default new Router({
       path: '/flows',
       name: 'NetworkFlows',
       component: NetworkFlows,
-    },
-    {
-      path: '/animation-cottbus',
-      name: 'JanekViz',
-      component: JanekViz,
     },
   ]
 })
