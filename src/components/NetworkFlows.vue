@@ -43,44 +43,44 @@ let mySlider = {
   max: 86399,
   piecewise: false,
   show: true,
-  tooltip: "always",
-  width: "100%",
+  tooltip: 'always',
+  width: '100%',
   tooltipDir: [],
   sliderStyle: [
-    {"backgroundColor": "#f05b72"},
-    {"backgroundColor": "#3498db"}
+    {'backgroundColor': '#f05b72'},
+    {'backgroundColor': '#3498db'}
   ],
   tooltipStyle: [
-    {"backgroundColor": "#f05b72",
-     "borderColor": "#f05b72"
+    {'backgroundColor': '#f05b72',
+      'borderColor': '#f05b72'
     },
-    {"backgroundColor": "#3498db",
-      "borderColor": "#3498db"
+    {'backgroundColor': '#3498db',
+      'borderColor': '#3498db'
     }
   ],
   bgStyle: {
-    "backgroundImage": "-webkit-linear-gradient(left, #eee, #eee)",
-    "boxShadow": "1px 1px 2px 1px rgba(0,0,0,.36)"
+    'backgroundImage': '-webkit-linear-gradient(left, #eee, #eee)',
+    'boxShadow': '1px 1px 2px 1px rgba(0,0,0,.36)'
   },
   processStyle: {
-    backgroundColor: "#00bb5588",
-    borderColor: "#f05b72"
+    backgroundColor: '#00bb5588',
+    borderColor: '#f05b72'
   },
-  formatter: function(index) {
+  formatter: function (index) {
     return convertSecondsToClockTimeMinutes(index);
   },
 }
 
-function convertSecondsToClockTimeMinutes(index) {
+function convertSecondsToClockTimeMinutes (index) {
   let hms = timeConvert(index)
-  let minutes = ("00" + hms.minutes).slice (-2)
+  let minutes = ('00' + hms.minutes).slice(-2)
   return `${hms.hours}:${minutes}`
 }
 
-function convertSecondsToClockTime(index) {
+function convertSecondsToClockTime (index) {
   let hms = timeConvert(index)
-  let minutes = ("00" + hms.minutes).slice (-2)
-  let seconds = ("00" + hms.seconds).slice (-2)
+  let minutes = ('00' + hms.minutes).slice(-2)
+  let seconds = ('00' + hms.seconds).slice(-2)
   return `${hms.hours}:${minutes}:${seconds}`
 }
 
@@ -115,9 +115,9 @@ export default {
     vueSlider,
   },
   computed: {
-      clockTime: function () {
-        return convertSecondsToClockTime(store.timeSliderValue)
-      }
+    clockTime: function () {
+      return convertSecondsToClockTime(store.timeSliderValue)
+    }
   },
   data () {
     return store
@@ -139,8 +139,8 @@ function sliderChangedEvent (seconds) {
   updateFlowsForTimeValue(seconds)
 }
 
-function updateFlowsForTimeValue(seconds) {
-  let segment = Math.floor(seconds/900); // 15 minutes
+function updateFlowsForTimeValue (seconds) {
+  let segment = Math.floor(seconds / 900); // 15 minutes
   store.setTimeSegment(segment)
 
   _linkLayers.eachLayer(function (layer) {
@@ -160,8 +160,8 @@ function updateTimeSliderSegmentColors (segments) {
     if (percent > 50) color = ',#04f'
     else if (percent > 20) color = ',#33c'
     else if (percent > 10) color = ',#669'
-    else if (percent > 5)  color = ',#99c'
-    else if (percent > 0)  color = ',#aaf'
+    else if (percent > 5) color = ',#99c'
+    else if (percent > 0) color = ',#aaf'
     gradient += color
   }
   gradient += ')'
@@ -230,15 +230,15 @@ function addLinksToMap () {
 }
 
 function calculateColorFromVolume (id) {
-  let volume = store.flows[id] ?
-    (store.flows[id][store.currentTimeSegment] ?
-      store.flows[id][store.currentTimeSegment] : 0) : 0;
+  let volume = store.flows[id]
+    ? (store.flows[id][store.currentTimeSegment]
+      ? store.flows[id][store.currentTimeSegment] : 0) : 0;
 
-  if (volume > 100) return { color: '#f66', weight: 4}
-  if (volume > 20) return { color: '#fc6', weight: 3}
-  if (volume > 1) return { color: '#69f', weight: 3}
+  if (volume > 100) return {color: '#f66', weight: 4}
+  if (volume > 20) return {color: '#fc6', weight: 3}
+  if (volume > 1) return {color: '#69f', weight: 3}
 
-  return { color: '#ccc', weight: 2}
+  return {color: '#ccc', weight: 2}
 }
 
 nSQL('events').config({mode: 'TEMP'}).model([
@@ -258,9 +258,9 @@ nSQL().connect()
 async function aggregate15minutes () {
   console.log('START 15-MIN AGGREGATION')
   nSQL('events').query('select')
-    .where(['type', 'IN', ['left link','vehicle leaves traffic']])
+    .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
     .exec().then(function (rows, db) {
-      console.log('got so many rows:',rows.length)
+      console.log('got so many rows:', rows.length)
       for (let row of rows) {
         let period = Math.floor(row.time / 900)
         if (!store.flows[row.link]) store.flows[row.link] = {}
@@ -270,60 +270,52 @@ async function aggregate15minutes () {
       }
       console.log({flows: store.flowSummary})
       updateTimeSliderSegmentColors(store.flowSummary)
-  })
-}
-
-async function testQuery () {
-  console.log('START QUERY')
-  nSQL('events').query('select').where(['time', 'BETWEEN', [23499, 23550]]).exec().then(function (rows, db) {
-    console.log({QUERY_RESULTS_LEN: rows.length, QUERY_RESULTS: rows})
-  })
+    })
 }
 
 async function readEventsFile () {
   let events = []
-  let time_idx = {}
-  let type_idx = {}
+  let timeIndex = {}
+  let typeIndex = {}
 
-  let id_auto_inc = 0;
+  let idAutoInc = 0;
   let saxparser = sax.parser(true); // strictmode=true
 
   saxparser.onopentag = function (tag) {
     if (tag.name === 'event') {
       let attr = tag.attributes
 
-      attr.id = ++id_auto_inc;
+      attr.id = ++idAutoInc;
       let key = parseInt(attr.time)
       attr.time = key
       events.push(attr)
 
       // create indices, too
-      if (!time_idx[key]) time_idx[key] = []
-      time_idx[key].push(attr.id)
-      if (!type_idx[attr.type]) type_idx[attr.type] = []
-      type_idx[attr.type].push(attr.id)
+      if (!timeIndex[key]) timeIndex[key] = []
+      timeIndex[key].push(attr.id)
+      if (!typeIndex[attr.type]) typeIndex[attr.type] = []
+      typeIndex[attr.type].push(attr.id)
     }
   }
 
   saxparser.onend = function () {
     console.log('START CONVERTING INDEX', events.length, 'events')
-    let z_time = []
-    for (let id in time_idx) {
-      z_time.push({id: id, rows: time_idx[id]})
+    let zTime = []
+    for (let id in timeIndex) {
+      zTime.push({id: id, rows: timeIndex[id]})
     }
-    let z_type = []
-    for (let id in type_idx) {
-      z_type.push({id: id, rows: type_idx[id]})
+    let zType = []
+    for (let id in typeIndex) {
+      zType.push({id: id, rows: typeIndex[id]})
     }
 
     console.log('START RAW EVENT DB IMPORT', events.length, 'events')
     nSQL().rawImport({
       events: events,
-      _events_idx_time: z_time,
-      _events_idx_type: z_type,
+      _events_idx_time: zTime,
+      _events_idx_type: zType,
     }).then(() => {
       console.log('DONE EVENTS')
-      // testQuery();
       aggregate15minutes()
     })
   }
@@ -434,10 +426,13 @@ function convertCoords (projection) {
 }
 
 #clock {
-  color: #c00;
-  background-color: #fffc;
+  color: #36f;
+  background-color: #fffb;
   margin: 10px 10px;
   padding: 0px 10px;
+  border: solid 1px;
+  border-color: #bbb;
+  box-shadow: 0px 1px 5px rgba(0,0,0, 0.2);
 }
 
 .controls {
