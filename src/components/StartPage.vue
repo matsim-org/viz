@@ -19,8 +19,8 @@
 </template>
 
 <script>
-'use strict';
-import { BigStore } from '../shared-store.js';
+'use strict'
+import { BigStore } from '../shared-store.js'
 
 // store is the component data store -- the state of the component.
 let store = {
@@ -49,11 +49,11 @@ let store = {
 export default {
   name: 'StartPage',
   components: {},
-  data () {
+  data() {
     return store
   },
-  mounted: function () {
-    mounted();
+  mounted: function() {
+    mounted()
   },
   methods: {
   },
@@ -62,7 +62,7 @@ export default {
 }
 
 // mounted is called by Vue after this component is installed on the page
-function mounted () {
+function mounted() {
 }
 
 </script>
