@@ -20,12 +20,12 @@
 </template>
 
 <script>
-'use strict';
+'use strict'
 
-import { BigStore, EventBus } from '../shared-store.js';
-import mapboxgl from 'mapbox-gl';
-import { nSQL } from 'nano-sql';
-import vueSlider from 'vue-slider-component';
+import { BigStore, EventBus } from '../shared-store.js'
+import mapboxgl from 'mapbox-gl'
+import { nSQL } from 'nano-sql'
+import vueSlider from 'vue-slider-component'
 
 let timeConvert = require('convert-seconds')
 let pako = require('pako')
@@ -33,7 +33,7 @@ let sax = require('sax')
 let readBlob = require('read-blob')
 let proj4 = require('proj4').default
 
-let L = require('leaflet');
+let L = require('leaflet')
 
 let mySlider = {
   disabled: false,
@@ -66,18 +66,18 @@ let mySlider = {
     backgroundColor: '#00bb5588',
     borderColor: '#f05b72'
   },
-  formatter: function (index) {
-    return convertSecondsToClockTimeMinutes(index);
+  formatter: function(index) {
+    return convertSecondsToClockTimeMinutes(index)
   },
 }
 
-function convertSecondsToClockTimeMinutes (index) {
+function convertSecondsToClockTimeMinutes(index) {
   let hms = timeConvert(index)
   let minutes = ('00' + hms.minutes).slice(-2)
   return `${hms.hours}:${minutes}`
 }
 
-function convertSecondsToClockTime (index) {
+function convertSecondsToClockTime(index) {
   let hms = timeConvert(index)
   let minutes = ('00' + hms.minutes).slice(-2)
   let seconds = ('00' + hms.seconds).slice(-2)
@@ -103,8 +103,8 @@ let store = {
   msg: '',
   timeSlider: mySlider,
   timeSliderValue: 0,
-  setTimeSegment: function (segment) {
-    this.currentTimeSegment = segment;
+  setTimeSegment: function(segment) {
+    this.currentTimeSegment = segment
   }
 }
 
@@ -115,15 +115,15 @@ export default {
     vueSlider,
   },
   computed: {
-    clockTime: function () {
+    clockTime: function() {
       return convertSecondsToClockTime(store.timeSliderValue)
     }
   },
-  data () {
+  data() {
     return store
   },
-  mounted: function () {
-    mounted();
+  mounted: function() {
+    mounted()
   },
   methods: {
     doIt: doIt,
@@ -133,23 +133,23 @@ export default {
   },
 }
 
-let mymap;
+let mymap
 
-function sliderChangedEvent (seconds) {
+function sliderChangedEvent(seconds) {
   updateFlowsForTimeValue(seconds)
 }
 
-function updateFlowsForTimeValue (seconds) {
-  let segment = Math.floor(seconds / 900); // 15 minutes
+function updateFlowsForTimeValue(seconds) {
+  let segment = Math.floor(seconds / 900) // 15 minutes
   store.setTimeSegment(segment)
 
-  _linkLayers.eachLayer(function (layer) {
+  _linkLayers.eachLayer(function(layer) {
     layer.setStyle(calculateColorFromVolume(layer.linkID))
-  });
+  })
   console.log('done')
 }
 
-function updateTimeSliderSegmentColors (segments) {
+function updateTimeSliderSegmentColors(segments) {
   let gradient = '-webkit-linear-gradient(left'
   let total = segments.reduce((sum, current) => sum + current)
 
@@ -170,49 +170,49 @@ function updateTimeSliderSegmentColors (segments) {
 }
 
 // mounted is called by Vue after this component is installed on the page
-function mounted () {
-  mymap = L.map('mymap', { zoomSnap: 0.5 });
-  mymap.fitBounds([[51.72, 14.3], [51.82, 14.4]]);
+function mounted() {
+  mymap = L.map('mymap', { zoomSnap: 0.5 })
+  mymap.fitBounds([[51.72, 14.3], [51.82, 14.4]])
   mymap.zoomControl.setPosition('bottomright')
 
   let url =
     'https://api.mapbox.com/styles/v1/mapbox/' +
     'light' +
-    '-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}';
+    '-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}'
   let token =
-    'pk.eyJ1IjoicHNyYyIsImEiOiJjaXFmc2UxanMwM3F6ZnJtMWp3MjBvZHNrIn0._Dmske9er0ounTbBmdRrRQ';
+    'pk.eyJ1IjoicHNyYyIsImEiOiJjaXFmc2UxanMwM3F6ZnJtMWp3MjBvZHNrIn0._Dmske9er0ounTbBmdRrRQ'
   let attribution =
     '<a href="http://openstreetmap.org">OpenStreetMap</a> | ' +
-    '<a href="http://mapbox.com">Mapbox</a>';
+    '<a href="http://mapbox.com">Mapbox</a>'
   L.tileLayer(url, {
     attribution: attribution,
     maxZoom: 18,
     accessToken: token,
-  }).addTo(mymap);
+  }).addTo(mymap)
 
   // Start doing stuff AFTER the MapBox library has fully initialized
-  mymap.on('style.load', mapIsReady);
-  setupEventListeners();
+  mymap.on('style.load', mapIsReady)
+  setupEventListeners()
 }
 
-async function mapIsReady () {
-  mymap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+async function mapIsReady() {
+  mymap.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
 }
 
-function setupEventListeners () {
+function setupEventListeners() {
   EventBus.$on('sidebar-toggled', isVisible => {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
     for (let delay of [50, 100, 150, 200, 250, 300]) {
-      setTimeout(function () { mymap.invalidateSize() }, delay);
+      setTimeout(function() { mymap.invalidateSize() }, delay)
     }
-  });
+  })
 }
 
-let _linkLayers;
+let _linkLayers
 
-function addLinksToMap () {
-  _linkLayers = L.featureGroup().addTo(mymap);
+function addLinksToMap() {
+  _linkLayers = L.featureGroup().addTo(mymap)
 
   for (let id in store.links) {
     let link = store.links[id]
@@ -224,15 +224,15 @@ function addLinksToMap () {
       [toNode.y, toNode.x]
     ], calculateColorFromVolume(id))
 
-    layer.linkID = id;
+    layer.linkID = id
     _linkLayers.addLayer(layer)
   }
 }
 
-function calculateColorFromVolume (id) {
+function calculateColorFromVolume(id) {
   let volume = store.flows[id]
     ? (store.flows[id][store.currentTimeSegment]
-      ? store.flows[id][store.currentTimeSegment] : 0) : 0;
+      ? store.flows[id][store.currentTimeSegment] : 0) : 0
 
   if (volume > 100) return {color: '#f66', weight: 4}
   if (volume > 20) return {color: '#fc6', weight: 3}
@@ -255,11 +255,11 @@ nSQL('events').config({mode: 'TEMP'}).model([
 ])
 nSQL().connect()
 
-async function aggregate15minutes () {
+async function aggregate15minutes() {
   console.log('START 15-MIN AGGREGATION')
   nSQL('events').query('select')
     .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
-    .exec().then(function (rows, db) {
+    .exec().then(function(rows, db) {
       console.log('got so many rows:', rows.length)
       for (let row of rows) {
         let period = Math.floor(row.time / 900)
@@ -273,19 +273,19 @@ async function aggregate15minutes () {
     })
 }
 
-async function readEventsFile () {
+async function readEventsFile() {
   let events = []
   let timeIndex = {}
   let typeIndex = {}
 
-  let idAutoInc = 0;
-  let saxparser = sax.parser(true); // strictmode=true
+  let idAutoInc = 0
+  let saxparser = sax.parser(true) // strictmode=true
 
-  saxparser.onopentag = function (tag) {
+  saxparser.onopentag = function(tag) {
     if (tag.name === 'event') {
       let attr = tag.attributes
 
-      attr.id = ++idAutoInc;
+      attr.id = ++idAutoInc
       let key = parseInt(attr.time)
       attr.time = key
       events.push(attr)
@@ -298,7 +298,7 @@ async function readEventsFile () {
     }
   }
 
-  saxparser.onend = function () {
+  saxparser.onend = function() {
     console.log('START CONVERTING INDEX', events.length, 'events')
     let zTime = []
     for (let id in timeIndex) {
@@ -330,7 +330,7 @@ async function readEventsFile () {
     let blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then(content => {
-      let xml = pako.inflate(content, { to: 'string' });
+      let xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
   } catch (e) {
@@ -339,10 +339,10 @@ async function readEventsFile () {
   }
 }
 
-async function readNetworkFile () {
+async function readNetworkFile() {
   let saxparser = sax.parser(true) // strictmode=true
 
-  saxparser.onopentag = function (tag) {
+  saxparser.onopentag = function(tag) {
     let attr = tag.attributes
 
     if (tag.name === 'node') {
@@ -356,7 +356,7 @@ async function readNetworkFile () {
     }
   }
 
-  saxparser.onend = function () {
+  saxparser.onend = function() {
     convertCoords('+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
     addLinksToMap()
   }
@@ -369,7 +369,7 @@ async function readNetworkFile () {
     let blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then(content => {
-      let xml = pako.inflate(content, { to: 'string' });
+      let xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
   } catch (e) {
@@ -378,13 +378,13 @@ async function readNetworkFile () {
   }
 }
 
-async function doIt () {
+async function doIt() {
   readNetworkFile()
   readEventsFile()
 }
 
 // MapBox requires long/lat
-function convertCoords (projection) {
+function convertCoords(projection) {
   console.log('starting conversion', projection)
 
   for (let id in store.nodes) {

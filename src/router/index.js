@@ -5,6 +5,7 @@ import KiberaAccessibility from '@/components/KiberaAccessibility'
 import NetworkViz from '@/components/NetworkViz'
 import StartPage from '@/components/StartPage'
 import NetworkFlows from '@/components/NetworkFlows'
+import Projects from '@/components/Projects'
 
 Vue.use(Router)
 
@@ -31,5 +32,10 @@ export default new Router({
       name: 'NetworkFlows',
       component: NetworkFlows,
     },
+    {
+      path: '/personal',
+      name: 'Your Projects',
+      component: Projects,
+    }
   ]
 })

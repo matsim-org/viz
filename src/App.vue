@@ -15,9 +15,9 @@
 </template>
 
 <script>
-'use strict';
+'use strict'
 
-import { BigStore } from './shared-store.js';
+import { BigStore } from './shared-store.js'
 import SideBar from '@/components/SideBar.vue'
 
 let store = {
@@ -27,23 +27,23 @@ let store = {
 export default {
   name: 'App',
   components: { SideBar },
-  data () {
+  data() {
     return store
   },
   methods: {
     toggleSidePanel: toggleSidePanel,
   },
-  mounted: function () {
-    mounted(this);
+  mounted: function() {
+    mounted(this)
   },
 }
 
 // mounted is called by Vue after this component is installed on the page
-function mounted (component) {
+function mounted(component) {
 }
 
-function toggleSidePanel () {
-  BigStore.toggleSidePanel();
+function toggleSidePanel() {
+  BigStore.toggleSidePanel()
 }
 
 </script>
