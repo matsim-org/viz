@@ -18,57 +18,56 @@
     a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
 
-<script>
-'use strict'
-import { BigStore } from '../shared-store.js'
+<script lang="ts">
+"use strict";
+import { BigStore } from "../shared-store.js";
 
 // store is the component data store -- the state of the component.
 let store = {
   shared: BigStore.state,
   visualizations: [
-    { title: 'Cottbus Network Flows',
-      url: '/flows',
-      thumbnail: '/static/data-cottbus/scrnshot.jpg'
+    {
+      title: "Cottbus Network Flows",
+      url: "/flows",
+      thumbnail: "/static/data-cottbus/scrnshot.jpg"
     },
-    { title: 'Network Links',
-      url: '/network',
-      thumbnail: '/static/network-viz/scrnshot.png'
+    {
+      title: "Network Links",
+      url: "/network",
+      thumbnail: "/static/network-viz/scrnshot.png"
     },
-    { title: 'Accessibility',
-      url: '/accessibility',
-      thumbnail: '/static/kibera-accessibility/scrnshot.png'
+    {
+      title: "Accessibility",
+      url: "/accessibility",
+      thumbnail: "/static/kibera-accessibility/scrnshot.png"
     },
-    { title: 'Cottbus Traffic Animation',
-      url: '/animation-cottbus',
-      thumbnail: '/static/janek-viz/scrnshot.png'
-    },
-  ],
-}
+    {
+      title: "Cottbus Traffic Animation",
+      url: "/animation-cottbus",
+      thumbnail: "/static/janek-viz/scrnshot.png"
+    }
+  ]
+};
 
 // this export is the Vue Component itself
 export default {
-  name: 'StartPage',
+  name: "StartPage",
   components: {},
   data() {
-    return store
+    return store;
   },
   mounted: function() {
-    mounted()
+    mounted();
   },
-  methods: {
-  },
-  watch: {
-  },
-}
+  methods: {},
+  watch: {}
+};
 
 // mounted is called by Vue after this component is installed on the page
-function mounted() {
-}
-
+function mounted() {}
 </script>
 
 <style scoped>
-
 /* this is the initial start page layout */
 .main-content {
   padding: 20px;
@@ -82,31 +81,31 @@ function mounted() {
   border-width: 1px 1px;
   border-color: #aaa;
   display: table-cell;
-  height:100%;
+  height: 100%;
   opacity: 0.9;
   padding: 0 0 0.5rem 0;
-  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
-  vertical-align:top;
+  box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
+  vertical-align: top;
   width: 20rem;
- }
+}
 
 .viz-thumbnail:hover {
   background-color: #fff;
-  opacity: 1.0;
-  box-shadow: 3px 3px 10px rgba(0,0,80, 0.3);
+  opacity: 1;
+  box-shadow: 3px 3px 10px rgba(0, 0, 80, 0.3);
   transition: all ease 0.2s;
   transform: translateY(-1px);
   border-color: #999;
 }
 
 .viz-thumbnail:active {
-  opacity: 1.0;
-  box-shadow: 3px 3px 6px rgba(0,0,80, 0.4);
+  opacity: 1;
+  box-shadow: 3px 3px 6px rgba(0, 0, 80, 0.4);
   transform: translateY(1px);
 }
 
 .thumbnail-image {
-  vertical-align:top;
+  vertical-align: top;
   width: 20rem;
   margin-bottom: 5px;
   padding-right: 2px;
@@ -120,15 +119,16 @@ function mounted() {
   padding-right: 2px;
 }
 
-h2,h3 {
+h2,
+h3 {
   color: #6666ff;
   margin-top: 15px;
   margin-bottom: 3px;
 }
 
 .lead {
-  text-align:center;
-  color:#555;
+  text-align: center;
+  color: #555;
   font-family: "Oswald", sans-serif;
 }
 
@@ -141,10 +141,9 @@ a:focus {
 .visualizations {
   display: grid;
   grid-gap: 20px;
-  grid-template-columns: repeat(auto-fill,20rem);
+  grid-template-columns: repeat(auto-fill, 20rem);
   list-style: none;
   margin-top: 20px;
   padding-left: 0px;
 }
-
 </style>

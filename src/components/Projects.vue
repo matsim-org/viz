@@ -1,18 +1,17 @@
-<template lang="pug">
-.projects
-    h2 Hello Projects
+<template>
+<div>
+<label>Hello Projects</label>
+</div>
 </template>
 
-<script>
-export default {
-  name: 'Projects',
+<script lang="ts">
+import Vue from "vue";
+
+export default Vue.extend({
   data() {
-    return {
-      someData: 'bla',
-      other: true
-    }
+    return {};
   }
-}
+});
 </script>
 
 <style scoped>

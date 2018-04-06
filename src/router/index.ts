@@ -1,11 +1,11 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import KiberaAccessibility from '@/components/KiberaAccessibility'
-import NetworkViz from '@/components/NetworkViz'
-import StartPage from '@/components/StartPage'
-import NetworkFlows from '@/components/NetworkFlows'
-import Projects from '@/components/Projects'
+import KiberaAccessibility from '@/components/KiberaAccessibility.vue'
+import NetworkViz from '@/components/NetworkViz.vue'
+import StartPage from '@/components/StartPage.vue'
+import NetworkFlows from '@/components/NetworkFlows.vue'
+import Projects from '@/components/Projects.vue'
 
 Vue.use(Router)
 

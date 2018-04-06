@@ -27,35 +27,32 @@
       router-link.sidebar-nav-item(to="network") NETWORK LINKS: GeoJson
 </template>
 
-<script>
-'use strict'
+<script lang="ts">
+"use strict";
 
-import { BigStore } from '../shared-store.js'
+import Vue from "vue";
+import { BigStore } from "../shared-store.js";
 
 // store is the component data store -- the state of the component.
 let store = {
-  sharedStore: BigStore.state,
-}
+  sharedStore: BigStore.state
+};
 
 // this export is the Vue Component itself
-export default {
-  name: 'SideBar',
+export default Vue.extend({
+  name: "SideBar",
   data() {
-    return store
+    return store;
   },
   mounted: function() {
-    mounted()
+    mounted();
   },
-  methods: {
-  },
-  watch: {
-  },
-}
+  methods: {},
+  watch: {}
+});
 
 // mounted is called by Vue after this component is installed on the page
-function mounted() {
-}
-
+function mounted() {}
 </script>
 
 <style scoped>
@@ -75,7 +72,9 @@ function mounted() {
 }
 
 /* About section */
-.sidebar-about { padding-top: 20px; }
+.sidebar-about {
+  padding-top: 20px;
+}
 
 .sidebar-about h1 {
   color: #66f;
@@ -95,11 +94,11 @@ function mounted() {
   padding-bottom: 0.3rem;
   padding-left: 1rem;
   font-size: 1rem;
-  min-height:3rem;
+  min-height: 3rem;
 }
 
 .sidebar-nav-item:hover {
-  background:#ded;
+  background: #ded;
 }
 
 a.sidebar-nav-item:hover,
@@ -123,7 +122,8 @@ a.sidebar-nav-item:focus {
   color: #6666ff;
 }
 
-.sidebar-content h2,h3 {
+.sidebar-content h2,
+h3 {
   border-style: solid;
   border-width: 1px 0 0 0;
   border-color: #36c;
@@ -134,14 +134,14 @@ a.sidebar-nav-item:focus {
 
 .sidebar-logo {
   display: block;
-  text-align:center;
+  text-align: center;
   margin: auto;
   width: 150px;
 }
 
 .lead {
-  text-align:center;
-  color:#555;
+  text-align: center;
+  color: #555;
   font-family: "Oswald", sans-serif;
 }
 
@@ -150,5 +150,4 @@ a:hover,
 a:focus {
   text-decoration: none;
 }
-
 </style>

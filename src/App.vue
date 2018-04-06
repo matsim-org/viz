@@ -14,44 +14,49 @@
       i.angle.white.double.icon(v-bind:class="{left: sharedState.isSidePanelExpanded, right: !sharedState.isSidePanelExpanded }")
 </template>
 
-<script>
-'use strict'
+<script lang="ts">
+"use strict";
 
-import { BigStore } from './shared-store.js'
-import SideBar from '@/components/SideBar.vue'
+import Vue from "vue";
+import { BigStore } from "./shared-store.js";
+import SideBar from "@/components/SideBar.vue";
 
 let store = {
-  sharedState: BigStore.state,
-}
+  sharedState: BigStore.state
+};
 
-export default {
-  name: 'App',
+export default Vue.extend({
+  name: "App",
   components: { SideBar },
   data() {
-    return store
+    return store;
   },
   methods: {
-    toggleSidePanel: toggleSidePanel,
+    toggleSidePanel: toggleSidePanel
   },
   mounted: function() {
-    mounted(this)
-  },
-}
+    mounted(this);
+  }
+});
 
 // mounted is called by Vue after this component is installed on the page
-function mounted(component) {
-}
+function mounted(component: any) {}
 
 function toggleSidePanel() {
-  BigStore.toggleSidePanel()
+  BigStore.toggleSidePanel();
 }
-
 </script>
 
 <style>
-
-body,p,h1,h2,h3,h4,h5,h6 {
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Lato", Helvetica, Arial, sans-serif;
   margin: 0px 0px;
   padding: 0px 0px;
 }
@@ -59,7 +64,7 @@ body,p,h1,h2,h3,h4,h5,h6 {
 #app {
   background-color: white;
   display: grid;
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
+  font-family: "Lato", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   grid-template-columns: auto auto 1fr;
@@ -102,7 +107,8 @@ body,p,h1,h2,h3,h4,h5,h6 {
   z-index: 1;
 }
 
-h2,h3 {
+h2,
+h3 {
   color: #6666ff;
 }
 
@@ -111,5 +117,4 @@ a:hover,
 a:focus {
   text-decoration: none;
 }
-
 </style>

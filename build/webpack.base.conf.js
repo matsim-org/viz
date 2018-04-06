@@ -4,11 +4,11 @@ const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
 
-function resolve (dir) {
+function resolve(dir) {
   return path.join(__dirname, '..', dir)
 }
 
-const createLintingRule = () => ({
+const createEsLintRule = () => ({
   test: /\.(js|vue)$/,
   loader: 'eslint-loader',
   enforce: 'pre',
@@ -19,10 +19,17 @@ const createLintingRule = () => ({
   }
 })
 
+const createTSLintRule = () => ({
+  test: /\.(ts|tsx)$/,
+  loader: 'tslint-loader',
+  enforce: 'pre',
+  include: [resolve('src'), resolve('test')],
+})
+
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    app: './src/main.js'
+    app: './src/main.ts'
   },
   output: {
     path: config.build.assetsRoot,
@@ -32,7 +39,7 @@ module.exports = {
       : config.dev.assetsPublicPath
   },
   resolve: {
-    extensions: ['.js', '.vue', '.json'],
+    extensions: ['.ts', 'tsx', '.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
@@ -40,11 +47,20 @@ module.exports = {
   },
   module: {
     rules: [
-      ...(config.dev.useEslint ? [createLintingRule()] : []),
+      ...(config.dev.useTslint ? [createTSLintRule()] : []),
+      ...(config.dev.useEslint ? [createEsLintRule()] : []),
       {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: vueLoaderConfig
+      },
+      {
+        test: /\.tsx?$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          appendTsSuffixTo: [/\.vue$/],
+        }
       },
       {
         test: /\.js$/,
