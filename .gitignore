@@ -32,6 +32,7 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 .idea
+.vscode
 
 # Folders to ignore
 node_modules
