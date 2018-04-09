@@ -4,11 +4,11 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 
-Vue.config.productionTip = false;
+Vue.config.productionTip = false
 
 let app = new Vue({
   el: '#app',
   router: router,
   template: `<App/>`,
-  components: { App }
+  components: { App },
 })

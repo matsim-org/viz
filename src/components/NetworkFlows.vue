@@ -46,25 +46,24 @@ let mySlider = {
   tooltip: 'always',
   width: '100%',
   tooltipDir: [],
-  sliderStyle: [
-    {'backgroundColor': '#f05b72'},
-    {'backgroundColor': '#3498db'}
-  ],
+  sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
   tooltipStyle: [
-    {'backgroundColor': '#f05b72',
-      'borderColor': '#f05b72'
+    {
+      backgroundColor: '#f05b72',
+      borderColor: '#f05b72',
     },
-    {'backgroundColor': '#3498db',
-      'borderColor': '#3498db'
-    }
+    {
+      backgroundColor: '#3498db',
+      borderColor: '#3498db',
+    },
   ],
   bgStyle: {
-    'backgroundImage': '-webkit-linear-gradient(left, #eee, #eee)',
-    'boxShadow': '1px 1px 2px 1px rgba(0,0,0,.36)'
+    backgroundImage: '-webkit-linear-gradient(left, #eee, #eee)',
+    boxShadow: '1px 1px 2px 1px rgba(0,0,0,.36)',
   },
   processStyle: {
     backgroundColor: '#00bb5588',
-    borderColor: '#f05b72'
+    borderColor: '#f05b72',
   },
   formatter: function(index) {
     return convertSecondsToClockTimeMinutes(index)
@@ -105,7 +104,7 @@ let store = {
   timeSliderValue: 0,
   setTimeSegment: function(segment) {
     this.currentTimeSegment = segment
-  }
+  },
 }
 
 // this export is the Vue Component itself
@@ -117,7 +116,7 @@ export default {
   computed: {
     clockTime: function() {
       return convertSecondsToClockTime(store.timeSliderValue)
-    }
+    },
   },
   data() {
     return store
@@ -129,7 +128,7 @@ export default {
     doIt: doIt,
   },
   watch: {
-    timeSliderValue: sliderChangedEvent
+    timeSliderValue: sliderChangedEvent,
   },
 }
 
@@ -204,7 +203,9 @@ function setupEventListeners() {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
     for (let delay of [50, 100, 150, 200, 250, 300]) {
-      setTimeout(function() { mymap.invalidateSize() }, delay)
+      setTimeout(function() {
+        mymap.invalidateSize()
+      }, delay)
     }
   })
 }
@@ -219,10 +220,10 @@ function addLinksToMap() {
     let fromNode = store.nodes[link.from]
     let toNode = store.nodes[link.to]
 
-    let layer = L.polyline([
-      [fromNode.y, fromNode.x],
-      [toNode.y, toNode.x]
-    ], calculateColorFromVolume(id))
+    let layer = L.polyline(
+      [[fromNode.y, fromNode.x], [toNode.y, toNode.x]],
+      calculateColorFromVolume(id)
+    )
 
     layer.linkID = id
     _linkLayers.addLayer(layer)
@@ -231,35 +232,41 @@ function addLinksToMap() {
 
 function calculateColorFromVolume(id) {
   let volume = store.flows[id]
-    ? (store.flows[id][store.currentTimeSegment]
-      ? store.flows[id][store.currentTimeSegment] : 0) : 0
+    ? store.flows[id][store.currentTimeSegment]
+      ? store.flows[id][store.currentTimeSegment]
+      : 0
+    : 0
 
-  if (volume > 100) return {color: '#f66', weight: 4}
-  if (volume > 20) return {color: '#fc6', weight: 3}
-  if (volume > 1) return {color: '#69f', weight: 3}
+  if (volume > 100) return { color: '#f66', weight: 4 }
+  if (volume > 20) return { color: '#fc6', weight: 3 }
+  if (volume > 1) return { color: '#69f', weight: 3 }
 
-  return {color: '#ccc', weight: 2}
+  return { color: '#ccc', weight: 2 }
 }
 
-nSQL('events').config({mode: 'TEMP'}).model([
-  {key: 'id', type: 'int', props: ['pk']},
-  {key: 'time', type: 'int', props: ['idx']},
-  {key: 'actType', type: 'string'},
-  {key: 'person', type: 'string'},
-  {key: 'type', type: 'string', props: ['idx']},
-  {key: 'link', type: 'string'},
-  {key: 'vehicle', type: 'string', props: ['idx']},
-  {key: 'networkMode', type: 'string', props: ['idx']},
-  {key: 'legMode', type: 'string', props: []},
-  {key: 'relativePosition', type: 'string', props: []},
-])
+nSQL('events')
+  .config({ mode: 'TEMP' })
+  .model([
+    { key: 'id', type: 'int', props: ['pk'] },
+    { key: 'time', type: 'int', props: ['idx'] },
+    { key: 'actType', type: 'string' },
+    { key: 'person', type: 'string' },
+    { key: 'type', type: 'string', props: ['idx'] },
+    { key: 'link', type: 'string' },
+    { key: 'vehicle', type: 'string', props: ['idx'] },
+    { key: 'networkMode', type: 'string', props: ['idx'] },
+    { key: 'legMode', type: 'string', props: [] },
+    { key: 'relativePosition', type: 'string', props: [] },
+  ])
 nSQL().connect()
 
 async function aggregate15minutes() {
   console.log('START 15-MIN AGGREGATION')
-  nSQL('events').query('select')
+  nSQL('events')
+    .query('select')
     .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
-    .exec().then(function(rows, db) {
+    .exec()
+    .then(function(rows, db) {
       console.log('got so many rows:', rows.length)
       for (let row of rows) {
         let period = Math.floor(row.time / 900)
@@ -268,7 +275,7 @@ async function aggregate15minutes() {
         store.flows[row.link][period]++
         store.flowSummary[period]++
       }
-      console.log({flows: store.flowSummary})
+      console.log({ flows: store.flowSummary })
       updateTimeSliderSegmentColors(store.flowSummary)
     })
 }
@@ -302,22 +309,24 @@ async function readEventsFile() {
     console.log('START CONVERTING INDEX', events.length, 'events')
     let zTime = []
     for (let id in timeIndex) {
-      zTime.push({id: id, rows: timeIndex[id]})
+      zTime.push({ id: id, rows: timeIndex[id] })
     }
     let zType = []
     for (let id in typeIndex) {
-      zType.push({id: id, rows: typeIndex[id]})
+      zType.push({ id: id, rows: typeIndex[id] })
     }
 
     console.log('START RAW EVENT DB IMPORT', events.length, 'events')
-    nSQL().rawImport({
-      events: events,
-      _events_idx_time: zTime,
-      _events_idx_type: zType,
-    }).then(() => {
-      console.log('DONE EVENTS')
-      aggregate15minutes()
-    })
+    nSQL()
+      .rawImport({
+        events: events,
+        _events_idx_time: zTime,
+        _events_idx_type: zType,
+      })
+      .then(() => {
+        console.log('DONE EVENTS')
+        aggregate15minutes()
+      })
   }
 
   console.log('Start EVENTS')
@@ -326,7 +335,7 @@ async function readEventsFile() {
     let url = '/static/data-cottbus/events.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
-    let resp = await fetch(url, {mode: 'no-cors'})
+    let resp = await fetch(url, { mode: 'no-cors' })
     let blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then(content => {
@@ -357,7 +366,9 @@ async function readNetworkFile() {
   }
 
   saxparser.onend = function() {
-    convertCoords('+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+    convertCoords(
+      '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+    )
     addLinksToMap()
   }
 
@@ -365,7 +376,7 @@ async function readNetworkFile() {
     let url = '/static/data-cottbus/network.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
-    let resp = await fetch(url, {mode: 'no-cors'})
+    let resp = await fetch(url, { mode: 'no-cors' })
     let blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then(content => {
@@ -395,11 +406,9 @@ function convertCoords(projection) {
   }
   console.log('done')
 }
-
 </script>
 
 <style scoped>
-
 /* this is the initial start page layout */
 .main-content {
   display: grid;
@@ -432,7 +441,7 @@ function convertCoords(projection) {
   padding: 0px 10px;
   border: solid 1px;
   border-color: #bbb;
-  box-shadow: 0px 1px 5px rgba(0,0,0, 0.2);
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
 }
 
 .controls {
@@ -443,7 +452,6 @@ function convertCoords(projection) {
   grid-column: 1 / 3;
   padding: 4px 28px 4px 5px;
   width: 100%;
-
 }
 
 .slider-things {
@@ -452,7 +460,9 @@ function convertCoords(projection) {
   flex-grow: 1;
 }
 
-.shrunken { margin-left: 38px;}
+.shrunken {
+  margin-left: 38px;
+}
 
 .viz-thumbnail {
   background: #dde8ff;
@@ -461,31 +471,31 @@ function convertCoords(projection) {
   border-width: 1px 1px;
   border-color: #aaa;
   display: table-cell;
-  height:100%;
+  height: 100%;
   opacity: 0.9;
   padding: 0 0 0.5rem 0;
-  box-shadow: 0px 2px 7px rgba(0,0,0, 0.2);
-  vertical-align:top;
+  box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
+  vertical-align: top;
   width: 20rem;
- }
+}
 
 .viz-thumbnail:hover {
   background-color: #fff;
-  opacity: 1.0;
-  box-shadow: 3px 3px 10px rgba(0,0,80, 0.3);
+  opacity: 1;
+  box-shadow: 3px 3px 10px rgba(0, 0, 80, 0.3);
   transition: all ease 0.2s;
   transform: translateY(-1px);
   border-color: #999;
 }
 
 .viz-thumbnail:active {
-  opacity: 1.0;
-  box-shadow: 3px 3px 6px rgba(0,0,80, 0.4);
+  opacity: 1;
+  box-shadow: 3px 3px 6px rgba(0, 0, 80, 0.4);
   transform: translateY(1px);
 }
 
 .thumbnail-image {
-  vertical-align:top;
+  vertical-align: top;
   width: 20rem;
   margin-bottom: 5px;
 }
@@ -498,16 +508,17 @@ function convertCoords(projection) {
   padding-right: 2px;
 }
 
-h2,h3 {
+h2,
+h3 {
   color: #6666ff;
   margin-top: 15px;
   margin-bottom: 3px;
 }
 
 .lead {
-  text-align:center;
-  color:#555;
-  font-family: "Oswald", sans-serif;
+  text-align: center;
+  color: #555;
+  font-family: 'Oswald', sans-serif;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
@@ -520,9 +531,12 @@ a:focus {
   margin-top: 10px;
 }
 
-.post {margin-top: 20px;}
+.post {
+  margin-top: 20px;
+}
 
-.time-slider {}
+.time-slider {
+}
 
 .clock-labels {
   display: grid;
@@ -535,5 +549,4 @@ a:focus {
   pointer-events: none;
   z-index: 2;
 }
-
 </style>

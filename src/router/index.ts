@@ -36,6 +36,6 @@ export default new Router({
       path: '/personal',
       name: 'Your Projects',
       component: Projects,
-    }
-  ]
+    },
+  ],
 })

@@ -22,7 +22,7 @@ import { BigStore } from './shared-store.js'
 import SideBar from '@/components/SideBar.vue'
 
 let store = {
-  sharedState: BigStore.state
+  sharedState: BigStore.state,
 }
 
 export default Vue.extend({
@@ -32,11 +32,11 @@ export default Vue.extend({
     return store
   },
   methods: {
-    toggleSidePanel: toggleSidePanel
+    toggleSidePanel: toggleSidePanel,
   },
   mounted: function() {
     mounted(this)
-  }
+  },
 })
 
 // mounted is called by Vue after this component is installed on the page

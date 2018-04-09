@@ -29,24 +29,24 @@ let store = {
     {
       title: 'Cottbus Network Flows',
       url: '/flows',
-      thumbnail: '/static/data-cottbus/scrnshot.jpg'
+      thumbnail: '/static/data-cottbus/scrnshot.jpg',
     },
     {
       title: 'Network Links',
       url: '/network',
-      thumbnail: '/static/network-viz/scrnshot.png'
+      thumbnail: '/static/network-viz/scrnshot.png',
     },
     {
       title: 'Accessibility',
       url: '/accessibility',
-      thumbnail: '/static/kibera-accessibility/scrnshot.png'
+      thumbnail: '/static/kibera-accessibility/scrnshot.png',
     },
     {
       title: 'Cottbus Traffic Animation',
       url: '/animation-cottbus',
-      thumbnail: '/static/janek-viz/scrnshot.png'
-    }
-  ]
+      thumbnail: '/static/janek-viz/scrnshot.png',
+    },
+  ],
 }
 
 // this export is the Vue Component itself
@@ -60,7 +60,7 @@ export default {
     mounted()
   },
   methods: {},
-  watch: {}
+  watch: {},
 }
 
 // mounted is called by Vue after this component is installed on the page

@@ -25,7 +25,7 @@ export default {
     mounted()
   },
   methods: {},
-  watch: {}
+  watch: {},
 }
 
 // mounted is called by Vue after this component is installed on the page
@@ -37,7 +37,7 @@ function mounted() {
     logoPosition: 'bottom-right',
     style: 'mapbox://styles/mapbox/dark-v9',
     pitch: 0,
-    zoom: 11
+    zoom: 11,
   })
 
   // Start doing stuff AFTER the MapBox library has fully initialized
@@ -89,7 +89,7 @@ async function mapIsReady() {
 
   map.addSource('my-data', {
     data: json,
-    type: 'geojson'
+    type: 'geojson',
   })
 
   console.log(map.getStyle().layers)
@@ -110,10 +110,10 @@ async function mapIsReady() {
             [1.0, '#0a0'],
             [1.3, '#cc0'],
             [1.7, '#fc0'],
-            [2.0, '#800']
-          ]
-        }
-      }
+            [2.0, '#800'],
+          ],
+        },
+      },
       // });
     },
     'road-primary'

@@ -50,16 +50,18 @@ import yaml from 'js-yaml'
 import { EventBus } from '../shared-store.js'
 
 const SERVER_ADDR = 'http://geo.vsp.tu-berlin.de'
-const SERVER_PARAMS = '/geoserver/accessibilities/ows?service=WFS' +
+const SERVER_PARAMS =
+  '/geoserver/accessibilities/ows?service=WFS' +
   '&version=1.0.0&request=GetFeature&outputFormat=application%2Fjson&typeName='
 
-mapboxgl.accessToken = 'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
+mapboxgl.accessToken =
+  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 const STARTING_MODE = 'Walk'
 
 // some global variables save some state for us.
 let _activeDataLayer
-let _activeDataset = {alternatives: []}
+let _activeDataset = { alternatives: [] }
 let _chosenCity
 let _popup
 
@@ -72,7 +74,7 @@ let store = {
   selectedAlt: STARTING_MODE,
   selectedDataset: _activeDataset,
   showUnitModal: false,
-  DATASETS: [{city: '', name: ''}],
+  DATASETS: [{ city: '', name: '' }],
   alternatives: Object.keys(_activeDataset.alternatives).reverse(), // reversed so they right-justify in the right order
 }
 
@@ -90,8 +92,7 @@ export default {
     clickedDataset: userChoseDataset,
     clickedAlternative: userChoseAlternative,
   },
-  watch: {
-  },
+  watch: {},
 }
 
 // mounted is called by Vue after this component is installed on the page
@@ -116,7 +117,7 @@ async function mounted() {
   // semantic requires this line for dropdowns to work
   // https://stackoverflow.com/questions/25347315/semantic-ui-dropdown-menu-do-not-work
   // eslint-disable-next-line
-  $('.ui.dropdown').dropdown();
+  $('.ui.dropdown').dropdown()
 
   // Start doing stuff AFTER the MapBox library has fully initialized
   mymap.on('style.load', mapIsReady)
@@ -129,7 +130,9 @@ function setupEventListeners() {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
     for (let delay of [50, 100, 150, 200, 250, 300]) {
-      setTimeout(function() { mymap.resize() }, delay)
+      setTimeout(function() {
+        mymap.resize()
+      }, delay)
     }
   })
 }
@@ -169,9 +172,9 @@ async function addAccessibilityLayer(alt) {
         'fill-opacity': 0.9,
         'fill-color': {
           property: alternative.column,
-          stops: [ [-5, '#f00'], [5, '#00f'] ],
-        }
-      }
+          stops: [[-5, '#f00'], [5, '#00f']],
+        },
+      },
     },
     'water' // layer gets added just *above* this MapBox-defined layer.
   )
@@ -189,9 +192,8 @@ async function addAccessibilityLayer(alt) {
       'line-color': '#dff',
       'line-width': 5,
     },
-    filter: ['==', 'id', '']
-  },
-  )
+    filter: ['==', 'id', ''],
+  })
 
   // turn "hover cursor" into a pointer, so user knows they can click.
   mymap.on('mousemove', geoserverLayerId, function(e) {
@@ -232,7 +234,7 @@ function clickedOnTaz(e) {
     html += `<p class="popup-value"><b>${altname}:</b> ${value}</p>`
   }
 
-  _popup = new mapboxgl.Popup({closeOnClick: true})
+  _popup = new mapboxgl.Popup({ closeOnClick: true })
     .setLngLat(e.lngLat)
     .setHTML(html)
 
@@ -272,25 +274,34 @@ function addLegend(colorValues) {
     let breakpoint = val[0]
     let color = val[1]
 
-    html += '<p class="legend-row">' +
-        '<i style="background:' + color + '"></i>&nbsp;' +
-        '<b>' + pre + breakpoint + '</b>' +
-        (colorValues[index + 1] ? '<br>' : '') +
-        '</p>'
+    html +=
+      '<p class="legend-row">' +
+      '<i style="background:' +
+      color +
+      '"></i>&nbsp;' +
+      '<b>' +
+      pre +
+      breakpoint +
+      '</b>' +
+      (colorValues[index + 1] ? '<br>' : '') +
+      '</p>'
   }
 
-  html += '<button id="units" class="ui tiny inverted green button">in EMU Units</button>'
+  html +=
+    '<button id="units" class="ui tiny inverted green button">in EMU Units</button>'
   legend.innerHTML = html
 
   mapElement.appendChild(legend)
-  document.getElementById('units').addEventListener('click', clickedUnits, false)
+  document
+    .getElementById('units')
+    .addEventListener('click', clickedUnits, false)
 }
 
 // Show units modal-dialog when user clicks in legend
 function clickedUnits() {
   // this is cheating: I'm using jQuery to unhide the modal "What are the units? modal dialog"
   // eslint-disable-next-line
-  $('.ui.modal').modal('show');
+  $('.ui.modal').modal('show')
 }
 
 // Add any map color & shape tweaks here
@@ -377,34 +388,35 @@ async function loadColorsFromFile() {
     console.log('dataset load error: ' + error)
   }
 }
-
 </script>
 
 <style scoped>
-
 [v-cloak] {
   display: none;
 }
 
-html,body { width:100%; height:100%;
-  font-family: Noto,Arial;
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family: Noto, Arial;
 }
 
 body {
   margin: 0px 0px 0px 0px;
-  height:100%;
+  height: 100%;
 }
 
 #page-content {
   display: flex;
   flex-direction: column;
-  height:100%;
+  height: 100%;
 }
 
 #titlebar {
-  background-color:#368;
+  background-color: #368;
   padding: 15px;
-  box-shadow: 0 0 5px rgba(0,0,0, 0.3);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   z-index: 1000;
 }
 
@@ -413,19 +425,18 @@ body {
   background: #888;
   height: 100%;
   touch-action: none;
-
 }
 
 #legend {
   position: absolute;
-  bottom:0;
-  left:0;
-  margin-bottom:8px;
-  margin-left:8px;
-  z-index:99;
+  bottom: 0;
+  left: 0;
+  margin-bottom: 8px;
+  margin-left: 8px;
+  z-index: 99;
   background: white;
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   padding: 6px 8px;
   font: Arial, Helvetica, sans-serif;
@@ -439,11 +450,11 @@ body {
 }
 
 .legend i {
-    width: 1rem;
-    height: 1rem;
-    float: left;
-    margin-right: 0.25rem;
-    opacity: 1;
+  width: 1rem;
+  height: 1rem;
+  float: left;
+  margin-right: 0.25rem;
+  opacity: 1;
 }
 
 p.legend-row {
@@ -468,7 +479,9 @@ p.popup-value {
   margin-bottom: 2px;
 }
 
-.page {height: 100%}
+.page {
+  height: 100%;
+}
 
 .content {
   height: 100%;
@@ -482,15 +495,12 @@ p.popup-value {
 /* ------------------- PHONE LAYOUT TWEAKS ----------------- */
 
 @media only screen and (max-device-width: 480px) {
-
-   .ui.dropdown>.text {
-     font-size: 80%;
+  .ui.dropdown > .text {
+    font-size: 80%;
   }
 
   #description-panel {
     font-size: 80%;
   }
-
 }
-
 </style>
