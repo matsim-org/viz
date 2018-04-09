@@ -18,7 +18,7 @@
 'use strict'
 
 import Vue from 'vue'
-import { BigStore } from './shared-store.js'
+import { BigStore } from './shared-store'
 import SideBar from '@/components/SideBar.vue'
 
 let store = {

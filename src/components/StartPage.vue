@@ -20,7 +20,7 @@
 
 <script lang="ts">
 'use strict'
-import { BigStore } from '../shared-store.js'
+import { BigStore } from '../shared-store'
 
 // store is the component data store -- the state of the component.
 let store = {

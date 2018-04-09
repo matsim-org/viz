@@ -9,7 +9,7 @@ import 'babel-polyfill'
 import 'isomorphic-fetch'
 import mapboxgl from 'mapbox-gl'
 
-import { EventBus } from '../shared-store.js'
+import { EventBus } from '../shared-store'
 
 // store is the component data store -- the state of the component.
 let store = {}

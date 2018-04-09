@@ -47,7 +47,7 @@ import 'isomorphic-fetch'
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
 
-import { EventBus } from '../shared-store.js'
+import { EventBus } from '../shared-store'
 
 const SERVER_ADDR = 'http://geo.vsp.tu-berlin.de'
 const SERVER_PARAMS =

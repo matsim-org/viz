@@ -22,7 +22,7 @@
 <script>
 'use strict'
 
-import { BigStore, EventBus } from '../shared-store.js'
+import { BigStore, EventBus } from '../shared-store'
 import mapboxgl from 'mapbox-gl'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
