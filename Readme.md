@@ -1,8 +1,4 @@
-# MATSim-Viz
-
-This project is about visualizing MATSim result data.
-
-## Set up development environment
+# Set up development environment
 
 The project is a browser application which uses the following techniques:
 
