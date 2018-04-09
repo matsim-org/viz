@@ -15,35 +15,35 @@
 </template>
 
 <script lang="ts">
-"use strict";
+'use strict'
 
-import Vue from "vue";
-import { BigStore } from "./shared-store.js";
-import SideBar from "@/components/SideBar.vue";
+import Vue from 'vue'
+import { BigStore } from './shared-store.js'
+import SideBar from '@/components/SideBar.vue'
 
 let store = {
   sharedState: BigStore.state
-};
+}
 
 export default Vue.extend({
-  name: "App",
+  name: 'App',
   components: { SideBar },
   data() {
-    return store;
+    return store
   },
   methods: {
     toggleSidePanel: toggleSidePanel
   },
   mounted: function() {
-    mounted(this);
+    mounted(this)
   }
-});
+})
 
 // mounted is called by Vue after this component is installed on the page
 function mounted(component: any) {}
 
 function toggleSidePanel() {
-  BigStore.toggleSidePanel();
+  BigStore.toggleSidePanel()
 }
 </script>
 
@@ -56,7 +56,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Lato", Helvetica, Arial, sans-serif;
+  font-family: 'Lato', Helvetica, Arial, sans-serif;
   margin: 0px 0px;
   padding: 0px 0px;
 }
@@ -64,7 +64,7 @@ h6 {
 #app {
   background-color: white;
   display: grid;
-  font-family: "Lato", Helvetica, Arial, sans-serif;
+  font-family: 'Lato', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   grid-template-columns: auto auto 1fr;

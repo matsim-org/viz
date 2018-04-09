@@ -28,28 +28,28 @@
 </template>
 
 <script lang="ts">
-"use strict";
+'use strict'
 
-import Vue from "vue";
-import { BigStore } from "../shared-store.js";
+import Vue from 'vue'
+import { BigStore } from '../shared-store.js'
 
 // store is the component data store -- the state of the component.
 let store = {
   sharedStore: BigStore.state
-};
+}
 
 // this export is the Vue Component itself
 export default Vue.extend({
-  name: "SideBar",
+  name: 'SideBar',
   data() {
-    return store;
+    return store
   },
   mounted: function() {
-    mounted();
+    mounted()
   },
   methods: {},
   watch: {}
-});
+})
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {}
@@ -79,7 +79,7 @@ function mounted() {}
 .sidebar-about h1 {
   color: #66f;
   margin-top: 0;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 1.8rem;
   text-shadow: 4px 4px 4px #ccc;
 }
@@ -142,7 +142,7 @@ h3 {
 .lead {
   text-align: center;
   color: #555;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */

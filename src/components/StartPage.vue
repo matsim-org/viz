@@ -19,49 +19,49 @@
 </template>
 
 <script lang="ts">
-"use strict";
-import { BigStore } from "../shared-store.js";
+'use strict'
+import { BigStore } from '../shared-store.js'
 
 // store is the component data store -- the state of the component.
 let store = {
   shared: BigStore.state,
   visualizations: [
     {
-      title: "Cottbus Network Flows",
-      url: "/flows",
-      thumbnail: "/static/data-cottbus/scrnshot.jpg"
+      title: 'Cottbus Network Flows',
+      url: '/flows',
+      thumbnail: '/static/data-cottbus/scrnshot.jpg'
     },
     {
-      title: "Network Links",
-      url: "/network",
-      thumbnail: "/static/network-viz/scrnshot.png"
+      title: 'Network Links',
+      url: '/network',
+      thumbnail: '/static/network-viz/scrnshot.png'
     },
     {
-      title: "Accessibility",
-      url: "/accessibility",
-      thumbnail: "/static/kibera-accessibility/scrnshot.png"
+      title: 'Accessibility',
+      url: '/accessibility',
+      thumbnail: '/static/kibera-accessibility/scrnshot.png'
     },
     {
-      title: "Cottbus Traffic Animation",
-      url: "/animation-cottbus",
-      thumbnail: "/static/janek-viz/scrnshot.png"
+      title: 'Cottbus Traffic Animation',
+      url: '/animation-cottbus',
+      thumbnail: '/static/janek-viz/scrnshot.png'
     }
   ]
-};
+}
 
 // this export is the Vue Component itself
 export default {
-  name: "StartPage",
+  name: 'StartPage',
   components: {},
   data() {
-    return store;
+    return store
   },
   mounted: function() {
-    mounted();
+    mounted()
   },
   methods: {},
   watch: {}
-};
+}
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {}
@@ -129,7 +129,7 @@ h3 {
 .lead {
   text-align: center;
   color: #555;
-  font-family: "Oswald", sans-serif;
+  font-family: 'Oswald', sans-serif;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
