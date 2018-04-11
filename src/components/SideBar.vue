@@ -32,11 +32,11 @@
 'use strict'
 
 import Vue from 'vue'
-import { BigStore } from '../shared-store'
+import sharedStore from '../SharedStore'
 
 // store is the component data store -- the state of the component.
 let store = {
-  sharedStore: BigStore.state,
+  sharedStore: sharedStore.state,
 }
 
 // this export is the Vue Component itself

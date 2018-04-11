@@ -22,7 +22,7 @@
 <script>
 'use strict'
 
-import { BigStore, EventBus } from '../shared-store'
+import sharedStore, { EventBus } from '../SharedStore'
 import mapboxgl from 'mapbox-gl'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
@@ -93,7 +93,7 @@ function convertSecondsToClockTime(index) {
 
 // store is the component data store -- the state of the component.
 let store = {
-  sharedStore: BigStore.state,
+  sharedStore: sharedStore.state,
   currentTimeSegment: 0,
   nodes: {},
   links: {},

@@ -20,11 +20,11 @@
 
 <script lang="ts">
 'use strict'
-import { BigStore } from '../shared-store'
+import sharedStore from '../SharedStore'
 
 // store is the component data store -- the state of the component.
 let store = {
-  shared: BigStore.state,
+  shared: sharedStore.state,
   visualizations: [
     {
       title: 'Cottbus Network Flows',

@@ -6,8 +6,8 @@ import NetworkViz from '@/components/NetworkViz.vue'
 import StartPage from '@/components/StartPage.vue'
 import NetworkFlows from '@/components/NetworkFlows.vue'
 import Projects from '@/components/Projects.vue'
-import AuthCallback from '@/auth/AuthCallback.vue'
-import { BigStore } from '../shared-store'
+import Authentication from '@/auth/Authentication.vue'
+import sharedStore from '../SharedStore'
 
 Vue.use(Router)
 
@@ -41,24 +41,24 @@ let instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/authcallback',
-      name: 'Auth Callback',
-      component: AuthCallback,
+      path: '/authentication',
+      name: 'Authentication',
+      component: Authentication,
     },
   ],
 })
 
 instance.beforeEach((to: Route, from: Route, next: Function) => {
+  sharedStore.setLastNavigatedRoute(to.fullPath)
   if (to.matched.some(record => record.meta && record.meta.authRequired)) {
     //login is required
-    const authenticated = BigStore.state.authentication.isAuthenticated()
-    if (!authenticated) {
-      //we are not logged in: request login
-      BigStore.authenticate()
+    //const authenticated = sharedStore.state.authentication.isAuthenticated
+    if (false) {
+      //we are not logged in: redirect to authentication component
+      //next('/authentication')
     }
-  } else {
-    next()
   }
+  next()
 })
 
 export default instance

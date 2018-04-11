@@ -1,4 +1,5 @@
 import { Dictionary } from 'lodash'
+import { IncomingMessage } from 'http'
 
 export default class Authentication {
   idToken: String = ''
@@ -58,9 +59,20 @@ class AuthRequest {
   scope: string = 'openid'
   response_type: string = 'id_token token'
   client_id: string = 'test-client-id'
-  redirect_uri: string = 'http://localhost:8080/authcallback'
+  redirect_uri: string = 'http://localhost:8080/authentication'
   state: string = 'some random state'
   nonce: string = 'some nonce'
 
   constructor() {}
+
+  toURLSearchParams(): URLSearchParams {
+    let result = new URLSearchParams()
+    result.append('scope', this.scope)
+    result.append('response_type', this.response_type)
+    result.append('client_id', this.client_id)
+    result.append('redirect_uri', this.redirect_uri)
+    result.append('state', this.state)
+    result.append('nonce', this.nonce)
+    return result
+  }
 }

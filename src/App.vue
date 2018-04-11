@@ -18,11 +18,11 @@
 'use strict'
 
 import Vue from 'vue'
-import { BigStore } from './shared-store'
+import sharedStore from './SharedStore'
 import SideBar from '@/components/SideBar.vue'
 
 let store = {
-  sharedState: BigStore.state,
+  sharedState: sharedStore.state,
 }
 
 export default Vue.extend({
@@ -43,7 +43,7 @@ export default Vue.extend({
 function mounted(component: any) {}
 
 function toggleSidePanel() {
-  BigStore.toggleSidePanel()
+  sharedStore.toggleSidePanel()
 }
 </script>
 
