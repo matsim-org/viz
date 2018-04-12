@@ -2,13 +2,12 @@
   "compilerOptions": {
     "allowJs": true,
     "outDir": "./_dist",
-    "lib": ["es2015"],
     "module": "es2015",
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es5"
+    "target": "es6"
   },
   "include": ["./src/**/*"],
   "exclude": []
