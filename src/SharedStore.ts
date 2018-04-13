@@ -23,6 +23,10 @@ class SharedStore {
     return this._state
   }
 
+  get debug(): boolean {
+    return true
+  }
+
   constructor() {
     this._state = this.initializeState()
   }
