@@ -50,14 +50,11 @@ let instance = new Router({
 })
 
 instance.beforeEach((to: Route, from: Route, next: Function) => {
-  sharedStore.setLastNavigatedRoute(to.fullPath)
   if (to.matched.some(record => record.meta && record.meta.authRequired)) {
-    //login is required
-    //const authenticated = sharedStore.state.authentication.isAuthenticated
     if (
       sharedStore.state.authentication !== AuthenticationState.Authenticated
     ) {
-      //we are not logged in: redirect to authentication component
+      sharedStore.setNavigateToOnAuthentication(to.fullPath)
       next(AUTHENTICATION)
     }
   }

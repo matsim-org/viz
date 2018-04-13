@@ -2,7 +2,7 @@
 
 import Vue from 'vue'
 import { Dictionary } from 'vue-router/types/router'
-import Authentication, { AuthenticationState } from './auth/Auth'
+import Authentication, { AuthenticationState } from './auth/Authentication'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/
@@ -10,7 +10,7 @@ export const EventBus = new Vue()
 
 interface SharedState {
   isSidePanelExpanded: boolean
-  lastNavigatedRoute: string
+  navigateToOnAuthentication: string
   authentication: AuthenticationState
 }
 
@@ -41,10 +41,20 @@ class SharedStore {
     EventBus.$emit('sidebar-toggled', this.state.isSidePanelExpanded)
   }
 
-  public setLastNavigatedRoute(path: string): void {
-    this._state.lastNavigatedRoute = path
-    console.log('last nav route set to: ' + this.state.lastNavigatedRoute)
-    EventBus.$emit('lastNavigatedRoute-changed', this.state.lastNavigatedRoute)
+  public setNavigateToOnAuthentication(path: string): void {
+    this._state.navigateToOnAuthentication = path
+    console.log(
+      'last nav route set to: ' + this.state.navigateToOnAuthentication
+    )
+    EventBus.$emit(
+      'lastNavigatedRoute-changed',
+      this.state.navigateToOnAuthentication
+    )
+  }
+
+  public resetAuthenticationState(): void {
+    this._authentication.resetState()
+    this._state.authentication = this._authentication.state
   }
 
   public authenticate(): void {
@@ -59,14 +69,18 @@ class SharedStore {
     this.persistState()
   }
 
-  handleFailedAuthenticationResponse(parameter: Dictionary<string>): void {
+  handleFailedAuthenticationResponse(parameter: {
+    [key: string]: string
+  }): void {
     this._authentication.handleFailedAuthenticationResponse(parameter)
+    this._state.authentication = this._authentication.state
+    this.persistState()
   }
 
   private defaultState(): SharedState {
     return {
       isSidePanelExpanded: true,
-      lastNavigatedRoute: '',
+      navigateToOnAuthentication: '',
       authentication: AuthenticationState.NotAuthenticated,
     }
   }
