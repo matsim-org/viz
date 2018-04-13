@@ -8,7 +8,7 @@
 import 'babel-polyfill'
 import * as mapboxgl from 'mapbox-gl'
 
-import { BigStore, EventBus } from '../shared-store.js'
+import sharedStore, { EventBus } from '../SharedStore'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 
 // store is the component data store -- the state of the component.
@@ -48,7 +48,7 @@ function mounted() {
 
 function setupEventListeners() {
   EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
-    if (BigStore.debug) console.log(`Sidebar is now: ${isVisible} :)`)
+    if (sharedStore.debug) console.log(`Sidebar is now: ${isVisible} :)`)
 
     // map needs to be force-recentered, and it is slow.
     // TODO look into making the sidebar an overlay instead of side-by-side with the map;

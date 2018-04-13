@@ -23,7 +23,7 @@
 'use strict'
 
 import 'babel-polyfill'
-import { BigStore, EventBus } from '../shared-store.js'
+import sharedStore, { EventBus } from '../SharedStore'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
 import * as mapboxgl from 'mapbox-gl'
@@ -107,7 +107,7 @@ interface StoreType {
 
 // store is the component data store -- the state of the component.
 let store: StoreType = {
-  sharedStore: BigStore.state,
+  sharedStore: sharedStore.state,
   currentTimeSegment: 0,
   nodes: {},
   links: {},
@@ -171,7 +171,7 @@ function updateTimeSliderSegmentColors(segments: number[]) {
   let total = segments.reduce((sum, current) => sum + current)
 
   for (let segment of segments) {
-    if (BigStore.debug) console.log(segment)
+    if (sharedStore.debug) console.log(segment)
 
     let percent = 100.0 * segment / total
     let color = ',#eee'

@@ -1,15 +1,18 @@
 import Vue from 'vue'
-import Router from 'vue-router'
+import Router, { Route } from 'vue-router'
 
 import KiberaAccessibility from '@/components/KiberaAccessibility.vue'
 import NetworkViz from '@/components/NetworkViz.vue'
 import StartPage from '@/components/StartPage.vue'
 import NetworkFlows from '@/components/NetworkFlows.vue'
 import Projects from '@/components/Projects.vue'
+import Authentication from '@/auth/Authentication.vue'
+import sharedStore, { AuthenticationState } from '../SharedStore'
 
 Vue.use(Router)
+const AUTHENTICATION = '/authentication'
 
-export default new Router({
+let instance = new Router({
   mode: 'history', // 'history' mode produces clean, normal URLs
   routes: [
     {
@@ -36,6 +39,26 @@ export default new Router({
       path: '/personal',
       name: 'Your Projects',
       component: Projects,
+      meta: { authRequired: true },
+    },
+    {
+      path: AUTHENTICATION,
+      name: 'Authentication',
+      component: Authentication,
     },
   ],
 })
+
+instance.beforeEach((to: Route, from: Route, next: Function) => {
+  if (to.matched.some(record => record.meta && record.meta.authRequired)) {
+    if (
+      sharedStore.state.authentication !== AuthenticationState.Authenticated
+    ) {
+      sharedStore.setNavigateToOnAuthentication(to.fullPath)
+      next(AUTHENTICATION)
+    }
+  }
+  next()
+})
+
+export default instance

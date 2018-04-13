@@ -25,17 +25,18 @@
       router-link.sidebar-nav-item(to="flows") NETWORK FLOWS in Cottbus
       router-link.sidebar-nav-item(to="accessibility") ACCESSIBILITY: Kibera
       router-link.sidebar-nav-item(to="network") NETWORK LINKS: GeoJson
+      router-link.sidebar-nav-item(to="personal") YOUR PROJECTS
 </template>
 
 <script lang="ts">
 'use strict'
 
 import Vue from 'vue'
-import { BigStore } from '../shared-store.js'
+import sharedStore from '../SharedStore'
 
 // store is the component data store -- the state of the component.
 let store = {
-  sharedStore: BigStore.state,
+  sharedStore: sharedStore.state,
 }
 
 // this export is the Vue Component itself
