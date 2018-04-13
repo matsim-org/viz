@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "outDir": "./_dist",
     "allowJs": true,
-    "sourceMap": true,
-    "strict": true,
-    "noImplicitReturns": true,
+    "outDir": "./_dist",
     "module": "es2015",
     "moduleResolution": "node",
+    "noImplicitReturns": true,
+    "sourceMap": true,
+    "strict": true,
     "target": "es6"
   },
   "include": ["./src/**/*"],

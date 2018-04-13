@@ -19,13 +19,14 @@
     h1#clock {{clockTime}}
 </template>
 
-<script>
+<script lang="ts">
 'use strict'
 
+import 'babel-polyfill'
 import sharedStore, { EventBus } from '../SharedStore'
-import mapboxgl from 'mapbox-gl'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
+import * as mapboxgl from 'mapbox-gl'
 
 let timeConvert = require('convert-seconds')
 let pako = require('pako')
@@ -65,18 +66,18 @@ let mySlider = {
     backgroundColor: '#00bb5588',
     borderColor: '#f05b72',
   },
-  formatter: function(index) {
+  formatter: function(index: number) {
     return convertSecondsToClockTimeMinutes(index)
   },
 }
 
-function convertSecondsToClockTimeMinutes(index) {
+function convertSecondsToClockTimeMinutes(index: number) {
   let hms = timeConvert(index)
   let minutes = ('00' + hms.minutes).slice(-2)
   return `${hms.hours}:${minutes}`
 }
 
-function convertSecondsToClockTime(index) {
+function convertSecondsToClockTime(index: number) {
   let hms = timeConvert(index)
   let minutes = ('00' + hms.minutes).slice(-2)
   let seconds = ('00' + hms.seconds).slice(-2)
@@ -91,18 +92,31 @@ function convertSecondsToClockTime(index) {
                   '8 PM','9 PM','10 PM','11 PM']
 */
 
+interface StoreType {
+  sharedStore: any
+  currentTimeSegment: number
+  nodes: any
+  links: any
+  flows: any
+  flowSummary: number[]
+  msg: string
+  timeSlider: any
+  timeSliderValue: 0
+  setTimeSegment: any
+}
+
 // store is the component data store -- the state of the component.
-let store = {
+let store: StoreType = {
   sharedStore: sharedStore.state,
   currentTimeSegment: 0,
   nodes: {},
   links: {},
   flows: {},
-  flowSummary: new Array(96).fill(0),
+  flowSummary: Array.apply(null, new Array(96)).map(() => 0),
   msg: '',
   timeSlider: mySlider,
   timeSliderValue: 0,
-  setTimeSegment: function(segment) {
+  setTimeSegment: function(segment: number) {
     this.currentTimeSegment = segment
   },
 }
@@ -132,28 +146,33 @@ export default {
   },
 }
 
-let mymap
+let mymap: LeafletMap
 
-function sliderChangedEvent(seconds) {
+interface LeafletMap {
+  [key: string]: any
+}
+
+function sliderChangedEvent(seconds: number) {
   updateFlowsForTimeValue(seconds)
 }
 
-function updateFlowsForTimeValue(seconds) {
+function updateFlowsForTimeValue(seconds: number) {
   let segment = Math.floor(seconds / 900) // 15 minutes
   store.setTimeSegment(segment)
 
-  _linkLayers.eachLayer(function(layer) {
+  _linkLayers.eachLayer(function(layer: any) {
     layer.setStyle(calculateColorFromVolume(layer.linkID))
   })
   console.log('done')
 }
 
-function updateTimeSliderSegmentColors(segments) {
+function updateTimeSliderSegmentColors(segments: number[]) {
   let gradient = '-webkit-linear-gradient(left'
   let total = segments.reduce((sum, current) => sum + current)
 
   for (let segment of segments) {
-    console.log(segment)
+    if (sharedStore.debug) console.log(segment)
+
     let percent = 100.0 * segment / total
     let color = ',#eee'
     if (percent > 50) color = ',#04f'
@@ -194,12 +213,12 @@ function mounted() {
   setupEventListeners()
 }
 
-async function mapIsReady() {
+function mapIsReady() {
   mymap.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
 }
 
 function setupEventListeners() {
-  EventBus.$on('sidebar-toggled', isVisible => {
+  EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
     for (let delay of [50, 100, 150, 200, 250, 300]) {
@@ -210,7 +229,7 @@ function setupEventListeners() {
   })
 }
 
-let _linkLayers
+let _linkLayers: L.FeatureGroup
 
 function addLinksToMap() {
   _linkLayers = L.featureGroup().addTo(mymap)
@@ -230,7 +249,7 @@ function addLinksToMap() {
   }
 }
 
-function calculateColorFromVolume(id) {
+function calculateColorFromVolume(id: string) {
   let volume = store.flows[id]
     ? store.flows[id][store.currentTimeSegment]
       ? store.flows[id][store.currentTimeSegment]
@@ -260,13 +279,13 @@ nSQL('events')
   ])
 nSQL().connect()
 
-async function aggregate15minutes() {
+async function aggregate15minutes(): Promise<void> {
   console.log('START 15-MIN AGGREGATION')
   nSQL('events')
     .query('select')
     .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
     .exec()
-    .then(function(rows, db) {
+    .then(function(rows: any[], db: any) {
       console.log('got so many rows:', rows.length)
       for (let row of rows) {
         let period = Math.floor(row.time / 900)
@@ -281,14 +300,14 @@ async function aggregate15minutes() {
 }
 
 async function readEventsFile() {
-  let events = []
-  let timeIndex = {}
-  let typeIndex = {}
+  let events: any[] = []
+  let timeIndex: any = {}
+  let typeIndex: any = {}
 
   let idAutoInc = 0
   let saxparser = sax.parser(true) // strictmode=true
 
-  saxparser.onopentag = function(tag) {
+  saxparser.onopentag = function(tag: any) {
     if (tag.name === 'event') {
       let attr = tag.attributes
 
@@ -338,7 +357,7 @@ async function readEventsFile() {
     let resp = await fetch(url, { mode: 'no-cors' })
     let blob = await resp.blob()
     // get the blob data
-    readBlob.arraybuffer(blob).then(content => {
+    readBlob.arraybuffer(blob).then((content: any) => {
       let xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
@@ -351,7 +370,7 @@ async function readEventsFile() {
 async function readNetworkFile() {
   let saxparser = sax.parser(true) // strictmode=true
 
-  saxparser.onopentag = function(tag) {
+  saxparser.onopentag = function(tag: any) {
     let attr = tag.attributes
 
     if (tag.name === 'node') {
@@ -379,7 +398,7 @@ async function readNetworkFile() {
     let resp = await fetch(url, { mode: 'no-cors' })
     let blob = await resp.blob()
     // get the blob data
-    readBlob.arraybuffer(blob).then(content => {
+    readBlob.arraybuffer(blob).then((content: any) => {
       let xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
@@ -395,7 +414,7 @@ async function doIt() {
 }
 
 // MapBox requires long/lat
-function convertCoords(projection) {
+function convertCoords(projection: string) {
   console.log('starting conversion', projection)
 
   for (let id in store.nodes) {
@@ -533,9 +552,6 @@ a:focus {
 
 .post {
   margin-top: 20px;
-}
-
-.time-slider {
 }
 
 .clock-labels {

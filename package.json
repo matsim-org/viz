@@ -47,6 +47,9 @@
     "vue-slider-component": "^2.6.1"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.2.6",
+    "@types/mapbox-gl": "^0.44.1",
+    "@types/node": "^7.0.60",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-eslint": "^8.2.1",

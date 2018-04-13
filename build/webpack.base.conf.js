@@ -20,7 +20,7 @@ const createEsLintRule = () => ({
 })
 
 const createTSLintRule = () => ({
-  test: /\.(ts|tsx)$/,
+  test: /\.(ts|tsx|vue)$/,
   loader: 'tslint-loader',
   enforce: 'pre',
   include: [resolve('src'), resolve('test')],

@@ -2,14 +2,14 @@
 #mymap
 </template>
 
-<script>
+<script lang="ts">
 'use strict'
 
 import 'babel-polyfill'
-import 'isomorphic-fetch'
-import mapboxgl from 'mapbox-gl'
+import * as mapboxgl from 'mapbox-gl'
 
-import { EventBus } from '../SharedStore'
+import sharedStore, { EventBus } from '../SharedStore'
+import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 
 // store is the component data store -- the state of the component.
 let store = {}
@@ -47,9 +47,12 @@ function mounted() {
 }
 
 function setupEventListeners() {
-  EventBus.$on('sidebar-toggled', isVisible => {
-    console.log(`Sidebar is now: ${isVisible} :)`)
+  EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
+    if (sharedStore.debug) console.log(`Sidebar is now: ${isVisible} :)`)
+
     // map needs to be force-recentered, and it is slow.
+    // TODO look into making the sidebar an overlay instead of side-by-side with the map;
+    // which will improve performance drastically but then the left edge of the map is hidden
     for (let delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function() {
         map.resize()
@@ -60,10 +63,18 @@ function setupEventListeners() {
 
 let filename = '/static/network-viz/networkWGS84.geo.json'
 
-mapboxgl.accessToken =
+// this is a required workaround to get the mapbox token assigned in TypeScript
+// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
+let writableMapBox: any = mapboxgl
+writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
-let map
+let map: mapboxgl.Map
+
+interface MapElement {
+  lngLat: LngLat
+  features: any[]
+}
 
 // Called immediately after MapBox is ready to draw the map
 async function mapIsReady() {
@@ -119,12 +130,12 @@ async function mapIsReady() {
     'road-primary'
   ) // layer gets added just *above* this MapBox-defined layer.
 
-  map.on('click', 'my-layer', function(e) {
+  map.on('click', 'my-layer', function(e: MapElement) {
     clickedOnTaz(e)
   })
 
   // turn "hover cursor" into a pointer, so user knows they can click.
-  map.on('mousemove', 'my-layer', function(e) {
+  map.on('mousemove', 'my-layer', function(e: MapElement) {
     map.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
   })
 
@@ -137,7 +148,7 @@ async function mapIsReady() {
 let _popup
 
 // clickedOnTaz: called when user... clicks on the taz
-function clickedOnTaz(e) {
+function clickedOnTaz(e: MapElement) {
   console.log(e)
 
   // cancel old close-popup event because it messes with event ordering
