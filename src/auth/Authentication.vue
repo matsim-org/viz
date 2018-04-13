@@ -1,39 +1,49 @@
 <template lang="pug">
-  span authenticating...
+  span bal
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import sharedStore from '../SharedStore'
+import sharedStore, { SharedState } from '../SharedStore'
+import { AuthenticationState } from '../auth/Auth'
 import { Route } from 'vue-router'
-import router from '../router'
+
+interface ComponentState {
+  sharedState: SharedState
+  message: string
+}
 
 export default Vue.extend({
   name: 'Authentication',
-  props: ['auth'],
-  beforeRouteEnter(to: Route, from: Route, next: Function) {
-    if (to.hash) {
-      sharedStore.handleAuthenticationResponse(to.hash)
-    } else if (to.params.error) {
-      sharedStore.handleFailedAuthenticationResponse(to.params)
-    }
-    console.log(router)
-
-    next()
-  },
-  data() {
+  data(): ComponentState {
     return {
-      isLoading: false,
+      sharedState: sharedStore.state,
+      message: '',
     }
   },
   created() {
-    this.authenticate()
-  },
-  methods: {
-    authenticate(): void {
-      this.isLoading = true
+    if (this.sharedState.authentication === AuthenticationState.Requesting) {
+      this.message = 'processing authentication...'
+      handleAuthenticationResponse(this.$route)
+    } else if (this.sharedState.authentication === AuthenticationState.Failed) {
+      this.message = 'failed authentication'
+    } else if (
+      this.sharedState.authentication === AuthenticationState.Authenticated
+    ) {
+      this.message = 'authenticated!'
+      this.$router.push('/personal')
+    } else {
+      this.message = 'requesting authentication...'
       sharedStore.authenticate()
-    },
+    }
   },
 })
+
+function handleAuthenticationResponse(route: Route): void {
+  if (route.hash) {
+    sharedStore.handleAuthenticationResponse(route.hash)
+  } else if (route.params.error) {
+    sharedStore.handleFailedAuthenticationResponse(route.params)
+  }
+}
 </script>

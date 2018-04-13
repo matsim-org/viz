@@ -7,9 +7,10 @@ import StartPage from '@/components/StartPage.vue'
 import NetworkFlows from '@/components/NetworkFlows.vue'
 import Projects from '@/components/Projects.vue'
 import Authentication from '@/auth/Authentication.vue'
-import sharedStore from '../SharedStore'
+import sharedStore, { AuthenticationState } from '../SharedStore'
 
 Vue.use(Router)
+const AUTHENTICATION = '/authentication'
 
 let instance = new Router({
   mode: 'history', // 'history' mode produces clean, normal URLs
@@ -41,7 +42,7 @@ let instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/authentication',
+      path: AUTHENTICATION,
       name: 'Authentication',
       component: Authentication,
     },
@@ -53,9 +54,11 @@ instance.beforeEach((to: Route, from: Route, next: Function) => {
   if (to.matched.some(record => record.meta && record.meta.authRequired)) {
     //login is required
     //const authenticated = sharedStore.state.authentication.isAuthenticated
-    if (false) {
+    if (
+      sharedStore.state.authentication !== AuthenticationState.Authenticated
+    ) {
       //we are not logged in: redirect to authentication component
-      //next('/authentication')
+      next(AUTHENTICATION)
     }
   }
   next()

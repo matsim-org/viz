@@ -1,18 +1,50 @@
 import { Dictionary } from 'lodash'
 import { IncomingMessage } from 'http'
+import * as JWT from 'jwt-decode'
+
+export enum AuthenticationState {
+  NotAuthenticated,
+  Requesting,
+  Failed,
+  Authenticated,
+}
+
+const authenticationRequest = {
+  //endpoint: new URL('https://localhost:3000/authorize/'),
+  scope: 'openid',
+  response_type: 'id_token token',
+  client_id: 'test-client-id',
+  redirect_uri: 'http://localhost:8080/authentication',
+  state: 'some random state',
+  nonce: 'some nonce',
+}
 
 export default class Authentication {
-  idToken: String = ''
-  fileServerAccessToken: String = ''
-  _isAuthenticated: boolean = false
+  private idToken: string = ''
+  private _subjectId: string = ''
+  private _tokenExpiresAt: number = 0
+  private _state: AuthenticationState = AuthenticationState.NotAuthenticated
+  fileServerAccessToken: string = ''
+
+  get state() {
+    return this._state
+  }
 
   constructor() {}
 
-  requestAuthorization(): void {
+  requestAuthentication(): void {
+    this._state = AuthenticationState.Requesting
     const parameters = new AuthRequest()
     const form = document.createElement('form')
     form.setAttribute('method', 'GET')
     form.setAttribute('action', parameters.endpoint.toString())
+
+    for (let key in authenticationRequest) {
+      let value = (authenticationRequest as any)[key]
+      form.appendChild(this.createInput(key, value))
+    }
+    /*
+
     form.appendChild(this.createInput('scope', parameters.scope))
     form.appendChild(
       this.createInput('response_type', parameters.response_type)
@@ -21,28 +53,66 @@ export default class Authentication {
     form.appendChild(this.createInput('redirect_uri', parameters.redirect_uri))
     form.appendChild(this.createInput('state', parameters.state))
     form.appendChild(this.createInput('nonce', parameters.nonce))
-
+*/
     document.body.appendChild(form)
     form.submit()
     document.body.removeChild(form)
   }
 
-  handleAuthorizationResponse(fragment: string) {
-    console.log(fragment)
-
+  handleAuthenticationResponse(fragment: string) {
     fragment = fragment.replace('#', '')
     let parameters = new URLSearchParams(fragment)
-    this.idToken = parameters.get('id_token') as string
-    this.fileServerAccessToken = parameters.get('access_token') as string
-    this._isAuthenticated = true
+
+    try {
+      this.idToken = parameters.get('id_token') as string
+      this.handleIdToken(this.idToken)
+      this.fileServerAccessToken = parameters.get('access_token') as string
+      this._state = AuthenticationState.Authenticated
+    } catch (error) {
+      this._state = AuthenticationState.Failed
+      this.idToken = ''
+      this.fileServerAccessToken = ''
+    }
   }
 
-  handleFailedAuthorizationResponse(parameter: Dictionary<String>) {
+  handleFailedAuthenticationResponse(parameter: Dictionary<String>) {
     console.error(parameter)
   }
 
   isAuthenticated(): boolean {
-    return this._isAuthenticated
+    return this._state === AuthenticationState.Authenticated
+  }
+
+  private handleIdToken(token: string): void {
+    let decoded = JWT(token) as any
+
+    if (this.isValid(decoded)) {
+      this._subjectId = decoded.sub
+      this._tokenExpiresAt = decoded.exp
+    } else {
+      throw Error('invalid token')
+    }
+  }
+
+  private isValid(decodedToken: any): boolean {
+    let valid = true
+    if (!decodedToken.sub || !(decodedToken.sub instanceof String)) {
+      valid = false
+    }
+    if (!decodedToken.exp || !(decodedToken.exp instanceof Number)) {
+      valid = false
+    }
+    if (!decodedToken.nonce || !(decodedToken.nonce instanceof String)) {
+      valid = false
+    }
+    if (!decodedToken.iss || !(decodedToken.iss instanceof String)) {
+      //this should also pinpoint the auth server address once deployed
+      valid = false
+    }
+
+    //here should also be a validation of the signature, but that's another ticket
+
+    return valid
   }
 
   private createInput(key: string, value: string) {
