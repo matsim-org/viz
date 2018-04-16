@@ -6,6 +6,8 @@ import NetworkViz from '@/components/NetworkViz.vue'
 import StartPage from '@/components/StartPage.vue'
 import NetworkFlows from '@/components/NetworkFlows.vue'
 import Projects from '@/components/Projects.vue'
+import Project from '@/components/Project.vue'
+import CreateProject from '@/components/CreateProject.vue'
 import Authentication from '@/auth/Authentication.vue'
 import sharedStore, { AuthenticationState } from '../SharedStore'
 
@@ -36,9 +38,21 @@ let instance = new Router({
       component: NetworkFlows,
     },
     {
-      path: '/personal',
+      path: '/projects',
       name: 'Your Projects',
       component: Projects,
+      meta: { authRequired: true },
+    },
+    {
+      path: '/projects/new',
+      component: CreateProject,
+      name: 'New Project',
+      meta: { authRequired: true },
+    },
+    {
+      path: '/project/:id',
+      component: Project,
+      name: 'Project',
       meta: { authRequired: true },
     },
     {
@@ -56,6 +70,7 @@ instance.beforeEach((to: Route, from: Route, next: Function) => {
     ) {
       sharedStore.setNavigateToOnAuthentication(to.fullPath)
       next(AUTHENTICATION)
+      return
     }
   }
   next()

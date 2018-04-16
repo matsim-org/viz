@@ -42,7 +42,16 @@ export default class Authentication {
     return this._errorMessage
   }
 
-  constructor() {}
+  constructor() {
+    this.initializeFromStorage()
+  }
+
+  private initializeFromStorage(): void {
+    this.idToken = this.load(AuthenticationResponse.idToken) || ''
+    this._subjectId = this.load('subject-id') || ''
+    this.fileServerAccessToken =
+      this.load(AuthenticationResponse.accessToken) || ''
+  }
 
   requestAuthentication(): void {
     this._state = AuthenticationState.Requesting
@@ -80,6 +89,13 @@ export default class Authentication {
       this.fileServerAccessToken = parameters.get(
         AuthenticationResponse.accessToken
       ) as string
+
+      this.persist(AuthenticationResponse.idToken, this.idToken)
+      this.persist(
+        AuthenticationResponse.accessToken,
+        this.fileServerAccessToken
+      )
+
       this._state = AuthenticationState.Authenticated
     } catch (error) {
       this.handleInvalidAuthenticationResponse('could not validate token')
