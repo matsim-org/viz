@@ -3,6 +3,8 @@
 import Vue from 'vue'
 import { Dictionary } from 'vue-router/types/router'
 import Authentication, { AuthenticationState } from './auth/Authentication'
+import FileAPI from './communication/FileAPI'
+import Project from './entities/Project'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/
@@ -12,6 +14,7 @@ interface SharedState {
   isSidePanelExpanded: boolean
   navigateToOnAuthentication: string
   authentication: AuthenticationState
+  personalProjects: Project[]
 }
 
 class SharedStore {
@@ -21,6 +24,10 @@ class SharedStore {
 
   get state(): SharedState {
     return this._state
+  }
+
+  get accessToken(): string {
+    return this._authentication.fileServerAccessToken
   }
 
   get debug(): boolean {
@@ -81,10 +88,16 @@ class SharedStore {
     this.persistState()
   }
 
+  async fetchProjects(): Promise<void> {
+    let fetchedProjects = await FileAPI.fetchAllPersonalProjects()
+    this._state.personalProjects = fetchedProjects
+  }
+
   private defaultState(): SharedState {
     return {
       isSidePanelExpanded: true,
       navigateToOnAuthentication: '',
+      personalProjects: [],
       authentication: AuthenticationState.NotAuthenticated,
     }
   }

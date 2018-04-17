@@ -22,10 +22,10 @@
     nav.sidebar-nav
       router-link.sidebar-nav-item(to="/") HOME
       br
-      router-link.sidebar-nav-item(to="flows") NETWORK FLOWS in Cottbus
-      router-link.sidebar-nav-item(to="accessibility") ACCESSIBILITY: Kibera
-      router-link.sidebar-nav-item(to="network") NETWORK LINKS: GeoJson
-      router-link.sidebar-nav-item(to="personal") YOUR PROJECTS
+      router-link.sidebar-nav-item(to="/flows") NETWORK FLOWS in Cottbus
+      router-link.sidebar-nav-item(to="/accessibility") ACCESSIBILITY: Kibera
+      router-link.sidebar-nav-item(to="/network") NETWORK LINKS: GeoJson
+      router-link.sidebar-nav-item(to="/projects") YOUR PROJECTS
 </template>
 
 <script lang="ts">
