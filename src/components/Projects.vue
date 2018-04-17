@@ -1,9 +1,6 @@
 <template lang="pug">
   .projects
-    div.projectListHeader
-      h1 Your projects
-      router-link(to="/projects/new")
-        button.ui.green.button Create Project
+    list-header(v-on:btnClicked="handleCreateClicked" title="Your Projects" btnTitle="Create Project")
 
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
@@ -19,11 +16,15 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import ListHeader from './ListHeader.vue'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
 
 export default Vue.extend({
+  components: {
+    'list-header': ListHeader,
+  },
   data() {
     return {
       sharedState: SharedStore.state,
@@ -32,6 +33,9 @@ export default Vue.extend({
   methods: {
     onProjectClicked(id: string) {
       this.$router.push({ path: `/project/${id}` })
+    },
+    handleCreateClicked() {
+      this.$router.push({ path: '/projects/new' })
     },
   },
   created: async function() {

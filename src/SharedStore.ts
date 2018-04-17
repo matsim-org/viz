@@ -89,7 +89,7 @@ class SharedStore {
   }
 
   async fetchProjects(): Promise<void> {
-    let fetchedProjects = await FileAPI.fetchProjects()
+    let fetchedProjects = await FileAPI.fetchAllPersonalProjects()
     this._state.personalProjects = fetchedProjects
   }
 

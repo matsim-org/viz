@@ -4,7 +4,7 @@ import SharedStore from '../SharedStore'
 const fileAPI = 'http://localhost:3001/'
 
 export default {
-  fetchProjects: async function(): Promise<Array<Project>> {
+  fetchAllPersonalProjects: async function(): Promise<Array<Project>> {
     const endpoint = 'project/'
 
     let headers = new Headers()
@@ -25,6 +25,25 @@ export default {
       return projects
     } else {
       throw new Error('could not fetch projects')
+    }
+  },
+
+  fetchProjects: async function(projectIds: string[]): Promise<Project[]> {
+    const endpoint = 'project/'
+    let result = await fetch(fileAPI + endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer ' + SharedStore.accessToken,
+      },
+      body: JSON.stringify({ projectIds: projectIds }),
+    })
+
+    if (result.ok) {
+      return (await result.json()) as Project[]
+    } else {
+      throw new Error('could not fetch project')
     }
   },
 
