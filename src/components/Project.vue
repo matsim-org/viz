@@ -1,9 +1,10 @@
 <template lang="pug">
   .project
-    .headline
-      h1 {{project.name}}
-      span {{project.id}}
-    span(v-if="isFetchingData") Fetching project data...
+    .header
+      .headline
+        h1 {{project.name}}
+        span {{project.id}}
+      span(v-if="isFetchingData") Fetching project data...
 
     list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
     input.fileInput(type="file" 
@@ -16,11 +17,11 @@
       .emptyMessage(v-if="project.files.length === 0")
         span No files yet. Add some!
       .fileList
-        .fileItem(v-for="file in project.files")
-          .itemTitle
+        list-element(v-for="file in project.files" v-bind:key="file.id")          
+          .itemTitle(slot="title")
             span {{file.userFileName}}
             span {{file.sizeInBytes}} Bytes
-          span {{file.id}}
+          span(slot="content") {{file.id}}
 </template>
 
 <style>
@@ -28,6 +29,12 @@
   margin: 1rem;
   display: flex;
   flex-direction: column;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .headline {
@@ -40,24 +47,10 @@
   display: none;
 }
 
-.files {
-}
-
-.fileList {
-}
-
-.fileItem {
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 0 1rem 0;
-  border-bottom: 1px solid lightgray;
-}
-
 .itemTitle {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  font-weight: bold;
 }
 
 .emptyMessage {
@@ -71,6 +64,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import ListHeader from './ListHeader.vue'
+import ListElement from './ListElement.vue'
 import SharedStore, { SharedState } from '../SharedStore'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
@@ -85,6 +79,7 @@ interface ProjectState {
 export default Vue.extend({
   components: {
     'list-header': ListHeader,
+    'list-element': ListElement,
   },
   data(): ProjectState {
     return {
@@ -106,7 +101,9 @@ export default Vue.extend({
     //if not, request the project
     if (project) {
       this.project = project
-    } else {
+    }
+
+    if (!project || project.files.length < 1) {
       this.isFetchingData = true
       let fetchedProjects = await FileAPI.fetchProjects([this.projectId])
       if (fetchedProjects.length > 0) {

@@ -4,19 +4,18 @@
 
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
-    div.ui.relaxed.divided.list(v-else  )  
-      div.ui.item(v-for="project in sharedState.personalProjects")
-        div.itemContainer
-          button.projectBtn(v-on:click="onProjectClicked(project.id)")
-            div.ui.header {{project.name}}
-            div.ui.descriptions {{project.id}}
-
+    .projectList(v-else  )  
+        button.projectItem(v-for="project in sharedState.personalProjects" v-on:click="onProjectClicked(project.id)")
+          list-element(v-bind:key="project.id")          
+            span(slot="title") {{project.name}}
+            span(slot="content") {{project.id}}
 </template>
 
 
 <script lang="ts">
 import Vue from 'vue'
 import ListHeader from './ListHeader.vue'
+import ListElement from './ListElement.vue'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
@@ -24,6 +23,7 @@ import SharedStore, { SharedState } from '../SharedStore'
 export default Vue.extend({
   components: {
     'list-header': ListHeader,
+    'list-element': ListElement,
   },
   data() {
     return {
@@ -52,23 +52,27 @@ export default Vue.extend({
 .projects {
   margin: 1rem;
 }
-.projectListHeader {
+
+.projectList {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
+  align-content: stretch;
 }
+
 .emptyMessage {
   padding-top: 3rem;
   display: flex;
   flex-direction: row;
   justify-content: center;
 }
+
 .itemContainer {
   display: flex;
   flex-direction: row;
   align-content: stretch;
 }
-.projectBtn {
+
+.projectItem {
   flex: 1;
   background-color: transparent;
   border: none;
@@ -78,9 +82,10 @@ export default Vue.extend({
   text-align: inherit;
   font-size: inherit;
   cursor: pointer;
+  transition-duration: 0.25s;
 }
 
-.projectBtn:hover {
-  text-decoration: underline;
+.projectItem:hover {
+  background-color: lightgray;
 }
 </style>
