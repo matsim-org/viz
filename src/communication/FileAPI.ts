@@ -1,79 +1,38 @@
 import Project from '../entities/Project'
 import SharedStore from '../SharedStore'
 
-const fileAPI = 'http://localhost:3001/'
+export default class FileAPI {
+  private static FILE_API = 'http://localhost:3001/'
+  private static PROJECT: string = 'project/'
+  private static FILE: string = 'file/'
 
-export default {
-  fetchAllPersonalProjects: async function(): Promise<Array<Project>> {
-    const endpoint = 'project/'
+  public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
+    return await this.request<Array<Project>>(
+      this.PROJECT,
+      this.authorizedPostRequestOptions({})
+    )
+  }
 
-    let headers = new Headers()
-    headers.append('Authorization', 'Bearer ' + SharedStore.accessToken)
+  public static async fetchProjects(
+    projectIds: string[]
+  ): Promise<Array<Project>> {
+    const body = { projectIds: projectIds }
+    return await this.request<Array<Project>>(
+      this.PROJECT,
+      this.authorizedPostRequestOptions(body)
+    )
+  }
 
-    let result = await fetch(fileAPI + endpoint, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'content-type': 'application/json',
-        authorization: 'Bearer ' + SharedStore.accessToken,
-      },
-      body: JSON.stringify({}),
-    })
+  public static async createProject(projectName: string): Promise<Project> {
+    let options = this.authorizedPostRequestOptions({ name: projectName })
+    options.method = 'PUT'
+    return await this.request<Project>(this.PROJECT, options)
+  }
 
-    if (result.ok) {
-      let projects = (await result.json()) as Array<Project>
-      return projects
-    } else {
-      throw new Error('could not fetch projects')
-    }
-  },
-
-  fetchProjects: async function(projectIds: string[]): Promise<Project[]> {
-    const endpoint = 'project/'
-    let result = await fetch(fileAPI + endpoint, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'content-type': 'application/json',
-        authorization: 'Bearer ' + SharedStore.accessToken,
-      },
-      body: JSON.stringify({ projectIds: projectIds }),
-    })
-
-    if (result.ok) {
-      return (await result.json()) as Project[]
-    } else {
-      throw new Error('could not fetch project')
-    }
-  },
-
-  createProject: async function(projectName: string): Promise<Project> {
-    const endpoint = 'project/'
-
-    let result = await fetch(fileAPI + endpoint, {
-      method: 'PUT',
-      mode: 'cors',
-      headers: {
-        'content-type': 'application/json',
-        authorization: 'Bearer ' + SharedStore.accessToken,
-      },
-      body: JSON.stringify({ name: projectName }),
-    })
-    if (result.ok) {
-      let project = (await result.json()) as Project
-      return project
-    } else {
-      let error = await result.json()
-      throw new Error(error.error_description)
-    }
-  },
-
-  uploadFiles: async function(
+  public static async uploadFiles(
     files: Array<File>,
     project: Project
   ): Promise<Project> {
-    const endpoint = 'file/'
-
     let formData = new FormData()
     for (let i = 0; i < files.length; i++) {
       let file = files[i]
@@ -81,7 +40,7 @@ export default {
     }
     formData.append('projectId', project.id)
 
-    let result = await fetch(fileAPI + endpoint, {
+    return await this.request<Project>(this.FILE, {
       method: 'POST',
       mode: 'cors',
       headers: {
@@ -89,13 +48,38 @@ export default {
       },
       body: formData,
     })
+  }
+
+  private static authorizedPostRequestOptions(body: any): RequestInit {
+    return {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer ' + SharedStore.accessToken,
+      },
+      body: JSON.stringify(body),
+    }
+  }
+
+  private static async request<T>(
+    endpoint: string,
+    options: RequestInit
+  ): Promise<T> {
+    let result = await fetch(this.FILE_API + endpoint, options)
 
     if (result.ok) {
-      let project = (await result.json()) as Project
-      return project
+      return await result.json()
+    } else if (result.status === 401) {
+      //unauthorized
+      //the token is not valid. A new one must be requested
+      throw Error(
+        'Token was not valid. Retreival of new token must be implemented'
+      )
     } else {
       let error = await result.json()
+      console.error(error)
       throw new Error(error.error_description)
     }
-  },
+  }
 }
