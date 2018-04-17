@@ -67,4 +67,35 @@ export default {
       throw new Error(error.error_description)
     }
   },
+
+  uploadFiles: async function(
+    files: Array<File>,
+    project: Project
+  ): Promise<Project> {
+    const endpoint = 'file/'
+
+    let formData = new FormData()
+    for (let i = 0; i < files.length; i++) {
+      let file = files[i]
+      formData.append(file.name, file)
+    }
+    formData.append('projectId', project.id)
+
+    let result = await fetch(fileAPI + endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        authorization: 'Bearer ' + SharedStore.accessToken,
+      },
+      body: formData,
+    })
+
+    if (result.ok) {
+      let project = (await result.json()) as Project
+      return project
+    } else {
+      let error = await result.json()
+      throw new Error(error.error_description)
+    }
+  },
 }
