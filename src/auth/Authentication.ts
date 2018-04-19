@@ -58,7 +58,10 @@ export default class Authentication {
     const authenticationRequest = this.createAuthRequest()
     const form = document.createElement('form')
     form.setAttribute('method', 'GET')
-    form.setAttribute('action', 'https://localhost:3000/authorize/')
+    form.setAttribute(
+      'action',
+      'https://cnode00.vsp.tu-berlin.de:3000/authorize/'
+    )
 
     for (let key in authenticationRequest) {
       let value = (authenticationRequest as any)[key]
@@ -191,7 +194,7 @@ export default class Authentication {
     return {
       scope: 'openid',
       response_type: 'id_token token',
-      client_id: 'test-client-id',
+      client_id: 'matsim-viz-local-client-id',
       redirect_uri: 'http://localhost:8080/authentication',
       state: this.randomString(),
       nonce: this.randomString(),

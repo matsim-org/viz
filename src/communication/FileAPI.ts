@@ -2,7 +2,7 @@ import Project from '../entities/Project'
 import SharedStore from '../SharedStore'
 
 export default class FileAPI {
-  private static FILE_API = 'http://localhost:3001/'
+  private static FILE_API = 'http://cnode00.vsp.tu-berlin.de:3001/'
   private static PROJECT: string = 'project/'
   private static FILE: string = 'file/'
 
