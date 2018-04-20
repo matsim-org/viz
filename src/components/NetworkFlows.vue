@@ -2,7 +2,7 @@
 .main-content
   #mymap
   .controls
-    button.ui.tiny.red.button(@click="doIt" :class="{shrunken: !sharedStore.isSidePanelExpanded}") DO IT!
+    button.ui.tiny.red.button(@click="loadData" :class="{shrunken: !sharedStore.isSidePanelExpanded}") Load Data
     .slider-things
       vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
       .clock-labels
@@ -27,20 +27,23 @@ import sharedStore, { EventBus } from '../SharedStore'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
 import * as mapboxgl from 'mapbox-gl'
+import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 
 let timeConvert = require('convert-seconds')
 let pako = require('pako')
 let sax = require('sax')
 let readBlob = require('read-blob')
 let proj4 = require('proj4').default
-let L = require('leaflet')
 
-let _linkLayers: L.FeatureGroup
+let mymap: mapboxgl.Map
+let _linkData: any
 
-let mymap: LeafletMap
-interface LeafletMap {
-  [key: string]: any
-}
+// this is a required workaround to get the mapbox token assigned in TypeScript
+// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
+// TODO: move mapbox access token to sharedstore
+let writableMapBox: any = mapboxgl
+writableMapBox.accessToken =
+  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 let mySlider = {
   disabled: false,
@@ -75,6 +78,11 @@ let mySlider = {
   formatter: function(index: number) {
     return convertSecondsToClockTimeMinutes(index)
   },
+}
+
+interface MapElement {
+  lngLat: LngLat
+  features: any[]
 }
 
 interface StoreType {
@@ -125,11 +133,20 @@ function sliderChangedEvent(seconds: number) {
 
 function updateFlowsForTimeValue(seconds: number) {
   let segment = Math.floor(seconds / 900) // 15 minutes
+
+  // nothing to do if segment hasn't changed
+  if (segment === store.currentTimeSegment) return
+
   store.setTimeSegment(segment)
 
-  _linkLayers.eachLayer(function(layer: any) {
-    layer.setStyle(calculateColorFromVolume(layer.linkID))
-  })
+  for (let link of _linkData.features) {
+    let id = link.properties.id
+    link.properties.color = calculateColorFromVolume(id)
+  }
+
+  let z: any = mymap.getSource('my-data')
+  z.setData(_linkData)
+
   if (sharedStore.debug) console.log('done')
 }
 
@@ -156,26 +173,17 @@ function updateTimeSliderSegmentColors(segments: number[]) {
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {
-  mymap = L.map('mymap', { zoomSnap: 0.5 })
-  mymap.fitBounds([[51.72, 14.3], [51.82, 14.4]])
-  mymap.zoomControl.setPosition('bottomright')
+  mymap = new mapboxgl.Map({
+    bearing: 0,
+    center: [14.35, 51.75], // lnglat, not latlng (think of it as: x,y)
+    container: 'mymap',
+    logoPosition: 'bottom-right',
+    style: 'mapbox://styles/mapbox/outdoors-v9',
+    pitch: 0,
+    zoom: 11,
+  })
 
-  let url =
-    'https://api.mapbox.com/styles/v1/mapbox/' +
-    'light' +
-    '-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}'
-  let token =
-    'pk.eyJ1IjoicHNyYyIsImEiOiJjaXFmc2UxanMwM3F6ZnJtMWp3MjBvZHNrIn0._Dmske9er0ounTbBmdRrRQ'
-  let attribution =
-    '<a href="http://openstreetmap.org">OpenStreetMap</a> | ' +
-    '<a href="http://mapbox.com">Mapbox</a>'
-  L.tileLayer(url, {
-    attribution: attribution,
-    maxZoom: 18,
-    accessToken: token,
-  }).addTo(mymap)
-
-  // Start doing stuff AFTER the MapBox library has fully initialized
+  // do things that can only be done after MapBox is fully initialized
   mymap.on('style.load', mapIsReady)
   setupEventListeners()
 }
@@ -190,28 +198,79 @@ function setupEventListeners() {
     // map needs to be force-recentered, and it is slow.
     for (let delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function() {
-        mymap.invalidateSize()
+        mymap.resize()
       }, delay)
     }
   })
 }
 
-function addLinksToMap() {
-  _linkLayers = L.featureGroup().addTo(mymap)
+function constructGeoJsonFromLinkData() {
+  let geojsonLinks = []
 
   for (let id in store.links) {
     let link = store.links[id]
     let fromNode = store.nodes[link.from]
     let toNode = store.nodes[link.to]
 
-    let layer = L.polyline(
-      [[fromNode.y, fromNode.x], [toNode.y, toNode.x]],
-      calculateColorFromVolume(id)
-    )
+    let coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
 
-    layer.linkID = id
-    _linkLayers.addLayer(layer)
+    let featureJson = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: coordinates,
+      },
+      properties: { id: id, color: '#aaa' },
+    }
+
+    geojsonLinks.push(featureJson)
   }
+
+  _linkData = {
+    type: 'FeatureCollection',
+    features: geojsonLinks,
+  }
+
+  return _linkData
+}
+
+function addLinksToMap() {
+  let linksAsGeojson: any = constructGeoJsonFromLinkData()
+
+  mymap.addSource('my-data', {
+    data: linksAsGeojson,
+    type: 'geojson',
+  })
+
+  console.log({ links: linksAsGeojson, boop: mymap.getStyle().layers })
+
+  mymap.addLayer(
+    {
+      id: 'my-layer',
+      source: 'my-data',
+      type: 'line',
+      paint: {
+        'line-opacity': 1.0,
+        'line-width': 3, // ['get', 'width'],
+        'line-color': ['get', 'color'],
+      },
+    },
+    'road-primary'
+  ) // layer gets added just *above* this MapBox-defined layer.
+
+  mymap.on('click', 'my-layer', function(e: MapElement) {
+    clickedOnLink(e)
+  })
+
+  // turn "hover cursor" into a pointer, so user knows they can click.
+  mymap.on('mousemove', 'my-layer', function(e: MapElement) {
+    mymap.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
+  })
+
+  // and back to normal when they mouse away
+  mymap.on('mouseleave', 'my-layer', function() {
+    mymap.getCanvas().style.cursor = '-webkit-grab'
+  })
 }
 
 function calculateColorFromVolume(id: string) {
@@ -221,12 +280,14 @@ function calculateColorFromVolume(id: string) {
       : 0
     : 0
 
-  if (volume > 100) return { color: '#f66', weight: 4 }
-  if (volume > 20) return { color: '#fc6', weight: 3 }
-  if (volume > 1) return { color: '#69f', weight: 3 }
+  if (volume === 0) return '#aaa'
+  if (volume < 20) return '#69f'
+  if (volume < 100) return '#fc6'
 
-  return { color: '#ccc', weight: 2 }
+  return '#f66'
 }
+
+function clickedOnLink(e: MapElement) {}
 
 nSQL('events')
   .config({ mode: 'TEMP' })
@@ -261,6 +322,7 @@ async function aggregate15minutes(): Promise<void> {
       }
       console.log({ flows: store.flowSummary })
       updateTimeSliderSegmentColors(store.flowSummary)
+      addLinksToMap()
     })
 }
 
@@ -349,11 +411,11 @@ async function readNetworkFile() {
     }
   }
 
+  let COTTBUS_PROJECTION =
+    '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+
   saxparser.onend = function() {
-    convertCoords(
-      '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-    )
-    addLinksToMap()
+    convertCoords(COTTBUS_PROJECTION)
   }
 
   try {
@@ -373,7 +435,7 @@ async function readNetworkFile() {
   }
 }
 
-async function doIt() {
+async function loadDataFiles() {
   readNetworkFile()
   readEventsFile()
 }
@@ -388,7 +450,6 @@ function convertCoords(projection: string) {
     node.x = z.x
     node.y = z.y
   }
-  console.log('done')
 }
 
 // this export is the Vue Component itself
@@ -409,7 +470,7 @@ export default {
     mounted()
   },
   methods: {
-    doIt: doIt,
+    loadData: loadDataFiles,
   },
   watch: {
     timeSliderValue: sliderChangedEvent,
