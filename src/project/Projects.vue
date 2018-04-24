@@ -14,8 +14,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import ListHeader from './ListHeader.vue'
-import ListElement from './ListElement.vue'
+import ListHeader from '@/components/ListHeader.vue'
+import ListElement from '@/components/ListElement.vue'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'

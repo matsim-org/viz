@@ -1,14 +1,13 @@
+import Authentication from '@/auth/Authentication.vue'
+import StartPage from '@/components/StartPage.vue'
+import CreateProject from '@/project/CreateProject.vue'
+import Project from '@/project/Project.vue'
+import Projects from '@/project/Projects.vue'
+import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
+import NetworkFlows from '@/visualization/NetworkFlows.vue'
+import NetworkViz from '@/visualization/NetworkViz.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
-
-import KiberaAccessibility from '@/components/KiberaAccessibility.vue'
-import NetworkViz from '@/components/NetworkViz.vue'
-import StartPage from '@/components/StartPage.vue'
-import NetworkFlows from '@/components/NetworkFlows.vue'
-import Projects from '@/components/Projects.vue'
-import Project from '@/components/Project.vue'
-import CreateProject from '@/components/CreateProject.vue'
-import Authentication from '@/auth/Authentication.vue'
 import sharedStore, { AuthenticationState } from '../SharedStore'
 
 Vue.use(Router)
