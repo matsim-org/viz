@@ -1,10 +1,12 @@
-import Project from '../entities/Project'
 import SharedStore from '../SharedStore'
+import Project from '../entities/Project'
+import { ContentType, HeaderKeys } from './Constants'
 
 export default class FileAPI {
   private static FILE_API = 'http://cnode00.vsp.tu-berlin.de:3001/'
   private static PROJECT: string = 'project/'
   private static FILE: string = 'file/'
+  private static FILE_UPLOAD: string = FileAPI.FILE + 'upload/'
 
   public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
     return await this.request<Array<Project>>(
@@ -40,24 +42,50 @@ export default class FileAPI {
     }
     formData.append('projectId', project.id)
 
-    return await this.request<Project>(this.FILE, {
+    let headers = new Headers()
+    headers.append(
+      HeaderKeys.AUTHORIZATION,
+      'Bearer ' + SharedStore.accessToken
+    )
+    const options: RequestInit = {
       method: 'POST',
       mode: 'cors',
-      headers: {
-        authorization: 'Bearer ' + SharedStore.accessToken,
-      },
+      headers: headers,
       body: formData,
-    })
+    }
+
+    return await this.request<Project>(this.FILE_UPLOAD, options)
+  }
+
+  public static async downloadFile(
+    fileId: string,
+    project: Project
+  ): Promise<Blob> {
+    const body = { fileId: fileId, projectId: project.id }
+    const options = this.authorizedPostRequestOptions(body)
+
+    let result = await fetch(this.FILE_API + this.FILE, options)
+
+    if (result.ok) {
+      let file = await result.blob()
+      console.log('downloaded blop with size: ' + file.size)
+      return file
+    } else {
+      throw this.generateError(result)
+    }
   }
 
   private static authorizedPostRequestOptions(body: any): RequestInit {
+    let headers = new Headers()
+    headers.append(
+      HeaderKeys.AUTHORIZATION,
+      'Bearer ' + SharedStore.accessToken
+    )
+    headers.append(HeaderKeys.CONTENT_TYPE, ContentType.APPLICATION_JSON)
     return {
       method: 'POST',
       mode: 'cors',
-      headers: {
-        'content-type': 'application/json',
-        authorization: 'Bearer ' + SharedStore.accessToken,
-      },
+      headers: headers,
       body: JSON.stringify(body),
     }
   }
@@ -67,19 +95,25 @@ export default class FileAPI {
     options: RequestInit
   ): Promise<T> {
     let result = await fetch(this.FILE_API + endpoint, options)
-
     if (result.ok) {
+      const contentType = result.headers.get('content-type')
       return await result.json()
-    } else if (result.status === 401) {
+    } else {
+      throw this.generateError(result)
+    }
+  }
+
+  private static async generateError(response: Response): Promise<Error> {
+    if (response.status === 401) {
       //unauthorized
       //the token is not valid. A new one must be requested
-      throw Error(
+      return Error(
         'Token was not valid. Retreival of new token must be implemented'
       )
     } else {
-      let error = await result.json()
+      let error = await response.json()
       console.error(error)
-      throw new Error(error.error_description)
+      return new Error(error.error_description)
     }
   }
 }
