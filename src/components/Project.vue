@@ -17,11 +17,12 @@
       .emptyMessage(v-if="project.files.length === 0")
         span No files yet. Add some!
       .fileList
-        list-element(v-for="file in project.files" v-bind:key="file.id")          
-          .itemTitle(slot="title")
-            span {{file.userFileName}}
-            span {{file.sizeInBytes}} Bytes
-          span(slot="content") {{file.id}}
+        button.fileItem(v-for="file in project.files" v-on:click="handleFileClicked(file.id)")
+          list-element( v-bind:key="file.id")          
+            .itemTitle(slot="title")
+              span {{file.userFileName}}
+              span {{file.sizeInBytes}} Bytes
+            span(slot="content") {{file.id}}
 </template>
 
 <style>
@@ -51,6 +52,29 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+}
+
+.fileItem {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition-duration: 0.25s;
+}
+
+.fileItem:hover {
+  background-color: lightgray;
 }
 
 .emptyMessage {
@@ -119,9 +143,16 @@ export default Vue.extend({
   },
   methods: {
     handleAddFileClicked: function(): void {
-      console.log('add file clicked')
       const input = this.$refs.fileInput as HTMLInputElement
       input.click()
+    },
+    handleFileClicked: async function(fileId: string) {
+      try {
+        let blob = await FileAPI.downloadFile(fileId, this.project)
+        window.open(URL.createObjectURL(blob))
+      } catch (e) {
+        console.log(e)
+      }
     },
     onFileInputChanged: async function() {
       const files = (this.$refs.fileInput as any).files

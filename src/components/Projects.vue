@@ -4,7 +4,7 @@
 
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
-    .projectList(v-else  )  
+    .projectList(v-else)  
         button.projectItem(v-for="project in sharedState.personalProjects" v-on:click="onProjectClicked(project.id)")
           list-element(v-bind:key="project.id")          
             span(slot="title") {{project.name}}
