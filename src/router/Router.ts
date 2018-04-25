@@ -8,7 +8,8 @@ import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkViz from '@/visualization/NetworkViz.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
-import sharedStore, { AuthenticationState } from '../SharedStore'
+import sharedStore from '../SharedStore'
+import authenticationStore, { AuthenticationStatus } from '../auth/Authentication'
 
 Vue.use(Router)
 const AUTHENTICATION = '/authentication'
@@ -64,9 +65,7 @@ let instance = new Router({
 
 instance.beforeEach((to: Route, from: Route, next: Function) => {
   if (to.matched.some(record => record.meta && record.meta.authRequired)) {
-    if (
-      sharedStore.state.authentication !== AuthenticationState.Authenticated
-    ) {
+    if (authenticationStore.state.status !== AuthenticationStatus.Authenticated) {
       sharedStore.setNavigateToOnAuthentication(to.fullPath)
       next(AUTHENTICATION)
       return

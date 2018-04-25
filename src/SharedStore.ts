@@ -2,7 +2,7 @@
 
 import Vue from 'vue'
 import { Dictionary } from 'vue-router/types/router'
-import Authentication, { AuthenticationState } from './auth/Authentication'
+import AuthenticationStore, { AuthenticationStatus } from './auth/Authentication'
 import FileAPI from './communication/FileAPI'
 import Project from './entities/Project'
 
@@ -13,21 +13,15 @@ export const EventBus = new Vue()
 interface SharedState {
   isSidePanelExpanded: boolean
   navigateToOnAuthentication: string
-  authentication: AuthenticationState
   personalProjects: Project[]
 }
 
 class SharedStore {
   private static STATE_KEY = 'shared-state'
   private _state: SharedState
-  private _authentication: Authentication = new Authentication()
 
   get state(): SharedState {
     return this._state
-  }
-
-  get accessToken(): string {
-    return this._authentication.fileServerAccessToken
   }
 
   get debug(): boolean {
@@ -54,38 +48,8 @@ class SharedStore {
 
   public setNavigateToOnAuthentication(path: string): void {
     this._state.navigateToOnAuthentication = path
-    console.log(
-      'last nav route set to: ' + this.state.navigateToOnAuthentication
-    )
-    EventBus.$emit(
-      'lastNavigatedRoute-changed',
-      this.state.navigateToOnAuthentication
-    )
-  }
-
-  public resetAuthenticationState(): void {
-    this._authentication.resetState()
-    this._state.authentication = this._authentication.state
-  }
-
-  public authenticate(): void {
-    this._state.authentication = AuthenticationState.Requesting
     this.persistState()
-    this._authentication.requestAuthentication()
-  }
-
-  public handleAuthenticationResponse(fragment: string): void {
-    this._authentication.handleAuthenticationResponse(fragment)
-    this._state.authentication = this._authentication.state
-    this.persistState()
-  }
-
-  handleFailedAuthenticationResponse(parameter: {
-    [key: string]: string
-  }): void {
-    this._authentication.handleFailedAuthenticationResponse(parameter)
-    this._state.authentication = this._authentication.state
-    this.persistState()
+    EventBus.$emit('lastNavigatedRoute-changed', this.state.navigateToOnAuthentication)
   }
 
   async fetchProjects(): Promise<void> {
@@ -98,7 +62,6 @@ class SharedStore {
       isSidePanelExpanded: true,
       navigateToOnAuthentication: '',
       personalProjects: [],
-      authentication: AuthenticationState.NotAuthenticated,
     }
   }
 
@@ -116,4 +79,4 @@ class SharedStore {
 }
 
 export default new SharedStore()
-export { SharedState, AuthenticationState }
+export { SharedState, AuthenticationStatus }

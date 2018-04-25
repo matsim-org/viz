@@ -28,11 +28,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import sharedStore, { SharedState } from '../SharedStore'
-import authentication, { AuthenticationState } from '../auth/Authentication'
+import authenticationStore, { AuthenticationStatus, AuthenticationState } from '../auth/Authentication'
 import { Route } from 'vue-router'
 
 interface ComponentState {
   sharedState: SharedState
+  authState: AuthenticationState
 }
 
 export default Vue.extend({
@@ -40,37 +41,36 @@ export default Vue.extend({
   data(): ComponentState {
     return {
       sharedState: sharedStore.state,
+      authState: authenticationStore.state,
     }
   },
   computed: {
-    message: getMessage,
+    message: function(): string {
+      return getMessage(this.authState.status)
+    },
     isFailed(): boolean {
-      return this.sharedState.authentication === AuthenticationState.Failed
+      return this.authState.status === AuthenticationStatus.Failed
     },
     isRequesting(): boolean {
-      return this.sharedState.authentication === AuthenticationState.Requesting
+      return this.authState.status === AuthenticationStatus.Requesting
     },
     isAuthenticated(): boolean {
-      return (
-        this.sharedState.authentication === AuthenticationState.Authenticated
-      )
+      return this.authState.status === AuthenticationStatus.Authenticated
     },
     isNotAuthenticated(): boolean {
-      return (
-        this.sharedState.authentication === AuthenticationState.NotAuthenticated
-      )
+      return this.authState.status === AuthenticationStatus.NotAuthenticated
     },
   },
   methods: {
     handleTryAgainClicked: () => {
-      sharedStore.resetAuthenticationState()
+      authenticationStore.resetState()
     },
   },
   created() {
     if (this.isRequesting) {
       handleAuthenticationResponse(this.$route)
     } else if (this.isNotAuthenticated) {
-      sharedStore.authenticate()
+      authenticationStore.requestAuthentication()
     }
   },
   beforeMount() {
@@ -80,18 +80,18 @@ export default Vue.extend({
   },
   updated() {
     if (this.isNotAuthenticated) {
-      sharedStore.authenticate()
+      authenticationStore.requestAuthentication()
     }
   },
 })
 
-function getMessage() {
-  switch (sharedStore.state.authentication) {
-    case AuthenticationState.NotAuthenticated:
+function getMessage(status: AuthenticationStatus) {
+  switch (status) {
+    case AuthenticationStatus.NotAuthenticated:
       return 'Not authenticated'
-    case AuthenticationState.Requesting:
+    case AuthenticationStatus.Requesting:
       return 'Requesting authentication'
-    case AuthenticationState.Failed:
+    case AuthenticationStatus.Failed:
       return 'Error! could not authenticate'
     default:
       return 'unknown state'
@@ -100,9 +100,10 @@ function getMessage() {
 
 function handleAuthenticationResponse(route: Route): void {
   if (route.hash) {
-    sharedStore.handleAuthenticationResponse(route.hash)
+    authenticationStore.handleAuthenticationResponse(route.hash)
   } else if (route.query.error) {
-    sharedStore.handleFailedAuthenticationResponse(route.query)
+    authenticationStore.handleFailedAuthenticationResponse(route.query)
+  } else {
   }
 }
 </script>

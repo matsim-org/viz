@@ -18,3 +18,17 @@ export class ContentType {
     return 'text/plain'
   }
 }
+
+export class Method {
+  static get GET(): string {
+    return 'GET'
+  }
+
+  static get POST(): string {
+    return 'POST'
+  }
+
+  static get PUT(): string {
+    return 'PUT'
+  }
+}
