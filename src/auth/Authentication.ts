@@ -120,7 +120,7 @@ class AuthenticationRequest {
   }
 
   private request: any
-  private endpoint: string = 'https://localhost:3000/authorize/' //'https://cnode00.vsp.tu-berlin.de:3000/authorize/'
+  private endpoint: string = 'https://cnode00.vsp.tu-berlin.de:3000/authorize/'
 
   get stateVariable(): string {
     return this.request.state
@@ -133,7 +133,7 @@ class AuthenticationRequest {
     this.request = {
       scope: 'openid',
       response_type: 'id_token token',
-      client_id: 'test-client-id',
+      client_id: 'matsim-viz-local-client-id',
       redirect_uri: 'http://localhost:8080/authentication',
       state: this.randomString(),
       nonce: this.randomString(),

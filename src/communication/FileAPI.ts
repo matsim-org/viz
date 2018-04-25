@@ -5,7 +5,7 @@ import { ContentType, HeaderKeys } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
 
 export default class FileAPI {
-  private static FILE_API = 'https://localhost:3001/' //'http://cnode00.vsp.tu-berlin.de:3001/'
+  private static FILE_API = 'http://cnode00.vsp.tu-berlin.de:3001/'
   private static PROJECT: string = 'project/'
   private static FILE: string = 'file/'
   private static FILE_UPLOAD: string = FileAPI.FILE + 'upload/'
