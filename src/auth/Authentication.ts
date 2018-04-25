@@ -68,6 +68,7 @@ class AuthenticationStore {
 
     try {
       const response = new AuthenticationResponse(parameters, requestVars)
+      this.resetState()
       this.authState.accessToken = response.accessToken
       this.authState.idToken = response.idToken
       this.authState.status = AuthenticationStatus.Authenticated
@@ -79,17 +80,22 @@ class AuthenticationStore {
   }
 
   handleFailedAuthenticationResponse(parameters: { [key: string]: string }) {
-    this.authState.status = AuthenticationStatus.Failed
-
     const response = new ErrorResponse(parameters)
     console.error('authentication failed. error: ' + response.error + ' description: ' + response.description)
-    this.authState.errorMessage = response.description
+    this.setToStateToFailed(response.description)
   }
 
   resetState(): void {
     this.authState.status = AuthenticationStatus.NotAuthenticated
     this.authState.idToken = {}
     this.authState.accessToken = ''
+    this.authState.errorMessage = ''
+  }
+
+  private setToStateToFailed(message: string): void {
+    this.resetState()
+    this.authState.status = AuthenticationStatus.Failed
+    this.authState.errorMessage = message
   }
 
   private persistState(): void {

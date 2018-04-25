@@ -75,7 +75,7 @@ export default Vue.extend({
   },
   beforeMount() {
     if (this.isAuthenticated) {
-      this.$router.replace(this.sharedState.navigateToOnAuthentication)
+      this.$router.replace(this.sharedState.lastNavigation)
     }
   },
   updated() {
@@ -104,6 +104,10 @@ function handleAuthenticationResponse(route: Route): void {
   } else if (route.query.error) {
     authenticationStore.handleFailedAuthenticationResponse(route.query)
   } else {
+    authenticationStore.handleFailedAuthenticationResponse({
+      error: 'request_incomplete',
+      error_description: 'unknown reason',
+    })
   }
 }
 </script>

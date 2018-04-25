@@ -64,14 +64,25 @@ let instance = new Router({
 })
 
 instance.beforeEach((to: Route, from: Route, next: Function) => {
-  if (to.matched.some(record => record.meta && record.meta.authRequired)) {
+  if (!isAuthenticationComponent(to)) {
+    sharedStore.setLastNavigation(to.fullPath)
+  }
+
+  if (isAuthRequired(to)) {
     if (authenticationStore.state.status !== AuthenticationStatus.Authenticated) {
-      sharedStore.setNavigateToOnAuthentication(to.fullPath)
       next(AUTHENTICATION)
       return
     }
   }
   next()
 })
+
+function isAuthenticationComponent(to: Route): boolean {
+  return to.matched.some(record => record.path === AUTHENTICATION)
+}
+
+function isAuthRequired(to: Route): boolean {
+  return to.matched.some(record => record.meta && record.meta.authRequired)
+}
 
 export default instance

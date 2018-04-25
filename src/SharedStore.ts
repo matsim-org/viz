@@ -12,7 +12,7 @@ export const EventBus = new Vue()
 
 interface SharedState {
   isSidePanelExpanded: boolean
-  navigateToOnAuthentication: string
+  lastNavigation: string
   personalProjects: Project[]
 }
 
@@ -46,10 +46,10 @@ class SharedStore {
     EventBus.$emit('sidebar-toggled', this.state.isSidePanelExpanded)
   }
 
-  public setNavigateToOnAuthentication(path: string): void {
-    this._state.navigateToOnAuthentication = path
+  public setLastNavigation(path: string): void {
+    this._state.lastNavigation = path
     this.persistState()
-    EventBus.$emit('lastNavigatedRoute-changed', this.state.navigateToOnAuthentication)
+    EventBus.$emit('lastNavigation-changed', this.state.lastNavigation)
   }
 
   async fetchProjects(): Promise<void> {
@@ -60,7 +60,7 @@ class SharedStore {
   private defaultState(): SharedState {
     return {
       isSidePanelExpanded: true,
-      navigateToOnAuthentication: '',
+      lastNavigation: '',
       personalProjects: [],
     }
   }

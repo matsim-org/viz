@@ -2,6 +2,7 @@ import SharedStore from '../SharedStore'
 import AuthenticationStore from '../auth/Authentication'
 import Project from '../entities/Project'
 import { ContentType, HeaderKeys } from './Constants'
+import AuthenticatedRequest from '../auth/AuthenticatedRequest'
 
 export default class FileAPI {
   private static FILE_API = 'https://localhost:3001/' //'http://cnode00.vsp.tu-berlin.de:3001/'
@@ -32,12 +33,9 @@ export default class FileAPI {
     }
     formData.append('projectId', project.id)
 
-    let headers = new Headers()
-    headers.append(HeaderKeys.AUTHORIZATION, 'Bearer ' + AuthenticationStore.state.accessToken)
     const options: RequestInit = {
       method: 'POST',
       mode: 'cors',
-      headers: headers,
       body: formData,
     }
 
@@ -48,7 +46,7 @@ export default class FileAPI {
     const body = { fileId: fileId, projectId: project.id }
     const options = this.authorizedPostRequestOptions(body)
 
-    let result = await fetch(this.FILE_API + this.FILE, options)
+    let result = await AuthenticatedRequest.fetch(this.FILE_API + this.FILE, options)
 
     if (result.ok) {
       let file = await result.blob()
@@ -61,7 +59,6 @@ export default class FileAPI {
 
   private static authorizedPostRequestOptions(body: any): RequestInit {
     let headers = new Headers()
-    headers.append(HeaderKeys.AUTHORIZATION, 'Bearer ' + AuthenticationStore.state.accessToken)
     headers.append(HeaderKeys.CONTENT_TYPE, ContentType.APPLICATION_JSON)
     return {
       method: 'POST',
@@ -72,7 +69,7 @@ export default class FileAPI {
   }
 
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    let result = await fetch(this.FILE_API + endpoint, options)
+    let result = await AuthenticatedRequest.fetch(this.FILE_API + endpoint, options)
     if (result.ok) {
       const contentType = result.headers.get('content-type')
       return await result.json()
@@ -82,14 +79,8 @@ export default class FileAPI {
   }
 
   private static async generateError(response: Response): Promise<Error> {
-    if (response.status === 401) {
-      //unauthorized
-      //the token is not valid. A new one must be requested
-      return Error('Token was not valid. Retreival of new token must be implemented')
-    } else {
-      let error = await response.json()
-      console.error(error)
-      return new Error(error.error_description)
-    }
+    let error = await response.json()
+    console.error(error)
+    return new Error(error.error_description)
   }
 }
