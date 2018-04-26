@@ -134,7 +134,7 @@ class AuthenticationRequest {
     this.request = {
       scope: 'openid',
       response_type: 'id_token token',
-      client_id: 'matsim-viz-local-client-id',
+      client_id: Config.clientId,
       redirect_uri: 'http://localhost:8080/authentication',
       state: this.randomString(),
       nonce: this.randomString(),

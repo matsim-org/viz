@@ -15,7 +15,7 @@ function createConfig(): Config {
     return {
       authServer: 'https://cnode00.vsp.tu-berlin.de:3000',
       fileServer: 'https://cnode00.vsp.tu-berlin.de:3001',
-      clientId: 'test-client-id',
+      clientId: 'matsim-viz-local-client-id',
     }
   }
 }
