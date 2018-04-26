@@ -3,12 +3,12 @@ import AuthenticationStore from '../auth/Authentication'
 import Project from '../entities/Project'
 import { ContentType, HeaderKeys } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
+import Config from '../config/Config'
 
 export default class FileAPI {
-  private static FILE_API = 'http://cnode00.vsp.tu-berlin.de:3001/'
-  private static PROJECT: string = 'project/'
-  private static FILE: string = 'file/'
-  private static FILE_UPLOAD: string = FileAPI.FILE + 'upload/'
+  private static PROJECT: string = '/project/'
+  private static FILE: string = '/file/'
+  private static FILE_UPLOAD: string = FileAPI.FILE + '/upload/'
 
   public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
     return await this.request<Array<Project>>(this.PROJECT, this.authorizedPostRequestOptions({}))
@@ -46,7 +46,7 @@ export default class FileAPI {
     const body = { fileId: fileId, projectId: project.id }
     const options = this.authorizedPostRequestOptions(body)
 
-    let result = await AuthenticatedRequest.fetch(this.FILE_API + this.FILE, options)
+    let result = await AuthenticatedRequest.fetch(Config.fileServer + this.FILE, options)
 
     if (result.ok) {
       let file = await result.blob()
@@ -69,7 +69,7 @@ export default class FileAPI {
   }
 
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    let result = await AuthenticatedRequest.fetch(this.FILE_API + endpoint, options)
+    let result = await AuthenticatedRequest.fetch(Config.fileServer + endpoint, options)
     if (result.ok) {
       const contentType = result.headers.get('content-type')
       return await result.json()

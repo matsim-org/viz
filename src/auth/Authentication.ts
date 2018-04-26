@@ -2,6 +2,7 @@ import { Dictionary } from 'lodash'
 import { IncomingMessage } from 'http'
 import * as JWT from 'jwt-decode'
 import { Method } from '../communication/Constants'
+import Config from '../config/Config'
 
 export enum AuthenticationStatus {
   NotAuthenticated,
@@ -120,7 +121,7 @@ class AuthenticationRequest {
   }
 
   private request: any
-  private endpoint: string = 'https://cnode00.vsp.tu-berlin.de:3000/authorize/'
+  private endpoint: string = Config.authServer + '/authorize/'
 
   get stateVariable(): string {
     return this.request.state
