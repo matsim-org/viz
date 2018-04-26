@@ -31,4 +31,8 @@ export class Method {
   static get PUT(): string {
     return 'PUT'
   }
+
+  static get DELETE(): string {
+    return 'DELETE'
+  }
 }

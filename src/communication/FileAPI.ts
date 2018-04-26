@@ -1,14 +1,14 @@
 import SharedStore from '../SharedStore'
 import AuthenticationStore from '../auth/Authentication'
 import Project from '../entities/Project'
-import { ContentType, HeaderKeys } from './Constants'
+import { ContentType, HeaderKeys, Method } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
 import Config from '../config/Config'
 
 export default class FileAPI {
-  private static PROJECT: string = '/project/'
-  private static FILE: string = '/file/'
-  private static FILE_UPLOAD: string = FileAPI.FILE + '/upload/'
+  private static PROJECT: string = Config.fileServer + '/project/'
+  private static FILE: string = Config.fileServer + '/file/'
+  private static FILE_UPLOAD: string = Config.fileServer + '/file/upload/'
 
   public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
     return await this.request<Array<Project>>(this.PROJECT, this.authorizedPostRequestOptions({}))
@@ -21,7 +21,7 @@ export default class FileAPI {
 
   public static async createProject(projectName: string): Promise<Project> {
     let options = this.authorizedPostRequestOptions({ name: projectName })
-    options.method = 'PUT'
+    options.method = Method.PUT
     return await this.request<Project>(this.PROJECT, options)
   }
 
@@ -34,7 +34,7 @@ export default class FileAPI {
     formData.append('projectId', project.id)
 
     const options: RequestInit = {
-      method: 'POST',
+      method: Method.POST,
       mode: 'cors',
       body: formData,
     }
@@ -46,7 +46,7 @@ export default class FileAPI {
     const body = { fileId: fileId, projectId: project.id }
     const options = this.authorizedPostRequestOptions(body)
 
-    let result = await AuthenticatedRequest.fetch(Config.fileServer + this.FILE, options)
+    let result = await AuthenticatedRequest.fetch(this.FILE, options)
 
     if (result.ok) {
       let file = await result.blob()
@@ -57,11 +57,19 @@ export default class FileAPI {
     }
   }
 
+  public static async deleteFile(fileId: string, project: Project): Promise<Project> {
+    const body = { fileId: fileId, projectId: project.id }
+    const options = this.authorizedPostRequestOptions(body)
+    options.method = Method.DELETE
+
+    return await this.request<Project>(this.FILE, options)
+  }
+
   private static authorizedPostRequestOptions(body: any): RequestInit {
     let headers = new Headers()
     headers.append(HeaderKeys.CONTENT_TYPE, ContentType.APPLICATION_JSON)
     return {
-      method: 'POST',
+      method: Method.POST,
       mode: 'cors',
       headers: headers,
       body: JSON.stringify(body),
@@ -69,7 +77,7 @@ export default class FileAPI {
   }
 
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    let result = await AuthenticatedRequest.fetch(Config.fileServer + endpoint, options)
+    let result = await AuthenticatedRequest.fetch(endpoint, options)
     if (result.ok) {
       const contentType = result.headers.get('content-type')
       return await result.json()

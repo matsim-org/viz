@@ -17,12 +17,17 @@
       .emptyMessage(v-if="project.files.length === 0")
         span No files yet. Add some!
       .fileList
-        button.fileItem(v-for="file in project.files" v-on:click="handleFileClicked(file.id)")
-          list-element( v-bind:key="file.id")          
+        .fileItem(v-for="file in project.files")
+          list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
             .itemTitle(slot="title")
               span {{file.userFileName}}
               span {{file.sizeInBytes}} Bytes
             span(slot="content") {{file.id}}
+            button.ui.animated.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
+              .ui.hidden.content Delete
+              .ui.visible.content
+                i.ui.trash.icon
+            
 </template>
 
 <style>
@@ -58,23 +63,6 @@
   display: flex;
   flex-direction: column;
   align-content: stretch;
-}
-
-.fileItem {
-  flex: 1;
-  background-color: transparent;
-  border: none;
-  font-family: inherit;
-  padding: 0;
-  margin: 0;
-  text-align: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  transition-duration: 0.25s;
-}
-
-.fileItem:hover {
-  background-color: lightgray;
 }
 
 .emptyMessage {
@@ -118,9 +106,7 @@ export default Vue.extend({
   },
   created: async function() {
     // check if project with id exists in personalProjects
-    let project = this.sharedState.personalProjects.find(
-      element => element.id === this.projectId
-    )
+    let project = this.sharedState.personalProjects.find(element => element.id === this.projectId)
 
     //if not, request the project
     if (project) {
@@ -150,6 +136,13 @@ export default Vue.extend({
       try {
         let blob = await FileAPI.downloadFile(fileId, this.project)
         window.open(URL.createObjectURL(blob))
+      } catch (e) {
+        console.log(e)
+      }
+    },
+    handleDeleteFileClicked: async function(fileId: string) {
+      try {
+        this.project = await FileAPI.deleteFile(fileId, this.project)
       } catch (e) {
         console.log(e)
       }
