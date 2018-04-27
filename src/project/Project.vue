@@ -23,9 +23,9 @@
               span {{file.userFileName}}
               span {{file.sizeInBytes}} Bytes
             span(slot="content") {{file.id}}
-            button.ui.animated.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
-              .ui.hidden.content Delete
-              .ui.visible.content
+            button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
+              .ui.visible.content Delete
+              .ui.hidden.content
                 i.ui.trash.icon
             
 </template>

@@ -1,7 +1,10 @@
 <template lang="pug">
   .listHeader
     h1 {{title}}
-    button.ui.green.button(v-on:click="$emit('btnClicked')") {{btnTitle}}
+    button.ui.animated.positive.button(v-on:click="$emit('btnClicked')")
+      .ui.visible.content {{btnTitle}}
+      .ui.hidden.content
+        i.ui.plus.icon
 </template>
 
 <style>
