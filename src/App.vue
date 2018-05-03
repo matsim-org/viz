@@ -90,7 +90,7 @@ h6 {
 }
 
 #btn-toggle-sidepanel {
-  background-color: #eeeee980;
+  background-color: transparent;
   border-radius: 0px 4px 0px 0px;
   padding: 4px 2px 4px 4px;
   grid-column: 1 / 3;

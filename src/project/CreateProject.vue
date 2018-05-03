@@ -1,13 +1,15 @@
 <template lang="pug">
-  .createProject
-    h1 New Project
-    span Create a new Project to collect result data. 
+  modal(v-on:close-requested="cancel()")
+    span(slot="header") Create Project
+    div(slot="content")
       text-input(label="Project Name" v-model="projectName")
-    error(v-if="isServerError" v-bind:message="serverError")
-    .buttonContainer
-      .loader
-        .ui.active.inline.loader(v-if="isRequesting")
-      button.ui.animated.positive.button(v-on:click="onCreateClicked")
+      error(v-if="isServerError" v-bind:message="serverError")
+    div(slot="actions")
+      button.ui.animated.negative.button(v-on:click="cancel()")
+        .ui.visible.content Cancel
+        .ui.hidden.content
+          i.ui.times.icon
+      button.ui.animated.positive.button(v-on:click="handleCreateClicked()")
         .ui.visible.content Create
         .ui.hidden.content
           i.ui.check.icon
@@ -18,10 +20,12 @@ import Vue from 'vue'
 import FileAPI from '../communication/FileAPI'
 import TextInput from '@/components/TextInput.vue'
 import Error from '@/components/Error.vue'
+import Modal from '@/components/Modal.vue'
 export default Vue.extend({
   components: {
     'text-input': TextInput,
     error: Error,
+    modal: Modal,
   },
   data() {
     return {
@@ -32,18 +36,24 @@ export default Vue.extend({
     }
   },
   methods: {
-    onCreateClicked: async function() {
+    handleCreateClicked: async function() {
       try {
         this.isRequesting = true
         this.isServerError = false
         let newProject = await FileAPI.createProject(this.projectName)
         this.isRequesting = false
-        this.$router.replace({ path: `/project/${newProject.id}` })
+        this.$router.push({ path: `/project/${newProject.id}` })
       } catch (error) {
         this.isServerError = true
         this.serverError = error.message
         this.isRequesting = false
       }
+    },
+    cancel: function(): void {
+      this.close()
+    },
+    close: function(): void {
+      this.$emit('close')
     },
   },
 })

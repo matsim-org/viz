@@ -49,12 +49,16 @@ export default Vue.extend({
   },
   methods: {
     cancel: function() {
+      this.close()
+    },
+    close: function() {
       this.$emit('close')
     },
     createVisualization: async function() {
       this.isRequesting = true
       try {
         let answer = await FileAPI.createVisualization({})
+        this.close()
       } catch (error) {
         this.isServerError = true
         this.serverError = error.message

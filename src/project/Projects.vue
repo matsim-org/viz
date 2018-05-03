@@ -5,10 +5,11 @@
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
     .projectList(v-else)  
-        button.projectItem(v-for="project in sharedState.personalProjects" v-on:click="onProjectClicked(project.id)")
+        button.projectItem(v-for="project in sharedState.personalProjects" v-on:click="handleProjectClicked(project.id)")
           list-element(v-bind:key="project.id")          
             span(slot="title") {{project.name}}
             span(slot="content") {{project.id}}
+    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed")        
 </template>
 
 
@@ -16,6 +17,7 @@
 import Vue from 'vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
+import CreateProject from '@/project/CreateProject.vue'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
@@ -24,18 +26,23 @@ export default Vue.extend({
   components: {
     'list-header': ListHeader,
     'list-element': ListElement,
+    'create-project': CreateProject,
   },
   data() {
     return {
       sharedState: SharedStore.state,
+      showCreateProject: false,
     }
   },
   methods: {
-    onProjectClicked(id: string) {
+    handleProjectClicked(id: string) {
       this.$router.push({ path: `/project/${id}` })
     },
     handleCreateClicked() {
-      this.$router.push({ path: '/projects/new' })
+      this.showCreateProject = true
+    },
+    handleCreateProjectClosed() {
+      this.showCreateProject = false
     },
   },
   created: async function() {
@@ -50,7 +57,7 @@ export default Vue.extend({
 
 <style scoped>
 .projects {
-  margin: 1rem;
+  padding: 1rem;
 }
 
 .projectList {

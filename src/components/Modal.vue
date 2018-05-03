@@ -24,11 +24,11 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .modal-wrapper {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .modal-enter {
