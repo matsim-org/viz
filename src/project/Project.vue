@@ -5,34 +5,44 @@
         h1 {{project.name}}
         span {{project.id}}
       span(v-if="isFetchingData") Fetching project data...
-
-    list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
-    input.fileInput(type="file" 
+    
+    section
+      list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
+    
+    section
+      list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
+      input.fileInput(type="file" 
           id="fileInput"
           ref="fileInput"
           multiple
           v-on:change="onFileInputChanged"
           )
-    .files
-      .emptyMessage(v-if="project.files.length === 0")
-        span No files yet. Add some!
-      .fileList
-        .fileItem(v-for="file in project.files")
-          list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
-            .itemTitle(slot="title")
-              span {{file.userFileName}}
-              span {{file.sizeInBytes}} Bytes
-            span(slot="content") {{file.id}}
-            button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
-              .ui.visible.content Delete
-              .ui.hidden.content
-                i.ui.trash.icon
-            
+      .files
+        .emptyMessage(v-if="project.files.length === 0")
+          span No files yet. Add some!
+        .fileList
+          .fileItem(v-for="file in project.files")
+            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
+              .itemTitle(slot="title")
+                span {{file.userFileName}}
+                span {{file.sizeInBytes}} Bytes
+              span(slot="content") {{file.id}}
+              button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
+                .ui.visible.content Delete
+                .ui.hidden.content
+                  i.ui.trash.icon
+    create-visualization(v-if="showCreateVisualization === true" 
+                         v-on:close="handleAddVisualizationCanceled()"
+                         v-bind:project="project")
 </template>
 
 <style>
+section {
+  margin: 4rem 0 4rem 0;
+}
+
 .project {
-  margin: 1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -77,6 +87,8 @@
 import Vue from 'vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
+import Modal from '@/components/Modal.vue'
+import CreateVisualization from '@/project/CreateVisualization.vue'
 import SharedStore, { SharedState } from '../SharedStore'
 import Project from '../entities/Project'
 import FileAPI from '../communication/FileAPI'
@@ -86,12 +98,15 @@ interface ProjectState {
   sharedState: SharedState
   project: Project
   isFetchingData: boolean
+  showCreateVisualization: boolean
 }
 
 export default Vue.extend({
   components: {
     'list-header': ListHeader,
     'list-element': ListElement,
+    modal: Modal,
+    'create-visualization': CreateVisualization,
   },
   data(): ProjectState {
     return {
@@ -102,6 +117,7 @@ export default Vue.extend({
         files: [],
       },
       isFetchingData: false,
+      showCreateVisualization: false,
     }
   },
   created: async function() {
@@ -146,6 +162,12 @@ export default Vue.extend({
       } catch (e) {
         console.log(e)
       }
+    },
+    handleAddVisualizationClicked: function() {
+      this.showCreateVisualization = true
+    },
+    handleAddVisualizationCanceled: function() {
+      this.showCreateVisualization = false
     },
     onFileInputChanged: async function() {
       const files = (this.$refs.fileInput as any).files

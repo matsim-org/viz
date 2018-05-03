@@ -2,27 +2,27 @@
   .createProject
     h1 New Project
     span Create a new Project to collect result data. 
-    .inputContainer
-      label.inputLabel(for="inputProjectName") Project Name
-      .ui.input
-        input(
-          v-model="projectName"
-          name="inputProjectName" 
-          type="text" 
-          placeholder="Enter project name..." 
-          required)
-    .error(v-if="isServerError") {{serverError}}
+      text-input(label="Project Name" v-model="projectName")
+    error(v-if="isServerError" v-bind:message="serverError")
     .buttonContainer
-      
-      button.ui.green.button(v-on:click="onCreateClicked")
-        div.ui.active.inline.loader(v-if="isRequesting")
-        span(v-else) Create
+      .loader
+        .ui.active.inline.loader(v-if="isRequesting")
+      button.ui.animated.positive.button(v-on:click="onCreateClicked")
+        .ui.visible.content Create
+        .ui.hidden.content
+          i.ui.check.icon
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import FileAPI from '../communication/FileAPI'
+import TextInput from '@/components/TextInput.vue'
+import Error from '@/components/Error.vue'
 export default Vue.extend({
+  components: {
+    'text-input': TextInput,
+    error: Error,
+  },
   data() {
     return {
       projectName: '',
@@ -74,10 +74,15 @@ export default Vue.extend({
   padding: 0.5rem 0.5rem 0.5rem 1rem;
   margin-bottom: 1rem;
 }
+
 .buttonContainer {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+}
+
+.loader {
+  margin-right: 1rem;
 }
 </style>
 
