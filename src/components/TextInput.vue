@@ -2,7 +2,10 @@
   .textInput
     label.inputLabel {{label}}
     .ui.input
-        input(v-bind:value="text" v-bind:change="text" v-on:change="$emit('change', $event.target.value)" type="text")
+        input(v-bind:value="text" 
+              v-bind:change="text" 
+              v-on:change="$emit('change', $event.target.value)" 
+              type="text")
 </template>
 <style scoped>
 .textInput {

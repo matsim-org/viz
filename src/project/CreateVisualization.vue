@@ -2,8 +2,10 @@
 modal(v-on:close-requested="cancel()")
     span(slot="header") Create Visualization
     div(slot="content")
-        text-input(label="Pick a network file" v-model="foo")
-        error(v-if="isServerError" v-bind:message="serverError")
+      selection(v-bind:options="project.files" v-on:selection-changed="handleSelectionChanged")
+        span(slot-scope="{ option }") {{ option.userFileName }}
+      text-input(label="Pick a network file" v-model="foo")
+      error(v-if="isServerError" v-bind:message="serverError")
     div(slot="actions")
         button.ui.negative.button(v-on:click="cancel()") Cancel
         button.ui.positive.button(v-on:click="createVisualization()") Create
@@ -14,14 +16,19 @@ import Vue from 'vue'
 import TextInput from '@/components/TextInput.vue'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
+import Selection from '@/components/Selection.vue'
 import { setTimeout } from 'timers'
 import FileAPI from '../communication/FileAPI'
+import Project from '../entities/Project'
 import { CreateVisualizationRequest } from '../entities/Visualization'
 
 interface CreateVisualizationState {
   isRequesting: boolean
-  foo: string
-  request: CreateVisualizationRequest
+  isServerError: boolean
+  serverError: string
+  foo?: string
+  request?: CreateVisualizationRequest
+  project?: Project
 }
 
 export default Vue.extend({
@@ -29,6 +36,7 @@ export default Vue.extend({
     modal: Modal,
     'text-input': TextInput,
     error: Error,
+    selection: Selection,
   },
   props: {
     project: Object,
@@ -65,6 +73,9 @@ export default Vue.extend({
       } finally {
         this.isRequesting = false
       }
+    },
+    handleSelectionChanged: function(value: any) {
+      console.log(value)
     },
   },
 })
