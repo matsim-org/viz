@@ -129,10 +129,7 @@ export default Vue.extend({
     }
   },
   created: async function() {
-    // check if project with id exists in personalProjects
     let project = this.sharedState.personalProjects.find(element => element.id === this.projectId)
-
-    //if not, request the project
     if (project) {
       this.project = project
     }
