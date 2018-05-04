@@ -8,6 +8,11 @@
     
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
+      div(v-for="viz in project.visualizations")
+        list-element(v-bind:key="viz.id")
+          .itemTitle(slot="title")
+            span {{ viz.type.key}}
+          
     
     section
       list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
@@ -31,8 +36,8 @@
                 .ui.visible.content Delete
                 .ui.hidden.content
                   i.ui.trash.icon
-    create-visualization(v-if="showCreateVisualization === true" 
-                         v-on:close="handleAddVisualizationCanceled()"
+    create-visualization(v-if="showCreateVisualization" 
+                         v-on:close="handleAddVisualizationClosed"
                          v-bind:project="project")
 </template>
 
@@ -91,6 +96,7 @@ import Modal from '@/components/Modal.vue'
 import CreateVisualization from '@/project/CreateVisualization.vue'
 import SharedStore, { SharedState } from '../SharedStore'
 import Project from '../entities/Project'
+import { Visualization } from '../entities/Visualization'
 import FileAPI from '../communication/FileAPI'
 import { File } from 'babel-types'
 
@@ -115,6 +121,8 @@ export default Vue.extend({
         id: this.$route.params.id,
         name: '',
         files: [],
+        creator: {},
+        visualizations: [],
       },
       isFetchingData: false,
       showCreateVisualization: false,
@@ -166,8 +174,9 @@ export default Vue.extend({
     handleAddVisualizationClicked: function() {
       this.showCreateVisualization = true
     },
-    handleAddVisualizationCanceled: function() {
+    handleAddVisualizationClosed: function(visualization: Visualization) {
       this.showCreateVisualization = false
+      if (visualization) this.project.visualizations.push(visualization)
     },
     onFileInputChanged: async function() {
       const files = (this.$refs.fileInput as any).files

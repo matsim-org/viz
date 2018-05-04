@@ -2,27 +2,19 @@
 modal(v-on:close-requested="cancel()")
     span(slot="header") Create Visualization
     div(slot="content")
-      selection.selection(v-bind:options="visualizationTypes" 
+      selection.selection(v-bind:options="sharedState.visualizationTypes" 
                 label="Select Visualization-Type" 
                 v-on:selection-changed="handleVizTypeChanged")
-        span(slot-scope="{option}") {{ option }}
-
-      selection.selection(v-bind:options="project.files"
-                label="Select network"
-                v-on:selection-changed="handleNetworkFileChanged")
-        span(slot-scope="{ option }") {{ option.userFileName }}
-
-      selection.selection(v-bind:options="project.files"
-                label="Select events"
-                v-on:selection-changed="handleEventsFileChanged")
-        span(slot-scope="{ option }") {{ option.userFileName }}
-
-      selection.selection(v-bind:options="project.files"
-                label="Select plans"
-                v-on:selection-changed="handlePlansFileChanged")
-        span(slot-scope="{ option }") {{ option.userFileName }}
-
-      text-input(label="Snapshot Intervall" v-on:change="handleSnapshotIntervallChanged")
+        span(slot-scope="{option}") {{ option.key }}
+      div(v-if="selectedVizType")
+        div(v-for="key in selectedVizType.requiredFileKeys")
+          selection.selection(v-bind:options="project.files"
+                            v-bind:label="key"
+                            v-on:selection-changed="handleFileChanged(key, $event)")
+            span(slot-scope="{option}") {{ option.userFileName }}
+        
+        div(v-for="key in selectedVizType.requiredParamKeys")
+          text-input(v-bind:label="key" v-on:change="handleParamChanged(key, $event)")
       error(v-if="isServerError" v-bind:message="serverError")
     div(slot="actions")
         div(v-if="isRequesting")
@@ -48,7 +40,9 @@ import Selection from '@/components/Selection.vue'
 import { setTimeout } from 'timers'
 import FileAPI from '../communication/FileAPI'
 import Project from '../entities/Project'
-import { CreateVisualizationRequest } from '../entities/Visualization'
+import { Visualization } from '../entities/Visualization'
+import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
+import SharedStore, { SharedState } from '../SharedStore'
 
 interface CreateVisualizationState {
   isRequesting: boolean
@@ -56,7 +50,8 @@ interface CreateVisualizationState {
   serverError: string
   request: CreateVisualizationRequest
   project?: Project
-  visualizationTypes?: String[]
+  sharedState: SharedState
+  selectedVizType?: VisualizationType
 }
 
 export default Vue.extend({
@@ -74,27 +69,28 @@ export default Vue.extend({
       isRequesting: false,
       isServerError: false,
       serverError: '',
-      visualizationTypes: ['Network-Flows', 'Accessibility', 'Network Links', 'Animation'],
       request: {
         projectId: this.project.id,
         typeKey: 'raw-files',
         inputFiles: new Map<string, string>(),
         inputParameters: new Map<string, string>(),
       },
+      sharedState: SharedStore.state,
+      selectedVizType: undefined,
     }
   },
   methods: {
     cancel: function(): void {
-      this.close()
+      this.close(null)
     },
-    close: function(): void {
-      this.$emit('close')
+    close: function(visualization: Visualization | null): void {
+      this.$emit('close', visualization)
     },
     createVisualization: async function(): Promise<void> {
       this.isRequesting = true
       try {
         let answer = await FileAPI.createVisualization(this.request)
-        this.close()
+        this.close(answer)
       } catch (error) {
         this.isServerError = true
         this.serverError = error.message
@@ -102,20 +98,15 @@ export default Vue.extend({
         this.isRequesting = false
       }
     },
-    handleVizTypeChanged: function(value: string) {
-      this.request.typeKey = value
+    handleVizTypeChanged: function(value: VisualizationType) {
+      this.request.typeKey = value.key
+      this.selectedVizType = value
     },
-    handleNetworkFileChanged: function(value: any) {
-      this.request.inputFiles.set('network', value.id)
+    handleFileChanged(key: string, event: any) {
+      this.request.inputFiles.set(key, event.id)
     },
-    handleEventsFileChanged: function(value: any) {
-      this.request.inputFiles.set('events', value.id)
-    },
-    handlePlansFileChanged: function(value: any) {
-      this.request.inputFiles.set('plans', value.id)
-    },
-    handleSnapshotIntervallChanged: function(value: string) {
-      this.request.inputParameters.set('snapshotIntervall', value)
+    handleParamChanged(key: string, value: string) {
+      this.request.inputParameters.set(key, value)
     },
   },
 })

@@ -4,13 +4,14 @@ import Project from '../entities/Project'
 import { ContentType, HeaderKeys, Method } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
 import Config from '../config/Config'
-import { CreateVisualizationRequest } from '../entities/Visualization'
+import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
 
 export default class FileAPI {
   private static PROJECT: string = Config.fileServer + '/project/'
   private static FILE: string = Config.fileServer + '/file/'
   private static FILE_UPLOAD: string = Config.fileServer + '/file/upload/'
   private static VISUALIZATION: string = FileAPI.PROJECT + 'visualization/'
+  private static VISUALIZATION_TYPE: string = Config.fileServer + '/visualization-type/'
 
   public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
     return await this.request<Array<Project>>(this.PROJECT, this.postRequestOptions({}))
@@ -19,6 +20,11 @@ export default class FileAPI {
   public static async fetchProjects(projectIds: string[]): Promise<Array<Project>> {
     const body = { projectIds: projectIds }
     return await this.request<Array<Project>>(this.PROJECT, this.postRequestOptions(body))
+  }
+
+  public static async fetchVisualizationTypes(): Promise<Array<VisualizationType>> {
+    const options = this.postRequestOptions({})
+    return await this.request<Array<VisualizationType>>(this.VISUALIZATION_TYPE, options)
   }
 
   public static async createProject(projectName: string): Promise<Project> {

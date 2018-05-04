@@ -5,6 +5,7 @@ import { Dictionary } from 'vue-router/types/router'
 import AuthenticationStore, { AuthenticationStatus } from './auth/Authentication'
 import FileAPI from './communication/FileAPI'
 import Project from './entities/Project'
+import { VisualizationType } from './entities/Visualization'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/
@@ -14,6 +15,7 @@ interface SharedState {
   isSidePanelExpanded: boolean
   lastNavigation: string
   personalProjects: Project[]
+  visualizationTypes: VisualizationType[]
 }
 
 class SharedStore {
@@ -55,6 +57,9 @@ class SharedStore {
   async fetchProjects(): Promise<void> {
     let fetchedProjects = await FileAPI.fetchAllPersonalProjects()
     this._state.personalProjects = fetchedProjects
+    //fetch the visualization type definition here for now
+    let fetchedVizTypes = await FileAPI.fetchVisualizationTypes()
+    this._state.visualizationTypes = fetchedVizTypes
   }
 
   private defaultState(): SharedState {
@@ -62,6 +67,7 @@ class SharedStore {
       isSidePanelExpanded: true,
       lastNavigation: '',
       personalProjects: [],
+      visualizationTypes: [],
     }
   }
 
