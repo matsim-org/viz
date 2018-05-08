@@ -55,11 +55,11 @@ class SharedStore {
   }
 
   async fetchProjects(): Promise<void> {
-    let fetchedProjects = await FileAPI.fetchAllPersonalProjects()
-    this._state.personalProjects = fetchedProjects
-    //fetch the visualization type definition here for now
-    let fetchedVizTypes = await FileAPI.fetchVisualizationTypes()
-    this._state.visualizationTypes = fetchedVizTypes
+    this._state.personalProjects = await FileAPI.fetchAllPersonalProjects()
+  }
+
+  async fetchVizTypes(): Promise<void> {
+    this._state.visualizationTypes = await FileAPI.fetchVisualizationTypes()
   }
 
   private defaultState(): SharedState {

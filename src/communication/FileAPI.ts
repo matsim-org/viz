@@ -4,7 +4,7 @@ import Project from '../entities/Project'
 import { ContentType, HeaderKeys, Method } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
 import Config from '../config/Config'
-import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
+import { CreateVisualizationRequest, VisualizationType, Visualization } from '../entities/Visualization'
 
 export default class FileAPI {
   private static PROJECT: string = Config.fileServer + '/project/'
@@ -33,10 +33,10 @@ export default class FileAPI {
     return await this.request<Project>(this.PROJECT, options)
   }
 
-  public static async createVisualization(request: CreateVisualizationRequest): Promise<any> {
+  public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     let options = this.postRequestOptions(request)
     options.method = Method.PUT
-    return await this.request<any>(this.VISUALIZATION, options)
+    return await this.request<Visualization>(this.VISUALIZATION, options)
   }
 
   public static async uploadFiles(files: Array<File>, project: Project): Promise<Project> {

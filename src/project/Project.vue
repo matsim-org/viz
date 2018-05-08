@@ -142,6 +142,10 @@ export default Vue.extend({
       }
       this.isFetchingData = false
     }
+
+    if (this.sharedState.visualizationTypes.length < 1) {
+      SharedStore.fetchVizTypes()
+    }
   },
   computed: {
     projectId: function(): string {
