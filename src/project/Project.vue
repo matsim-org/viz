@@ -5,34 +5,49 @@
         h1 {{project.name}}
         span {{project.id}}
       span(v-if="isFetchingData") Fetching project data...
-
-    list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
-    input.fileInput(type="file" 
+    
+    section
+      list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
+      div(v-for="viz in project.visualizations")
+        list-element(v-bind:key="viz.id")
+          .itemTitle(slot="title")
+            span {{ viz.type.key}}
+          
+    
+    section
+      list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
+      input.fileInput(type="file" 
           id="fileInput"
           ref="fileInput"
           multiple
           v-on:change="onFileInputChanged"
           )
-    .files
-      .emptyMessage(v-if="project.files.length === 0")
-        span No files yet. Add some!
-      .fileList
-        .fileItem(v-for="file in project.files")
-          list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
-            .itemTitle(slot="title")
-              span {{file.userFileName}}
-              span {{file.sizeInBytes}} Bytes
-            span(slot="content") {{file.id}}
-            button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
-              .ui.visible.content Delete
-              .ui.hidden.content
-                i.ui.trash.icon
-            
+      .files
+        .emptyMessage(v-if="project.files.length === 0")
+          span No files yet. Add some!
+        .fileList
+          .fileItem(v-for="file in project.files")
+            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
+              .itemTitle(slot="title")
+                span {{file.userFileName}}
+                span {{file.sizeInBytes}} Bytes
+              span(slot="content") {{file.id}}
+              button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
+                .ui.visible.content Delete
+                .ui.hidden.content
+                  i.ui.trash.icon
+    create-visualization(v-if="showCreateVisualization" 
+                         v-on:close="handleAddVisualizationClosed"
+                         v-bind:project="project")
 </template>
 
 <style>
+section {
+  margin: 4rem 0 4rem 0;
+}
+
 .project {
-  margin: 1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -77,8 +92,11 @@
 import Vue from 'vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
+import Modal from '@/components/Modal.vue'
+import CreateVisualization from '@/project/CreateVisualization.vue'
 import SharedStore, { SharedState } from '../SharedStore'
 import Project from '../entities/Project'
+import { Visualization } from '../entities/Visualization'
 import FileAPI from '../communication/FileAPI'
 import { File } from 'babel-types'
 
@@ -86,12 +104,15 @@ interface ProjectState {
   sharedState: SharedState
   project: Project
   isFetchingData: boolean
+  showCreateVisualization: boolean
 }
 
 export default Vue.extend({
   components: {
     'list-header': ListHeader,
     'list-element': ListElement,
+    modal: Modal,
+    'create-visualization': CreateVisualization,
   },
   data(): ProjectState {
     return {
@@ -100,15 +121,15 @@ export default Vue.extend({
         id: this.$route.params.id,
         name: '',
         files: [],
+        creator: {},
+        visualizations: [],
       },
       isFetchingData: false,
+      showCreateVisualization: false,
     }
   },
   created: async function() {
-    // check if project with id exists in personalProjects
     let project = this.sharedState.personalProjects.find(element => element.id === this.projectId)
-
-    //if not, request the project
     if (project) {
       this.project = project
     }
@@ -120,6 +141,10 @@ export default Vue.extend({
         this.project = fetchedProjects[0]
       }
       this.isFetchingData = false
+    }
+
+    if (this.sharedState.visualizationTypes.length < 1) {
+      SharedStore.fetchVizTypes()
     }
   },
   computed: {
@@ -146,6 +171,13 @@ export default Vue.extend({
       } catch (e) {
         console.log(e)
       }
+    },
+    handleAddVisualizationClicked: function() {
+      this.showCreateVisualization = true
+    },
+    handleAddVisualizationClosed: function(visualization: Visualization) {
+      this.showCreateVisualization = false
+      if (visualization) this.project.visualizations.push(visualization)
     },
     onFileInputChanged: async function() {
       const files = (this.$refs.fileInput as any).files

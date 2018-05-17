@@ -44,12 +44,6 @@ let instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/projects/new',
-      component: CreateProject,
-      name: 'New Project',
-      meta: { authRequired: true },
-    },
-    {
       path: '/project/:id',
       component: Project,
       name: 'Project',
