@@ -128,7 +128,7 @@ export default Vue.extend({
       showCreateVisualization: false,
     }
   },
-  created: async function() {
+  created: async function(): Promise<void> {
     let project = this.sharedState.personalProjects.find(element => element.id === this.projectId)
     if (project) {
       this.project = project
@@ -136,7 +136,7 @@ export default Vue.extend({
 
     if (!project || project.files.length < 1) {
       this.isFetchingData = true
-      let fetchedProjects = await FileAPI.fetchProjects([this.projectId])
+      let fetchedProjects = await FileAPI.fetchProject(this.projectId)
       if (fetchedProjects.length > 0) {
         this.project = fetchedProjects[0]
       }
@@ -157,7 +157,7 @@ export default Vue.extend({
       const input = this.$refs.fileInput as HTMLInputElement
       input.click()
     },
-    handleFileClicked: async function(fileId: string) {
+    handleFileClicked: async function(fileId: string): Promise<void> {
       try {
         let blob = await FileAPI.downloadFile(fileId, this.project)
         window.open(URL.createObjectURL(blob))
@@ -165,21 +165,21 @@ export default Vue.extend({
         console.log(e)
       }
     },
-    handleDeleteFileClicked: async function(fileId: string) {
+    handleDeleteFileClicked: async function(fileId: string): Promise<void> {
       try {
         this.project = await FileAPI.deleteFile(fileId, this.project)
       } catch (e) {
         console.log(e)
       }
     },
-    handleAddVisualizationClicked: function() {
+    handleAddVisualizationClicked: function(): void {
       this.showCreateVisualization = true
     },
-    handleAddVisualizationClosed: function(visualization: Visualization) {
+    handleAddVisualizationClosed: function(visualization: Visualization): void {
       this.showCreateVisualization = false
       if (visualization) this.project.visualizations.push(visualization)
     },
-    onFileInputChanged: async function() {
+    onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files
       const updatedProject = await FileAPI.uploadFiles(files, this.project)
       this.project = updatedProject

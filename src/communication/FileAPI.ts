@@ -17,8 +17,8 @@ export default class FileAPI {
     return await this.request<Array<Project>>(this.PROJECT, this.postRequestOptions({}))
   }
 
-  public static async fetchProjects(projectIds: string[]): Promise<Array<Project>> {
-    const body = { projectIds: projectIds }
+  public static async fetchProject(projectId: string): Promise<Array<Project>> {
+    const body = { projectId: projectId }
     return await this.request<Array<Project>>(this.PROJECT, this.postRequestOptions(body))
   }
 
