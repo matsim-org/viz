@@ -1,0 +1,36 @@
+image: maven:3-jdk-8
+
+stages:
+    - test
+    - build
+    - deploy
+
+#run tests for every commit
+test:
+    stage: test
+    script: "mvn test --batch-mode"
+
+#run the build with artifacts only for commits to develop and master after tests were run
+build:
+    stage: build
+    only:
+      - master
+    script: "mvn install -DskipTests --batch-mode"
+    artifacts:
+      when: on_success
+      paths:
+        - auth/target/auth-*-jar-with-dependencies.jar
+        - files/target/files-*-jar-with-dependencies.jar
+deploy:
+    stage: deploy
+    only:
+        - master
+    dependencies: 
+        - build  
+    script:
+        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+        - eval $(ssh-agent -s)
+        - ssh-add <(echo "$SSH_PRIVATE_KEY")
+        - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
+        - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
+#        - scp auth/target/auth-*-jar-with-dependencies.jar vspdeploy@geo.vsp.tu-berlin.de:/home/webvis/matsim-webvis-auth/auth-server.jar
