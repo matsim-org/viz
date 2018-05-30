@@ -33,5 +33,5 @@ deploy:
         - ssh-add <(echo "$SSH_PRIVATE_KEY")
         - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
         - ls -lhaA
-        - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
-#        - scp auth/target/* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz
+#        - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
+        - scp ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
