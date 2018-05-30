@@ -6,21 +6,21 @@ stages:
     - deploy
 
 #run tests for every commit
-test:
-    stage: test
-    script: "mvn test --batch-mode"
+#test:
+#    stage: test
+#    script: "mvn test --batch-mode"
 
 #run the build with artifacts only for commits to develop and master after tests were run
-build:
-    stage: build
-    only:
-      - master
-    script: "mvn install -DskipTests --batch-mode"
-    artifacts:
-      when: on_success
-      paths:
-        - auth/target/auth-*-jar-with-dependencies.jar
-        - files/target/files-*-jar-with-dependencies.jar
+#build:
+#    stage: build
+#    only:
+#      - master
+#    script: "mvn install -DskipTests --batch-mode"
+#    artifacts:
+#      when: on_success
+#      paths:
+#        - auth/target/auth-*-jar-with-dependencies.jar
+#        - files/target/files-*-jar-with-dependencies.jar
 deploy:
     stage: deploy
     only:
