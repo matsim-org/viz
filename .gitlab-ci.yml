@@ -34,4 +34,4 @@ deploy:
         - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
         - ls -lhaA
 #        - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
-        - scp -r ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
+        - scp -rpv ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
