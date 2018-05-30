@@ -33,4 +33,4 @@ deploy:
         - ssh-add <(echo "$SSH_PRIVATE_KEY")
         - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
         - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
-#        - scp auth/target/auth-*-jar-with-dependencies.jar vspdeploy@geo.vsp.tu-berlin.de:/home/webvis/matsim-webvis-auth/auth-server.jar
+#        - scp auth/target/* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz
