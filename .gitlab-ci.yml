@@ -36,4 +36,4 @@ deploy:
         - ls -lhaA
 #       - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
 #       - scp -rpv ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
-        - rsync -rvltp --exclude '.git' ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
+        - rsync -rvlp --exclude '.git' ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
