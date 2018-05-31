@@ -2,7 +2,7 @@ image: maven:3-jdk-8
 
 stages:
 #    - test
-#    - build
+    - build
     - deploy
 
 #run tests for every commit
@@ -11,11 +11,11 @@ stages:
 #    script: "mvn test --batch-mode"
 
 #run the build with artifacts only for commits to develop and master after tests were run
-#build:
-#    stage: build
-#    only:
-#      - master
-#    script: "mvn install -DskipTests --batch-mode"
+build:
+    stage: build
+    only:
+      - master
+    script: "mvn install -DskipTests --batch-mode"
 #    artifacts:
 #      when: on_success
 #      paths:
@@ -25,7 +25,7 @@ deploy:
     stage: deploy
     only:
         - master
-    dependencies: 
+#    dependencies: 
         - build  
     script:
         - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
