@@ -35,12 +35,12 @@ let sax = require('sax')
 let readBlob = require('read-blob')
 let proj4 = require('proj4').default
 
-let mymap: mapboxgl.Map
 let _linkData: any
 
 // this is a required workaround to get the mapbox token assigned in TypeScript
 // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
 // TODO: move mapbox access token to sharedstore
+let mymap: mapboxgl.Map
 let writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
@@ -275,9 +275,7 @@ function addLinksToMap() {
 
 function calculateColorFromVolume(id: string) {
   let volume = store.flows[id]
-    ? store.flows[id][store.currentTimeSegment]
-      ? store.flows[id][store.currentTimeSegment]
-      : 0
+    ? store.flows[id][store.currentTimeSegment] ? store.flows[id][store.currentTimeSegment] : 0
     : 0
 
   if (volume === 0) return '#aaa'
@@ -411,8 +409,7 @@ async function readNetworkFile() {
     }
   }
 
-  let COTTBUS_PROJECTION =
-    '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+  let COTTBUS_PROJECTION = '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
 
   saxparser.onend = function() {
     convertCoords(COTTBUS_PROJECTION)
