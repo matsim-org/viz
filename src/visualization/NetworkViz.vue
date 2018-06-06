@@ -92,10 +92,7 @@ async function mapIsReady() {
   for (let link of json.features) {
     link.properties.width = link.properties['base case (demand)_agents'] / 200
     if (link.properties.width < 3) link.properties.width = 2
-    link.properties.vc =
-      1.0 *
-      link.properties['base case (demand)_agents'] /
-      link.properties.capacity
+    link.properties.vc = 1.0 * link.properties['base case (demand)_agents'] / link.properties.capacity
   }
 
   map.addSource('my-data', {
@@ -103,7 +100,7 @@ async function mapIsReady() {
     type: 'geojson',
   })
 
-  console.log(map.getStyle().layers)
+  // console.log(map.getStyle().layers)
 
   map.addLayer(
     {
@@ -115,14 +112,7 @@ async function mapIsReady() {
         'line-width': ['get', 'width'],
         'line-color': {
           property: 'vc',
-          stops: [
-            [0.4, '#04c'],
-            [0.8, '#084'],
-            [1.0, '#0a0'],
-            [1.3, '#cc0'],
-            [1.7, '#fc0'],
-            [2.0, '#800'],
-          ],
+          stops: [[0.4, '#04c'], [0.8, '#084'], [1.0, '#0a0'], [1.3, '#cc0'], [1.7, '#fc0'], [2.0, '#800']],
         },
       },
       // });
@@ -179,9 +169,7 @@ function clickedOnTaz(e: MapElement) {
     html += `<p class="popup-value"><b>${altname}:</b> ${value}</p>`;
   } */
 
-  _popup = new mapboxgl.Popup({ closeOnClick: true })
-    .setLngLat(e.lngLat)
-    .setHTML(html)
+  _popup = new mapboxgl.Popup({ closeOnClick: true }).setLngLat(e.lngLat).setHTML(html)
 
   // add a close-event, to remove highlight if user closes the popup
   // _popup.on('close', closePopupEvent);

@@ -1,31 +1,13 @@
 <template lang="pug">
 .sidebar
-  .sidebar-about
-    router-link(to="/"): img.sidebar-logo(src="../assets/matsim-logo-blue.png")
-  br
-  br
-
-  .sidebar-content
     h3
       i.cloud.download.icon
-      | &nbsp;About
+      | FIDDLY WIDGETS FOR THIS VIEW:
     br
-    p MATSim Viz, release 0.1
-    br
-    p We welcome your feedback and contributions! Join us at:
-      a(href="https://github.com/matsim-org") &nbsp;MATSim&nbsp;GitHub
+    .black.ui.button Dark View
+    .white.ui.button Light View
     br
     br
-
-    h3
-      i.chart.area.alternate.icon
-      | &nbsp;MY MATSIM
-    nav.sidebar-nav
-      router-link.sidebar-nav-item(to="/projects") MY PROJECTS
-
-    br
-
-    component(:is="sidebarComponent")
 
 </template>
 
@@ -34,21 +16,18 @@
 
 import Vue from 'vue'
 import sharedStore from '../SharedStore'
-import BonusSidebar from '@/components/BonusSidebar.vue'
 
 // store is the component data store -- the state of the component.
 let store = {
   sharedStore: sharedStore.state,
-  sidebarComponent: 'BonusSidebar',
 }
 
 // this export is the Vue Component itself
 export default Vue.extend({
-  name: 'SideBar',
+  name: 'BonusSidebar',
   data() {
     return store
   },
-  components: { BonusSidebar },
   mounted: function() {
     mounted()
   },
