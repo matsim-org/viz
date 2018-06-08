@@ -132,7 +132,7 @@ class AuthenticationRequest {
 
   constructor() {
     this.request = {
-      scope: 'openid',
+      scope: 'openid user-client',
       response_type: 'id_token token',
       client_id: Config.clientId,
       redirect_uri: 'http://localhost:8080/authentication',
