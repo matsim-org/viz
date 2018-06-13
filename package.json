@@ -39,7 +39,7 @@
     "read-blob": "^1.1.0",
     "request": "^2.85.0",
     "sax": "^1.2.4",
-    "three": "^0.91.0",
+    "three": "^0.85.2",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
     "vue-slider-component": "^2.6.1"
