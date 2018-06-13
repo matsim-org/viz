@@ -8,7 +8,7 @@
     
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-      div(v-for="viz in project.visualizations")
+      div(v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz.id)")
         list-element(v-bind:key="viz.id")
           .itemTitle(slot="title")
             span {{ viz.type.key}}
@@ -118,7 +118,7 @@ export default Vue.extend({
     return {
       sharedState: SharedStore.state,
       project: {
-        id: this.$route.params.id,
+        id: this.$route.params.projectId,
         name: '',
         files: [],
         creator: {},
@@ -129,14 +129,14 @@ export default Vue.extend({
     }
   },
   created: async function(): Promise<void> {
-    let project = this.sharedState.personalProjects.find(element => element.id === this.projectId)
+    let project = this.sharedState.personalProjects.find(element => element.id === this.project.id)
     if (project) {
       this.project = project
     }
 
     if (!project || project.files.length < 1) {
       this.isFetchingData = true
-      let fetchedProjects = await FileAPI.fetchProject(this.projectId)
+      let fetchedProjects = await FileAPI.fetchProject(this.project.id)
       if (fetchedProjects.length > 0) {
         this.project = fetchedProjects[0]
       }
@@ -178,6 +178,9 @@ export default Vue.extend({
     handleAddVisualizationClosed: function(visualization: Visualization): void {
       this.showCreateVisualization = false
       if (visualization) this.project.visualizations.push(visualization)
+    },
+    handleVisualizationClicked: function(id: string): void {
+      this.$router.push({path: `/frame-animation/${id}`})
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files

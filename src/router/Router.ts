@@ -3,6 +3,7 @@ import StartPage from '@/components/StartPage.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/project/Project.vue'
 import Projects from '@/project/Projects.vue'
+import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkViz from '@/visualization/NetworkViz.vue'
@@ -44,9 +45,15 @@ let instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/project/:id',
+      path: '/project/:projectId',
       component: Project,
       name: 'Project',
+      meta: { authRequired: true },
+    },
+    {
+      path: '/frame-animation/:vizId',
+      component: FrameAnimation,
+      name: 'FrameAnimation',
       meta: { authRequired: true },
     },
     {
