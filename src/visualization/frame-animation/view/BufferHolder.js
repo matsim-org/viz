@@ -1,3 +1,5 @@
+/* eslint-disable */
+import * as THREE from 'three'
 import {
   BufferAttribute,
   BufferGeometry,
@@ -14,13 +16,13 @@ import {
   TextureLoader,
   Vector2,
 } from 'three'
-
+/* eslint-disable */
 import { Shader } from './Shader.js'
 import Configuration from '../contracts/Configuration.js'
 
 /* eslint-disable */
-import triangle from 'file-loader!./assets/triangle-64.png'
-import circle from 'file-loader!./assets/circle-64.png'
+import triangle from 'file-loader!../../../../static/frame-animation/triangle-64.png'
+import circle from 'file-loader!../../../../static/frame-animation/circle-64.png'
 /* eslint-enable */
 
 class BufferHolder {
@@ -46,6 +48,8 @@ class BufferHolder {
   constructor() {
     this._config = Configuration.getConfig()
     this._scene = new Scene()
+    window.scene = this._scene
+    window.THREE = THREE
     this._scene.background = new Color(this._config.colors.background)
   }
 
@@ -97,7 +101,7 @@ class BufferHolder {
 
         color: { value: new Color(this._config.colors.agents) },
         selectedColor: { value: new Color(this._config.colors.selectedAgent) },
-        triangle: { value: this._createTexture(triangle) },
+        triangle: { value: this._createTexture('/static/frame-animation/triangle-64.png') },
         circle: { value: this._createTexture(circle) },
       },
       transparent: true,

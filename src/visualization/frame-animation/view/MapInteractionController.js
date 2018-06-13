@@ -30,14 +30,15 @@ class MapInteractionController {
 
   destroy() {
     let canvas = document.getElementById(Configuration.getConfig().canvasId)
-    canvas.removeEventListener('mousedown', this._boundPointerDown)
-    canvas.removeEventListener('mouseup', this._boundPointerUp)
-    canvas.removeEventListener('mousemove', this._boundPointerMove)
-    canvas.removeEventListener('pointerdown', this._boundPointerDown)
-    canvas.removeEventListener('pointerup', this._boundPointerUp)
-    canvas.removeEventListener('pointermove', this._boundPointerMove)
-    canvas.removeEventListener('wheel', this._boundMouseWheel)
-
+    if (canvas) {
+      canvas.removeEventListener('mousedown', this._boundPointerDown)
+      canvas.removeEventListener('mouseup', this._boundPointerUp)
+      canvas.removeEventListener('mousemove', this._boundPointerMove)
+      canvas.removeEventListener('pointerdown', this._boundPointerDown)
+      canvas.removeEventListener('pointerup', this._boundPointerUp)
+      canvas.removeEventListener('pointermove', this._boundPointerMove)
+      canvas.removeEventListener('wheel', this._boundMouseWheel)
+    }
     this._redrawNeeded = null
     this._clicked = null
   }
