@@ -12,6 +12,7 @@ class DataFetcher extends BackgroundWorkerFacade {
 
   getConfigData(parameters) {
     this._http.getConfigData(
+      parameters,
       response => {
         let config = JSON.parse(response)
         this.postEvent('configDataReceived', config)
@@ -22,6 +23,7 @@ class DataFetcher extends BackgroundWorkerFacade {
 
   getNetworkData(parameters) {
     this._http.getNetworkData(
+      parameters,
       response => {
         let reader = new NetworkReader(response)
         let network = reader.parse()

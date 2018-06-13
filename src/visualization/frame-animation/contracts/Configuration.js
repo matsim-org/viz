@@ -1,5 +1,6 @@
 class Config {
   constructor(parameters) {
+    this._setVizId(parameters.vizId)
     this._setCanvasId(parameters.canvasId)
     this._setColors(parameters.colors)
     this._setBackendUrl(parameters.dataUrl)
@@ -24,6 +25,11 @@ class Config {
     for (let i = 0; i < this._listeners.length; i++) {
       this._listeners[i]()
     }
+  }
+
+  _setVizId(id) {
+    if (!id) throw new Error('vizId is required!')
+    this.vizId = id
   }
 
   _setCanvasId(id) {

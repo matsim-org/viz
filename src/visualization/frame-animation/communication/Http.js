@@ -25,14 +25,14 @@ class Http {
     this._dataUrl = dataUrl
   }
 
-  getConfigData(success, error) {
+  getConfigData(parameters, success, error) {
     let url = this._dataUrl + Http.URLPATH_CONFIGURATION()
-    this.makePostRequest(url, {}, Http.RESPONSETYPE_TEXT(), success, error)
+    this.makePostRequest(url, parameters, Http.RESPONSETYPE_TEXT(), success, error)
   }
 
-  getNetworkData(success, error) {
+  getNetworkData(parameters, success, error) {
     let url = this._dataUrl + Http.URLPATH_NETWORK()
-    this.makePostRequest(url, {}, Http.RESPONSETYPE_BUFFER(), success, error)
+    this.makePostRequest(url, parameters, Http.RESPONSETYPE_BUFFER(), success, error)
   }
 
   getSnapshotData(parameters, success, error) {

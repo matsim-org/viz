@@ -61,11 +61,11 @@ class DataProvider {
 
   loadServerConfig() {
     this.workerFacade.postWorkerMessage('initialize', { dataUrl: this._config.dataUrl })
-    this.workerFacade.postWorkerMessage('getConfig', { id: 'id' })
+    this.workerFacade.postWorkerMessage('getConfig', { id: this._config.vizId })
   }
 
   loadNetworkData() {
-    this.workerFacade.postWorkerMessage('getNetworkData', {})
+    this.workerFacade.postWorkerMessage('getNetworkData', { id: this._config.vizId })
   }
 
   loadPlan(id) {
@@ -150,6 +150,7 @@ class DataProvider {
     let params = {
       requestNumber: this._requestNumber,
       requestParameters: {
+        id: this._config.vizId,
         fromTimestep: fromTimestep,
         speedFactor: this._speedFactor,
         size: requestSize,
