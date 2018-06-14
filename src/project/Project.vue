@@ -8,7 +8,7 @@
     
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-      div(v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz.id)")
+      div(v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz)")
         list-element(v-bind:key="viz.id")
           .itemTitle(slot="title")
             span {{ viz.type.key}}
@@ -179,8 +179,8 @@ export default Vue.extend({
       this.showCreateVisualization = false
       if (visualization) this.project.visualizations.push(visualization)
     },
-    handleVisualizationClicked: function(id: string): void {
-      this.$router.push({path: `/frame-animation/${id}`})
+    handleVisualizationClicked: function(viz: Visualization): void {
+      this.$router.push({ path: `/${viz.type.key}/${viz.id}` })
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files

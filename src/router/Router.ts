@@ -51,7 +51,7 @@ let instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/frame-animation/:vizId',
+      path: '/Animation/:vizId',
       component: FrameAnimation,
       name: 'FrameAnimation',
       meta: { authRequired: true },
