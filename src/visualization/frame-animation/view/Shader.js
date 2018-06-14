@@ -108,12 +108,10 @@ class Shader {
 
                     if (vShouldInterpolate >= 1.0) {
                         vec2 coord = rotateCoordinates();
-                       // gl_FragColor = opaqueColor * texture2D(triangle, coord);
-                       gl_FragColor = opaqueColor;
+                        gl_FragColor = opaqueColor * texture2D(triangle, coord);
                     } else {
                         opaqueColor.a = 1.0 - timestepFraction;
-                        //gl_FragColor = opaqueColor * texture2D(circle, gl_PointCoord);
-                        gl_FragColor = opaqueColor;
+                        gl_FragColor = opaqueColor * texture2D(circle, gl_PointCoord);
                     }
 
                     if ( gl_FragColor.a < ALPHATEST ) discard;

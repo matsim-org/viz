@@ -1,4 +1,3 @@
-import { Dictionary } from 'lodash'
 import { IncomingMessage } from 'http'
 import * as JWT from 'jwt-decode'
 import { Method } from '../communication/Constants'

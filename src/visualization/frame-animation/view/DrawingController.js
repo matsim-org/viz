@@ -5,11 +5,6 @@ import { BufferHolder } from './BufferHolder.js'
 import Configuration from '../contracts/Configuration.js'
 import { WebGLRenderer, Raycaster, Vector3 } from 'three'
 
-/* eslint-disable */
-import triangle from 'file-loader!./assets/triangle-32.png'
-import circle from 'file-loader!./assets/circle-32.png'
-/* eslint-enable */
-
 class DrawingController {
   static AGENT_LAYER() {
     return 'agent-layer'

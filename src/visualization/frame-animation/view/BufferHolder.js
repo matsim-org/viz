@@ -21,8 +21,8 @@ import { Shader } from './Shader.js'
 import Configuration from '../contracts/Configuration.js'
 
 /* eslint-disable */
-import triangle from 'file-loader!../../../../static/frame-animation/triangle-64.png'
-import circle from 'file-loader!../../../../static/frame-animation/circle-64.png'
+import triangle from './assets/triangle-64.png'
+import circle from './assets/circle-64.png'
 /* eslint-enable */
 
 class BufferHolder {
@@ -101,7 +101,7 @@ class BufferHolder {
 
         color: { value: new Color(this._config.colors.agents) },
         selectedColor: { value: new Color(this._config.colors.selectedAgent) },
-        triangle: { value: this._createTexture('/static/frame-animation/triangle-64.png') },
+        triangle: { value: this._createTexture(triangle) },
         circle: { value: this._createTexture(circle) },
       },
       transparent: true,
