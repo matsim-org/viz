@@ -20,6 +20,10 @@ class Webvis {
     return this.playback.speedFactor
   }
 
+  get isPlaying() {
+    return this.drawingController.shouldRender
+  }
+
   set onServerConfigChanged(value) {
     this._onServerConfigChanged = value
   }
