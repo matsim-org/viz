@@ -34,10 +34,7 @@ module.exports = {
   output: {
     path: config.build.assetsRoot,
     filename: '[name].js',
-    publicPath:
-      process.env.NODE_ENV === 'production'
-        ? config.build.assetsPublicPath
-        : config.dev.assetsPublicPath,
+    publicPath: process.env.NODE_ENV === 'production' ? config.build.assetsPublicPath : config.dev.assetsPublicPath,
   },
   resolve: {
     extensions: ['.ts', 'tsx', '.js', '.vue', '.json'],
@@ -57,20 +54,13 @@ module.exports = {
       },
       {
         test: /\.tsx?$/,
-        use: [
-          { loader: 'babel-loader' },
-          { loader: 'ts-loader', options: { appendTsSuffixTo: [/\.vue$/] } },
-        ],
+        use: [{ loader: 'babel-loader' }, { loader: 'ts-loader', options: { appendTsSuffixTo: [/\.vue$/] } }],
         exclude: /node_modules/,
       },
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        include: [
-          resolve('src'),
-          resolve('test'),
-          resolve('node_modules/webpack-dev-server/client'),
-        ],
+        include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client')],
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -95,6 +85,10 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]'),
         },
+      },
+      {
+        test: /\.worker\.js$/,
+        use: [{ loader: 'worker-loader' }, { loader: 'babel-loader' }],
       },
     ],
   },

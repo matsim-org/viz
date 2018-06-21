@@ -15,7 +15,7 @@ module.exports = {
     host: 'localhost', // can be overwritten by process.env.HOST
     port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     headers: {
-      'Access-Control-Allow-Origin': 'null',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Credentials': true,
     }, //allows redirects from auth server
     autoOpenBrowser: false,
