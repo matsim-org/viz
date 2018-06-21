@@ -3,7 +3,7 @@ image: maven:3-jdk-8
 stages:
 #    - test
    - build
-#   - deploy
+   - deploy
 
 #run tests for every commit
 #test:
