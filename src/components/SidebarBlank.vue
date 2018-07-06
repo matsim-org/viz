@@ -1,30 +1,6 @@
 <template lang="pug">
 .sidebar
-  .sidebar-about
-    router-link(to="/"): img.sidebar-logo(src="../assets/matsim-logo-blue.png")
-  br
-  br
-
-  .sidebar-content
-    h3
-      i.cloud.download.icon
-      | &nbsp;About
     br
-    p MATSim Viz, release 0.1
-    br
-    p We welcome your feedback and contributions! Join us at:
-      a(href="https://github.com/matsim-org") &nbsp;MATSim&nbsp;GitHub
-    br
-    br
-
-    h3
-      i.chart.area.alternate.icon
-      | &nbsp;MY MATSIM
-    nav.sidebar-nav
-      router-link.sidebar-nav-item(to="/projects") MY PROJECTS
-
-    br
-    component(:is="sidebarComponent")
 </template>
 
 <script lang="ts">
@@ -33,22 +9,17 @@
 import Vue from 'vue'
 import sharedStore, { EventBus } from '../SharedStore'
 
-import BonusSidebar from '@/components/BonusSidebar.vue'
-import SidebarBlank from '@/components/SidebarBlank.vue'
-
 // store is the component data store -- the state of the component.
 let store = {
   sharedStore: sharedStore.state,
-  sidebarComponent: 'SidebarBlank',
 }
 
 // this export is the Vue Component itself
 export default Vue.extend({
-  name: 'SideBar',
+  name: 'SidebarBlank',
   data() {
     return store
   },
-  components: { BonusSidebar, SidebarBlank },
   mounted: function() {
     mounted()
   },
@@ -57,11 +28,7 @@ export default Vue.extend({
 })
 
 // mounted is called by Vue after this component is installed on the page
-function mounted() {
-  EventBus.$on('switch-sidebar', (sidebarComponent: string) => {
-    store.sidebarComponent = sidebarComponent
-  })
-}
+function mounted() {}
 </script>
 
 <style scoped>

@@ -42,8 +42,10 @@ function mounted() {
 
   // Start doing stuff AFTER the MapBox library has fully initialized
   map.on('style.load', mapIsReady)
+  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
 
   setupEventListeners()
+  EventBus.$emit('switch-sidebar', 'BonusSidebar')
 }
 
 function setupEventListeners() {
@@ -59,6 +61,15 @@ function setupEventListeners() {
       }, delay)
     }
   })
+
+  EventBus.$on('change_theme', (theme: string) => {
+    console.log(theme)
+    changeTheme(theme)
+  })
+}
+
+function changeTheme(theme: string) {
+  map.setStyle('mapbox://styles/mapbox/' + theme + '-v9')
 }
 
 let filename = '/static/network-viz/networkWGS84.geo.json'
@@ -78,8 +89,6 @@ interface MapElement {
 
 // Called immediately after MapBox is ready to draw the map
 async function mapIsReady() {
-  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
-
   let json
 
   try {

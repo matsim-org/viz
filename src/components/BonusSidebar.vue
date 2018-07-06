@@ -4,8 +4,8 @@
       i.cloud.download.icon
       | FIDDLY WIDGETS FOR THIS VIEW:
     br
-    .black.ui.button Dark View
-    .white.ui.button Light View
+    .black.ui.button(@click="clickedTheme('dark')") Dark View
+    .white.ui.button(@click="clickedTheme('light')") Light View
     br
     br
 
@@ -15,7 +15,7 @@
 'use strict'
 
 import Vue from 'vue'
-import sharedStore from '../SharedStore'
+import sharedStore, { EventBus } from '../SharedStore'
 
 // store is the component data store -- the state of the component.
 let store = {
@@ -31,12 +31,19 @@ export default Vue.extend({
   mounted: function() {
     mounted()
   },
-  methods: {},
+  methods: {
+    clickedTheme: clickedTheme,
+  },
   watch: {},
 })
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {}
+
+function clickedTheme(theme: string) {
+  console.log('clicked')
+  EventBus.$emit('change_theme', theme)
+}
 </script>
 
 <style scoped>
