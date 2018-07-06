@@ -1,6 +1,14 @@
 <template lang="pug">
 .sidebar
+    h3
+      i.cloud.download.icon
+      | FIDDLY WIDGETS FOR THIS VIEW:
     br
+    .black.ui.button(@click="clickedTheme('dark')") Dark View
+    .white.ui.button(@click="clickedTheme('light')") Light View
+    br
+    br
+
 </template>
 
 <script lang="ts">
@@ -16,19 +24,26 @@ let store = {
 
 // this export is the Vue Component itself
 export default Vue.extend({
-  name: 'SidebarBlank',
+  name: 'NetworkVizSidebar',
   data() {
     return store
   },
   mounted: function() {
     mounted()
   },
-  methods: {},
+  methods: {
+    clickedTheme: clickedTheme,
+  },
   watch: {},
 })
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {}
+
+function clickedTheme(theme: string) {
+  console.log('clicked')
+  EventBus.$emit('change_theme', theme)
+}
 </script>
 
 <style scoped>

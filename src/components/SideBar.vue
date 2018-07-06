@@ -33,13 +33,12 @@
 import Vue from 'vue'
 import sharedStore, { EventBus } from '../SharedStore'
 
-import BonusSidebar from '@/components/BonusSidebar.vue'
-import SidebarBlank from '@/components/SidebarBlank.vue'
+import NetworkVizSidebar from '@/visualization/NetworkVizSidebar.vue'
 
 // store is the component data store -- the state of the component.
 let store = {
   sharedStore: sharedStore.state,
-  sidebarComponent: 'SidebarBlank',
+  sidebarComponent: '',
 }
 
 // this export is the Vue Component itself
@@ -48,7 +47,7 @@ export default Vue.extend({
   data() {
     return store
   },
-  components: { BonusSidebar, SidebarBlank },
+  components: { NetworkVizSidebar },
   mounted: function() {
     mounted()
   },

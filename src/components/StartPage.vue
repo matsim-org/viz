@@ -65,7 +65,7 @@ export default {
 
 // mounted is called by Vue after this component is installed on the page
 function mounted() {
-  EventBus.$emit('switch-sidebar', 'SidebarBlank')
+  EventBus.$emit('switch-sidebar', '')
 }
 </script>
 
