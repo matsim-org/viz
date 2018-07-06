@@ -8,10 +8,13 @@
     
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-      div(v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz)")
-        list-element(v-bind:key="viz.id")
-          .itemTitle(slot="title")
-            span {{ viz.type.key}}
+      .visualizations
+        .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
+          span No Visualizations yet. Add some!
+        div(v-else v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz)")
+          list-element(v-bind:key="viz.id")
+            .itemTitle(slot="title")
+              span {{ viz.type.key}}
           
     
     section
@@ -23,9 +26,9 @@
           v-on:change="onFileInputChanged"
           )
       .files
-        .emptyMessage(v-if="project.files.length === 0")
+        .emptyMessage(v-if="project.files && project.files.length === 0")
           span No files yet. Add some!
-        .fileList
+        .fileList(v-else)
           .fileItem(v-for="file in project.files")
             list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
               .itemTitle(slot="title")
@@ -134,12 +137,9 @@ export default Vue.extend({
       this.project = project
     }
 
-    if (!project || project.files.length < 1) {
+    if (!project || !project.files) {
       this.isFetchingData = true
-      let fetchedProjects = await FileAPI.fetchProject(this.project.id)
-      if (fetchedProjects.length > 0) {
-        this.project = fetchedProjects[0]
-      }
+      this.project = await FileAPI.fetchProject(this.project.id)
       this.isFetchingData = false
     }
 

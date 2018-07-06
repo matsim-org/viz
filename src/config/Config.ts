@@ -8,7 +8,7 @@ function createConfig(): Config {
   if (process.env.USE_LOCAL_API) {
     return {
       authServer: 'https://localhost:3000',
-      fileServer: 'https://localhost:3001',
+      fileServer: 'https://localhost:3010',
       clientId: 'test-client-id',
     }
   } else {
