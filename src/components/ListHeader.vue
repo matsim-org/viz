@@ -15,6 +15,10 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid lightgray;
 }
+
+button.ui.green.button {
+  margin-right: 0px;
+}
 </style>
 
 <script lang="ts">

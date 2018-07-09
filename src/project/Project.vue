@@ -5,7 +5,7 @@
         h1 {{project.name}}
         span {{project.id}}
       span(v-if="isFetchingData") Fetching project data...
-    
+
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
       .visualizations
@@ -19,7 +19,7 @@
     
     section
       list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
-      input.fileInput(type="file" 
+      input.fileInput(type="file"
           id="fileInput"
           ref="fileInput"
           multiple
@@ -81,6 +81,23 @@ section {
   display: flex;
   flex-direction: column;
   align-content: stretch;
+}
+
+.fileItem {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition-duration: 0.2s;
+}
+
+.fileItem:hover {
+  background-color: #f0f0f0;
 }
 
 .emptyMessage {

@@ -20,7 +20,7 @@
 
 <script lang="ts">
 'use strict'
-import sharedStore from '../SharedStore'
+import sharedStore, { EventBus } from '../SharedStore'
 
 // store is the component data store -- the state of the component.
 let store = {
@@ -64,7 +64,9 @@ export default {
 }
 
 // mounted is called by Vue after this component is installed on the page
-function mounted() {}
+function mounted() {
+  EventBus.$emit('switch-sidebar', '')
+}
 </script>
 
 <style scoped>

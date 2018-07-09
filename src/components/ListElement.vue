@@ -13,13 +13,13 @@
 <style>
 .listItem {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
+  padding: 1rem 0.25rem 1rem 0.25rem;
   border-bottom: 1px solid lightgray;
 }
 
 .listItem:hover {
-background-color: rgb(240, 240, 240);
+  background-color: rgb(240, 240, 240);
 }
 
 .clickContent {
