@@ -1,9 +1,9 @@
-image: maven:3-jdk-8
+image: node:9.11-strech
 
 stages:
 #    - test
    - build
-   - deploy
+#   - deploy
 
 #run tests for every commit
 #test:
@@ -20,19 +20,19 @@ build:
       when: on_success
       paths:
         - _dist/
-deploy:
-    stage: deploy
-    only:
-        - master
-    dependencies: 
-        - build  
-    script:
-        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-        - 'which rsync || ( apt-get update -y && apt-get install rsync -y )'
-        - eval $(ssh-agent -s)
-        - ssh-add <(echo "$SSH_PRIVATE_KEY")
-        - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
+#deploy:
+#    stage: deploy
+#   only:
+#        - master
+#    dependencies: 
+#        - build  
+#    script:
+#        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+#        - 'which rsync || ( apt-get update -y && apt-get install rsync -y )'
+#        - eval $(ssh-agent -s)
+#        - ssh-add <(echo "$SSH_PRIVATE_KEY")
+#        - '[[ -f /.dockerenv ]] && mkdir -p ~/.ssh && echo "$KNOWN_HOST" > ~/.ssh/known_hosts'
 #       - ssh vspdeploy@geo.vsp.tu-berlin.de 'echo 'execute some remote cmds' && pwd && ls -lhaA'
 # deploy files either with scp or rsync
 #       - scp -rpv ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
-        - rsync -rvlp --exclude '.git' ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
+#        - rsync -rvlp --exclude '.git' ./* vspdeploy@geo.vsp.tu-berlin.de:/var/lib/tomcat8/webapps/viz/
