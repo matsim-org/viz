@@ -15,7 +15,9 @@ build:
     stage: build
     only:
       - master
-    script: "npm run build"
+    script: 
+        - npm install 
+        - npm run build
     artifacts:
       when: on_success
       paths:
