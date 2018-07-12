@@ -9,10 +9,8 @@ class GeoJsonReader {
   }
 
   parse() {
-    let json = JSON.parse(this.geoJson)
-
-    for (let i = 0; i < json.features.length; i++) {
-      let feature = json.features[i]
+    for (let i = 0; i < this.geoJson.features.length; i++) {
+      let feature = this.geoJson.features[i]
       this._parseFeature(feature)
     }
 

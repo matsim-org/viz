@@ -8,12 +8,16 @@
 
     section
       list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-      div(v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz)")
-        list-element(v-bind:key="viz.id")
-          .itemTitle(slot="title")
-            span {{ viz.type.key}}
-
-
+      .visualizations
+        .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
+          span No Visualizations yet. Add some!
+        div(v-else v-for="viz in project.visualizations" v-on:click="handleVisualizationClicked(viz)")
+          list-element(v-bind:key="viz.id")
+            .itemTitle(slot="title")
+              span {{ viz.type.key}}
+            span(slot="content") {{viz.id}}
+          
+    
     section
       list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
       input.fileInput(type="file"
@@ -22,17 +26,23 @@
           multiple
           v-on:change="onFileInputChanged"
           )
-
-    .files
-      .emptyMessage(v-if="project.files.length === 0")
-        span No files yet. Add some!
-      .fileList
-        button.fileItem(v-for="file in project.files" v-on:click="handleFileClicked(file.id)")
-          list-element( v-bind:key="file.id")
-            .itemTitle(slot="title")
-              span {{file.userFileName}}
-              span {{file.sizeInBytes}} Bytes
-            span(slot="content") {{file.id}}
+      .files
+        .emptyMessage(v-if="project.files && project.files.length === 0")
+          span No files yet. Add some!
+        .fileList(v-else)
+          .fileItem(v-for="file in project.files")
+            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
+              .itemTitle(slot="title")
+                span {{file.userFileName}}
+                span {{file.sizeInBytes}} Bytes
+              span(slot="content") {{file.id}}
+              button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
+                .ui.visible.content Delete
+                .ui.hidden.content
+                  i.ui.trash.icon
+    create-visualization(v-if="showCreateVisualization" 
+                         v-on:close="handleAddVisualizationClosed"
+                         v-bind:project="project")
 </template>
 
 <style>
@@ -145,12 +155,9 @@ export default Vue.extend({
       this.project = project
     }
 
-    if (!project || project.files.length < 1) {
+    if (!project || !project.files) {
       this.isFetchingData = true
-      let fetchedProjects = await FileAPI.fetchProject(this.project.id)
-      if (fetchedProjects.length > 0) {
-        this.project = fetchedProjects[0]
-      }
+      this.project = await FileAPI.fetchProject(this.project.id)
       this.isFetchingData = false
     }
 
