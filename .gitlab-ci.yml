@@ -1,4 +1,4 @@
-image: node:9.11-strech
+image: node:9.11-stretch
 
 stages:
 #    - test
