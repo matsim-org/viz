@@ -13,8 +13,8 @@
 <style>
 .listItem {
   display: flex;
-  flex-direction: column;
-  padding: 1rem 0.25rem 1rem 0.25rem;
+  flex-direction: row;
+  padding: 0rem 0.25rem 0rem 0.25rem;
   border-bottom: 1px solid lightgray;
 }
 

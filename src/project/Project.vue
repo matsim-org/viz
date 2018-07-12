@@ -15,6 +15,7 @@
           list-element(v-bind:key="viz.id")
             .itemTitle(slot="title")
               span {{ viz.type.key}}
+            span(slot="content") {{viz.id}}
           
     
     section
