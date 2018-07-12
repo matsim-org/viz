@@ -71,7 +71,7 @@ export default Vue.extend({
   },
   mounted: function() {
     let canvas = this.$refs.canvas as HTMLElement
-    this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: 'https://localhost:3002/', vizId: this.vizId })
+    this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: 'https://localhost:3020', vizId: this.vizId })
     this.webvis.onServerConfigChanged = () => this.handeConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.handleFetchingDataChanged(value)
     this.webvis.onTimestepChanged = (value: number) => this.handleTimestepChanged(value)
