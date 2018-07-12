@@ -6,9 +6,7 @@ const packageConfig = require('../package.json')
 
 exports.assetsPath = function(_path) {
   const assetsSubDirectory =
-    process.env.NODE_ENV === 'production'
-      ? config.build.assetsSubDirectory
-      : config.dev.assetsSubDirectory
+    process.env.NODE_ENV === 'production' ? config.build.assetsSubDirectory : config.dev.assetsSubDirectory
 
   return path.posix.join(assetsSubDirectory, _path)
 }
@@ -32,9 +30,7 @@ exports.cssLoaders = function(options) {
 
   // generate loader string to be used with extract text plugin
   function generateLoaders(loader, loaderOptions) {
-    const loaders = options.usePostCSS
-      ? [cssLoader, postcssLoader]
-      : [cssLoader]
+    const loaders = options.usePostCSS ? [cssLoader, postcssLoader] : [cssLoader]
 
     if (loader) {
       loaders.push({
@@ -92,11 +88,12 @@ exports.createNotifierCallback = () => {
     if (severity !== 'error') return
 
     const error = errors[0]
-    const filename = error.file && error.file.split('!').pop()
+    const filename = error && error.file && error.file.split('!').pop()
+    const errorName = (error && error.name) || ''
 
     notifier.notify({
       title: packageConfig.name,
-      message: severity + ': ' + error.name,
+      message: severity + ': ' + errorName || '',
       subtitle: filename || '',
       icon: path.join(__dirname, 'logo.png'),
     })
