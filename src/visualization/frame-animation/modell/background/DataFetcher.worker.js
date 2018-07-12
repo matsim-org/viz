@@ -1,71 +1,58 @@
 import { BackgroundWorkerFacade } from './BackgroundWorkerFacade.js'
-import { Http } from '../../communication/Http.js'
 import { NetworkReader } from '../../contracts/NetworkReader'
 import { SnapshotReader } from '../../contracts/SnapshotReader.js'
 import { GeoJsonReader } from '../../contracts/GeoJsonReader.js'
+import FrameAnimationAPI from '../../communication/FrameAnimationAPI.ts'
 
 class DataFetcher extends BackgroundWorkerFacade {
   constructor(parameters) {
     super()
-    this._http = new Http(parameters.dataUrl)
+    this._api = new FrameAnimationAPI(parameters.dataUrl, parameters.id)
   }
 
-  getConfigData(parameters) {
-    this._http.getConfigData(
-      parameters,
-      response => {
-        let config = JSON.parse(response)
-        this.postEvent('configDataReceived', config)
-      },
-      error => this.error(error.message)
-    )
+  async getConfigData(parameters) {
+    try {
+      let configuration = await this._api.fetchConfiguration()
+      this.postEvent('configDataReceived', configuration)
+    } catch (error) {
+      this.error(error.message)
+    }
   }
 
-  getNetworkData(parameters) {
-    this._http.getNetworkData(
-      parameters,
-      response => {
-        let reader = new NetworkReader(response)
-        let network = reader.parse()
-        this.postEventByReference('networkDataReceived', network, [network.buffer])
-      },
-      error => this.error(error.message)
-    )
+  async getNetworkData(parameters) {
+    try {
+      let response = await this._api.fetchNetwork()
+      let network = new NetworkReader(response).parse()
+      this.postEventByReference('networkDataReceived', network, [network.buffer])
+    } catch (error) {
+      this.error(error.message)
+    }
   }
 
-  getSnapshotData(parameters) {
-    let requestNumber = parameters.requestNumber
-    this._http.getSnapshotData(
-      parameters.requestParameters,
-      response => this._handleSnapshotData(requestNumber, response),
-      error => this.error(error.message)
-    )
-  }
-
-  getPlan(parameters) {
-    this._http.getPlan(parameters, response => this._handlePlanData(response), error => this.error(error.message))
-  }
-
-  _handleSnapshotData(requestNumber, response) {
-    let reader = new SnapshotReader(response)
-    let snapshots = reader.parse()
+  async getSnapshotData(parameters) {
+    let response = await this._api.fetchSnapshots(parameters.requestParameters)
+    let snapshots = new SnapshotReader(response).parse()
 
     let transferrables = []
-    for (let i = 0; i < snapshots.length; i++) {
-      let snapshot = snapshots[i]
+
+    snapshots.forEach(snapshot => {
       transferrables.push(snapshot.position.buffer)
       transferrables.push(snapshot.nextPosition.buffer)
       transferrables.push(snapshot.shouldInterpolate.buffer)
       transferrables.push(snapshot.ids.buffer)
-    }
-    let result = { requestNumber: requestNumber, data: snapshots }
-    this.postEventByReference('snapshotDataReceived', result, transferrables)
+    })
+
+    this.postEventByReference(
+      'snapshotDataReceived',
+      { requestNumber: parameters.requestNumber, data: snapshots },
+      transferrables
+    )
   }
 
-  _handlePlanData(response) {
-    let reader = new GeoJsonReader(response)
-    let geoJson = reader.parse()
+  async getPlan(parameters) {
+    let response = await this._api.fetchPlan(parameters.idIndex)
 
+    let geoJson = new GeoJsonReader(response).parse()
     let transferrableObjects = [
       geoJson.points.buffer,
       geoJson.lines.buffer,
