@@ -1,8 +1,15 @@
+enum Progress {
+  Downloading = 'Downloading',
+  Processing = 'Processing',
+  Done = 'Done',
+}
+
 interface ServerConfiguration {
-  firstTimeste: number
+  firstTimestep: number
   lastTimestep: number
   timestepSize: number
   bounds: Rect
+  progress: Progress
 }
 
 interface Rect {
@@ -71,4 +78,4 @@ export default class FrameAnimationAPI {
   }
 }
 
-export { ServerConfiguration, Rect }
+export { Progress, ServerConfiguration, Rect }

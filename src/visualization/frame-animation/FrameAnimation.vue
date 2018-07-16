@@ -4,6 +4,8 @@
           h1 Frame Based Animation
           span Id: {{vizId}}
         .canvasContainer
+          .loaderContainer
+            .ui.active.indeterminate.small.inline.text.loader(v-if="!isDone") Processing files...
           canvas.canvas(ref="canvas" id="canvas")
         .controls
           .slider
@@ -44,6 +46,7 @@ interface FrameAnimationState {
   currentTimestep: number
   timestepSize: number
   playbackSpeedFactor: number
+  progress: String
   webvis?: Webvis
 }
 
@@ -59,6 +62,7 @@ export default Vue.extend({
       currentTimestep: 0,
       timestepSize: 1,
       playbackSpeedFactor: 1,
+      progress: "Done",
     }
   },
   computed: {
@@ -68,6 +72,9 @@ export default Vue.extend({
     speedFactor: function() {
       return this.playbackSpeedFactor * 60 * this.timestepSize
     },
+    isDone: function() {
+      return this.progress === "Done"
+    }
   },
   mounted: function() {
     let canvas = this.$refs.canvas as HTMLElement
@@ -113,6 +120,7 @@ export default Vue.extend({
         this.currentTimestep = this.webvis.firstTimestep
         this.timestepSize = this.webvis.timestepSize
         this.playbackSpeedFactor = this.webvis.playbackSpeedFactor
+        this.progress = this.webvis.progress
       }
     },
     handleTimestepChanged: function(timestep: number) {
@@ -140,6 +148,19 @@ export default Vue.extend({
 .canvasContainer {
   display: flex;
   flex: 1;
+}
+
+.loaderContainer {
+  position: absolute;
+  z-index: 9000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .canvas {
@@ -198,7 +219,7 @@ export default Vue.extend({
 .bufferState {
   flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
 }
 </style>

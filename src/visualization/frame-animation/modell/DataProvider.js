@@ -4,7 +4,8 @@ import GeoJsonParser from './background/GeoJsonParser.worker.js'
 import { SnapshotData } from './SnapshotData.js'
 import { LayerData } from './LayerData.js'
 import { Rectangle } from '../contracts/Rectangle.js'
-import Configuration from '../contracts/Configuration.js'
+import Configuration from '../contracts/Configuration'
+import { Progress } from '../communication/FrameAnimationAPI'
 
 class DataProvider {
   get isFetchingData() {
@@ -181,9 +182,15 @@ class DataProvider {
 
   _handleConfigDataReceived(data) {
     Configuration.updateServerConfiguration(data)
-    this.snapshotData = new SnapshotData(data.timestepSize)
-    this.lastTimestep = data.lastTimestep
-    this.firstTimestep = data.firstTimestep
+
+    if (data.progress !== Progress.Done) {
+      setTimeout(() => this.workerFacade.postWorkerMessage('getConfig', { id: this._config.vizId }), 10000)
+    } else {
+      this.snapshotData = new SnapshotData(data.timestepSize)
+      this.lastTimestep = data.lastTimestep
+      this.firstTimestep = data.firstTimestep
+      this.loadNetworkData()
+    }
   }
 
   _handlePlanDataReceived(data) {

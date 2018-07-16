@@ -1,7 +1,7 @@
 import { DrawingController } from './view/DrawingController.js'
 import { Playback } from './modell/Playback.js'
 import { DataProvider } from './modell/DataProvider.js'
-import Configuration from './contracts/Configuration.js'
+import Configuration from './contracts/Configuration'
 
 class Webvis {
   get firstTimestep() {
@@ -22,6 +22,10 @@ class Webvis {
 
   get isPlaying() {
     return this.drawingController.shouldRender
+  }
+
+  get progress() {
+    return this._config.progress
   }
 
   set onServerConfigChanged(value) {

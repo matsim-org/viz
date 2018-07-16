@@ -2,7 +2,7 @@ import { Rectangle } from '../contracts/Rectangle.js'
 import { MapState } from './MapState.js'
 import { MapInteractionController } from './MapInteractionController.js'
 import { BufferHolder } from './BufferHolder.js'
-import Configuration from '../contracts/Configuration.js'
+import Configuration from '../contracts/Configuration'
 import { WebGLRenderer, Raycaster, Vector3 } from 'three'
 
 class DrawingController {
@@ -42,6 +42,8 @@ class DrawingController {
 
   set dataProvider(dataProvider) {
     this._dataProvider = dataProvider
+    this._dataProvider.networkDataChanged = data => this.onNetworkDataChanged(data)
+    this._dataProvider.geoJsonDataChanged = layerName => this.onGeoJsonDataChanged(layerName)
   }
 
   get dataProvider() {
@@ -82,9 +84,6 @@ class DrawingController {
     let rawBounds = this._config.bounds
     let bounds = new Rectangle(rawBounds.left, rawBounds.right, rawBounds.top, rawBounds.bottom)
     this.mapState.resizeMapEnclose(bounds)
-    this.dataProvider.networkDataChanged = data => this.onNetworkDataChanged(data)
-    this.dataProvider.geoJsonDataChanged = layerName => this.onGeoJsonDataChanged(layerName)
-    this.dataProvider.loadNetworkData()
   }
 
   onNetworkDataChanged(data) {
@@ -114,11 +113,13 @@ class DrawingController {
 
   resizeMap(width, height) {
     if (this.mapState) {
-      if (this.mapState.bounds.width === 0 || this.mapState.bounds.height === 0) {
+      this.mapState.resizeViewport(width, height)
+
+      /* if (this.mapState.bounds.width === 0 || this.mapState.bounds.height === 0) {
         this.mapState.bounds = new Rectangle(0, width, 0, height)
       } else {
         this.mapState.resizeMap(width, height)
-      }
+      } */
     }
   }
 
