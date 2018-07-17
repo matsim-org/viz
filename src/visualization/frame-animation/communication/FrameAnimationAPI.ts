@@ -78,4 +78,4 @@ export default class FrameAnimationAPI {
   }
 }
 
-export { Progress, ServerConfiguration, Rect }
+export { Progress, ServerConfiguration, Rect, SnapshotRequestParams }
