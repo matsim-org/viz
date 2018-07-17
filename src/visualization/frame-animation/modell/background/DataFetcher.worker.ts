@@ -1,8 +1,18 @@
-import BackgroundWorker, { MethodCall } from './BackgroundWorker'
+import BackgroundWorker from './BackgroundWorker'
 import FrameAnimationAPI, { SnapshotRequestParams } from '../../communication/FrameAnimationAPI'
 import { NetworkReader } from '../../contracts/NetworkReader'
 import { SnapshotReader } from '../../contracts/SnapshotReader'
 import { GeoJsonReader } from '../../contracts/GeoJsonReader'
+import {
+  MethodCall,
+  GET_CONFIG,
+  GET_SNAPSHOT_DATA,
+  GET_PLAN,
+  EVENT_CONFIG_RECEIVED,
+  EVENT_NETWORK_RECEIVED,
+  EVENT_SNAPSHOTS_RECEIVED,
+  EVENT_PLAN_RECEIVED,
+} from './Contracts'
 
 interface InitParams {
   dataUrl: URL
@@ -19,16 +29,6 @@ interface GetPlanParams {
 }
 
 class DataFetcher extends BackgroundWorker {
-  static readonly GET_SNAPSHOT_DATA: string = 'getSnapshotData'
-  static readonly GET_NETWORK_DATA: string = 'getNetworkData'
-  static readonly GET_CONFIG: string = 'getConfig'
-  static readonly GET_PLAN: string = 'getPlan'
-
-  static readonly EVENT_CONFIG_RECEIVED = 'configReceived'
-  static readonly EVENT_SNAPSHOTS_RECEIVED = 'snapshotsReceived'
-  static readonly EVENT_NETWORK_RECEIVED = 'networkReceived'
-  static readonly EVENT_PLAN_RECEIVED = 'planReceived'
-
   private api!: FrameAnimationAPI
 
   constructor() {
@@ -42,16 +42,16 @@ class DataFetcher extends BackgroundWorker {
 
   handleMethodCall(call: MethodCall): void {
     switch (call.method) {
-      case DataFetcher.GET_CONFIG:
+      case GET_CONFIG:
         this.getConfigData()
         break
-      case DataFetcher.GET_NETWORK_DATA:
+      case GET_CONFIG:
         this.getNetworkData()
         break
-      case DataFetcher.GET_SNAPSHOT_DATA:
+      case GET_SNAPSHOT_DATA:
         this.getSnapshotData(call.parameters as GetSnapshotParams)
         break
-      case DataFetcher.GET_PLAN:
+      case GET_PLAN:
         this.getPlan(call.parameters as GetPlanParams)
         break
       default:
@@ -62,7 +62,7 @@ class DataFetcher extends BackgroundWorker {
   async getConfigData() {
     try {
       let configuration = await this.api.fetchConfiguration()
-      this.event(DataFetcher.EVENT_CONFIG_RECEIVED, configuration)
+      this.event(EVENT_CONFIG_RECEIVED, configuration)
     } catch (error) {
       this.error(error.message)
     }
@@ -72,7 +72,7 @@ class DataFetcher extends BackgroundWorker {
     try {
       let response = await this.api.fetchNetwork()
       let network = new NetworkReader(response).parse()
-      this.eventByReference(DataFetcher.EVENT_NETWORK_RECEIVED, network, [network.buffer])
+      this.eventByReference(EVENT_NETWORK_RECEIVED, network, [network.buffer])
     } catch (error) {
       this.error(error.message)
     }
@@ -92,7 +92,7 @@ class DataFetcher extends BackgroundWorker {
     })
 
     this.eventByReference(
-      DataFetcher.EVENT_SNAPSHOTS_RECEIVED,
+      EVENT_SNAPSHOTS_RECEIVED,
       { requestNumber: parameters.requestNumber, data: snapshots },
       transferrables
     )
@@ -108,7 +108,7 @@ class DataFetcher extends BackgroundWorker {
       geoJson.shapeVertices.buffer,
       geoJson.shapeNormals.buffer,
     ]
-    this.eventByReference(DataFetcher.EVENT_PLAN_RECEIVED, geoJson, transferrableObjects)
+    this.eventByReference(EVENT_PLAN_RECEIVED, geoJson, transferrableObjects)
   }
 }
 

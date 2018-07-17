@@ -1,12 +1,24 @@
 // import { WorkerFacade } from './background/WorkerFacade.ts'
-import DataFetcher from './background/DataFetcher.worker.ts'
-import GeoJsonParser from './background/GeoJsonParser.worker.ts'
+import DataFetcher from './background/DataFetcher.worker'
+import GeoJsonParser from './background/GeoJsonParser.worker'
 import { SnapshotData } from './SnapshotData.js'
 import { LayerData } from './LayerData.js'
 import { Rectangle } from '../contracts/Rectangle.js'
 import Configuration from '../contracts/Configuration.ts'
 import { Progress } from '../communication/FrameAnimationAPI.ts'
 import WorkerConnector from './background/WorkerConnector.ts'
+import {
+  GET_SNAPSHOT_DATA,
+  GET_CONFIG,
+  EVENT_CONFIG_RECEIVED,
+  EVENT_NETWORK_RECEIVED,
+  EVENT_SNAPSHOTS_RECEIVED,
+  EVENT_PLAN_RECEIVED,
+  EVENT_GEO_JSON_PARSED,
+  INITIALIZE,
+  GET_NETWORK_DATA,
+  GET_PLAN,
+} from './background/Contracts'
 
 class DataProvider {
   get isFetchingData() {
@@ -62,22 +74,22 @@ class DataProvider {
   }
 
   loadServerConfig() {
-    this.workerFacade.postWorkerMessage(DataFetcher.INITIALIZE, {
+    this.workerFacade.postWorkerMessage(INITIALIZE, {
       dataUrl: this._config.dataUrl,
       id: this._config.vizId,
     })
-    this.workerFacade.postWorkerMessage(DataFetcher.GET_CONFIG, { id: this._config.vizId })
+    this.workerFacade.postWorkerMessage(GET_CONFIG, { id: this._config.vizId })
   }
 
   loadNetworkData() {
-    this.workerFacade.postWorkerMessage(DataFetcher.GET_NETWORK_DATA, { id: this._config.vizId })
+    this.workerFacade.postWorkerMessage(GET_NETWORK_DATA, { id: this._config.vizId })
   }
 
   loadPlan(id) {
     let params = {
       idIndex: id,
     }
-    this.workerFacade.postWorkerMessage(DataFetcher.GET_PLAN, params)
+    this.workerFacade.postWorkerMessage(GET_PLAN, params)
     this._isLoadingPlan = true
     this._onFetchingDataChanged()
   }
@@ -164,7 +176,7 @@ class DataProvider {
       },
     }
     this._agentRequests++
-    this.workerFacade.postWorkerMessage(DataFetcher.GET_SNAPSHOT_DATA, params)
+    this.workerFacade.postWorkerMessage(GET_SNAPSHOT_DATA, params)
     this._onFetchingDataChanged()
   }
 
@@ -189,7 +201,7 @@ class DataProvider {
     Configuration.updateServerConfiguration(data)
 
     if (data.progress !== Progress.Done) {
-      setTimeout(() => this.workerFacade.postWorkerMessage(DataFetcher.GET_CONFIG, { id: this._config.vizId }), 10000)
+      setTimeout(() => this.workerFacade.postWorkerMessage(GET_CONFIG, { id: this._config.vizId }), 10000)
     } else {
       this.snapshotData = new SnapshotData(data.timestepSize)
       this.lastTimestep = data.lastTimestep
@@ -241,19 +253,19 @@ class DataProvider {
 
   onWorkerEvent(name, data) {
     switch (name) {
-      case DataFetcher.EVENT_CONFIG_RECEIVED:
+      case EVENT_CONFIG_RECEIVED:
         this._handleConfigDataReceived(data)
         break
-      case DataFetcher.EVENT_NETWORK_RECEIVED:
+      case EVENT_NETWORK_RECEIVED:
         this._networkDataChanged(data)
         break
-      case DataFetcher.EVENT_SNAPSHOTS_RECEIVED:
+      case EVENT_SNAPSHOTS_RECEIVED:
         this._handleSnapshotDataReceived(data)
         break
-      case DataFetcher.EVENT_PLAN_RECEIVED:
+      case EVENT_PLAN_RECEIVED:
         this._handlePlanDataReceived(data)
         break
-      case GeoJsonParser.EVENT_GEO_JSON_PARSED:
+      case EVENT_GEO_JSON_PARSED:
         this._handleGeoJsonParsed(data)
         break
       default:

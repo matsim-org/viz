@@ -1,5 +1,6 @@
-import BackgroundWorker, { MethodCall } from './BackgroundWorker'
+import BackgroundWorker from './BackgroundWorker'
 import { GeoJsonReader } from '../../contracts/GeoJsonReader'
+import { MethodCall, PARSE_GEO_JSON, EVENT_GEO_JSON_PARSED } from './Contracts'
 
 interface ParseParams {
   geoJson: string
@@ -9,9 +10,6 @@ interface ParseParams {
 }
 
 export default class GeoJsonParser extends BackgroundWorker {
-  static readonly PARSE_GEO_JSON = 'parseGeoJson'
-  static readonly EVENT_GEO_JSON_PARSED = 'geoJsonParsed'
-
   constructor() {
     super()
   }
@@ -19,7 +17,7 @@ export default class GeoJsonParser extends BackgroundWorker {
   handleInitialize(call: MethodCall) {}
   handleMethodCall(call: MethodCall) {
     switch (call.method) {
-      case GeoJsonParser.PARSE_GEO_JSON:
+      case PARSE_GEO_JSON:
         this.parseGeoJson(call.parameters)
         break
       default:
@@ -43,7 +41,7 @@ export default class GeoJsonParser extends BackgroundWorker {
       result.shapeVertices.buffer,
       result.shapeNormals.buffer,
     ]
-    this.eventByReference(GeoJsonParser.EVENT_GEO_JSON_PARSED, result, transferrable)
+    this.eventByReference(EVENT_GEO_JSON_PARSED, result, transferrable)
     close()
   }
 

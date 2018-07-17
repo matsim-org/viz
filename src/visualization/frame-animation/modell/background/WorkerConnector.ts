@@ -1,5 +1,5 @@
-import BackgroundWorker, { Message, MethodCall } from './BackgroundWorker'
-
+import BackgroundWorker from './BackgroundWorker'
+import { MethodCall, Message, TYPE_ERROR, TYPE_EVENT } from './Contracts'
 type WorkerEventHandler = (name: string, data: any) => void
 
 export default class WorkerConnector {
@@ -36,17 +36,17 @@ export default class WorkerConnector {
     let message = e.data as Message
 
     switch (message.type) {
-      case BackgroundWorker.TYPE_ERROR:
+      case TYPE_ERROR:
         console.error('Error in Worker: ' + message.message)
         break
-      case BackgroundWorker.TYPE_EVENT:
+      case TYPE_EVENT:
         this.onWorkerEvent(message)
         break
       default:
         console.error('unknown message type: ' + message.type)
     }
 
-    if (message.type === BackgroundWorker.TYPE_EVENT) {
+    if (message.type === TYPE_EVENT) {
       let time = Date.now() - then
       console.log('Processing worker message: "' + message.name + '" took: ' + time + 'ms')
     }

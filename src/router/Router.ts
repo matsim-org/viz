@@ -7,6 +7,7 @@ import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkViz from '@/visualization/NetworkViz.vue'
+import WorkerTest from '@/worker-test/WorkerTest.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '../SharedStore'
@@ -60,6 +61,11 @@ let instance = new Router({
       path: AUTHENTICATION,
       name: 'Authentication',
       component: Authentication,
+    },
+    {
+      path: '/worker-test',
+      name: 'WorkerTest',
+      component: WorkerTest,
     },
   ],
 })

@@ -1,34 +1,15 @@
-/// <reference path="./custom.d.ts"/>
-
-import WebpackWorker from 'Webpack-worker'
-
-interface MethodCall {
-  method: string
-  parameters: any
-}
-
-interface Message {
-  type: string
-  name: string
-  message: any
-}
-
+import { MethodCall, Message, INITIALIZE, TYPE_EVENT, TYPE_ERROR } from './Contracts'
 /*  make sure typescript know that the global context is a worker context
     also see: https://github.com/Microsoft/TypeScript/issues/582
     and: https://github.com/Microsoft/TypeScript/issues/20595
 */
 const workerContext: Worker = self as any
 
-abstract class BackgroundWorker extends WebpackWorker {
-  static readonly INITIALIZE = 'initialize'
-  static readonly TYPE_EVENT = 'event'
-  static readonly TYPE_ERROR = 'error'
-
+abstract class BackgroundWorker {
   private handleMessageDelegate: EventListener
   private isInitialized = false
 
   constructor() {
-    super()
     this.handleMessageDelegate = (evt: Event) => this.handleMessage(evt as MessageEvent)
     addEventListener('message', this.handleMessageDelegate)
   }
@@ -44,9 +25,10 @@ abstract class BackgroundWorker extends WebpackWorker {
       return
     }
 
-    if (message.method === BackgroundWorker.INITIALIZE) {
+    if (message.method === INITIALIZE) {
       this.handleInitialize(message)
       this.isInitialized = true
+      return
     }
 
     if (!this.isInitialized) {
@@ -62,7 +44,7 @@ abstract class BackgroundWorker extends WebpackWorker {
 
   protected eventByReference(name: string, data: any, transferrables: any[]) {
     let objData: Message = {
-      type: BackgroundWorker.TYPE_EVENT,
+      type: TYPE_EVENT,
       name: name,
       message: data,
     }
@@ -71,13 +53,13 @@ abstract class BackgroundWorker extends WebpackWorker {
   }
 
   protected event(name: string, data: any) {
-    workerContext.postMessage({ type: BackgroundWorker.TYPE_EVENT, name: name, message: data })
+    workerContext.postMessage({ type: TYPE_EVENT, name: name, message: data })
   }
 
   protected error(errorMessage: string) {
     workerContext.postMessage({
-      type: BackgroundWorker.TYPE_ERROR,
-      name: BackgroundWorker.TYPE_ERROR,
+      type: TYPE_ERROR,
+      name: TYPE_ERROR,
       message: errorMessage,
     })
   }
@@ -88,4 +70,3 @@ abstract class BackgroundWorker extends WebpackWorker {
 }
 
 export default BackgroundWorker
-export { MethodCall, Message }
