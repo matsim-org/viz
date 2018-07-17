@@ -22,7 +22,6 @@
 <script lang="ts">
 'use strict'
 
-import 'babel-polyfill'
 import sharedStore, { EventBus } from '../SharedStore'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
@@ -30,7 +29,7 @@ import * as mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 
 let timeConvert = require('convert-seconds')
-let pako = require('pako')
+import pako from 'pako'
 let sax = require('sax')
 let readBlob = require('read-blob')
 let proj4 = require('proj4').default
@@ -376,7 +375,7 @@ async function readEventsFile() {
   console.log('Start EVENTS')
 
   try {
-    let url = '/static/data-cottbus/events.xml.gz'
+    let url = '/data-cottbus/events.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
     let resp = await fetch(url, { mode: 'no-cors' })
@@ -416,7 +415,7 @@ async function readNetworkFile() {
   }
 
   try {
-    let url = '/static/data-cottbus/network.xml.gz'
+    let url = '/data-cottbus/network.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
     let resp = await fetch(url, { mode: 'no-cors' })

@@ -24,7 +24,6 @@
 }
 </style>
 
-
 <script lang="ts">
 import Vue from 'vue'
 import sharedStore, { SharedState } from '../SharedStore'

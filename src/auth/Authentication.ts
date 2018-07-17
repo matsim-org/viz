@@ -273,11 +273,11 @@ class AuthenticationResponse {
       valid = false
     }
     if (!decodedToken.iss) {
-      //this should also pinpoint the auth server address once deployed
+      // this should also pinpoint the auth server address once deployed
       valid = false
     }
 
-    //here should also be a validation of the signature, but that's another ticket
+    // here should also be a validation of the signature, but that's another ticket
     return valid
   }
 }

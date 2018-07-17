@@ -4,8 +4,7 @@
     select.ui.input.selectInput(v-on:change="handleChanged('changed', $event)" v-model="selected")
       option.option(v-for="option in options" v-bind:value="option")
         slot(v-bind:option="option")
-        
-    
+
 </template>
 
 <script lang="ts">
@@ -63,5 +62,3 @@ export default Vue.extend({
   margin: 1rem;
 }
 </style>
-
-

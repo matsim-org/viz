@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "outDir": "./_dist",
-    "module": "es2015",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "importHelpers": true,
+    "jsx": "preserve",
+    "module": "esnext",
     "moduleResolution": "node",
     "noImplicitReturns": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es6"
+    "target": "esnext",
+    "types": ["node", "jest"],
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "lib": ["es2015", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["./src/**/*"],
-  "exclude": []
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["node_modules"]
 }

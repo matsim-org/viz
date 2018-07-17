@@ -7,7 +7,7 @@ export default class AuthenticatedRequest {
     let response = await fetch(endpoint, options)
 
     if (response.status === 401) {
-      //token was invalid try to request a new one
+      // token was invalid try to request a new one
       AuthenticationStore.resetState()
       AuthenticationStore.requestAuthentication()
     }

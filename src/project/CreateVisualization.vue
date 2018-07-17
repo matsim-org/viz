@@ -2,8 +2,8 @@
 modal(v-on:close-requested="cancel()")
     span(slot="header") Create Visualization
     div(slot="content")
-      selection.selection(v-bind:options="sharedState.visualizationTypes" 
-                label="Select Visualization-Type" 
+      selection.selection(v-bind:options="sharedState.visualizationTypes"
+                label="Select Visualization-Type"
                 v-on:selection-changed="handleVizTypeChanged")
         span(slot-scope="{option}") {{ option.key }}
       div(v-if="selectedVizType")
@@ -12,7 +12,7 @@ modal(v-on:close-requested="cancel()")
                             v-bind:label="key"
                             v-on:selection-changed="handleFileChanged(key, $event)")
             span(slot-scope="{option}") {{ option.userFileName }}
-        
+
         div(v-for="key in selectedVizType.requiredParamKeys")
           text-input(v-bind:label="key" v-on:change="handleParamChanged(key, $event)")
       error(v-if="isServerError" v-bind:message="serverError")
@@ -29,7 +29,6 @@ modal(v-on:close-requested="cancel()")
   margin-bottom: 1rem;
 }
 </style>
-
 
 <script lang="ts">
 import Vue from 'vue'
@@ -111,4 +110,3 @@ export default Vue.extend({
   },
 })
 </script>
-
