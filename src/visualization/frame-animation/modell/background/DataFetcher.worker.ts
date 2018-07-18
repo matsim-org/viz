@@ -12,6 +12,7 @@ import {
   EVENT_NETWORK_RECEIVED,
   EVENT_SNAPSHOTS_RECEIVED,
   EVENT_PLAN_RECEIVED,
+  GET_NETWORK_DATA,
 } from './Contracts'
 
 interface InitParams {
@@ -21,7 +22,7 @@ interface InitParams {
 
 interface GetSnapshotParams {
   requestNumber: number
-  parameters: SnapshotRequestParams
+  requestParameters: SnapshotRequestParams
 }
 
 interface GetPlanParams {
@@ -45,7 +46,7 @@ class DataFetcher extends BackgroundWorker {
       case GET_CONFIG:
         this.getConfigData()
         break
-      case GET_CONFIG:
+      case GET_NETWORK_DATA:
         this.getNetworkData()
         break
       case GET_SNAPSHOT_DATA:
@@ -79,7 +80,7 @@ class DataFetcher extends BackgroundWorker {
   }
 
   async getSnapshotData(parameters: GetSnapshotParams) {
-    let response = await this.api.fetchSnapshots(parameters.parameters)
+    let response = await this.api.fetchSnapshots(parameters.requestParameters)
     let snapshots = new SnapshotReader(response).parse()
 
     let transferrables: Array<ArrayBuffer> = []

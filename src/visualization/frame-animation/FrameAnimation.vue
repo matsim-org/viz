@@ -4,8 +4,8 @@
           h1 Frame Based Animation
           span Id: {{vizId}}
         .canvasContainer
-          .loaderContainer
-            .ui.active.indeterminate.small.inline.text.loader(v-if="!isDone") Processing files...
+          .loaderContainer(v-if="!isDone")
+            .ui.active.indeterminate.small.inline.text.loader Processing files...
           canvas.canvas(ref="canvas" id="canvas")
         .controls
           .slider
@@ -62,7 +62,7 @@ export default Vue.extend({
       currentTimestep: 0,
       timestepSize: 1,
       playbackSpeedFactor: 1,
-      progress: "Done",
+      progress: 'Done',
     }
   },
   computed: {
@@ -73,8 +73,8 @@ export default Vue.extend({
       return this.playbackSpeedFactor * 60 * this.timestepSize
     },
     isDone: function() {
-      return this.progress === "Done"
-    }
+      return this.progress === 'Done'
+    },
   },
   mounted: function() {
     let canvas = this.$refs.canvas as HTMLElement

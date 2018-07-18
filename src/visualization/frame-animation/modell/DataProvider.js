@@ -76,7 +76,7 @@ class DataProvider {
   loadServerConfig() {
     this.workerFacade.postWorkerMessage(INITIALIZE, {
       dataUrl: this._config.dataUrl,
-      id: this._config.vizId,
+      vizId: this._config.vizId,
     })
     this.workerFacade.postWorkerMessage(GET_CONFIG, { id: this._config.vizId })
   }
