@@ -1,19 +1,9 @@
-import BackgroundWorker from './BackgroundWorker'
 import FrameAnimationAPI, { SnapshotRequestParams } from '../../communication/FrameAnimationAPI'
 import { NetworkReader } from '../../contracts/NetworkReader'
 import { SnapshotReader } from '../../contracts/SnapshotReader'
 import { GeoJsonReader } from '../../contracts/GeoJsonReader'
-import {
-  MethodCall,
-  GET_CONFIG,
-  GET_SNAPSHOT_DATA,
-  GET_PLAN,
-  EVENT_CONFIG_RECEIVED,
-  EVENT_NETWORK_RECEIVED,
-  EVENT_SNAPSHOTS_RECEIVED,
-  EVENT_PLAN_RECEIVED,
-  GET_NETWORK_DATA,
-} from './Contracts'
+import { MethodCall, GET_CONFIG, GET_SNAPSHOT_DATA, GET_PLAN, GET_NETWORK_DATA, MethodResult } from './Contracts'
+import AsyncBackgroundWorker from './AsyncBackgroundWorker'
 
 interface InitParams {
   dataUrl: URL
@@ -29,7 +19,7 @@ interface GetPlanParams {
   idIndex: number
 }
 
-class DataFetcher extends BackgroundWorker {
+class DataFetcher extends AsyncBackgroundWorker {
   private api!: FrameAnimationAPI
 
   constructor() {
@@ -41,42 +31,31 @@ class DataFetcher extends BackgroundWorker {
     this.api = new FrameAnimationAPI(params.dataUrl, params.vizId)
   }
 
-  handleMethodCall(call: MethodCall): void {
+  async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
       case GET_CONFIG:
-        this.getConfigData()
-        break
+        return await this.getConfigData()
       case GET_NETWORK_DATA:
-        this.getNetworkData()
-        break
+        return await this.getNetworkData()
       case GET_SNAPSHOT_DATA:
-        this.getSnapshotData(call.parameters as GetSnapshotParams)
-        break
+        return await this.getSnapshotData(call.parameters as GetSnapshotParams)
       case GET_PLAN:
-        this.getPlan(call.parameters as GetPlanParams)
-        break
+        return await this.getPlan(call.parameters as GetPlanParams)
       default:
-        this.error('No method with name: ' + call.method)
+        throw new Error('No method with name: ' + call.method)
     }
   }
 
   async getConfigData() {
-    try {
-      let configuration = await this.api.fetchConfiguration()
-      this.event(EVENT_CONFIG_RECEIVED, configuration)
-    } catch (error) {
-      this.error(error.message)
-    }
+    let configuration = await this.api.fetchConfiguration()
+    return { data: configuration }
   }
 
   async getNetworkData() {
-    try {
-      let response = await this.api.fetchNetwork()
-      let network = new NetworkReader(response).parse()
-      this.eventByReference(EVENT_NETWORK_RECEIVED, network, [network.buffer])
-    } catch (error) {
-      this.error(error.message)
-    }
+    let response = await this.api.fetchNetwork()
+    let network = new NetworkReader(response).parse()
+
+    return { data: network, transferrables: [network.buffer] }
   }
 
   async getSnapshotData(parameters: GetSnapshotParams) {
@@ -92,11 +71,7 @@ class DataFetcher extends BackgroundWorker {
       transferrables.push(snapshot.ids.buffer)
     })
 
-    this.eventByReference(
-      EVENT_SNAPSHOTS_RECEIVED,
-      { requestNumber: parameters.requestNumber, data: snapshots },
-      transferrables
-    )
+    return { data: { data: snapshots, requestNumber: parameters.requestNumber }, transferrables: transferrables }
   }
 
   async getPlan(parameters: GetPlanParams) {
@@ -109,11 +84,12 @@ class DataFetcher extends BackgroundWorker {
       geoJson.shapeVertices.buffer,
       geoJson.shapeNormals.buffer,
     ]
-    this.eventByReference(EVENT_PLAN_RECEIVED, geoJson, transferrableObjects)
+
+    return { data: geoJson, transferrables: transferrableObjects }
   }
 }
 
-export default DataFetcher
+export default null as any
 
 // Bootstrap DataFetcher when file is loaded from server
 let worker = new DataFetcher()

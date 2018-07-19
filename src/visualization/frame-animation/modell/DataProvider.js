@@ -1,24 +1,10 @@
-// import { WorkerFacade } from './background/WorkerFacade.ts'
-import DataFetcher from './background/DataFetcher.worker'
+import DataFetcher from './background/DataFetcher'
 import GeoJsonParser from './background/GeoJsonParser.worker'
 import { SnapshotData } from './SnapshotData.js'
 import { LayerData } from './LayerData.js'
 import { Rectangle } from '../contracts/Rectangle.js'
 import Configuration from '../contracts/Configuration.ts'
 import { Progress } from '../communication/FrameAnimationAPI.ts'
-import WorkerConnector from './background/WorkerConnector.ts'
-import {
-  GET_SNAPSHOT_DATA,
-  GET_CONFIG,
-  EVENT_CONFIG_RECEIVED,
-  EVENT_NETWORK_RECEIVED,
-  EVENT_SNAPSHOTS_RECEIVED,
-  EVENT_PLAN_RECEIVED,
-  EVENT_GEO_JSON_PARSED,
-  INITIALIZE,
-  GET_NETWORK_DATA,
-  GET_PLAN,
-} from './background/Contracts'
 
 class DataProvider {
   get isFetchingData() {
@@ -57,12 +43,11 @@ class DataProvider {
     this._requestNumber = 0
     this._isLoadingPlan = false
     this._maxConcurrentSnapshotRequests = 1
-    this.workerFacade = new WorkerConnector(new DataFetcher(), (name, data) => this.onWorkerEvent(name, data))
     this.layerData = new LayerData()
   }
 
   destroy() {
-    this.workerFacade.destroy()
+    this.dataFetcher.destroy()
     if (this._parserWorkerFacade) {
       this._parserWorkerFacade.destroy()
     }
@@ -73,25 +58,39 @@ class DataProvider {
     this._isFetchingDataChanged = null
   }
 
-  loadServerConfig() {
-    this.workerFacade.postWorkerMessage(INITIALIZE, {
-      dataUrl: this._config.dataUrl,
-      vizId: this._config.vizId,
-    })
-    this.workerFacade.postWorkerMessage(GET_CONFIG, { id: this._config.vizId })
+  async loadServerConfig() {
+    if (!this.dataFetcher) {
+      this.dataFetcher = await DataFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
+    }
+    let config = await this.dataFetcher.fetchServerConfig()
+    console.log(config)
+    Configuration.updateServerConfiguration(config)
+
+    if (config.progress !== Progress.Done) {
+      setTimeout(() => this.dataFetcher.fetchServerConfig(), 10000)
+    } else {
+      this.snapshotData = new SnapshotData(config.timestepSize)
+      this.lastTimestep = config.lastTimestep
+      this.firstTimestep = config.firstTimestep
+      this.loadNetworkData()
+    }
   }
 
-  loadNetworkData() {
-    this.workerFacade.postWorkerMessage(GET_NETWORK_DATA, { id: this._config.vizId })
+  async loadNetworkData() {
+    let network = await this.dataFetcher.fetchNetwork()
+    this._networkDataChanged(network)
   }
 
-  loadPlan(id) {
+  async loadPlan(id) {
     let params = {
       idIndex: id,
     }
-    this.workerFacade.postWorkerMessage(GET_PLAN, params)
+
     this._isLoadingPlan = true
     this._onFetchingDataChanged()
+    let plan = await this.dataFetcher.fetchPlan(params)
+
+    this._handlePlanDataReceived(plan)
   }
 
   getId(index, timestep) {
@@ -128,17 +127,18 @@ class DataProvider {
     return result
   }
 
-  addGeoJsonLayer(geoJson, layerName, z, color) {
+  async addGeoJsonLayer(geoJson, layerName, z, color) {
     let parameters = {
       layerName: layerName,
       z: z,
       color: color,
       geoJson: geoJson,
     }
-    this._parserWorkerFacade = new WorkerConnector(new GeoJsonParser(), (name, data) => this.onWorkerEvent(name, data))
-    // this._parserWorkerFacade = new WorkerFacade(GeoJsonParser, (name, data) => this.onWorkerEvent(name, data))
-    this._parserWorkerFacade.postWorkerMessage(GeoJsonParser.INITIALIZE, {})
-    this._parserWorkerFacade.postWorkerMessage(GeoJsonParser.PARSE_GEO_JSON, parameters)
+
+    let parser = GeoJsonParser.create()
+    let result = await parser.parseGeoJson(parameters)
+    this._handleGeoJsonParsed(result)
+    parser.destroy()
   }
 
   removeGeoJsonLayer(layerName) {
@@ -159,7 +159,7 @@ class DataProvider {
     }
   }
 
-  _loadSnapshots(fromTimestep) {
+  async _loadSnapshots(fromTimestep) {
     if (this.isFetchingData) return
 
     this._requestNumber++
@@ -176,8 +176,9 @@ class DataProvider {
       },
     }
     this._agentRequests++
-    this.workerFacade.postWorkerMessage(GET_SNAPSHOT_DATA, params)
     this._onFetchingDataChanged()
+    let snapshotResponse = await this.dataFetcher.fetchSnapshots(params)
+    this._handleSnapshotDataReceived(snapshotResponse)
   }
 
   _handleSnapshotDataReceived(response) {
@@ -195,19 +196,6 @@ class DataProvider {
     }
     this._agentRequests--
     this._onFetchingDataChanged()
-  }
-
-  _handleConfigDataReceived(data) {
-    Configuration.updateServerConfiguration(data)
-
-    if (data.progress !== Progress.Done) {
-      setTimeout(() => this.workerFacade.postWorkerMessage(GET_CONFIG, { id: this._config.vizId }), 10000)
-    } else {
-      this.snapshotData = new SnapshotData(data.timestepSize)
-      this.lastTimestep = data.lastTimestep
-      this.firstTimestep = data.firstTimestep
-      this.loadNetworkData()
-    }
   }
 
   _handlePlanDataReceived(data) {
@@ -248,28 +236,6 @@ class DataProvider {
   _onFetchingDataChanged() {
     if (this._isFetchingDataChanged) {
       this._isFetchingDataChanged()
-    }
-  }
-
-  onWorkerEvent(name, data) {
-    switch (name) {
-      case EVENT_CONFIG_RECEIVED:
-        this._handleConfigDataReceived(data)
-        break
-      case EVENT_NETWORK_RECEIVED:
-        this._networkDataChanged(data)
-        break
-      case EVENT_SNAPSHOTS_RECEIVED:
-        this._handleSnapshotDataReceived(data)
-        break
-      case EVENT_PLAN_RECEIVED:
-        this._handlePlanDataReceived(data)
-        break
-      case EVENT_GEO_JSON_PARSED:
-        this._handleGeoJsonParsed(data)
-        break
-      default:
-        throw new Error('no such event name: ' + name)
     }
   }
 }

@@ -1,6 +1,6 @@
-import BackgroundWorker from './BackgroundWorker'
 import { GeoJsonReader } from '../../contracts/GeoJsonReader'
-import { MethodCall, PARSE_GEO_JSON, EVENT_GEO_JSON_PARSED } from './Contracts'
+import { MethodCall, PARSE_GEO_JSON, MethodResult } from './Contracts'
+import AsyncBackgroundWorker from './AsyncBackgroundWorker'
 
 interface ParseParams {
   geoJson: string
@@ -9,25 +9,27 @@ interface ParseParams {
   color?: number
 }
 
-export default class GeoJsonParser extends BackgroundWorker {
+export default class GeoJsonParser extends AsyncBackgroundWorker {
   constructor() {
     super()
   }
 
-  handleInitialize(call: MethodCall) {}
-  handleMethodCall(call: MethodCall) {
+  async handleInitialize(call: MethodCall) {
+    return
+  }
+
+  async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
       case PARSE_GEO_JSON:
-        this.parseGeoJson(call.parameters)
-        break
+        return this.parseGeoJson(call.parameters)
       default:
-        this.error('No method with name: ' + call.method)
+        throw new Error('No method with name: ' + call.method)
     }
   }
 
-  parseGeoJson(parameters: ParseParams) {
+  parseGeoJson(parameters: ParseParams): Promise<MethodResult> {
     if (!this.isValid(parameters))
-      this.error('parseGeoJson: invalid parameters! geoJson:string, layerName:string, z:number required')
+      throw new Error('parseGeoJson: invalid parameters! geoJson:string, layerName:string, z:number required')
 
     let reader = new GeoJsonReader(parameters.geoJson)
     let result = reader.parse()
@@ -41,8 +43,10 @@ export default class GeoJsonParser extends BackgroundWorker {
       result.shapeVertices.buffer,
       result.shapeNormals.buffer,
     ]
-    this.eventByReference(EVENT_GEO_JSON_PARSED, result, transferrable)
-    close()
+    return Promise.resolve<MethodResult>({
+      data: result,
+      transferrables: transferrable,
+    })
   }
 
   private isValid(parameters: ParseParams) {
@@ -50,4 +54,4 @@ export default class GeoJsonParser extends BackgroundWorker {
   }
 }
 
-//let worker = new GeoJsonParser()
+let worker = new GeoJsonParser()
