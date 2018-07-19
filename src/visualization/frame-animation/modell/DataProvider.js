@@ -62,12 +62,21 @@ class DataProvider {
     if (!this.dataFetcher) {
       this.dataFetcher = await DataFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
     }
-    let config = await this.dataFetcher.fetchServerConfig()
-    console.log(config)
+    try {
+      let config = await this.dataFetcher.fetchServerConfig()
+      this._handleServerConfigReceived(config)
+    } catch (error) {
+      console.log(error)
+      console.log('reatempting to connect to server in 5s')
+      setTimeout(() => this.loadServerConfig(), 5000)
+    }
+  }
+
+  _handleServerConfigReceived(config) {
     Configuration.updateServerConfiguration(config)
 
     if (config.progress !== Progress.Done) {
-      setTimeout(() => this.dataFetcher.fetchServerConfig(), 10000)
+      setTimeout(() => this.loadServerConfig(), 10000)
     } else {
       this.snapshotData = new SnapshotData(config.timestepSize)
       this.lastTimestep = config.lastTimestep

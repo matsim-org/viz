@@ -5,7 +5,9 @@
           span Id: {{vizId}}
         .canvasContainer
           .loaderContainer(v-if="!isDone")
-            .ui.active.indeterminate.small.inline.text.loader Processing files...
+            .ui.active.indeterminate.small.inline.text.loader Server is processing files...
+          .loaderContainer(v-if="!connected")
+            .ui.active.small.inline.text.loader Connecting to server...
           canvas.canvas(ref="canvas" id="canvas")
         .controls
           .slider
@@ -47,6 +49,7 @@ interface FrameAnimationState {
   timestepSize: number
   playbackSpeedFactor: number
   progress: String
+  connected: boolean
   webvis?: Webvis
 }
 
@@ -63,6 +66,7 @@ export default Vue.extend({
       timestepSize: 1,
       playbackSpeedFactor: 1,
       progress: 'Done',
+      connected: false,
     }
   },
   computed: {
@@ -115,6 +119,7 @@ export default Vue.extend({
     },
     handeConfigChanged: function() {
       if (this.webvis) {
+        this.connected = true
         this.firstTimestep = this.webvis.firstTimestep
         this.lastTimestep = this.webvis.lastTimestep
         this.currentTimestep = this.webvis.firstTimestep
