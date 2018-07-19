@@ -114,12 +114,6 @@ class DrawingController {
   resizeMap(width, height) {
     if (this.mapState) {
       this.mapState.resizeViewport(width, height)
-
-      /* if (this.mapState.bounds.width === 0 || this.mapState.bounds.height === 0) {
-        this.mapState.bounds = new Rectangle(0, width, 0, height)
-      } else {
-        this.mapState.resizeMap(width, height)
-      } */
     }
   }
 

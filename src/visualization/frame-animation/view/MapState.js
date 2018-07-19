@@ -59,7 +59,6 @@ class MapState {
   }
 
   resizeMapEnclose(rectangle) {
-    // let aspect = this.bounds.width / this.bounds.height || 1
     let aspect = this._viewport.width / this._viewport.height
     let newBounds
 
