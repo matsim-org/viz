@@ -1,4 +1,4 @@
-import AuthenticationStore from './Authentication'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export default class AuthenticatedRequest {
   public static async fetch(endpoint: string, options: RequestInit): Promise<Response> {
