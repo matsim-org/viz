@@ -49,6 +49,7 @@
     "pug-plain-loader": "^1.0.0",
     "ts-jest": "^23.0.0",
     "tslint-config-prettier": "^1.13.0",
-    "vue-template-compiler": "^2.5.16"
+    "vue-template-compiler": "^2.5.16",
+    "worker-loader": "^2.0.0"
   }
 }
