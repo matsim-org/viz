@@ -50,7 +50,3 @@
   align-items: center;
 }
 </style>
-
-
-
-

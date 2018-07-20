@@ -1,5 +1,3 @@
-import SharedStore from '../SharedStore'
-import AuthenticationStore from '../auth/Authentication'
 import Project from '../entities/Project'
 import { ContentType, HeaderKeys, Method } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'

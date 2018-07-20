@@ -29,22 +29,22 @@ let store = {
     {
       title: 'Cottbus Network Flows',
       url: '/flows',
-      thumbnail: '/static/data-cottbus/scrnshot.jpg',
+      thumbnail: '/data-cottbus/scrnshot.jpg',
     },
     {
       title: 'Network Links',
       url: '/network',
-      thumbnail: '/static/network-viz/scrnshot.png',
+      thumbnail: '/network-viz/scrnshot.png',
     },
     {
       title: 'Accessibility',
       url: '/accessibility',
-      thumbnail: '/static/kibera-accessibility/scrnshot.png',
+      thumbnail: '/kibera-accessibility/scrnshot.png',
     },
     {
       title: 'Cottbus Traffic Animation',
       url: '/animation-cottbus',
-      thumbnail: '/static/janek-viz/scrnshot.png',
+      thumbnail: '/janek-viz/scrnshot.png',
     },
   ],
 }

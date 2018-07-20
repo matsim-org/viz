@@ -16,7 +16,7 @@ class Shader {
                 varying float vIsHover;
 
                 vec3 interpolate(in vec3 pos1, in vec3 pos2, in float timestepFraction, in float shouldInterpolate) {
-                    
+
                     if(shouldInterpolate >= 0.0) {
                         vec3 direction = (pos2 - pos1);
                         vRotation = atan(direction.x, direction.y);
@@ -56,7 +56,7 @@ class Shader {
                     vIsSelected = isIdSelected();
 
                     gl_PointSize = getSize();
-                    
+
                     vShouldInterpolate = shouldInterpolate;
                     vec3 interpolated = interpolate(position, nextPosition, timestepFraction, shouldInterpolate);
 
@@ -76,11 +76,11 @@ class Shader {
 
                 uniform sampler2D triangle;
                 uniform sampler2D circle;
-                
+
                 varying float vRotation;
                 varying float vShouldInterpolate;
                 varying float vIsSelected;
-                
+
                 vec2 rotateCoordinates() {
                     mat2 rotationMatrix = mat2(cos(vRotation), sin(vRotation), -sin(vRotation), cos(vRotation));
 
@@ -90,7 +90,7 @@ class Shader {
                 }
 
                 vec4 getColor() {
-                    
+
                     vec4 result;
 
                     if (vIsSelected >= 1.0) {

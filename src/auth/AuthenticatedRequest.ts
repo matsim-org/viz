@@ -1,4 +1,4 @@
-import AuthenticationStore from './Authentication'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export default class AuthenticatedRequest {
   public static async fetch(endpoint: string, options: RequestInit): Promise<Response> {
@@ -7,7 +7,7 @@ export default class AuthenticatedRequest {
     let response = await fetch(endpoint, options)
 
     if (response.status === 401) {
-      //token was invalid try to request a new one
+      // token was invalid try to request a new one
       AuthenticationStore.resetState()
       AuthenticationStore.requestAuthentication()
     }

@@ -16,8 +16,7 @@
             .itemTitle(slot="title")
               span {{ viz.type.key}}
             span(slot="content") {{viz.id}}
-          
-    
+
     section
       list-header(v-on:btnClicked="handleAddFileClicked" title="Files" btnTitle="Add File")
       input.fileInput(type="file"
@@ -31,7 +30,7 @@
           span No files yet. Add some!
         .fileList(v-else)
           .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")          
+            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")
               .itemTitle(slot="title")
                 span {{file.userFileName}}
                 span {{file.sizeInBytes}} Bytes
@@ -40,7 +39,7 @@
                 .ui.visible.content Delete
                 .ui.hidden.content
                   i.ui.trash.icon
-    create-visualization(v-if="showCreateVisualization" 
+    create-visualization(v-if="showCreateVisualization"
                          v-on:close="handleAddVisualizationClosed"
                          v-bind:project="project")
 </template>
@@ -208,5 +207,3 @@ export default Vue.extend({
   },
 })
 </script>
-
-

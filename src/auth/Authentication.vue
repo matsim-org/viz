@@ -1,7 +1,7 @@
 <template lang="pug">
   div.authentication
     div.ui.active.text.loader(v-if="isRequesting") {{message}}
-    div.error(v-if="isFailed")
+    div.authError(v-if="isFailed")
       span.errorMessage {{message}}
       button.ui.green.button(v-on:click="handleTryAgainClicked") Try again
 </template>
@@ -13,7 +13,7 @@
   justify-content: center;
   align-items: center;
 }
-.error {
+.authError {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,11 +24,10 @@
 }
 </style>
 
-
 <script lang="ts">
 import Vue from 'vue'
 import sharedStore, { SharedState } from '../SharedStore'
-import authenticationStore, { AuthenticationStatus, AuthenticationState } from '../auth/Authentication'
+import authenticationStore, { AuthenticationStatus, AuthenticationState } from '@/auth/AuthenticationStore'
 import { Route } from 'vue-router'
 
 interface ComponentState {

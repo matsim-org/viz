@@ -5,7 +5,6 @@
 <script lang="ts">
 'use strict'
 
-import 'babel-polyfill'
 import * as mapboxgl from 'mapbox-gl'
 
 import sharedStore, { EventBus } from '../SharedStore'
@@ -72,7 +71,7 @@ function changeTheme(theme: string) {
   map.setStyle('mapbox://styles/mapbox/' + theme + '-v9')
 }
 
-let filename = '/static/network-viz/networkWGS84.geo.json'
+let filename = '/network-viz/networkWGS84.geo.json'
 
 // this is a required workaround to get the mapbox token assigned in TypeScript
 // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment

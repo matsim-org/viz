@@ -12,7 +12,6 @@
     create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed")
 </template>
 
-
 <script lang="ts">
 import Vue from 'vue'
 import ListHeader from '@/components/ListHeader.vue'

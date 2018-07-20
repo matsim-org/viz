@@ -1,8 +1,6 @@
 'use strict'
 
 import Vue from 'vue'
-import { Dictionary } from 'vue-router/types/router'
-import AuthenticationStore, { AuthenticationStatus } from './auth/Authentication'
 import FileAPI from './communication/FileAPI'
 import Project from './entities/Project'
 import { VisualizationType } from './entities/Visualization'
@@ -85,4 +83,4 @@ class SharedStore {
 }
 
 export default new SharedStore()
-export { SharedState, AuthenticationStatus }
+export { SharedState }

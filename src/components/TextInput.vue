@@ -2,9 +2,9 @@
   .textInput
     label.inputLabel {{label}}
     .ui.input
-        input(v-bind:value="text" 
-              v-bind:change="text" 
-              v-on:change="$emit('change', $event.target.value)" 
+        input(v-bind:value="text"
+              v-bind:change="text"
+              v-on:change="$emit('change', $event.target.value)"
               type="text")
 </template>
 <style scoped>
@@ -33,4 +33,3 @@ export default Vue.extend({
   },
 })
 </script>
-
