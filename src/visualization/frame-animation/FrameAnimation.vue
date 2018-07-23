@@ -4,6 +4,10 @@
           h1 Frame Based Animation
           span Id: {{vizId}}
         .canvasContainer
+          .loaderContainer(v-if="!isDone")
+            .ui.active.indeterminate.small.inline.text.loader Server is processing files...
+          .loaderContainer(v-if="!connected")
+            .ui.active.small.inline.text.loader Connecting to server...
           canvas.canvas(ref="canvas" id="canvas")
         .controls
           .slider
@@ -27,7 +31,7 @@
               label.description(for="timestepInput") Time
               .ui.mini.input
                 input(type="text" readonly v-model="currentTime")
-      
+
 </template>
 
 <script lang="ts">
@@ -44,11 +48,13 @@ interface FrameAnimationState {
   currentTimestep: number
   timestepSize: number
   playbackSpeedFactor: number
+  progress: String
+  connected: boolean
   webvis?: Webvis
 }
 
 export default Vue.extend({
-  data(): FrameAnimationState {
+  data (): FrameAnimationState {
     return {
       vizId: this.$route.params.vizId,
       isPlaying: false,
@@ -59,28 +65,33 @@ export default Vue.extend({
       currentTimestep: 0,
       timestepSize: 1,
       playbackSpeedFactor: 1,
+      progress: 'Done',
+      connected: false,
     }
   },
   computed: {
-    currentTime: function() {
+    currentTime: function () {
       return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
     },
-    speedFactor: function() {
+    speedFactor: function () {
       return this.playbackSpeedFactor * 60 * this.timestepSize
     },
+    isDone: function() {
+      return this.progress === 'Done'
+    },
   },
-  mounted: function() {
+  mounted: function () {
     let canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: 'https://localhost:3020', vizId: this.vizId })
     this.webvis.onServerConfigChanged = () => this.handeConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.handleFetchingDataChanged(value)
     this.webvis.onTimestepChanged = (value: number) => this.handleTimestepChanged(value)
   },
-  beforeDestroy: function() {
+  beforeDestroy: function () {
     if (this.webvis) this.webvis.destroy()
   },
   methods: {
-    togglePlayPause: function() {
+    togglePlayPause: function () {
       if (this.isPlaying) {
         this.webvis!.stopPlayback()
         this.isPlaying = false
@@ -89,39 +100,41 @@ export default Vue.extend({
         this.isPlaying = true
       }
     },
-    changeSpeedFactor: function(multiplyBy: number) {
+    changeSpeedFactor: function (multiplyBy: number) {
       if (this.webvis) {
         this.playbackSpeedFactor = this.playbackSpeedFactor * multiplyBy
         this.webvis.setPlaybackSpeed(this.playbackSpeedFactor)
       }
     },
-    handleRangeChanged(event: Event) {
+    handleRangeChanged (event: Event) {
       let target = event.target as HTMLInputElement
       let step = parseFloat(target.value)
       if (this.webvis) this.webvis.seekTimestep(step)
     },
-    handleRangeMouseDown(event: Event) {
+    handleRangeMouseDown (event: Event) {
       this.isRangeMouseDown = true
     },
-    handleRangeMouseUp(event: Event) {
+    handleRangeMouseUp (event: Event) {
       this.isRangeMouseDown = false
     },
-    handeConfigChanged: function() {
+    handeConfigChanged: function () {
       if (this.webvis) {
+        this.connected = true
         this.firstTimestep = this.webvis.firstTimestep
         this.lastTimestep = this.webvis.lastTimestep
         this.currentTimestep = this.webvis.firstTimestep
         this.timestepSize = this.webvis.timestepSize
         this.playbackSpeedFactor = this.webvis.playbackSpeedFactor
+        this.progress = this.webvis.progress
       }
     },
-    handleTimestepChanged: function(timestep: number) {
+    handleTimestepChanged: function (timestep: number) {
       if (!this.isRangeMouseDown) this.currentTimestep = timestep
     },
-    handleFetchingDataChanged: function(value: boolean) {
+    handleFetchingDataChanged: function (value: boolean) {
       this.isFetchingData = value
-    },
-  },
+    }
+  }
 })
 </script>
 
@@ -140,6 +153,19 @@ export default Vue.extend({
 .canvasContainer {
   display: flex;
   flex: 1;
+}
+
+.loaderContainer {
+  position: absolute;
+  z-index: 9000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .canvas {
@@ -198,8 +224,7 @@ export default Vue.extend({
 .bufferState {
   flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
 }
 </style>
-

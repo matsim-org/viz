@@ -42,8 +42,6 @@
 <script>
 'use strict'
 
-import 'babel-polyfill'
-import 'isomorphic-fetch'
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
 
@@ -234,9 +232,7 @@ function clickedOnTaz(e) {
     html += `<p class="popup-value"><b>${altname}:</b> ${value}</p>`
   }
 
-  _popup = new mapboxgl.Popup({ closeOnClick: true })
-    .setLngLat(e.lngLat)
-    .setHTML(html)
+  _popup = new mapboxgl.Popup({ closeOnClick: true }).setLngLat(e.lngLat).setHTML(html)
 
   // add a close-event, to remove highlight if user closes the popup
   _popup.on('close', closePopupEvent)
@@ -287,14 +283,11 @@ function addLegend(colorValues) {
       '</p>'
   }
 
-  html +=
-    '<button id="units" class="ui tiny inverted green button">in EMU Units</button>'
+  html += '<button id="units" class="ui tiny inverted green button">in EMU Units</button>'
   legend.innerHTML = html
 
   mapElement.appendChild(legend)
-  document
-    .getElementById('units')
-    .addEventListener('click', clickedUnits, false)
+  document.getElementById('units').addEventListener('click', clickedUnits, false)
 }
 
 // Show units modal-dialog when user clicks in legend
@@ -367,7 +360,7 @@ function loadDatasets() {
 // Load dataset definitions
 async function loadDatasetsFromFile() {
   try {
-    let url = '/static/kibera-accessibility/datasets.yml'
+    let url = '/kibera-accessibility/datasets.yml'
     let resp = await fetch(url)
     let text = await resp.text()
     let yml = await yaml.safeLoad(text, 'utf8')
@@ -380,7 +373,7 @@ async function loadDatasetsFromFile() {
 // Load color definitions
 async function loadColorsFromFile() {
   try {
-    let url = '/static/kibera-accessibility/colors.json'
+    let url = '/kibera-accessibility/colors.json'
     let resp = await fetch(url)
     let json = await resp.json()
     return json

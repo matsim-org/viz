@@ -1,6 +1,5 @@
 import Authentication from '@/auth/Authentication.vue'
 import StartPage from '@/components/StartPage.vue'
-import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/project/Project.vue'
 import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
@@ -9,13 +8,13 @@ import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkViz from '@/visualization/NetworkViz.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
-import sharedStore from '../SharedStore'
-import authenticationStore, { AuthenticationStatus } from '../auth/Authentication'
+import sharedStore from '@/SharedStore'
+import authenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
 Vue.use(Router)
 const AUTHENTICATION = '/authentication'
 
-let instance = new Router({
+const instance = new Router({
   mode: 'history', // 'history' mode produces clean, normal URLs
   routes: [
     {

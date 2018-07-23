@@ -28,4 +28,3 @@ export default Vue.extend({
   name: 'listHeader',
 })
 </script>
-

@@ -95,5 +95,3 @@ export default Vue.extend({
   margin-right: 1rem;
 }
 </style>
-
-

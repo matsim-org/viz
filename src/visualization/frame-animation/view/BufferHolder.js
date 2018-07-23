@@ -18,7 +18,7 @@ import {
 } from 'three'
 /* eslint-disable */
 import { Shader } from './Shader.js'
-import Configuration from '../contracts/Configuration.js'
+import Configuration from '../contracts/Configuration'
 
 /* eslint-disable */
 import triangle from './assets/triangle-64.png'

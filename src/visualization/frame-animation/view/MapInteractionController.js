@@ -1,4 +1,4 @@
-import Configuration from '../contracts/Configuration.js'
+import Configuration from '../contracts/Configuration'
 
 class MapInteractionController {
   set clicked(callback) {

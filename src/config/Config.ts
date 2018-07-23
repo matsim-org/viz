@@ -5,18 +5,10 @@ interface Config {
 }
 
 function createConfig(): Config {
-  if (process.env.USE_LOCAL_API) {
-    return {
-      authServer: 'https://localhost:3000',
-      fileServer: 'https://localhost:3010',
-      clientId: 'test-client-id',
-    }
-  } else {
-    return {
-      authServer: 'https://cnode00.vsp.tu-berlin.de:3000',
-      fileServer: 'https://cnode00.vsp.tu-berlin.de:3001',
-      clientId: 'matsim-viz-local-client-id',
-    }
+  return {
+    authServer: process.env.VUE_APP_AUTH_SERVER as string,
+    fileServer: process.env.VUE_APP_FILE_SERVER as string,
+    clientId: process.env.VUE_APP_ID as string,
   }
 }
 

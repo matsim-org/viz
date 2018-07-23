@@ -21,7 +21,7 @@ import Vue from 'vue'
 import sharedStore from './SharedStore'
 import SideBar from '@/components/SideBar.vue'
 
-let store = {
+const store = {
   sharedState: sharedStore.state,
 }
 
@@ -32,9 +32,9 @@ export default Vue.extend({
     return store
   },
   methods: {
-    toggleSidePanel: toggleSidePanel,
+    toggleSidePanel,
   },
-  mounted: function() {
+  mounted() {
     mounted(this)
   },
 })

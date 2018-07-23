@@ -30,6 +30,7 @@ class MapState {
    */
   constructor(bounds) {
     this._bounds = bounds
+    this._viewport = bounds
     this._scale = 1
     this._camera = new OrthographicCamera(bounds.left, bounds.right, bounds.top, bounds.bottom, 1, 100)
     this._camera.position.z = 1
@@ -43,6 +44,11 @@ class MapState {
     }
   }
 
+  resizeViewport(toWidth, toHeight) {
+    this._viewport = new Rectangle(0, toWidth, toHeight, 0)
+    this.resizeMap(toWidth, toHeight)
+  }
+
   resizeMap(toWidth, toHeight) {
     this.bounds = Rectangle.createRectFromCenterDimensions(
       this.bounds.centerX,
@@ -53,7 +59,7 @@ class MapState {
   }
 
   resizeMapEnclose(rectangle) {
-    let aspect = this.bounds.width / this.bounds.height
+    let aspect = this._viewport.width / this._viewport.height
     let newBounds
 
     if (rectangle.width > rectangle.height) {
@@ -71,7 +77,8 @@ class MapState {
         rectangle.height
       )
     }
-    this._scale = newBounds.width / this.bounds.width
+    let newScale = newBounds.width / this._viewport.width
+    this._scale = isFinite(newScale) ? newScale : 1
     this.bounds = newBounds
   }
 
