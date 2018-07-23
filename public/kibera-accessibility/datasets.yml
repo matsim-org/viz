@@ -164,3 +164,26 @@
     Breakdown Scenario:
       column: walk
       geoserver: accessibilities:ke_kibera_osm_20151105_50_water_breakdown_drinking_water_walk_0.5_3.5
+
+- city: Cape Town
+  lnglat:
+  - 18.32
+  - -33.57
+  name: School Accessibility
+  description: This layer shows the accessibilities of all schools in Cape Town,
+    South Africa. Accessibilities are calculated for walking, biking, and for private cars
+    in uncongested conditions. The computation is exclusively based on
+    input data from OpenStreetMap.
+  zoom: 15
+  colorScale: -2.5:3.5
+  altsBy: Data Source
+  alternatives:
+    Normal:
+      column: walk
+      geoserver: accessibilities:za_capetown_osm_live_1000_school_walk_-2.5-3.5
+    Normal (OSM Live):
+      column: bike
+      geoserver: accessibilities:za_capetown_osm_live_1000_school_bike_-2.5-3.5
+    Breakdown Scenario:
+      column: freespeed
+      geoserver: accessibilities:za_capetown_osm_live_1000_school_freespeed_-2.5-3.5
