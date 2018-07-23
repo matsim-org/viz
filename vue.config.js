@@ -1,4 +1,5 @@
 module.exports = {
+  parallel: false,
   configureWebpack: {
     module: {
       rules: [
