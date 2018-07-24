@@ -71,8 +71,8 @@ export default Vue.extend({
       request: {
         projectId: this.project.id,
         typeKey: 'raw-files',
-        inputFiles: new Map<string, string>(),
-        inputParameters: new Map<string, string>(),
+        inputFiles: {},
+        inputParameters: {},
       },
       sharedState: SharedStore.state,
       selectedVizType: undefined,
@@ -102,10 +102,10 @@ export default Vue.extend({
       this.selectedVizType = value
     },
     handleFileChanged(key: string, event: any) {
-      this.request.inputFiles.set(key, event.id)
+      this.request.inputFiles[key] = event.id
     },
     handleParamChanged(key: string, value: string) {
-      this.request.inputParameters.set(key, value)
+      this.request.inputParameters[key] = value
     },
   },
 })
