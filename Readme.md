@@ -14,3 +14,25 @@ The recomended editor is [Visual Studio Code](https://code.visualstudio.com/Down
 * TSLint Vue for linting VueJS-Components written in Typescript
 * Prettier to auto format code according to the linting rules.
 * To enable auto formatting on save add `"editor.formatOnSave": true` in the user settings
+
+# install
+
+### prerequisites
+
+##### macports
+
+```
+sudo port install nodejs8
+sudo port install npm6
+```
+
+### code itself
+
+```
+git clone https://github.com/matsim-org/viz
+cd viz/code
+npm install
+npm run serve
+```
+
+open browser at `localhost:8080`
