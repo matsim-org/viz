@@ -13,6 +13,7 @@
     "ordered-imports": false,
     "object-literal-sort-keys": false,
     "object-literal-shorthand": false,
+    "member-ordering": [true, { "order": "fields-first" }],
     "no-consecutive-blank-lines": false,
     "no-console": false,
     "no-empty": false,
