@@ -3,8 +3,8 @@
   "version": "0.11.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "serve-local": "vue-cli-service serve --mode local-backend",
+    "serve": "rm -r -f ./node_modules/.cache && vue-cli-service serve",
+    "serve-local": "rm -r -f ./node_modules/.cache && vue-cli-service serve --mode local-backend",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
