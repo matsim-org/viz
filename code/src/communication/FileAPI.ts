@@ -1,3 +1,4 @@
+import { JsogService } from 'jsog-typescript'
 import Project from '../entities/Project'
 import { ContentType, HeaderKeys, Method } from './Constants'
 import AuthenticatedRequest from '../auth/AuthenticatedRequest'
@@ -11,16 +12,18 @@ export default class FileAPI {
   private static VISUALIZATION: string = 'visualizations/'
   private static VISUALIZATION_TYPE: string = Config.fileServer + '/visualization-types/'
 
-  public static async fetchAllPersonalProjects(): Promise<Array<Project>> {
-    return await this.request<Array<Project>>(this.PROJECT, this.corsRequestOptions())
+  private static jsogService = new JsogService()
+
+  public static async fetchAllPersonalProjects(): Promise<Project[]> {
+    return await this.request<Project[]>(this.PROJECT, this.corsRequestOptions())
   }
 
   public static async fetchProject(projectId: string): Promise<Project> {
     return await this.request<Project>(this.PROJECT + '/' + projectId, this.corsRequestOptions())
   }
 
-  public static async fetchVisualizationTypes(): Promise<Array<VisualizationType>> {
-    return await this.request<Array<VisualizationType>>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
+  public static async fetchVisualizationTypes(): Promise<VisualizationType[]> {
+    return await this.request<VisualizationType[]>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
   }
 
   public static async createProject(projectName: string): Promise<Project> {
@@ -33,10 +36,9 @@ export default class FileAPI {
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
   }
 
-  public static async uploadFiles(files: Array<File>, project: Project): Promise<Project> {
+  public static async uploadFiles(files: File[], project: Project): Promise<Project> {
     let formData = new FormData()
-    for (let i = 0; i < files.length; i++) {
-      let file = files[i]
+    for (let file of files) {
       formData.append(file.name, file)
     }
 
@@ -90,8 +92,8 @@ export default class FileAPI {
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
     let result = await AuthenticatedRequest.fetch(endpoint, options)
     if (result.ok) {
-      const contentType = result.headers.get('content-type')
-      return await result.json()
+      let message = await result.json()
+      return this.jsogService.deserialize(message) as any
     } else {
       throw await this.generateError(result)
     }
