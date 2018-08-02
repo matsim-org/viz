@@ -16,6 +16,7 @@
     "convert-seconds": "^1.0.1",
     "debounce": "^1.1.0",
     "js-cookie": "^2.2.0",
+    "jsog-typescript": "^1.0.0-1",
     "jwt-decode": "^2.2.0",
     "keyword-extractor": "0.0.15",
     "mapbox-gl": "^0.44.2",
