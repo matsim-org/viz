@@ -37,6 +37,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Webvis from './Webvis'
+import Config from '../../config/Config'
 
 interface FrameAnimationState {
   vizId: String
@@ -54,7 +55,7 @@ interface FrameAnimationState {
 }
 
 export default Vue.extend({
-  data (): FrameAnimationState {
+  data(): FrameAnimationState {
     return {
       vizId: this.$route.params.vizId,
       isPlaying: false,
@@ -70,28 +71,28 @@ export default Vue.extend({
     }
   },
   computed: {
-    currentTime: function () {
+    currentTime: function() {
       return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
     },
-    speedFactor: function () {
+    speedFactor: function() {
       return this.playbackSpeedFactor * 60 * this.timestepSize
     },
     isDone: function() {
       return this.progress === 'Done'
     },
   },
-  mounted: function () {
+  mounted: function() {
     let canvas = this.$refs.canvas as HTMLElement
-    this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: 'https://localhost:3020', vizId: this.vizId })
+    this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: Config.frameAnimationServer, vizId: this.vizId })
     this.webvis.onServerConfigChanged = () => this.handeConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.handleFetchingDataChanged(value)
     this.webvis.onTimestepChanged = (value: number) => this.handleTimestepChanged(value)
   },
-  beforeDestroy: function () {
+  beforeDestroy: function() {
     if (this.webvis) this.webvis.destroy()
   },
   methods: {
-    togglePlayPause: function () {
+    togglePlayPause: function() {
       if (this.isPlaying) {
         this.webvis!.stopPlayback()
         this.isPlaying = false
@@ -100,24 +101,24 @@ export default Vue.extend({
         this.isPlaying = true
       }
     },
-    changeSpeedFactor: function (multiplyBy: number) {
+    changeSpeedFactor: function(multiplyBy: number) {
       if (this.webvis) {
         this.playbackSpeedFactor = this.playbackSpeedFactor * multiplyBy
         this.webvis.setPlaybackSpeed(this.playbackSpeedFactor)
       }
     },
-    handleRangeChanged (event: Event) {
+    handleRangeChanged(event: Event) {
       let target = event.target as HTMLInputElement
       let step = parseFloat(target.value)
       if (this.webvis) this.webvis.seekTimestep(step)
     },
-    handleRangeMouseDown (event: Event) {
+    handleRangeMouseDown(event: Event) {
       this.isRangeMouseDown = true
     },
-    handleRangeMouseUp (event: Event) {
+    handleRangeMouseUp(event: Event) {
       this.isRangeMouseDown = false
     },
-    handeConfigChanged: function () {
+    handeConfigChanged: function() {
       if (this.webvis) {
         this.connected = true
         this.firstTimestep = this.webvis.firstTimestep
@@ -128,13 +129,13 @@ export default Vue.extend({
         this.progress = this.webvis.progress
       }
     },
-    handleTimestepChanged: function (timestep: number) {
+    handleTimestepChanged: function(timestep: number) {
       if (!this.isRangeMouseDown) this.currentTimestep = timestep
     },
-    handleFetchingDataChanged: function (value: boolean) {
+    handleFetchingDataChanged: function(value: boolean) {
       this.isFetchingData = value
-    }
-  }
+    },
+  },
 })
 </script>
 

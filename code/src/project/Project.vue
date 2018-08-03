@@ -201,8 +201,12 @@ export default Vue.extend({
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files
-      const updatedProject = await FileAPI.uploadFiles(files, this.project)
-      this.project = updatedProject
+      try {
+        const updatedProject = await FileAPI.uploadFiles(files, this.project)
+        this.project = updatedProject
+      } catch (error) {
+        console.error(error)
+      }
     },
   },
 })
