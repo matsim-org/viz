@@ -1,5 +1,13 @@
 module.exports = {
   parallel: false,
+  chainWebpack: config => {
+    /*
+    * the default loaders for worker files must be disabled. Otherwise both the default and the loaders defined below
+    * will be applied to worker files. See also: https://github.com/vuejs/vue-cli/issues/2028
+    */
+    config.module.rule('js').exclude.add(/\.worker\.js$/)
+    config.module.rule('ts').exclude.add(/\.worker\.ts$/)
+  },
   configureWebpack: {
     /*
      * Setting the global object is necessary to make the loading of web-workers work. Otherwise, window is referenced
