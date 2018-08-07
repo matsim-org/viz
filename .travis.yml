@@ -1,14 +1,25 @@
 language: node_js
 node_js:
   - "8"
+env: 
+  global:
+    # include $HOME for aws command
+    - PATH=$HOME/.local/bin:$PATH
+    - travis encrypt AWS_ACCESS_KEY_ID=$S3_KEY_ID --add
+    - travis encrypt AWS_SECRET_ACCESS_KEY=$S3_KEY --add
+
 script: npm run build
+
+before_deploy: pip install --user awscli
 
 deploy:
   on:
     branch: feature/#9-deployment
-  provider: s3
-  access_key_id: $S3_KEY_ID
-  secret_access_key: $S3_KEY
-  bucket: matsim-viz-website
-  local_dir: dist
+  provider: script
+  script: 
+    - aws s3 sync ./dist s3://matsim-viz-website --delete
+  #access_key_id: $S3_KEY_ID
+  #secret_access_key: $S3_KEY
+  #bucket: matsim-viz-website
+  #local_dir: dist
   skip_cleanup: true
