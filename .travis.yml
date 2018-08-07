@@ -5,9 +5,7 @@ script: npm run build
 
 deploy:
   on:
-    branches:
-      - master
-      - feature/#9-deployment
+    branch: feature/#9-deployment
   provider: s3
   access_key_id: $S3_KEY_ID
   access_key: $S3_KEY
