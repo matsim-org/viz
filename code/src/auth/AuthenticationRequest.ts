@@ -47,7 +47,7 @@ export default class AuthenticationRequest {
       scope: 'openid user-client',
       response_type: 'id_token token',
       client_id: Config.clientId,
-      redirect_uri: 'http://localhost:8080/authentication',
+      redirect_uri: Config.authCallback,
       state: this.randomString(),
       nonce: this.randomString(),
     }
