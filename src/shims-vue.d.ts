@@ -4,6 +4,8 @@ declare module '*.vue' {
 }
 
 declare module 'vue-slider-component'
+declare module 'convert-seconds'
+declare module 'read-blob'
 
 declare module '*.worker' {
   class WebpackWorker extends Worker {
