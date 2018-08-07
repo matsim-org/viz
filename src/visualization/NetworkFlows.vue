@@ -27,12 +27,11 @@ import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
 import * as mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
-
-let timeConvert = require('convert-seconds')
+import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
-let sax = require('sax')
-let readBlob = require('read-blob')
-let proj4 = require('proj4').default
+import sax from 'sax'
+import readBlob from 'read-blob'
+import * as proj4 from 'proj4'
 
 let _linkData: any
 
@@ -40,11 +39,11 @@ let _linkData: any
 // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
 // TODO: move mapbox access token to sharedstore
 let mymap: mapboxgl.Map
-let writableMapBox: any = mapboxgl
+const writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
-let mySlider = {
+const mySlider = {
   disabled: false,
   dotSize: 24,
   height: 10,
@@ -98,7 +97,7 @@ interface StoreType {
 }
 
 // store is the component data store -- the state of the component.
-let store: StoreType = {
+const store: StoreType = {
   sharedStore: sharedStore.state,
   currentTimeSegment: 0,
   nodes: {},
@@ -114,15 +113,15 @@ let store: StoreType = {
 }
 
 function convertSecondsToClockTimeMinutes(index: number) {
-  let hms = timeConvert(index)
-  let minutes = ('00' + hms.minutes).slice(-2)
+  const hms = timeConvert(index)
+  const minutes = ('00' + hms.minutes).slice(-2)
   return `${hms.hours}:${minutes}`
 }
 
 function convertSecondsToClockTime(index: number) {
-  let hms = timeConvert(index)
-  let minutes = ('00' + hms.minutes).slice(-2)
-  let seconds = ('00' + hms.seconds).slice(-2)
+  const hms = timeConvert(index)
+  const minutes = ('00' + hms.minutes).slice(-2)
+  const seconds = ('00' + hms.seconds).slice(-2)
   return `${hms.hours}:${minutes}:${seconds}`
 }
 
@@ -131,19 +130,19 @@ function sliderChangedEvent(seconds: number) {
 }
 
 function updateFlowsForTimeValue(seconds: number) {
-  let segment = Math.floor(seconds / 900) // 15 minutes
+  const segment = Math.floor(seconds / 900) // 15 minutes
 
   // nothing to do if segment hasn't changed
   if (segment === store.currentTimeSegment) return
 
   store.setTimeSegment(segment)
 
-  for (let link of _linkData.features) {
-    let id = link.properties.id
+  for (const link of _linkData.features) {
+    const id = link.properties.id
     link.properties.color = calculateColorFromVolume(id)
   }
 
-  let z: any = mymap.getSource('my-data')
+  const z: any = mymap.getSource('my-data')
   z.setData(_linkData)
 
   if (sharedStore.debug) console.log('done')
@@ -151,12 +150,12 @@ function updateFlowsForTimeValue(seconds: number) {
 
 function updateTimeSliderSegmentColors(segments: number[]) {
   let gradient = '-webkit-linear-gradient(left'
-  let total = segments.reduce((sum, current) => sum + current)
+  const total = segments.reduce((sum, current) => sum + current)
 
-  for (let segment of segments) {
+  for (const segment of segments) {
     if (sharedStore.debug) console.log(segment)
 
-    let percent = 100.0 * segment / total
+    const percent = 100.0 * segment / total
     let color = ',#eee'
     if (percent > 50) color = ',#04f'
     else if (percent > 20) color = ',#33c'
@@ -195,7 +194,7 @@ function setupEventListeners() {
   EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
-    for (let delay of [50, 100, 150, 200, 250, 300]) {
+    for (const delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function() {
         mymap.resize()
       }, delay)
@@ -204,25 +203,27 @@ function setupEventListeners() {
 }
 
 function constructGeoJsonFromLinkData() {
-  let geojsonLinks = []
+  const geojsonLinks = []
 
-  for (let id in store.links) {
-    let link = store.links[id]
-    let fromNode = store.nodes[link.from]
-    let toNode = store.nodes[link.to]
+  for (const id in store.links) {
+    if (store.links.hasOwnProperty(id)) {
+      const link = store.links[id]
+      const fromNode = store.nodes[link.from]
+      const toNode = store.nodes[link.to]
 
-    let coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
+      const coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
 
-    let featureJson = {
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: coordinates,
-      },
-      properties: { id: id, color: '#aaa' },
+      const featureJson = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates,
+        },
+        properties: { id: id, color: '#aaa' },
+      }
+
+      geojsonLinks.push(featureJson)
     }
-
-    geojsonLinks.push(featureJson)
   }
 
   _linkData = {
@@ -234,7 +235,7 @@ function constructGeoJsonFromLinkData() {
 }
 
 function addLinksToMap() {
-  let linksAsGeojson: any = constructGeoJsonFromLinkData()
+  const linksAsGeojson: any = constructGeoJsonFromLinkData()
 
   mymap.addSource('my-data', {
     data: linksAsGeojson,
@@ -273,7 +274,7 @@ function addLinksToMap() {
 }
 
 function calculateColorFromVolume(id: string) {
-  let volume = store.flows[id]
+  const volume = store.flows[id]
     ? store.flows[id][store.currentTimeSegment] ? store.flows[id][store.currentTimeSegment] : 0
     : 0
 
@@ -310,8 +311,8 @@ async function aggregate15minutes(): Promise<void> {
     .exec()
     .then(function(rows: any[], db: any) {
       console.log('got so many rows:', rows.length)
-      for (let row of rows) {
-        let period = Math.floor(row.time / 900)
+      for (const row of rows) {
+        const period = Math.floor(row.time / 900)
         if (!store.flows[row.link]) store.flows[row.link] = {}
         if (!store.flows[row.link][period]) store.flows[row.link][period] = 0
         store.flows[row.link][period]++
@@ -324,19 +325,19 @@ async function aggregate15minutes(): Promise<void> {
 }
 
 async function readEventsFile() {
-  let events: any[] = []
-  let timeIndex: any = {}
-  let typeIndex: any = {}
+  const events: any[] = []
+  const timeIndex: any = {}
+  const typeIndex: any = {}
 
   let idAutoInc = 0
-  let saxparser = sax.parser(true) // strictmode=true
+  const saxparser = sax.parser(true, {}) // strictmode=true
 
   saxparser.onopentag = function(tag: any) {
     if (tag.name === 'event') {
-      let attr = tag.attributes
+      const attr = tag.attributes
 
       attr.id = ++idAutoInc
-      let key = parseInt(attr.time)
+      const key = parseInt(attr.time, 10)
       attr.time = key
       events.push(attr)
 
@@ -350,13 +351,13 @@ async function readEventsFile() {
 
   saxparser.onend = function() {
     console.log('START CONVERTING INDEX', events.length, 'events')
-    let zTime = []
-    for (let id in timeIndex) {
-      zTime.push({ id: id, rows: timeIndex[id] })
+    const zTime = []
+    for (const id in timeIndex) {
+      if (timeIndex.hasOwnProperty(id)) zTime.push({ id: id, rows: timeIndex[id] })
     }
-    let zType = []
-    for (let id in typeIndex) {
-      zType.push({ id: id, rows: typeIndex[id] })
+    const zType = []
+    for (const id in typeIndex) {
+      if (typeIndex.hasOwnProperty(id)) zType.push({ id: id, rows: typeIndex[id] })
     }
 
     console.log('START RAW EVENT DB IMPORT', events.length, 'events')
@@ -375,14 +376,14 @@ async function readEventsFile() {
   console.log('Start EVENTS')
 
   try {
-    let url = '/data-cottbus/events.xml.gz'
+    const url = '/data-cottbus/events.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
-    let resp = await fetch(url, { mode: 'no-cors' })
-    let blob = await resp.blob()
+    const resp = await fetch(url, { mode: 'no-cors' })
+    const blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then((content: any) => {
-      let xml = pako.inflate(content, { to: 'string' })
+      const xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
   } catch (e) {
@@ -392,10 +393,10 @@ async function readEventsFile() {
 }
 
 async function readNetworkFile() {
-  let saxparser = sax.parser(true) // strictmode=true
+  const saxparser = sax.parser(true, {}) // strictmode=true
 
   saxparser.onopentag = function(tag: any) {
-    let attr = tag.attributes
+    const attr = tag.attributes
 
     if (tag.name === 'node') {
       attr.x = parseFloat(attr.x)
@@ -408,21 +409,21 @@ async function readNetworkFile() {
     }
   }
 
-  let COTTBUS_PROJECTION = '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+  const COTTBUS_PROJECTION = '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
 
   saxparser.onend = function() {
     convertCoords(COTTBUS_PROJECTION)
   }
 
   try {
-    let url = '/data-cottbus/network.xml.gz'
+    const url = '/data-cottbus/network.xml.gz'
     // let url = 'http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/2014-08-01_car_1pct/network.xml.gz'
     // let url = 'http://matsim-viz.surge.sh/static/data-cottbus/network.xml.gz'
-    let resp = await fetch(url, { mode: 'no-cors' })
-    let blob = await resp.blob()
+    const resp = await fetch(url, { mode: 'no-cors' })
+    const blob = await resp.blob()
     // get the blob data
     readBlob.arraybuffer(blob).then((content: any) => {
-      let xml = pako.inflate(content, { to: 'string' })
+      const xml = pako.inflate(content, { to: 'string' })
       saxparser.write(xml).close()
     })
   } catch (e) {
@@ -437,12 +438,12 @@ async function loadDataFiles() {
 }
 
 // MapBox requires long/lat
-function convertCoords(projection: string) {
+function convertCoords(projection: any) {
   console.log('starting conversion', projection)
 
-  for (let id in store.nodes) {
-    let node = store.nodes[id]
-    let z = proj4(projection, 'WGS84', node)
+  for (const key of Object.keys(store.nodes)) {
+    const node = store.nodes[key]
+    const z = proj4.transform(projection, 'WGS84' as any, node)
     node.x = z.x
     node.y = z.y
   }

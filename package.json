@@ -34,10 +34,13 @@
   },
   "devDependencies": {
     "@types/jest": "^23.1.4",
+    "@types/js-yaml": "^3.11.2",
     "@types/jwt-decode": "^2.2.1",
     "@types/mapbox-gl": "^0.44.2",
     "@types/node": "^7.0.60",
     "@types/pako": "^1.0.0",
+    "@types/proj4": "^2.3.4",
+    "@types/sax": "^1.0.1",
     "@vue/cli-plugin-babel": "^3.0.0-rc.10",
     "@vue/cli-plugin-eslint": "^3.0.0-rc.10",
     "@vue/cli-plugin-typescript": "^3.0.0-rc.10",

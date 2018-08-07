@@ -11,7 +11,7 @@ import sharedStore, { EventBus } from '../SharedStore'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 
 // store is the component data store -- the state of the component.
-let store = {}
+const store = {}
 
 // this export is the Vue Component itself
 export default {
@@ -54,7 +54,7 @@ function setupEventListeners() {
     // map needs to be force-recentered, and it is slow.
     // TODO look into making the sidebar an overlay instead of side-by-side with the map;
     // which will improve performance drastically but then the left edge of the map is hidden
-    for (let delay of [50, 100, 150, 200, 250, 300]) {
+    for (const delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function() {
         map.resize()
       }, delay)
@@ -71,11 +71,11 @@ function changeTheme(theme: string) {
   map.setStyle('mapbox://styles/mapbox/' + theme + '-v9')
 }
 
-let filename = '/network-viz/networkWGS84.geo.json'
+const filename = '/network-viz/networkWGS84.geo.json'
 
 // this is a required workaround to get the mapbox token assigned in TypeScript
 // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-let writableMapBox: any = mapboxgl
+const writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
@@ -91,13 +91,13 @@ async function mapIsReady() {
   let json
 
   try {
-    let resp = await fetch(filename)
+    const resp = await fetch(filename)
     json = await resp.json()
   } catch (e) {
     alert(e)
   }
 
-  for (let link of json.features) {
+  for (const link of json.features) {
     link.properties.width = link.properties['base case (demand)_agents'] / 200
     if (link.properties.width < 3) link.properties.width = 2
     link.properties.vc = 1.0 * link.properties['base case (demand)_agents'] / link.properties.capacity
@@ -153,7 +153,7 @@ function clickedOnTaz(e: MapElement) {
   // if (_popup) _popup.off('close', closePopupEvent);
 
   // the browser delivers some details that we need, in the fn argument 'e'
-  let props = e.features[0].properties
+  const props = e.features[0].properties
 
   // highlight the zone that we clicked on, using this weird filter thing in MapBox API
   // see https://www.mapbox.com/mapbox-gl-js/example/hover-styles/

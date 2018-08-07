@@ -39,7 +39,7 @@
     #mymap
 </template>
 
-<script>
+<script lang=ts>
 'use strict'
 
 import mapboxgl from 'mapbox-gl'
@@ -58,17 +58,17 @@ mapboxgl.accessToken =
 const STARTING_MODE = 'Walk'
 
 // some global variables save some state for us.
-let _activeDataLayer
-let _activeDataset = { alternatives: [] }
-let _chosenCity
-let _popup
+let _activeDataLayer: any
+let _activeDataset: any = { alternatives: [] }
+let _chosenCity: any
+let _popup: any
 
-let mymap
+let mymap: mapboxgl.Map
 
-let COLORS = {}
+let COLORS: any = {}
 
 // store is the component data store -- the state of the component.
-let store = {
+const store = {
   selectedAlt: STARTING_MODE,
   selectedDataset: _activeDataset,
   showUnitModal: false,
@@ -114,7 +114,7 @@ async function mounted() {
 
   // semantic requires this line for dropdowns to work
   // https://stackoverflow.com/questions/25347315/semantic-ui-dropdown-menu-do-not-work
-  // eslint-disable-next-line
+  // tslint:disable-next-line
   $('.ui.dropdown').dropdown()
 
   // Start doing stuff AFTER the MapBox library has fully initialized
@@ -124,10 +124,10 @@ async function mounted() {
 }
 
 function setupEventListeners() {
-  EventBus.$on('sidebar-toggled', isVisible => {
+  EventBus.$on('sidebar-toggled', (isVisible: any) => {
     console.log(`Sidebar is now: ${isVisible} :)`)
     // map needs to be force-recentered, and it is slow.
-    for (let delay of [50, 100, 150, 200, 250, 300]) {
+    for (const delay of [50, 100, 150, 200, 250, 300]) {
       setTimeout(function() {
         mymap.resize()
       }, delay)
@@ -145,18 +145,18 @@ function mapIsReady() {
 }
 
 // Add the dataset layer corresponding to our chosen alternative
-async function addAccessibilityLayer(alt) {
+async function addAccessibilityLayer(alt: string) {
   console.log('--City: ' + _activeDataset.city)
   console.log('--Dataset: ' + _activeDataset.name)
   console.log('--Alternative: ' + alt)
 
-  let alternative = _activeDataset.alternatives[alt]
-  let geoserverLayerId = alternative['geoserver']
+  const alternative = _activeDataset.alternatives[alt]
+  const geoserverLayerId = alternative.geoserver
   console.log('--Geoserver Layer: ' + geoserverLayerId)
 
   // choose correct colors: dataset has default colorScale,
   // but alternative can override this setting.
-  let colorRamp = COLORS[_activeDataset.colorScale]
+  let colorRamp: any = COLORS[_activeDataset.colorScale]
   if ('colorScale' in alternative) {
     colorRamp = COLORS[alternative.colorScale]
   }
@@ -194,7 +194,7 @@ async function addAccessibilityLayer(alt) {
   })
 
   // turn "hover cursor" into a pointer, so user knows they can click.
-  mymap.on('mousemove', geoserverLayerId, function(e) {
+  mymap.on('mousemove', geoserverLayerId, function(e: any) {
     mymap.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
   })
 
@@ -203,7 +203,7 @@ async function addAccessibilityLayer(alt) {
     mymap.getCanvas().style.cursor = '-webkit-grab'
   })
 
-  mymap.on('click', geoserverLayerId, function(e) {
+  mymap.on('click', geoserverLayerId, function(e: any) {
     clickedOnTaz(e)
   })
 
@@ -213,12 +213,12 @@ async function addAccessibilityLayer(alt) {
 }
 
 // clickedOnTaz: called when user... clicks on the taz ;-)
-function clickedOnTaz(e) {
+function clickedOnTaz(e: any) {
   // cancel old close-popup event because it messes with event ordering
   if (_popup) _popup.off('close', closePopupEvent)
 
   // the browser delivers some details that we need, in the fn argument 'e'
-  let props = e.features[0].properties
+  const props = e.features[0].properties
 
   // highlight the zone that we clicked on, using this weird filter thing in MapBox API
   // see https://www.mapbox.com/mapbox-gl-js/example/hover-styles/
@@ -226,9 +226,9 @@ function clickedOnTaz(e) {
 
   // build HTML of popup window
   let html = `<h4>Raw Values:</h4><hr/>`
-  for (let altname in _activeDataset.alternatives) {
-    let column = _activeDataset.alternatives[altname].column
-    let value = props[column].toFixed(4)
+  for (const altname of _activeDataset.alternatives.keys()) {
+    const column = _activeDataset.alternatives[altname].column
+    const value = props[column].toFixed(4)
     html += `<p class="popup-value"><b>${altname}:</b> ${value}</p>`
   }
 
@@ -241,14 +241,16 @@ function clickedOnTaz(e) {
   _popup.addTo(mymap)
 }
 
-function closePopupEvent(p) {
+function closePopupEvent(p: any) {
   // remove highlight
   mymap.setFilter('highlight-layer', ['==', 'id', ''])
 }
 
-function addLegend(colorValues) {
+function addLegend(colorValues: [number, any]) {
   // remove old legend first
-  let mapElement = document.getElementById('mymap')
+  const mapElement = document.getElementById('mymap')
+  if (!mapElement) return
+
   let legend = document.getElementById('legend')
   if (legend) mapElement.removeChild(legend)
 
@@ -260,15 +262,15 @@ function addLegend(colorValues) {
   let html = `<h4>Legend:</h4><hr/>`
 
   // loop through our color-bin intervals and generate a label with a colored square for each interval
-  for (let [index, val] of colorValues.entries()) {
+  for (const [index, val] of colorValues.entries()) {
     if (index === 0 || index === 10) continue
 
     let pre = ''
     if (index === 1) pre = '< '
     if (index === 9) pre = '> '
 
-    let breakpoint = val[0]
-    let color = val[1]
+    const breakpoint = val[0]
+    const color = val[1]
 
     html +=
       '<p class="legend-row">' +
@@ -287,13 +289,14 @@ function addLegend(colorValues) {
   legend.innerHTML = html
 
   mapElement.appendChild(legend)
-  document.getElementById('units').addEventListener('click', clickedUnits, false)
+  const units = document.getElementById('units')
+  if (units) units.addEventListener('click', clickedUnits, false)
 }
 
 // Show units modal-dialog when user clicks in legend
 function clickedUnits() {
   // this is cheating: I'm using jQuery to unhide the modal "What are the units? modal dialog"
-  // eslint-disable-next-line
+  // tslint-disable-next-line
   $('.ui.modal').modal('show')
 }
 
@@ -304,13 +307,13 @@ function tweakMapColors() {
 }
 
 // Do things when user clicks on one of the alternative buttons
-function userChoseAlternative(alt) {
+function userChoseAlternative(alt: any) {
   addAccessibilityLayer(alt)
   store.selectedAlt = alt
 }
 
 // Do things when user clicks on one of the dataset dropdown choices
-function userChoseDataset(choice) {
+function userChoseDataset(choice: any) {
   // first make sure user didn't just pick the same dataset
   if (store.DATASETS[choice].name === _activeDataset.name) return
 
@@ -344,8 +347,8 @@ function userChoseDataset(choice) {
 
 // load geoserver data for all alternatives, but just for the one active dataset
 function loadDatasets() {
-  for (let altname in _activeDataset.alternatives) {
-    let alt = _activeDataset.alternatives[altname]
+  for (const id of Object.keys(_activeDataset.alternatives)) {
+    const alt = _activeDataset.alternatives[id]
     if (!mymap.getSource(alt.geoserver)) {
       const url = SERVER_ADDR + SERVER_PARAMS + alt.geoserver
       mymap.addSource(alt.geoserver, {
@@ -360,10 +363,10 @@ function loadDatasets() {
 // Load dataset definitions
 async function loadDatasetsFromFile() {
   try {
-    let url = '/kibera-accessibility/datasets.yml'
-    let resp = await fetch(url)
-    let text = await resp.text()
-    let yml = await yaml.safeLoad(text, 'utf8')
+    const url = '/kibera-accessibility/datasets.yml'
+    const resp = await fetch(url)
+    const text = await resp.text()
+    const yml = await yaml.safeLoad(text)
     return yml
   } catch (error) {
     console.log('dataset load error: ' + error)
@@ -373,9 +376,9 @@ async function loadDatasetsFromFile() {
 // Load color definitions
 async function loadColorsFromFile() {
   try {
-    let url = '/kibera-accessibility/colors.json'
-    let resp = await fetch(url)
-    let json = await resp.json()
+    const url = '/kibera-accessibility/colors.json'
+    const resp = await fetch(url)
+    const json = await resp.json()
     return json
   } catch (error) {
     console.log('dataset load error: ' + error)
