@@ -20,24 +20,8 @@ class SharedStore {
   private static STATE_KEY = 'shared-state'
   private _state: SharedState
 
-  get state(): SharedState {
-    return this._state
-  }
-
-  get debug(): boolean {
-    return true
-  }
-
   constructor() {
     this._state = this.initializeState()
-  }
-
-  private initializeState(): SharedState {
-    let state = this.loadState()
-    if (!state) {
-      state = this.defaultState()
-    }
-    return state
   }
 
   public toggleSidePanel(): void {
@@ -52,12 +36,28 @@ class SharedStore {
     EventBus.$emit('lastNavigation-changed', this.state.lastNavigation)
   }
 
-  async fetchProjects(): Promise<void> {
+  public async fetchProjects(): Promise<void> {
     this._state.personalProjects = await FileAPI.fetchAllPersonalProjects()
   }
 
-  async fetchVizTypes(): Promise<void> {
+  public async fetchVizTypes(): Promise<void> {
     this._state.visualizationTypes = await FileAPI.fetchVisualizationTypes()
+  }
+
+  get state(): SharedState {
+    return this._state
+  }
+
+  get debug(): boolean {
+    return true
+  }
+
+  private initializeState(): SharedState {
+    let state = this.loadState()
+    if (!state) {
+      state = this.defaultState()
+    }
+    return state
   }
 
   private defaultState(): SharedState {
