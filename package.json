@@ -38,10 +38,11 @@
     "@types/mapbox-gl": "^0.44.2",
     "@types/node": "^7.0.60",
     "@types/pako": "^1.0.0",
-    "@vue/cli-plugin-babel": "^3.0.0-rc.5",
-    "@vue/cli-plugin-typescript": "^3.0.0-rc.5",
-    "@vue/cli-plugin-unit-jest": "^3.0.0-rc.5",
-    "@vue/cli-service": "^3.0.0-rc.5",
+    "@vue/cli-plugin-babel": "^3.0.0-rc.10",
+    "@vue/cli-plugin-eslint": "^3.0.0-rc.10",
+    "@vue/cli-plugin-typescript": "^3.0.0-rc.10",
+    "@vue/cli-plugin-unit-jest": "^3.0.0-rc.10",
+    "@vue/cli-service": "^3.0.0-rc.10",
     "@vue/test-utils": "^1.0.0-beta.20",
     "babel-core": "7.0.0-bridge.0",
     "eslint": "^4.0.0",
@@ -51,6 +52,7 @@
     "pug-plain-loader": "^1.0.0",
     "ts-jest": "^23.0.0",
     "tslint-config-prettier": "^1.13.0",
+    "typescript": "^3.0.1",
     "vue-template-compiler": "^2.5.16",
     "worker-loader": "^2.0.0"
   }

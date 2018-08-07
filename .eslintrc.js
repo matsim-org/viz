@@ -16,10 +16,12 @@ module.exports = {
   plugins: ['vue'],
   // add your custom rules here
   rules: {
+    'brace-style': ['error', '1tbs', { allowSingleLine: true }],
     // allow async-await
     'generator-star-spacing': 'off',
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'no-console': 0,
     'no-unused-vars': process.env.NODE_ENV === 'production' ? 2 : 1,
     'comma-dangle': ['off', 'ignore'],
     semi: ['error', 'never'],

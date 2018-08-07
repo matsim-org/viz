@@ -5,7 +5,7 @@
     "exclude": ["node_modules/**"]
   },
   "rules": {
-    "curly": [true, "as-needed"],
+    "curly": [true, "ignore-same-line"],
     "quotemark": [true, "single"],
     "indent": [true, "spaces", 2],
     "interface-name": false,
@@ -17,7 +17,6 @@
     "no-consecutive-blank-lines": false,
     "no-console": false,
     "no-empty": false,
-    "prefer-const": false,
     "semicolon": [true, "never"],
     "variable-name": [true, "allow-leading-underscore"]
   }
