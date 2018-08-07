@@ -10,5 +10,5 @@ deploy:
   access_key_id: $S3_KEY_ID
   access_key: $S3_KEY
   bucket: matsim-viz-website
-  local_dir: build
+  local_dir: dist
   skip_cleanup: true
