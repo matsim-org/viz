@@ -26,6 +26,14 @@ import circle from './assets/circle-64.png'
 /* eslint-enable */
 
 class BufferHolder {
+  constructor() {
+    this._config = Configuration.getConfig()
+    this._scene = new Scene()
+    window.scene = this._scene
+    window.THREE = THREE
+    this._scene.background = new Color(this._config.colors.background)
+  }
+
   static AGENT_LAYER() {
     return 'agent-layer'
   }
@@ -43,14 +51,6 @@ class BufferHolder {
 
   set redrawNeeded(callback) {
     this._redrawNeeded = callback
-  }
-
-  constructor() {
-    this._config = Configuration.getConfig()
-    this._scene = new Scene()
-    window.scene = this._scene
-    window.THREE = THREE
-    this._scene.background = new Color(this._config.colors.background)
   }
 
   destroy() {

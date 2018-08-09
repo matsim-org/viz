@@ -12,6 +12,12 @@ export default class DataFetcher extends AsyncWorkerConnector {
     super(new BackgroundWorker())
   }
 
+  static async create(params) {
+    let fetcher = new DataFetcher()
+    await fetcher.initialize(params)
+    return fetcher
+  }
+
   async initialize(params) {
     await this.postAsyncWorkerMessage(INITIALIZE, params)
   }
@@ -30,11 +36,5 @@ export default class DataFetcher extends AsyncWorkerConnector {
 
   async fetchPlan(params) {
     return this.postAsyncWorkerMessage(GET_PLAN, params)
-  }
-
-  static async create(params) {
-    let fetcher = new DataFetcher()
-    await fetcher.initialize(params)
-    return fetcher
   }
 }

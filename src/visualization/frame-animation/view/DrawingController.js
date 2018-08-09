@@ -6,6 +6,10 @@ import Configuration from '../contracts/Configuration'
 import { WebGLRenderer, Raycaster, Vector3 } from 'three'
 
 class DrawingController {
+  constructor() {
+    this.initialize()
+  }
+
   static AGENT_LAYER() {
     return 'agent-layer'
   }
@@ -48,10 +52,6 @@ class DrawingController {
 
   get dataProvider() {
     return this._dataProvider
-  }
-
-  constructor() {
-    this.initialize()
   }
 
   initialize() {

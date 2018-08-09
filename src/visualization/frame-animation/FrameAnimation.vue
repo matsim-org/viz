@@ -40,7 +40,7 @@ import Webvis from './Webvis'
 import Config from '../../config/Config'
 
 interface FrameAnimationState {
-  vizId: String
+  vizId: string
   isPlaying: boolean
   isFetchingData: boolean
   isRangeMouseDown: boolean
@@ -49,7 +49,7 @@ interface FrameAnimationState {
   currentTimestep: number
   timestepSize: number
   playbackSpeedFactor: number
-  progress: String
+  progress: string
   connected: boolean
   webvis?: Webvis
 }

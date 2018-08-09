@@ -2,6 +2,20 @@ import { Rectangle } from '../contracts/Rectangle.js'
 import { OrthographicCamera } from 'three'
 
 class MapState {
+  /**
+   * Map state handles the translation of screen coordinates into world coordinates the bounds are expected to be
+   * in right hand coordinates -> lef < right, bottom < top
+   * @param {*Rectangle} bounds - bounds of the rectangle that should be shown
+   */
+  constructor(bounds) {
+    this._bounds = bounds
+    this._viewport = bounds
+    this._scale = 1
+    this._camera = new OrthographicCamera(bounds.left, bounds.right, bounds.top, bounds.bottom, 1, 100)
+    this._camera.position.z = 1
+    this._camera.frustumCulled = false
+  }
+
   static ZOOMFACTOR() {
     return 1.1
   }
@@ -21,20 +35,6 @@ class MapState {
 
   get scale() {
     return this._scale
-  }
-
-  /**
-   * Map state handles the translation of screen coordinates into world coordinates the bounds are expected to be
-   * in right hand coordinates -> lef < right, bottom < top
-   * @param {*Rectangle} bounds - bounds of the rectangle that should be shown
-   */
-  constructor(bounds) {
-    this._bounds = bounds
-    this._viewport = bounds
-    this._scale = 1
-    this._camera = new OrthographicCamera(bounds.left, bounds.right, bounds.top, bounds.bottom, 1, 100)
-    this._camera.position.z = 1
-    this._camera.frustumCulled = false
   }
 
   transformCoordinate(offsetX, offsetY) {

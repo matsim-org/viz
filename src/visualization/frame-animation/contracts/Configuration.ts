@@ -22,7 +22,6 @@ interface ConfigParams {
   cache?: ConfigCacheParams
 }
 class Config {
-
   get vizId() {
     return this._vizId
   }
@@ -81,11 +80,11 @@ class Config {
     this._listeners = []
   }
 
-  public subscribeServerConfigUpdated(callback: Function) {
+  public subscribeServerConfigUpdated(callback: () => void) {
     this._listeners.push(callback)
   }
 
-  public unsubscribeServerConfigUpdated(callback: Function) {
+  public unsubscribeServerConfigUpdated(callback: () => void) {
     const index = this._listeners.indexOf(callback)
     this._listeners.splice(index, 1)
   }

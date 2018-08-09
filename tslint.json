@@ -8,6 +8,7 @@
     "curly": [true, "ignore-same-line"],
     "indent": [true, "spaces", 2],
     "interface-name": false,
+    "max-classes-per-file": false,
     "member-ordering": [true, { "order": "fields-first" }],
     "no-consecutive-blank-lines": false,
     "no-console": false,

@@ -7,6 +7,18 @@ class LayerData {
     this._layers = []
   }
 
+  static createLayer(name, z, color, data) {
+    return {
+      name: name,
+      z: z,
+      color: color,
+      points: data.points,
+      lines: data.lines,
+      shapeVertices: data.shapeVertices,
+      shapeNormals: data.shapeNormals,
+    }
+  }
+
   addLayer(layer) {
     // check whether a layer with the name exists
     let foundIndex = -1
@@ -43,18 +55,6 @@ class LayerData {
       return layerName === entry.name
     })
     return layer
-  }
-
-  static createLayer(name, z, color, data) {
-    return {
-      name: name,
-      z: z,
-      color: color,
-      points: data.points,
-      lines: data.lines,
-      shapeVertices: data.shapeVertices,
-      shapeNormals: data.shapeNormals,
-    }
   }
 }
 
