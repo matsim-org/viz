@@ -296,7 +296,7 @@ function addLegend(colorValues: [number, any]) {
 // Show units modal-dialog when user clicks in legend
 function clickedUnits() {
   // this is cheating: I'm using jQuery to unhide the modal "What are the units? modal dialog"
-  // tslint-disable-next-line
+  // tslint:disable-next-line
   $('.ui.modal').modal('show')
 }
 

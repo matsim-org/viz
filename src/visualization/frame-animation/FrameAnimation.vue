@@ -82,7 +82,7 @@ export default Vue.extend({
     },
   },
   mounted: function() {
-    let canvas = this.$refs.canvas as HTMLElement
+    const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: Config.frameAnimationServer, vizId: this.vizId })
     this.webvis.onServerConfigChanged = () => this.handeConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.handleFetchingDataChanged(value)
@@ -108,8 +108,8 @@ export default Vue.extend({
       }
     },
     handleRangeChanged(event: Event) {
-      let target = event.target as HTMLInputElement
-      let step = parseFloat(target.value)
+      const target = event.target as HTMLInputElement
+      const step = parseFloat(target.value)
       if (this.webvis) this.webvis.seekTimestep(step)
     },
     handleRangeMouseDown(event: Event) {

@@ -26,12 +26,12 @@ class DataFetcher extends AsyncBackgroundWorker {
     super()
   }
 
-  handleInitialize(call: MethodCall): void {
-    let params = call.parameters as InitParams
+  public handleInitialize(call: MethodCall): void {
+    const params = call.parameters as InitParams
     this.api = new FrameAnimationAPI(params.dataUrl, params.vizId)
   }
 
-  async handleMethodCall(call: MethodCall): Promise<MethodResult> {
+  public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
       case GET_CONFIG:
         return await this.getConfigData()
@@ -46,23 +46,23 @@ class DataFetcher extends AsyncBackgroundWorker {
     }
   }
 
-  async getConfigData() {
-    let configuration = await this.api.fetchConfiguration()
+  public async getConfigData() {
+    const configuration = await this.api.fetchConfiguration()
     return { data: configuration }
   }
 
-  async getNetworkData() {
-    let response = await this.api.fetchNetwork()
-    let network = new NetworkReader(response).parse()
+  public async getNetworkData() {
+    const response = await this.api.fetchNetwork()
+    const network = new NetworkReader(response).parse()
 
     return { data: network, transferrables: [network.buffer] }
   }
 
-  async getSnapshotData(parameters: GetSnapshotParams) {
-    let response = await this.api.fetchSnapshots(parameters.requestParameters)
-    let snapshots = new SnapshotReader(response).parse()
+  public async getSnapshotData(parameters: GetSnapshotParams) {
+    const response = await this.api.fetchSnapshots(parameters.requestParameters)
+    const snapshots = new SnapshotReader(response).parse()
 
-    let transferrables: Array<ArrayBuffer> = []
+    const transferrables: ArrayBuffer[] = []
 
     snapshots.forEach(snapshot => {
       transferrables.push(snapshot.position.buffer)
@@ -74,11 +74,11 @@ class DataFetcher extends AsyncBackgroundWorker {
     return { data: { data: snapshots, requestNumber: parameters.requestNumber }, transferrables: transferrables }
   }
 
-  async getPlan(parameters: GetPlanParams) {
-    let response = await this.api.fetchPlan(parameters.idIndex)
+  public async getPlan(parameters: GetPlanParams) {
+    const response = await this.api.fetchPlan(parameters.idIndex)
 
-    let geoJson = new GeoJsonReader(response).parse()
-    let transferrableObjects = [
+    const geoJson = new GeoJsonReader(response).parse()
+    const transferrableObjects = [
       geoJson.points.buffer,
       geoJson.lines.buffer,
       geoJson.shapeVertices.buffer,
@@ -92,4 +92,4 @@ class DataFetcher extends AsyncBackgroundWorker {
 export default null as any
 
 // Bootstrap DataFetcher when file is loaded from server
-let worker = new DataFetcher()
+const worker = new DataFetcher()

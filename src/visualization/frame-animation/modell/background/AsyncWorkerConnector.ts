@@ -17,15 +17,15 @@ export default class AsyncWorkerConnector {
     this.worker.addEventListener('message', this.handleMessageDelegate)
   }
 
-  destroy() {
+  public destroy() {
     if (this.worker) {
       this.worker.removeEventListener('message', this.handleMessageDelegate)
       this.worker.terminate()
     }
   }
 
-  async postAsyncWorkerMessage<T>(methodName: string, data: any, transferrables?: any[]) {
-    let message = {
+  public async postAsyncWorkerMessage<T>(methodName: string, data: any, transferrables?: any[]) {
+    const message = {
       call: {
         method: methodName,
         parameters: data,
@@ -40,8 +40,8 @@ export default class AsyncWorkerConnector {
   }
 
   private handleWorkerMessage(e: MessageEvent) {
-    let then = Date.now()
-    let message = e.data as AsyncResult
+    const then = Date.now()
+    const message = e.data as AsyncResult
 
     switch (message.type) {
       case TYPE_ERROR:
@@ -71,7 +71,7 @@ export default class AsyncWorkerConnector {
   }
 
   private generatePromiseId() {
-    let values = new Uint32Array(8)
+    const values = new Uint32Array(8)
     crypto.getRandomValues(values)
     // Developed by stackoverflow https://stackoverflow.com/a/50192275/9945451
     return values.reduce((output, value) => output + ('0' + value.toString(16)).slice(-2), '')

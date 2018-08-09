@@ -36,7 +36,7 @@ import sharedStore, { EventBus } from '../SharedStore'
 import NetworkVizSidebar from '@/visualization/NetworkVizSidebar.vue'
 
 // store is the component data store -- the state of the component.
-let store = {
+const store = {
   sharedStore: sharedStore.state,
   sidebarComponent: '',
 }

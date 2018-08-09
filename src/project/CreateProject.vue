@@ -40,7 +40,7 @@ export default Vue.extend({
       try {
         this.isRequesting = true
         this.isServerError = false
-        let newProject = await FileAPI.createProject(this.projectName)
+        const newProject = await FileAPI.createProject(this.projectName)
         this.isRequesting = false
         this.$router.push({ path: `/project/${newProject.id}` })
       } catch (error) {

@@ -11,36 +11,15 @@ export default class AuthenticationRequest {
     return 'Authentication-Request-variables'
   }
 
-  public static persistVariables(request: AuthenticationRequest): void {
-    let toPersist = {
-      state: request.stateVariable,
-      nonce: request.nonceVariable,
-    }
-    sessionStorage.setItem(AuthenticationRequest.TMP_STORAGE_KEY, JSON.stringify(toPersist))
-  }
-
-  public static loadVariablesAndDelete(): AuthenticationRequestVars {
-    let loaded = sessionStorage.getItem(AuthenticationRequest.TMP_STORAGE_KEY)
-    if (loaded) {
-      sessionStorage.removeItem(AuthenticationRequest.TMP_STORAGE_KEY)
-      return JSON.parse(loaded) as AuthenticationRequestVars
-    } else {
-      return {
-        state: '',
-        nonce: '',
-      }
-    }
-  }
-
-  private request: any
-  private endpoint: string = Config.authServer + '/authorize/'
-
   get stateVariable(): string {
     return this.request.state
   }
   get nonceVariable(): string {
     return this.request.nonce
   }
+
+  private request: any
+  private endpoint: string = Config.authServer + '/authorize/'
 
   constructor() {
     this.request = {
@@ -53,14 +32,35 @@ export default class AuthenticationRequest {
     }
   }
 
+  public static persistVariables(request: AuthenticationRequest): void {
+    const toPersist = {
+      state: request.stateVariable,
+      nonce: request.nonceVariable,
+    }
+    sessionStorage.setItem(AuthenticationRequest.TMP_STORAGE_KEY, JSON.stringify(toPersist))
+  }
+
+  public static loadVariablesAndDelete(): AuthenticationRequestVars {
+    const loaded = sessionStorage.getItem(AuthenticationRequest.TMP_STORAGE_KEY)
+    if (loaded) {
+      sessionStorage.removeItem(AuthenticationRequest.TMP_STORAGE_KEY)
+      return JSON.parse(loaded) as AuthenticationRequestVars
+    } else {
+      return {
+        state: '',
+        nonce: '',
+      }
+    }
+  }
+
   public submit(): void {
     const form = document.createElement('form')
     form.setAttribute('method', Method.GET)
     form.setAttribute('action', this.endpoint)
 
-    for (let key in this.request) {
+    for (const key in this.request) {
       if (this.request.hasOwnProperty(key)) {
-        let value = (this.request as any)[key]
+        const value = (this.request as any)[key]
         form.appendChild(this.createInput(key, value))
       }
     }
@@ -79,7 +79,7 @@ export default class AuthenticationRequest {
   }
 
   private randomString(): string {
-    let randomValues = new Int32Array(5)
+    const randomValues = new Int32Array(5)
     window.crypto.getRandomValues(randomValues)
     let result: string = ''
     randomValues.forEach(value => (result += value.toString()))

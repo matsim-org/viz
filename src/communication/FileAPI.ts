@@ -27,18 +27,18 @@ export default class FileAPI {
   }
 
   public static async createProject(projectName: string): Promise<Project> {
-    let options = this.postRequestOptions({ name: projectName })
+    const options = this.postRequestOptions({ name: projectName })
     return await this.request<Project>(this.PROJECT, options)
   }
 
   public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
-    let options = this.postRequestOptions(request)
+    const options = this.postRequestOptions(request)
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
   }
 
   public static async uploadFiles(files: File[], project: Project): Promise<Project> {
-    let formData = new FormData()
-    for (let file of files) {
+    const formData = new FormData()
+    for (const file of files) {
       formData.append(file.name, file)
     }
 
@@ -54,10 +54,10 @@ export default class FileAPI {
 
   public static async downloadFile(fileId: string, project: Project): Promise<Blob> {
     const url = `${this.PROJECT}/${project.id}/files/${fileId}`
-    let result = await AuthenticatedRequest.fetch(url, this.corsRequestOptions())
+    const result = await AuthenticatedRequest.fetch(url, this.corsRequestOptions())
 
     if (result.ok) {
-      let file = await result.blob()
+      const file = await result.blob()
       console.log('downloaded blop with size: ' + file.size)
       return file
     } else {
@@ -73,7 +73,7 @@ export default class FileAPI {
   }
 
   private static postRequestOptions(body: any): RequestInit {
-    let headers = new Headers()
+    const headers = new Headers()
     headers.append(HeaderKeys.CONTENT_TYPE, ContentType.APPLICATION_JSON)
     return {
       method: Method.POST,
@@ -90,9 +90,9 @@ export default class FileAPI {
   }
 
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    let result = await AuthenticatedRequest.fetch(endpoint, options)
+    const result = await AuthenticatedRequest.fetch(endpoint, options)
     if (result.ok) {
-      let message = await result.json()
+      const message = await result.json()
       return this.jsogService.deserialize(message) as any
     } else {
       throw await this.generateError(result)
@@ -100,7 +100,7 @@ export default class FileAPI {
   }
 
   private static async generateError(response: Response): Promise<Error> {
-    let error = await response.json()
+    const error = await response.json()
     console.error(error)
     return new Error(error.error_description)
   }

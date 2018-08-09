@@ -24,8 +24,11 @@ export default abstract class AsyncBackgroundWorker {
     addEventListener('message', this.handleMessageDelegate)
   }
 
+  public abstract handleInitialize(call: MethodCall): void
+  public abstract async handleMethodCall(call: MethodCall): Promise<MethodResult>
+
   private async handleMessage(e: MessageEvent): Promise<void> {
-    let message = e.data as AsyncMethodCall
+    const message = e.data as AsyncMethodCall
 
     if (!this.isValidMessage(message)) console.error('invalid message')
 
@@ -42,18 +45,15 @@ export default abstract class AsyncBackgroundWorker {
     }
 
     try {
-      let result = await this.handleMethodCall(message.call)
+      const result = await this.handleMethodCall(message.call)
       this.postResult(message.id, result)
     } catch (error) {
       this.postError(message.id, error.message)
     }
   }
 
-  abstract handleInitialize(call: MethodCall): void
-  abstract async handleMethodCall(call: MethodCall): Promise<MethodResult>
-
   private postResult(id: string, methodResult: MethodResult) {
-    let asyncResult: AsyncMethodResult = {
+    const asyncResult: AsyncMethodResult = {
       id: id,
       type: TYPE_RESULT,
       result: methodResult.data,
@@ -62,7 +62,7 @@ export default abstract class AsyncBackgroundWorker {
   }
 
   private postError(id: string, error: any) {
-    let asyncError: AsyncError = {
+    const asyncError: AsyncError = {
       id: id,
       type: TYPE_ERROR,
       error: error,

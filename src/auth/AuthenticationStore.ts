@@ -102,7 +102,7 @@ class AuthenticationStore {
   }
 
   private loadState(): AuthenticationState | null {
-    let state = sessionStorage.getItem(AuthenticationStore.STATE_STORAGE_KEY)
+    const state = sessionStorage.getItem(AuthenticationStore.STATE_STORAGE_KEY)
     if (state) return JSON.parse(state) as AuthenticationState
     return null
   }

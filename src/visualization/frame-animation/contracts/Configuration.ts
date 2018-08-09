@@ -22,21 +22,6 @@ interface ConfigParams {
   cache?: ConfigCacheParams
 }
 class Config {
-  private static instance: Config
-
-  private _listeners: Array<Function> = []
-  private _vizId = ''
-  private _canvasId = ''
-  private _dataUrl = ''
-  private _colors: ConfigColors = {}
-  private _cache: ConfigCacheParams = {}
-  private _serverConfig: ServerConfiguration = {
-    firstTimestep: 0,
-    lastTimestep: 0,
-    timestepSize: 1,
-    bounds: { left: 0, right: 0, top: 0, bottom: 0 },
-    progress: Progress.Downloading,
-  }
 
   get vizId() {
     return this._vizId
@@ -67,6 +52,53 @@ class Config {
   }
   get progress() {
     return this._serverConfig.progress
+  }
+  private static instance: Config
+
+  private _listeners: Function[] = []
+  private _vizId = ''
+  private _canvasId = ''
+  private _dataUrl = ''
+  private _colors: ConfigColors = {}
+  private _cache: ConfigCacheParams = {}
+  private _serverConfig: ServerConfiguration = {
+    firstTimestep: 0,
+    lastTimestep: 0,
+    timestepSize: 1,
+    bounds: { left: 0, right: 0, top: 0, bottom: 0 },
+    progress: Progress.Downloading,
+  }
+
+  constructor(parameters: ConfigParams) {
+    this.setVizId(parameters.vizId)
+    this.setCanvasId(parameters.canvasId)
+    this.setColors(parameters.colors || {})
+    this.setCache(parameters.cache || {})
+    this.setDataUrl(parameters.dataUrl)
+  }
+
+  public destroy() {
+    this._listeners = []
+  }
+
+  public subscribeServerConfigUpdated(callback: Function) {
+    this._listeners.push(callback)
+  }
+
+  public unsubscribeServerConfigUpdated(callback: Function) {
+    const index = this._listeners.indexOf(callback)
+    this._listeners.splice(index, 1)
+  }
+
+  public _broadCastServerConfigUpdated() {
+    for (let i = 0; i < this._listeners.length; i++) {
+      this._listeners[i]()
+    }
+  }
+
+  public _updateServerConfig(serverConfig: ServerConfiguration) {
+    this.setServerConfig(serverConfig)
+    this._broadCastServerConfigUpdated()
   }
 
   private setVizId(id: string) {
@@ -103,43 +135,11 @@ class Config {
   private setServerConfig(config: ServerConfiguration) {
     this._serverConfig = config
   }
-
-  constructor(parameters: ConfigParams) {
-    this.setVizId(parameters.vizId)
-    this.setCanvasId(parameters.canvasId)
-    this.setColors(parameters.colors || {})
-    this.setCache(parameters.cache || {})
-    this.setDataUrl(parameters.dataUrl)
-  }
-
-  destroy() {
-    this._listeners = []
-  }
-
-  subscribeServerConfigUpdated(callback: Function) {
-    this._listeners.push(callback)
-  }
-
-  unsubscribeServerConfigUpdated(callback: Function) {
-    let index = this._listeners.indexOf(callback)
-    this._listeners.splice(index, 1)
-  }
-
-  _broadCastServerConfigUpdated() {
-    for (let i = 0; i < this._listeners.length; i++) {
-      this._listeners[i]()
-    }
-  }
-
-  _updateServerConfig(serverConfig: ServerConfiguration) {
-    this.setServerConfig(serverConfig)
-    this._broadCastServerConfigUpdated()
-  }
 }
 
 let instance: Config
 
-let Configuration = {
+const Configuration = {
   createConfiguration: (parameters: ConfigParams) => {
     instance = new Config(parameters)
   },

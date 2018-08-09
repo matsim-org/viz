@@ -14,11 +14,11 @@ export default class GeoJsonParser extends AsyncBackgroundWorker {
     super()
   }
 
-  async handleInitialize(call: MethodCall) {
+  public async handleInitialize(call: MethodCall) {
     return
   }
 
-  async handleMethodCall(call: MethodCall): Promise<MethodResult> {
+  public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
       case PARSE_GEO_JSON:
         return this.parseGeoJson(call.parameters)
@@ -27,17 +27,18 @@ export default class GeoJsonParser extends AsyncBackgroundWorker {
     }
   }
 
-  parseGeoJson(parameters: ParseParams): Promise<MethodResult> {
-    if (!this.isValid(parameters))
+  public parseGeoJson(parameters: ParseParams): Promise<MethodResult> {
+    if (!this.isValid(parameters)) {
       throw new Error('parseGeoJson: invalid parameters! geoJson:string, layerName:string, z:number required')
+    }
 
-    let reader = new GeoJsonReader(parameters.geoJson)
-    let result = reader.parse()
+    const reader = new GeoJsonReader(parameters.geoJson)
+    const result = reader.parse()
     result.z = parameters.z
     result.layerName = parameters.layerName
     result.color = parameters.color || undefined
 
-    let transferrable = [
+    const transferrable = [
       result.points.buffer,
       result.lines.buffer,
       result.shapeVertices.buffer,
@@ -54,4 +55,4 @@ export default class GeoJsonParser extends AsyncBackgroundWorker {
   }
 }
 
-let worker = new GeoJsonParser()
+const worker = new GeoJsonParser()

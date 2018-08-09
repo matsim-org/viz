@@ -88,7 +88,7 @@ export default Vue.extend({
     createVisualization: async function(): Promise<void> {
       this.isRequesting = true
       try {
-        let answer = await FileAPI.createVisualization(this.request)
+        const answer = await FileAPI.createVisualization(this.request)
         this.close(answer)
       } catch (error) {
         this.isServerError = true

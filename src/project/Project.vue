@@ -149,7 +149,7 @@ export default Vue.extend({
     }
   },
   created: async function(): Promise<void> {
-    let project = this.sharedState.personalProjects.find(element => element.id === this.project.id)
+    const project = this.sharedState.personalProjects.find(element => element.id === this.project.id)
     if (project) {
       this.project = project
     }
@@ -176,7 +176,7 @@ export default Vue.extend({
     },
     handleFileClicked: async function(fileId: string): Promise<void> {
       try {
-        let blob = await FileAPI.downloadFile(fileId, this.project)
+        const blob = await FileAPI.downloadFile(fileId, this.project)
         window.open(URL.createObjectURL(blob))
       } catch (e) {
         console.log(e)
