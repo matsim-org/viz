@@ -3,7 +3,6 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
-    "esModuleInterop": true,
     "importHelpers": true,
     "jsx": "preserve",
     "module": "esnext",
