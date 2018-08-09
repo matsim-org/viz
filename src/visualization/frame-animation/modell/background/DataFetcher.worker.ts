@@ -65,10 +65,10 @@ class DataFetcher extends AsyncBackgroundWorker {
     const transferrables: ArrayBuffer[] = []
 
     snapshots.forEach(snapshot => {
-      transferrables.push(snapshot.position.buffer)
-      transferrables.push(snapshot.nextPosition.buffer)
-      transferrables.push(snapshot.shouldInterpolate.buffer)
-      transferrables.push(snapshot.ids.buffer)
+      transferrables.push(snapshot.position.buffer as ArrayBuffer)
+      transferrables.push(snapshot.nextPosition.buffer as ArrayBuffer)
+      transferrables.push(snapshot.shouldInterpolate.buffer as ArrayBuffer)
+      transferrables.push(snapshot.ids.buffer as ArrayBuffer)
     })
 
     return { data: { data: snapshots, requestNumber: parameters.requestNumber }, transferrables: transferrables }
