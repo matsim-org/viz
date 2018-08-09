@@ -44,6 +44,7 @@
 
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
+import $ from 'jquery'
 
 import { EventBus } from '../SharedStore'
 
@@ -114,8 +115,7 @@ async function mounted() {
 
   // semantic requires this line for dropdowns to work
   // https://stackoverflow.com/questions/25347315/semantic-ui-dropdown-menu-do-not-work
-  // tslint:disable-next-line
-  $('.ui.dropdown').dropdown()
+  ;($('.ui.dropdown') as any).dropdown()
 
   // Start doing stuff AFTER the MapBox library has fully initialized
   mymap.on('style.load', mapIsReady)
@@ -296,8 +296,8 @@ function addLegend(colorValues: [number, any]) {
 // Show units modal-dialog when user clicks in legend
 function clickedUnits() {
   // this is cheating: I'm using jQuery to unhide the modal "What are the units? modal dialog"
-  // tslint:disable-next-line
-  $('.ui.modal').modal('show')
+  // tslint:disable-next-line:semicolon
+  ;($('.ui.modal') as any).modal('show')
 }
 
 // Add any map color & shape tweaks here
