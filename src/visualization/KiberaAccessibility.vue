@@ -1,24 +1,5 @@
 <template lang="pug">
 #container
-  .ui.modal
-      i.close.icon
-      .header
-        Accessibility Units
-      .image.content
-        .ui.medium.image
-          img(src="kibera.thumb.jpg")
-        .description
-          .ui.header Accessibility units are the expected maximum utility (EMU) in Euros or other monetary units.
-          p In easier terms: The color of a tile/origin tells you how plentiful (land-use aspect) and reachable (transport aspect) facilities/opportunities of a given type are from this location by a given mode of transport.
-          p For an explanation of the computation procedure, data acquisition, and interpretation of the measure, see the paper labeled
-            b VSP-WP 17-03
-            | at the
-            a(href="https://www.vsp.tu-berlin.de/publications/vspwp") VSP Publication Site.
-      .actions
-        .ui.positive.right.labeled.icon.button
-          Okay
-          i.checkmark.icon
-
   #page-content
     #titlebar
       h2
@@ -44,7 +25,6 @@
 
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
-import $ from 'jquery'
 
 import { EventBus } from '../SharedStore'
 
@@ -113,14 +93,13 @@ async function mounted() {
     zoom: _activeDataset.zoom,
   })
 
-  // semantic requires this line for dropdowns to work
-  // https://stackoverflow.com/questions/25347315/semantic-ui-dropdown-menu-do-not-work
-  ;($('.ui.dropdown') as any).dropdown()
-
   // Start doing stuff AFTER the MapBox library has fully initialized
   mymap.on('style.load', mapIsReady)
 
   setupEventListeners()
+  // semantic requires this line for dropdowns to work
+  // https://stackoverflow.com/questions/25347315/semantic-ui-dropdown-menu-do-not-work
+  ;($('.ui.dropdown') as any).dropdown()
 }
 
 function setupEventListeners() {
