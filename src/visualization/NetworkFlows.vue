@@ -2,8 +2,7 @@
 .main-content
   #mymap
   .controls
-    button.ui.tiny.red.button(@click="loadData" :class="{shrunken: !sharedStore.isSidePanelExpanded}") Load Data
-    .slider-things
+    .slider-things(:class="{shrunken: !sharedStore.isSidePanelExpanded}")
       vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
       .clock-labels
         .hour &nbsp;
@@ -17,6 +16,9 @@
         .hour &nbsp;
   .right-overlay
     h1#clock {{clockTime}}
+  .loading-message.ui.segment(v-show='loadingMsg')
+    .ui.inverted.active.dimmer
+      .ui.text.loader {{ loadingMsg }}
 </template>
 
 <script lang="ts">
@@ -53,7 +55,7 @@ const mySlider = {
   show: true,
   tooltip: 'always',
   width: '100%',
-  tooltipDir: [],
+  tooltipDir: 'center',
   sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
   tooltipStyle: [
     {
@@ -94,6 +96,7 @@ interface StoreType {
   timeSlider: any
   timeSliderValue: 0
   setTimeSegment: any
+  loadingMsg: string
 }
 
 // store is the component data store -- the state of the component.
@@ -102,6 +105,7 @@ const store: StoreType = {
   currentTimeSegment: 0,
   nodes: {},
   links: {},
+  loadingMsg: '',
   flows: {},
   flowSummary: Array.apply(null, new Array(96)).map(() => 0),
   msg: '',
@@ -113,9 +117,13 @@ const store: StoreType = {
 }
 
 function convertSecondsToClockTimeMinutes(index: number) {
-  const hms = timeConvert(index)
-  const minutes = ('00' + hms.minutes).slice(-2)
-  return `${hms.hours}:${minutes}`
+  try {
+    const hms = timeConvert(index)
+    const minutes = ('00' + hms.minutes).slice(-2)
+    return `${hms.hours}:${minutes}`
+  } catch (e) {
+    return ''
+  }
 }
 
 function convertSecondsToClockTime(index: number) {
@@ -176,7 +184,7 @@ function mounted() {
     center: [14.35, 51.75], // lnglat, not latlng (think of it as: x,y)
     container: 'mymap',
     logoPosition: 'bottom-right',
-    style: 'mapbox://styles/mapbox/outdoors-v9',
+    style: 'mapbox://styles/mapbox/light-v9',
     pitch: 0,
     zoom: 11,
   })
@@ -184,6 +192,7 @@ function mounted() {
   // do things that can only be done after MapBox is fully initialized
   mymap.on('style.load', mapIsReady)
   setupEventListeners()
+  loadDataFiles()
 }
 
 function mapIsReady() {
@@ -305,9 +314,11 @@ nSQL().connect()
 
 async function aggregate15minutes(): Promise<void> {
   console.log('START 15-MIN AGGREGATION')
+  store.loadingMsg = 'Aggregating'
+
   nSQL('events')
     .query('select')
-    .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
+    // .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
     .exec()
     .then(function(rows: any[], db: any) {
       console.log('got so many rows:', rows.length)
@@ -321,10 +332,13 @@ async function aggregate15minutes(): Promise<void> {
       console.log({ flows: store.flowSummary })
       updateTimeSliderSegmentColors(store.flowSummary)
       addLinksToMap()
+      store.loadingMsg = ''
     })
 }
 
 async function readEventsFile() {
+  store.loadingMsg = 'Loading Events'
+
   const events: any[] = []
   const timeIndex: any = {}
   const typeIndex: any = {}
@@ -350,6 +364,7 @@ async function readEventsFile() {
   }
 
   saxparser.onend = function() {
+    store.loadingMsg = 'Analyzing'
     console.log('START CONVERTING INDEX', events.length, 'events')
     const zTime = []
     for (const id in timeIndex) {
@@ -394,6 +409,8 @@ async function readEventsFile() {
 
 async function readNetworkFile() {
   const saxparser = sax.parser(true, {}) // strictmode=true
+
+  store.loadingMsg = 'Reading Network'
 
   saxparser.onopentag = function(tag: any) {
     const attr = tag.attributes
@@ -494,6 +511,13 @@ export default {
   background: #eee;
 }
 
+.loading-message {
+  grid-row: 1 / 2;
+  grid-column: 1 / 3;
+  overflow: hidden;
+  opacity: 0.8;
+}
+
 .right-overlay {
   grid-row: 1 / 3;
   grid-column: 2 / 3;
@@ -525,6 +549,7 @@ export default {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  margin-bottom: 5px;
 }
 
 .shrunken {
