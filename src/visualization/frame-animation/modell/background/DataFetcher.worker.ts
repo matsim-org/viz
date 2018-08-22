@@ -1,21 +1,30 @@
-import FrameAnimationAPI, { SnapshotRequestParams } from '../../communication/FrameAnimationAPI'
-import { NetworkReader } from '../../contracts/NetworkReader'
-import { SnapshotReader } from '../../contracts/SnapshotReader'
-import { GeoJsonReader } from '../../contracts/GeoJsonReader'
-import { MethodCall, GET_CONFIG, GET_SNAPSHOT_DATA, GET_PLAN, GET_NETWORK_DATA, MethodResult } from './Contracts'
-import AsyncBackgroundWorker from './AsyncBackgroundWorker'
+import FrameAnimationAPI, {
+  SnapshotRequestParams,
+} from '@/visualization/frame-animation/communication/FrameAnimationAPI'
+import { NetworkReader } from '@/visualization/frame-animation/contracts/NetworkReader'
+import { SnapshotReader } from '@/visualization/frame-animation/contracts/SnapshotReader'
+import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
+import {
+  MethodCall,
+  GET_CONFIG,
+  GET_SNAPSHOT_DATA,
+  GET_PLAN,
+  GET_NETWORK_DATA,
+  MethodResult,
+} from '@/visualization/frame-animation/modell/background/Contracts'
+import AsyncBackgroundWorker from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
-interface InitParams {
+export interface InitParams {
   dataUrl: URL
   vizId: string
 }
 
-interface GetSnapshotParams {
+export interface GetSnapshotParams {
   requestNumber: number
   requestParameters: SnapshotRequestParams
 }
 
-interface GetPlanParams {
+export interface GetPlanParams {
   idIndex: number
 }
 
@@ -89,6 +98,7 @@ class DataFetcher extends AsyncBackgroundWorker {
   }
 }
 
+// make Typescript compiler happy when importing this module
 export default null as any
 
 // Bootstrap DataFetcher when file is loaded from server

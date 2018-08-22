@@ -1,5 +1,5 @@
-import Entity from './Entity'
-import Project from './Project'
+import Entity from '@/entities/Entity'
+import Project from '@/entities/Project'
 
 export interface CreateVisualizationRequest {
   projectId?: string

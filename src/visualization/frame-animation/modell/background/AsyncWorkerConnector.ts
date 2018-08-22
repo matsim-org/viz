@@ -1,4 +1,10 @@
-import { TYPE_ERROR, AsyncMethodResult, AsyncResult, AsyncError, TYPE_RESULT } from './Contracts'
+import {
+  TYPE_ERROR,
+  AsyncMethodResult,
+  AsyncResult,
+  AsyncError,
+  TYPE_RESULT,
+} from '@/visualization/frame-animation/modell/background/Contracts'
 
 interface ResolveReject {
   resolve: (value: any) => any

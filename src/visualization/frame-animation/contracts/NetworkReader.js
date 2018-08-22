@@ -1,4 +1,4 @@
-import { Reader } from './Reader.js'
+import { Reader } from '@/visualization/frame-animation/contracts/Reader'
 
 class NetworkReader extends Reader {
   constructor(byteArray) {

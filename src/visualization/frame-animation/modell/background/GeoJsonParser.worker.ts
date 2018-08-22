@@ -1,15 +1,15 @@
-import { GeoJsonReader } from '../../contracts/GeoJsonReader'
-import { MethodCall, PARSE_GEO_JSON, MethodResult } from './Contracts'
-import AsyncBackgroundWorker from './AsyncBackgroundWorker'
+import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
+import { MethodCall, PARSE_GEO_JSON, MethodResult } from '@/visualization/frame-animation/modell/background/Contracts'
+import AsyncBackgroundWorker from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
-interface ParseParams {
+export interface ParseParams {
   geoJson: string
   z: number
   layerName: string
   color?: number
 }
 
-export default class GeoJsonParser extends AsyncBackgroundWorker {
+class GeoJsonParser extends AsyncBackgroundWorker {
   constructor() {
     super()
   }
@@ -55,4 +55,8 @@ export default class GeoJsonParser extends AsyncBackgroundWorker {
   }
 }
 
+// make Typescript compiler happy when importing this module
+export default null as any
+
+// Bootstrap Worker
 const worker = new GeoJsonParser()

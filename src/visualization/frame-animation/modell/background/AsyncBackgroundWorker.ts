@@ -7,7 +7,7 @@ import {
   MethodResult,
   TYPE_ERROR,
   AsyncError,
-} from './Contracts'
+} from '@/visualization/frame-animation/modell/background/Contracts'
 
 /*  make sure typescript compiler knows that the global context is a worker context.
     also see: https://github.com/Microsoft/TypeScript/issues/582
