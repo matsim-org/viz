@@ -7,6 +7,8 @@ import { VisualizationType } from './entities/Visualization'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/
+
+// tslint:disable-next-line:variable-name
 export const EventBus = new Vue()
 
 interface SharedState {
