@@ -1,10 +1,28 @@
 class Reader {
-  constructor(byteArray, valueLength) {
-    this.data = new DataView(byteArray)
-    this.size = this.data.byteLength
-    this.position = 0
-    this.valueLength = valueLength
-    this.z = 0
+  private _data: DataView
+  private _size: number
+  private _position: number
+  private _valueLength: number
+  private _z: number
+
+  protected get position() {
+    return this._position
+  }
+
+  protected get size() {
+    return this._size
+  }
+
+  protected get z() {
+    return this._z
+  }
+
+  constructor(byteArray: ArrayBuffer, valueLength: number) {
+    this._data = new DataView(byteArray)
+    this._size = this._data.byteLength
+    this._position = 0
+    this._valueLength = valueLength
+    this._z = 0
   }
 
   /**
@@ -14,8 +32,8 @@ class Reader {
    * @param {* number } numberOfItems - number of items in the array e.g. how many lines
    * @param {* number } valuesPerItem - number of values per Item e.g. how many coordinates per line
    */
-  parseCoordinatesArray(numberOfItems, valuesPerItem) {
-    let result = new Float32Array(numberOfItems * valuesPerItem * 3)
+  protected parseCoordinatesArray(numberOfItems: number, valuesPerItem: number) {
+    const result = new Float32Array(numberOfItems * valuesPerItem * 3)
     let index = 0
 
     this.parseArray(numberOfItems, valuesPerItem, () => {
@@ -34,7 +52,7 @@ class Reader {
    * @param {* number} valuesPerItem - number of values per Item e.g. how many coordinates per line
    * @param {* function} parseValue - function to actually read the bytes from the buffer
    */
-  parseArray(numberOfItems, valuesPerItem, parseValue) {
+  protected parseArray(numberOfItems: number, valuesPerItem: number, parseValue: () => void) {
     let itemsProcessed = 0
 
     while (itemsProcessed < numberOfItems) {
@@ -43,7 +61,17 @@ class Reader {
     }
   }
 
-  _parseItem(valuesPerItem, parseValue) {
+  /**
+   * Reads a Float32 from the current position in the byteArray and increments the reader position by 'valueLength'.
+   * Big Endianess is assumed.
+   */
+  protected getFloat32AndIncrementPosition() {
+    const val = this._data.getFloat32(this._position, false)
+    this._position += this._valueLength
+    return val
+  }
+
+  private _parseItem(valuesPerItem: number, parseValue: () => void) {
     let valuesProcessed = 0
 
     while (valuesProcessed < valuesPerItem) {
@@ -52,20 +80,10 @@ class Reader {
     }
   }
 
-  _parsePoint(array, index, valueIndex) {
+  private _parsePoint(array: Float32Array, index: number, valueIndex: number) {
     array[index + valueIndex] = this.getFloat32AndIncrementPosition()
-    array[index + valueIndex + 1] = this.getFloat32AndIncrementPosition() // invert y
-    array[index + valueIndex + 2] = this.z // add z component
-  }
-
-  /**
-   * Reads a Float32 from the current position in the byteArray and increments the reader position by 'valueLength'.
-   * Big Endianess is assumed.
-   */
-  getFloat32AndIncrementPosition() {
-    let val = this.data.getFloat32(this.position, false)
-    this.position += this.valueLength
-    return val
+    array[index + valueIndex + 1] = this.getFloat32AndIncrementPosition()
+    array[index + valueIndex + 2] = this._z // add z component
   }
 }
 

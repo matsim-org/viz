@@ -3,10 +3,20 @@ import GeoJsonParser from './background/GeoJsonParser.worker'
 import { SnapshotData } from './SnapshotData.js'
 import { LayerData } from './LayerData.js'
 import { Rectangle } from '../contracts/Rectangle.js'
-import Configuration from '../contracts/Configuration.ts'
-import { Progress } from '../communication/FrameAnimationAPI.ts'
+import Configuration from '../contracts/Configuration'
+import { Progress } from '../communication/FrameAnimationAPI'
 
 class DataProvider {
+  private _agentRequests = 0
+  private _config = Configuration.getConfig()
+  private _speedFactor = 1.0
+  private _requestNumber = 0
+  private _isLoadingPlan = false
+  private _maxConcurrentSnapshotRequests = 1
+
+  private _layerData = new LayerData()
+  private _snapshotData: SnapshotData
+
   get isFetchingData() {
     return this._agentRequests >= this._maxConcurrentSnapshotRequests || this._isLoadingPlan
   }
@@ -36,15 +46,7 @@ class DataProvider {
     else this._speedFactor = 1.0
   }
 
-  constructor() {
-    this._config = Configuration.getConfig()
-    this._speedFactor = 1.0
-    this._agentRequests = 0
-    this._requestNumber = 0
-    this._isLoadingPlan = false
-    this._maxConcurrentSnapshotRequests = 1
-    this.layerData = new LayerData()
-  }
+  constructor() {}
 
   destroy() {
     this.dataFetcher.destroy()
