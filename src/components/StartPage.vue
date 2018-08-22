@@ -41,11 +41,6 @@ const store = {
       url: '/accessibility',
       thumbnail: '/kibera-accessibility/scrnshot.png',
     },
-    {
-      title: 'Cottbus Traffic Animation',
-      url: '/animation-cottbus',
-      thumbnail: '/janek-viz/scrnshot.png',
-    },
   ],
 }
 
