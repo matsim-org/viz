@@ -28,9 +28,6 @@ import yaml from 'js-yaml'
 
 import { EventBus } from '../SharedStore'
 
-// this keeps typescript / semantic / jquery happy together:
-declare var $: any
-
 const SERVER_ADDR = 'http://geo.vsp.tu-berlin.de'
 const SERVER_PARAMS =
   '/geoserver/accessibilities/ows?service=WFS' +

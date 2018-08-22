@@ -3,6 +3,9 @@ declare module '*.vue' {
   export default Vue
 }
 
+// this keeps typescript / semantic / jquery happy together:
+declare var $: any
+
 declare module 'vue-slider-component'
 declare module 'convert-seconds'
 declare module 'read-blob'
