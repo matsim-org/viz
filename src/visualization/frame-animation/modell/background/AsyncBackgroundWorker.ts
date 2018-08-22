@@ -13,7 +13,7 @@ import {
     also see: https://github.com/Microsoft/TypeScript/issues/582
     and: https://github.com/Microsoft/TypeScript/issues/20595
 */
-const WorkerContext: Worker = self as any
+const workerContext: Worker = self as any
 
 export default abstract class AsyncBackgroundWorker {
   private handleMessageDelegate: EventListener
@@ -58,7 +58,7 @@ export default abstract class AsyncBackgroundWorker {
       type: TYPE_RESULT,
       result: methodResult.data,
     }
-    WorkerContext.postMessage(asyncResult, methodResult.transferrables)
+    workerContext.postMessage(asyncResult, methodResult.transferrables)
   }
 
   private postError(id: string, error: any) {
@@ -67,7 +67,7 @@ export default abstract class AsyncBackgroundWorker {
       type: TYPE_ERROR,
       error: error,
     }
-    WorkerContext.postMessage(asyncError)
+    workerContext.postMessage(asyncError)
   }
 
   private isValidMessage(message?: AsyncMethodCall) {

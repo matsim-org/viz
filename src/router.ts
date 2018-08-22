@@ -63,7 +63,7 @@ const instance = new Router({
   ],
 })
 
-instance.beforeEach((to: Route, from: Route, next: Function) => {
+instance.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
   if (!isAuthenticationComponent(to)) {
     sharedStore.setLastNavigation(to.fullPath)
   }

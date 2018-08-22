@@ -52,9 +52,9 @@ class Config {
   get progress() {
     return this._serverConfig.progress
   }
-  private static instance: Config
 
-  private _listeners: Function[] = []
+  private _listeners: Array<(() => void)> = []
+
   private _vizId = ''
   private _canvasId = ''
   private _dataUrl = ''
@@ -90,8 +90,8 @@ class Config {
   }
 
   public _broadCastServerConfigUpdated() {
-    for (let i = 0; i < this._listeners.length; i++) {
-      this._listeners[i]()
+    for (const listener of this._listeners) {
+      listener()
     }
   }
 
@@ -138,6 +138,8 @@ class Config {
 
 let instance: Config
 
+// bc: this is essentially acting a singleton.
+// tslint:disable-next-line:variable-name
 const Configuration = {
   createConfiguration: (parameters: ConfigParams) => {
     instance = new Config(parameters)

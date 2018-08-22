@@ -31,7 +31,7 @@ import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import sax from 'sax'
 import readBlob from 'read-blob'
-import * as proj4 from 'proj4'
+import proj4 from 'proj4' // = require('proj4').default
 
 let _linkData: any
 
@@ -443,7 +443,7 @@ function convertCoords(projection: any) {
 
   for (const key of Object.keys(store.nodes)) {
     const node = store.nodes[key]
-    const z = proj4.transform(projection, 'WGS84' as any, node)
+    const z = proj4(projection, 'WGS84', node) as any
     node.x = z.x
     node.y = z.y
   }
