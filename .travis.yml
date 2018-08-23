@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "8"
-env: 
+  - '8'
+env:
   global:
     # include $HOME for aws command
     - PATH=$HOME/.local/bin:$PATH
@@ -10,7 +10,7 @@ env:
     - travis encrypt AWS_SECRET_ACCESS_KEY=$S3_KEY --add
 
 # build the webapp into ./dist
-script: npm run build
+script: npm run build && npm run unit
 
 # install awscli command line tool to sync files to s3
 before_deploy: pip install --user awscli
@@ -19,7 +19,7 @@ deploy:
   on:
     branch: master
   provider: script
-  script: 
+  script:
     # upload all files from ./dist folder and delete files on s3 which are not in current build
     - aws s3 sync ./dist s3://matsim-viz-website --delete
   skip_cleanup: true

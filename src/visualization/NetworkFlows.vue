@@ -320,7 +320,7 @@ async function aggregate15minutes(): Promise<void> {
     .query('select')
     // .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
     .exec()
-    .then(function(rows: any[], db: any) {
+    .then(rows => {
       console.log('got so many rows:', rows.length)
       for (const row of rows) {
         const period = Math.floor(row.time / 900)
