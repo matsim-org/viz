@@ -7,7 +7,7 @@
     "serve-local": "vue-cli-service serve --mode local-backend",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "test": "vue-cli-service test:unit"
+    "unit": "vue-cli-service test:unit"
   },
   "dependencies": {
     "ajv": "^6.5.3",
