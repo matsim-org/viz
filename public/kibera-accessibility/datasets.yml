@@ -1,3 +1,26 @@
+- city: Cape Town
+  lnglat:
+    - 18.42
+    - -33.9
+  name: School Accessibility
+  description: This layer shows the accessibilities of all schools in Cape Town,
+    South Africa. Accessibilities are calculated for walking, biking, and for private cars
+    in uncongested conditions. The computation is exclusively based on
+    input data from OpenStreetMap.
+  zoom: 9
+  colorScale: -2.5:3.5
+  altsBy: Data Source
+  alternatives:
+    Walk:
+      column: walk
+      geoserver: /kibera-accessibility/capetown-walk.geo.json
+    Bike:
+      column: bike
+      geoserver: /kibera-accessibility/capetown-bike.geo.json
+    Drive:
+      column: freespeed
+      geoserver: /kibera-accessibility/capetown-drive.geo.json
+
 - city: Nairobi
   lnglat:
     - 36.83
@@ -139,26 +162,3 @@
     Breakdown Scenario:
       column: walk
       geoserver: /kibera-accessibility/kibera-water-breakdown.geo.json
-
-- city: Cape Town
-  lnglat:
-    - 18.42
-    - -33.9
-  name: School Accessibility
-  description: This layer shows the accessibilities of all schools in Cape Town,
-    South Africa. Accessibilities are calculated for walking, biking, and for private cars
-    in uncongested conditions. The computation is exclusively based on
-    input data from OpenStreetMap.
-  zoom: 9
-  colorScale: -2.5:3.5
-  altsBy: Data Source
-  alternatives:
-    Walk:
-      column: walk
-      geoserver: /kibera-accessibility/capetown-walk.geo.json
-    Bike:
-      column: bike
-      geoserver: /kibera-accessibility/capetown-bike.geo.json
-    Drive:
-      column: freespeed
-      geoserver: /kibera-accessibility/capetown-drive.geo.json
