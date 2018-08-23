@@ -4,69 +4,70 @@ import { SnapshotData } from './SnapshotData.js'
 import { LayerData } from './LayerData.js'
 import { Rectangle } from '../contracts/Rectangle.js'
 import Configuration from '../contracts/Configuration'
-import { Progress } from '../communication/FrameAnimationAPI'
+import { Progress, ServerConfiguration, SnapshotRequestParams } from '../communication/FrameAnimationAPI'
+import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'
+import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 
 class DataProvider {
+  // new caching
+  private snapshotCache!: SnapshotCache
+  private dataFetcher!: DataFetcher
+  private _layerData = new LayerData()
+
+  // old callbacks
+  private _networkDataChanged?: (data: Float32Array) => void
+  private _geoJsonDataChanged?: (layerName: string) => void
+  private _isFetchingDataChanged?: () => void
+
+  // internal state
+  private lastRequestedTimestep = 0
+  private maxConcurrentRequests = 1
+  private ongoingRequests = 0
+
   private _agentRequests = 0
   private _config = Configuration.getConfig()
-  private _speedFactor = 1.0
-  private _requestNumber = 0
   private _isLoadingPlan = false
   private _maxConcurrentSnapshotRequests = 1
 
-  private _layerData = new LayerData()
-  private _snapshotData: SnapshotData
-
-  get isFetchingData() {
+  get isFetchingData(): boolean {
     return this._agentRequests >= this._maxConcurrentSnapshotRequests || this._isLoadingPlan
   }
 
+  // is not correct anymore
   get lastCachedTimestep() {
-    return this.snapshotData.lastTimestep
+    return this.snapshotCache.lastTimestep
   }
 
+  // is not correct anymore
   get firstCachedTimestep() {
-    return this.snapshotData.firstTimestep
+    return this.snapshotCache.firstTimestep
   }
 
-  set networkDataChanged(callback) {
+  set networkDataChanged(callback: (data: Float32Array) => void) {
     this._networkDataChanged = callback
   }
 
-  set geoJsonDataChanged(callback) {
+  set geoJsonDataChanged(callback: (layerName: string) => void) {
     this._geoJsonDataChanged = callback
   }
 
-  set isFetchingDataChanged(callback) {
+  set isFetchingDataChanged(callback: () => void) {
     this._isFetchingDataChanged = callback
-  }
-
-  set speedFactor(value) {
-    if (value >= 1.0) this._speedFactor = value
-    else this._speedFactor = 1.0
   }
 
   constructor() {}
 
-  destroy() {
+  public destroy() {
     this.dataFetcher.destroy()
-    if (this._parserWorkerFacade) {
-      this._parserWorkerFacade.destroy()
-    }
-    this.snapshotData = null
-    this.layerData = null
-    this._networkDataChanged = null
-    this._geoJsonDataChanged = null
-    this._isFetchingDataChanged = null
   }
 
-  async loadServerConfig() {
+  public async loadServerConfig() {
     if (!this.dataFetcher) {
       this.dataFetcher = await DataFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
     }
     try {
-      let config = await this.dataFetcher.fetchServerConfig()
-      this._handleServerConfigReceived(config)
+      const config = await this.dataFetcher.fetchServerConfig()
+      this.handleServerConfigReceived(config)
     } catch (error) {
       console.log(error)
       console.log('reatempting to connect to server in 5s')
@@ -74,53 +75,38 @@ class DataProvider {
     }
   }
 
-  _handleServerConfigReceived(config) {
-    Configuration.updateServerConfiguration(config)
-
-    if (config.progress !== Progress.Done) {
-      setTimeout(() => this.loadServerConfig(), 10000)
-    } else {
-      this.snapshotData = new SnapshotData(config.timestepSize)
-      this.lastTimestep = config.lastTimestep
-      this.firstTimestep = config.firstTimestep
-      this.loadNetworkData()
-    }
+  public async loadNetworkData() {
+    const network = await this.dataFetcher.fetchNetwork()
+    if (this._networkDataChanged) this._networkDataChanged(network)
   }
 
-  async loadNetworkData() {
-    let network = await this.dataFetcher.fetchNetwork()
-    this._networkDataChanged(network)
+  public hasSnapshot(timestep: number) {
+    return this.snapshotCache.hasSnapshot(timestep)
   }
 
-  async loadPlan(id) {
-    let params = {
-      idIndex: id,
-    }
-
-    this._isLoadingPlan = true
-    this._onFetchingDataChanged()
-    let plan = await this.dataFetcher.fetchPlan(params)
-
-    this._handlePlanDataReceived(plan)
-  }
-
-  getId(index, timestep) {
-    let snapshot = this.snapshotData.getSnapshot(timestep, this._speedFactor)
-    return snapshot.ids[index]
-  }
-
-  getSnapshot(timestep) {
+  public getSnapshot(timestep: number, speedFactor: number): Snapshot {
     this.lastRequestedTimestep = timestep
-    let result
+
     // 1. Get snapshot from chache if available
+    if (this.snapshotCache.hasSnapshot(timestep)) {
+      return this.snapshotCache.getSnapshot(timestep)
+    } else {
+      // if not available schedule caching and throw an error
+      this.scheduleSnapshotFetching(timestep, speedFactor)
+      throw new Error('no snapshot for timestep ' + timestep)
+    }
+
+    /*
     if (this.snapshotData.hasSnapshotFor(timestep)) {
       result = this.snapshotData.getSnapshot(timestep, this._speedFactor)
     } else {
       result = {}
     }
+    */
 
     // 2. Make sure there are enough snapshots chached
     // if not tell background worker to load more snapshots
+    /*
     let lastCachedTimestep = this.snapshotData.lastTimestep
 
     if (this._isSmallerThanLastTimestep(lastCachedTimestep) && !this._isBufferSuficient(timestep)) {
@@ -136,33 +122,53 @@ class DataProvider {
 
     // 3. return the snapshot or empty object
     return result
+    */
   }
 
-  async addGeoJsonLayer(geoJson, layerName, z, color) {
-    let parameters = {
+  public async loadPlan(id: number) {
+    const params = {
+      idIndex: id,
+    }
+
+    this._isLoadingPlan = true
+    this._onFetchingDataChanged()
+    const plan = await this.dataFetcher.fetchPlan(params)
+    this._handlePlanDataReceived(plan)
+  }
+
+  public getId(index: number, timestep: number) {
+    /*let snapshot = this.snapshotData.getSnapshot(timestep, this._speedFactor)
+    return snapshot.ids[index]
+    */
+
+    throw new Error('not implemented yet')
+  }
+
+  public async addGeoJsonLayer(geoJson: string, layerName: string, z: number, color: any) {
+    const parameters = {
       layerName: layerName,
       z: z,
       color: color,
       geoJson: geoJson,
     }
 
-    let parser = GeoJsonParser.create()
-    let result = await parser.parseGeoJson(parameters)
+    const parser = GeoJsonParser.create()
+    const result = await parser.parseGeoJson(parameters)
     this._handleGeoJsonParsed(result)
     parser.destroy()
   }
 
-  removeGeoJsonLayer(layerName) {
-    this.layerData.removeLayer(layerName)
-    this._geoJsonDataChanged(layerName)
+  public removeGeoJsonLayer(layerName: string) {
+    this._layerData.removeLayer(layerName)
+    if (this._geoJsonDataChanged) this._geoJsonDataChanged(layerName)
   }
 
-  getLayer(layerName) {
-    return this.layerData.getLayer(layerName)
+  public getLayer(layerName: string) {
+    return this._layerData.getLayer(layerName)
   }
 
-  clearCache() {
-    this.snapshotData.clearSnapshots()
+  public clearCache() {
+    this.snapshotCache.clearSnapshots()
 
     // we also need to reload new agents
     if (this.isFetchingData) {
@@ -170,7 +176,38 @@ class DataProvider {
     }
   }
 
-  async _loadSnapshots(fromTimestep) {
+  private scheduleSnapshotFetching(timestep: number, speedFactor: number) {
+    if (this.ongoingRequests < this.maxConcurrentRequests) {
+      this.ongoingRequests++
+      setTimeout((t: number, s: number) => this.loadSnapshots(t, s), 0, timestep, speedFactor)
+    }
+  }
+
+  private async loadSnapshots(fromTimestep: number, speedFactor: number) {
+    const requestSize = 100 // use a dynamic estimate later
+    const params: SnapshotRequestParams = {
+      fromTimestep: fromTimestep,
+      size: requestSize,
+      speedFactor: speedFactor,
+    }
+
+    const response = await this.dataFetcher.fetchSnapshots(params)
+    this.ongoingRequests--
+    this.snapshotCache.addSnapshots(response)
+  }
+
+  private handleServerConfigReceived(config: ServerConfiguration) {
+    Configuration.updateServerConfiguration(config)
+
+    if (config.progress !== Progress.Done) {
+      setTimeout(() => this.loadServerConfig(), 10000)
+    } else {
+      this.snapshotCache = new SnapshotCache(config)
+      this.loadNetworkData()
+    }
+  }
+
+  /* async _loadSnapshots(fromTimestep) {
     if (this.isFetchingData) return
 
     this._requestNumber++
@@ -208,43 +245,46 @@ class DataProvider {
     this._agentRequests--
     this._onFetchingDataChanged()
   }
+  */
 
-  _handlePlanDataReceived(data) {
+  // data is of type any until GeoJsonReader is typescript
+  private _handlePlanDataReceived(data: any) {
     this._isLoadingPlan = false
-    let name = 'selectedPlan'
-    let layer = LayerData.createLayer(name, -9.0, this._config.colors.selectedPlan, data)
-    this.layerData.addLayer(layer)
+    const name = 'selectedPlan'
+    const layer = LayerData.createLayer(name, -9.0, this._config.colors.selectedPlan, data)
+    this._layerData.addLayer(layer)
     this._onFetchingDataChanged()
-    this._geoJsonDataChanged(name)
+    if (this._geoJsonDataChanged) this._geoJsonDataChanged(name)
   }
 
-  _handleGeoJsonParsed(data) {
-    let layer = LayerData.createLayer(data.layerName, data.z, data.color, data)
-    this.layerData.addLayer(layer)
-    this._geoJsonDataChanged(layer.name)
+  private _handleGeoJsonParsed(data: any) {
+    const layer = LayerData.createLayer(data.layerName, data.z, data.color, data)
+    this._layerData.addLayer(layer)
+    if (this._geoJsonDataChanged) this._geoJsonDataChanged(layer.name)
   }
 
-  _isBufferSuficient(timestep) {
+  /*private _isBufferSuficient(timestep) {
     return this._numberOfCachedTimestepsAhead(timestep) > this._config.cache.cachedSnapshots
   }
 
-  _numberOfCachedTimestepsAhead(timestep) {
+  private _numberOfCachedTimestepsAhead(timestep) {
     return (this.snapshotData.lastTimestep - timestep) / this.snapshotData.timestepSize
   }
 
-  _isSmallerThanLastTimestep(timestep) {
+  private _isSmallerThanLastTimestep(timestep) {
     return timestep + this.snapshotData.timestepSize * this._speedFactor <= this.lastTimestep
   }
 
-  _getRequestSize(timestep) {
+  private _getRequestSize(timestep) {
     let size = this._numberOfCachedTimestepsAhead(this.lastRequestedTimestep)
     if (this._config.cache.minRequestSize > size) {
       size = this._config.cache.minRequestSize
     }
     return size
   }
+  */
 
-  _onFetchingDataChanged() {
+  private _onFetchingDataChanged() {
     if (this._isFetchingDataChanged) {
       this._isFetchingDataChanged()
     }

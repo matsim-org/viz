@@ -13,6 +13,10 @@ class Reader {
     return this._size
   }
 
+  protected get valueLength() {
+    return this._valueLength
+  }
+
   protected get z() {
     return this._z
   }

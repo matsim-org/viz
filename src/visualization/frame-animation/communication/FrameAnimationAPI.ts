@@ -33,7 +33,7 @@ export default class FrameAnimationAPI {
 
   private endpoint: URL
 
-  constructor(endpoint: URL, vizId: string) {
+  constructor(endpoint: string, vizId: string) {
     this.endpoint = new URL(endpoint + `/${vizId}`)
   }
 

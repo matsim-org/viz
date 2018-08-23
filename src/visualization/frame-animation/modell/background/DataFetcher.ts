@@ -1,7 +1,6 @@
 import AsyncWorkerConnector from '@/visualization/frame-animation/modell/background/AsyncWorkerConnector'
 import BackgroundWorker, {
   InitParams,
-  GetSnapshotParams,
   GetPlanParams,
 } from '@/visualization/frame-animation/modell/background/DataFetcher.worker'
 import {
@@ -11,6 +10,11 @@ import {
   GET_SNAPSHOT_DATA,
   GET_PLAN,
 } from '@/visualization/frame-animation/modell/background/Contracts'
+import {
+  ServerConfiguration,
+  SnapshotRequestParams,
+} from '@/visualization/frame-animation/communication/FrameAnimationAPI'
+import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 
 export default class DataFetcher extends AsyncWorkerConnector {
   constructor() {
@@ -23,16 +27,16 @@ export default class DataFetcher extends AsyncWorkerConnector {
     return fetcher
   }
 
-  public async fetchServerConfig() {
-    return this.postAsyncWorkerMessage(GET_CONFIG, {})
+  public async fetchServerConfig(): Promise<ServerConfiguration> {
+    return this.postAsyncWorkerMessage<ServerConfiguration>(GET_CONFIG, {})
   }
 
-  public async fetchNetwork() {
-    return this.postAsyncWorkerMessage(GET_NETWORK_DATA, {})
+  public async fetchNetwork(): Promise<Float32Array> {
+    return this.postAsyncWorkerMessage<Float32Array>(GET_NETWORK_DATA, {})
   }
 
-  public async fetchSnapshots(params: GetSnapshotParams) {
-    return this.postAsyncWorkerMessage(GET_SNAPSHOT_DATA, params)
+  public async fetchSnapshots(params: SnapshotRequestParams): Promise<Snapshot[]> {
+    return this.postAsyncWorkerMessage<Snapshot[]>(GET_SNAPSHOT_DATA, params)
   }
 
   public async fetchPlan(params: GetPlanParams) {

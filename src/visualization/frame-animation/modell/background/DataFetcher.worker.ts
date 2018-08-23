@@ -1,8 +1,8 @@
 import FrameAnimationAPI, {
   SnapshotRequestParams,
 } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
-import { NetworkReader } from '@/visualization/frame-animation/contracts/NetworkReader'
-import { SnapshotReader } from '@/visualization/frame-animation/contracts/SnapshotReader'
+import NetworkReader from '@/visualization/frame-animation/contracts/NetworkReader'
+import SnapshotReader, { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
 import {
   MethodCall,
@@ -15,13 +15,8 @@ import {
 import AsyncBackgroundWorker from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
 export interface InitParams {
-  dataUrl: URL
+  dataUrl: string
   vizId: string
-}
-
-export interface GetSnapshotParams {
-  requestNumber: number
-  requestParameters: SnapshotRequestParams
 }
 
 export interface GetPlanParams {
@@ -47,7 +42,7 @@ class DataFetcher extends AsyncBackgroundWorker {
       case GET_NETWORK_DATA:
         return await this.getNetworkData()
       case GET_SNAPSHOT_DATA:
-        return await this.getSnapshotData(call.parameters as GetSnapshotParams)
+        return await this.getSnapshotData(call.parameters as SnapshotRequestParams)
       case GET_PLAN:
         return await this.getPlan(call.parameters as GetPlanParams)
       default:
@@ -67,20 +62,20 @@ class DataFetcher extends AsyncBackgroundWorker {
     return { data: network, transferrables: [network.buffer] }
   }
 
-  public async getSnapshotData(parameters: GetSnapshotParams) {
-    const response = await this.api.fetchSnapshots(parameters.requestParameters)
+  public async getSnapshotData(parameters: SnapshotRequestParams) {
+    const response = await this.api.fetchSnapshots(parameters)
     const snapshots = new SnapshotReader(response).parse()
 
     const transferrables: ArrayBuffer[] = []
 
-    snapshots.forEach(snapshot => {
+    snapshots.forEach((snapshot: Snapshot) => {
       transferrables.push(snapshot.position.buffer as ArrayBuffer)
       transferrables.push(snapshot.nextPosition.buffer as ArrayBuffer)
       transferrables.push(snapshot.shouldInterpolate.buffer as ArrayBuffer)
       transferrables.push(snapshot.ids.buffer as ArrayBuffer)
     })
 
-    return { data: { data: snapshots, requestNumber: parameters.requestNumber }, transferrables: transferrables }
+    return { data: snapshots, transferrables: transferrables }
   }
 
   public async getPlan(parameters: GetPlanParams) {
