@@ -157,7 +157,12 @@ async function addAccessibilityLayer(alt: string) {
   )
 
   // remove old layer after new layer is added
-  if (_activeDataLayer) mymap.removeLayer(_activeDataLayer)
+  if (_activeDataLayer) {
+    try {
+      mymap.removeLayer(_activeDataLayer)
+    } catch (e) {}
+  }
+
   _activeDataLayer = geoserverLayerId
 
   // add "highlight" layer: for highlighting the square under the mouse
