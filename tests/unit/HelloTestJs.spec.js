@@ -1,12 +1,7 @@
-import { shallowMount } from '@vue/test-utils'
-import HelloWorld from '@/components/HelloWorld.vue'
+import ListHeader from '@/components/ListHeader.vue'
 
-describe('StartPage.vue', () => {
-  it('always passes', () => {
-    const msg = 'new message'
-    // const wrapper = shallowMount(HelloWorld, {
-    //  propsData: { msg },
-    // })
-    expect('hi').toMatch('h' + 'i')
+describe('ListHeader', () => {
+  it('should be instanceable', () => {
+    expect(new ListHeader()).toBeInstanceOf(ListHeader)
   })
 })
