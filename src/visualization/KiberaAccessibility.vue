@@ -329,7 +329,7 @@ function loadDatasets() {
   for (const id of Object.keys(_activeDataset.alternatives)) {
     const alt = _activeDataset.alternatives[id]
     if (!mymap.getSource(alt.geoserver)) {
-      const url = SERVER_ADDR + SERVER_PARAMS + alt.geoserver
+      const url = alt.geoserver
       mymap.addSource(alt.geoserver, {
         data: url,
         type: 'geojson',
