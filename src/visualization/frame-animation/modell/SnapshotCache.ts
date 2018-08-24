@@ -10,9 +10,13 @@ interface SnapshotRequest {
   toIndex: number
 }
 
+interface EmptyBlock {
+  start: number
+  end: number
+}
+
 enum SnapshotEntryStatus {
   NOT_LOADED,
-  LOADING,
   LOADED,
 }
 
@@ -26,7 +30,6 @@ const emtpySnapshot: Snapshot = {
 
 class SnapshotEntry {
   private static _emtpyEntry: SnapshotEntry = new SnapshotEntry(SnapshotEntryStatus.NOT_LOADED, emtpySnapshot)
-  private static _loadingEntry: SnapshotEntry = new SnapshotEntry(SnapshotEntryStatus.LOADING, emtpySnapshot)
 
   private _status: SnapshotEntryStatus
   private _snapshot: Snapshot
@@ -48,20 +51,12 @@ class SnapshotEntry {
     return SnapshotEntry._emtpyEntry
   }
 
-  public static getLoadingEntry() {
-    return SnapshotEntry._loadingEntry
-  }
-
   public static createLoadedEntry(snapshot: Snapshot) {
     return new SnapshotEntry(SnapshotEntryStatus.LOADED, snapshot)
   }
 
   public isLoaded() {
     return this._status === SnapshotEntryStatus.LOADED
-  }
-
-  public isLoading() {
-    return this._status === SnapshotEntryStatus.LOADING
   }
 
   public isNotLoaded() {
@@ -74,11 +69,12 @@ export default class SnapshotCache {
   private _lastTimestep: number
   private _timestepSize: number
   private snapshots: SnapshotEntry[] = []
+  private emptyBlocks: EmptyBlock[] = []
 
-  private minCacheSize = 200
-  private fetchSize = 50
+  private minCacheSize = 500
+  private fetchSize = 100
   private dataFetcher: DataFetcher
-  private requests: SnapshotRequest[] = []
+  private _isFetching: boolean = false
 
   get firstTimestep() {
     return this._firstTimestep
@@ -90,6 +86,10 @@ export default class SnapshotCache {
 
   get timestepSize() {
     return this._timestepSize
+  }
+
+  get isFetching() {
+    return this._isFetching
   }
 
   constructor(config: ServerConfiguration, dataFetcher: DataFetcher) {
@@ -129,40 +129,63 @@ export default class SnapshotCache {
     this.initEmptySnapshots()
   }
 
-  public ensureSufficientCaching(timestep: number) {
-    const timestepIndex = this.getIndexForTimestep(timestep)
+  public async ensureSufficientCaching(currentTimestep: number) {
+    if (this._isFetching || this.emptyBlocks.length === 0) {
+      return
+    }
+    const blockIndex = this.emptyBlocks.findIndex(block => {
+      return block.end >= currentTimestep && block.start <= currentTimestep + this.minCacheSize * this.timestepSize
+    })
 
-    for (let i = timestepIndex; i < this.snapshots.length && i < timestepIndex + this.minCacheSize; i++) {
-      const entry = this.snapshots[i]
-      if (entry.isNotLoaded()) {
-        this.loadChunkFrom(i)
-      }
+    if (blockIndex >= 0) {
+      await this.fetchSnapshots(currentTimestep, blockIndex)
     }
   }
 
-  private async loadChunkFrom(start: number) {
-    let index = start
-    while (index < this.snapshots.length && index < start + this.minCacheSize) {
-      this.snapshots[index] = SnapshotEntry.getLoadingEntry()
-      index++
-    }
-
-    const params: SnapshotRequestParams = {
-      fromTimestep: this.firstTimestep + start * this.timestepSize,
-      size: index - start,
+  private async fetchSnapshots(currentTimestep: number, emptyBlockIndex: number) {
+    const emptyBlock = this.emptyBlocks[emptyBlockIndex]
+    const fromTimestep = Math.max(emptyBlock.start, currentTimestep)
+    const toTimestep = Math.min(emptyBlock.end, fromTimestep + this.fetchSize * this.timestepSize)
+    const parameters: SnapshotRequestParams = {
+      fromTimestep: fromTimestep,
+      size: (toTimestep - fromTimestep) / this.timestepSize,
       speedFactor: 1.0,
     }
 
-    const snapshots = await this.dataFetcher.fetchSnapshots(params)
+    this._isFetching = true
+    const snapshots = await this.dataFetcher.fetchSnapshots(parameters)
     this.addSnapshots(snapshots)
+
+    this.updateEmtpyBlocks(fromTimestep, toTimestep, emptyBlock, emptyBlockIndex)
+    this._isFetching = false
+  }
+
+  private updateEmtpyBlocks(fromTimestep: number, toTimestep: number, emptyBlock: EmptyBlock, emptyBlockIndex: number) {
+    // remove the old block and insert two new ones
+    if (fromTimestep > emptyBlock.start && toTimestep < emptyBlock.end) {
+      const leftBlock = { start: emptyBlock.start, end: fromTimestep - this.timestepSize }
+      const rightBlock = { start: toTimestep + this.timestepSize, end: emptyBlock.end }
+      this.emptyBlocks.splice(emptyBlockIndex, 1, leftBlock, rightBlock)
+    } // change start bounds of emtpy block
+    else if (fromTimestep <= emptyBlock.start && toTimestep < emptyBlock.end) {
+      emptyBlock.start = toTimestep
+    } // change end bounds of empty block
+    else if (fromTimestep > emptyBlock.start && toTimestep >= emptyBlock.end) {
+      emptyBlock.end = fromTimestep
+    } // the whole block has been loaded. Remove it
+    else {
+      this.emptyBlocks.splice(emptyBlockIndex, 1)
+    }
   }
 
   private initEmptySnapshots() {
-    const length = (this._lastTimestep - this._firstTimestep) / this._timestepSize
+    const length = (this._lastTimestep - this._firstTimestep) / this._timestepSize + 1
 
     for (let i = 0; i < length; i++) {
       this.snapshots.push(SnapshotEntry.getEmtpyEntry())
     }
+
+    this.emptyBlocks.push({ start: this.firstTimestep, end: this.lastTimestep })
   }
 
   private isWithinBounds(timestep: number) {
@@ -170,7 +193,7 @@ export default class SnapshotCache {
   }
 
   private getIndexForTimestep(timestep: number) {
-    if (timestep > this._lastTimestep || timestep < this._firstTimestep) throw new Error('invalid timestep')
+    if (!this.isWithinBounds(timestep)) throw new Error('invalid timestep')
     const index = (timestep - this._firstTimestep) / this._timestepSize
     if (index < 0) return 0
     return index

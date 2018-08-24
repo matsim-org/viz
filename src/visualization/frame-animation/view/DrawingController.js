@@ -1,4 +1,4 @@
-import { Rectangle } from '../contracts/Rectangle.js'
+import Rectangle from '../contracts/Rectangle'
 import { MapState } from './MapState.js'
 import { MapInteractionController } from './MapInteractionController.js'
 import { BufferHolder } from './BufferHolder.js'

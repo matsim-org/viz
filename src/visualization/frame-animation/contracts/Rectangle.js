@@ -1,4 +1,4 @@
-class Rectangle {
+export default class Rectangle {
   get left() {
     return this._left
   }
@@ -67,5 +67,3 @@ class Rectangle {
     }
   }
 }
-
-export { Rectangle }

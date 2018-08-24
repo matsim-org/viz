@@ -25,7 +25,7 @@ class Playback {
 
   set speedFactor(value) {
     if (this._shouldRelaodShansphots(value)) {
-      this.dataProvider.clearCache()
+      // this.dataProvider.clearCache()
     }
     this._speedFactor = value
     this._timestepFraction = 0.0
@@ -80,7 +80,7 @@ class Playback {
     }
 
     if (timestep < this.dataProvider.firstCachedTimestep) {
-      this.dataProvider.clearCache()
+      // this.dataProvider.clearCache()
     }
     const modulo = timestep % this._timestepSize
     this._setCurrentTime(timestep - modulo)
@@ -152,7 +152,7 @@ class Playback {
 
   private _resetToFirstTimestep() {
     this._setCurrentTime(this._firstTimestep)
-    this.dataProvider.clearCache()
+    // this.dataProvider.clearCache()
   }
 }
 
