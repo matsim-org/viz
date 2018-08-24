@@ -141,6 +141,7 @@ class DataProvider {
     } else {
       this.snapshotCache = new SnapshotCache(config, this.dataFetcher)
       this.loadNetworkData()
+      this.snapshotCache.ensureSufficientCaching(config.firstTimestep)
     }
   }
 
