@@ -1,26 +1,48 @@
----
+- city: Cape Town
+  lnglat:
+    - 18.42
+    - -33.9
+  name: School Accessibility
+  description: This layer shows the accessibilities of all schools in Cape Town,
+    South Africa. Accessibilities are calculated for walking, biking, and for private cars
+    in uncongested conditions. The computation is exclusively based on
+    input data from OpenStreetMap.
+  zoom: 9
+  colorScale: -2.5:3.5
+  altsBy: Data Source
+  alternatives:
+    Walk:
+      column: walk
+      geoserver: /kibera-accessibility/capetown-walk.geo.json
+    Bike:
+      column: bike
+      geoserver: /kibera-accessibility/capetown-bike.geo.json
+    Drive:
+      column: freespeed
+      geoserver: /kibera-accessibility/capetown-drive.geo.json
+
 - city: Nairobi
   lnglat:
-  - 36.83
-  - -1.29
+    - 36.83
+    - -1.29
   name: Primary Schools (All)
   description: This layer shows the accessibilities of all primary schools in Nairobi,
     Kenya. Accessibilities are calculated for walking, biking, and for private cars
     in uncongested conditions. The computation is based on input data from OpenStreetMap
     and the Kenya Open Data Initiative.
   zoom: 13
-  colorScale: "-2.5:3.5"
+  colorScale: '-2.5:3.5'
   altsBy: Travel Mode
   alternatives:
     Walk:
       column: walk
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_walk_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-all-walk.geo.json
     Bike:
       column: bike
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_bike_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-all-bike.geo.json
     Drive:
       column: freespeed
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_freespeed_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-all-drive.geo.json
 
 - city: Nairobi
   name: Primary Schools (Public Only)
@@ -29,49 +51,49 @@
     in uncongested conditions. The computation is based on input data from OpenStreetMap
     and the Kenya Open Data Initiative.
   lnglat:
-  - 36.83
-  - -1.29
+    - 36.83
+    - -1.29
   zoom: 12
-  colorScale: "-2.5:3.5"
+  colorScale: '-2.5:3.5'
   altsBy: Travel Mode
   alternatives:
     Walk:
       column: walk
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_public_walk_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-public-walk.geo.json
     Bike:
       column: bike
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_public_bike_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-public-bike.geo.json
     Drive:
       column: freespeed
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_primary_public_freespeed_-2.5_3.5
+      geoserver: /kibera-accessibility/primary-schools-public-drive.geo.json
 
 - city: Nairobi
   lnglat:
-  - 36.83
-  - -1.29
+    - 36.83
+    - -1.29
   name: Secondary Schools (All)
   description: This layer shows the accessibilities of secondary schools in Nairobi,
     Kenya. Accessibilities are calculated for walking, biking, and for private cars
     in uncongested conditions. The computation is based on input data from OpenStreetMap
     and the Kenya Open Data Initiative.
   zoom: 12
-  colorScale: "-2.5:3.5"
+  colorScale: '-2.5:3.5'
   altsBy: Travel Mode
   alternatives:
     Walk:
       column: walk
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_secondary_walk_-2.5_3.5
+      geoserver: /kibera-accessibility/secondary-walk.geo.json
     Bike:
       column: bike
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_secondary_bike_-2.5_3.5
+      geoserver: /kibera-accessibility/secondary-bike.geo.json
     Drive:
       column: freespeed
-      geoserver: accessibilities:ke_nairobi_kodi_500_school_secondary_freespeed_-2.5_3.5
+      geoserver: /kibera-accessibility/secondaryl-drive.geo.json
 
 - city: Nairobi
   lnglat:
-  - 36.83
-  - -1.29
+    - 36.83
+    - -1.29
   name: Commercial Land Use
   description: This layer shows the accessibilities of commercial areas by walking
     in Nairobi, Kenya. It does not necessarily show where actual commercial activites
@@ -79,47 +101,23 @@
     official land-use zoning. The computation is based on input data from OpenStreetMap
     and official land-use data.
   zoom: 12
-  colorScale: "-6.0:6.0"
+  colorScale: '-6.0:6.0'
   altsBy: Travel Mode
   alternatives:
     Walk:
       column: walk
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_walk_-6.0_6.0
+      geoserver: /kibera-accessibility/commercial-walk.geo.json
     Bike:
       column: bike
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_bike_-6.0_6.0
+      geoserver: /kibera-accessibility/commercial-bike.geo.json
     Drive:
       column: freespeed
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_freespeed_-6.0_6.0
-
-- city: Nairobi
-  lnglat:
-  - 36.83
-  - -1.29
-  name: Commercial Land Use (0-6 Scale)
-  description: This layer shows the accessibilities of commercial areas by walking
-    in Nairobi, Kenya. It does not necessarily show where actual commercial activites
-    take place, but areas that are reserved for commercial activities in terms of
-    official land-use zoning. The computation is based on input data from OpenStreetMap
-    and official land-use data.
-  zoom: 12
-  colorScale: 0.0:6.0
-  altsBy: Travel Mode
-  alternatives:
-    Walk:
-      column: walk
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_walk_0.0_6.0
-    Bike:
-      column: bike
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_bike_0.0_6.0
-    Drive:
-      column: freespeed
-      geoserver: accessibilities:ke_nairobi_landuse_500_commercial_freespeed_0.0_6.0
+      geoserver: /kibera-accessibility/commercial-drive.geo.json
 
 - city: Kibera
   lnglat:
-  - 36.787
-  - -1.3121
+    - 36.787
+    - -1.3121
   name: Clinic Walk Accessibility
   description: This layer shows the walk accessibilities of clinics by walking in
     the slum of Kibera, Nairobi, Kenya. The computation is exclusively based on input
@@ -127,22 +125,22 @@
     computation, and publication is re-done once a day automatically so that changes
     due to potential infrastructure alterations are automatically taken into account.
   zoom: 15
-  colorScale: "-6.0:6.0"
+  colorScale: '-6.0:6.0'
   altsBy: Data Source
   alternatives:
     OSM Data:
       column: walk
-      colorScale: "-6.0:6.0"
-      geoserver: accessibilities:ke_kibera_osm_20151105_50_clinic_walk_-6.0-6.0
+      colorScale: '-6.0:6.0'
+      geoserver: /kibera-accessibility/clinic-osm.geo.json
     OSM Live Data:
       column: walk
       colorScale: 0.5:3.5
-      geoserver: accessibilities:ke_kibera_osm_live_50_clinic_walk_0.5_3.5
+      geoserver: /kibera-accessibility/clinic-osm-live.geo.json
 
 - city: Kibera
   lnglat:
-  - 36.787
-  - -1.3121
+    - 36.787
+    - -1.3121
   name: Drinking Water Accessibility
   description: This layer shows the accessibilities of publicly accessible drinking
     water taps by walking in the slum of Kibera, Nairobi, Kenya. For the "live" data,
@@ -157,33 +155,10 @@
   alternatives:
     Normal:
       column: walk
-      geoserver: accessibilities:ke_kibera_osm_20151105_50_drinking_water_walk_0.5_3.5
+      geoserver: /kibera-accessibility/kibera-water-walk.geo.json
     Normal (OSM Live):
       column: walk
-      geoserver: accessibilities:ke_kibera_osm_live_50_drinking_water_walk_0.5_3.5
+      geoserver: /kibera-accessibility/kibera-water-normal-live.geo.json
     Breakdown Scenario:
       column: walk
-      geoserver: accessibilities:ke_kibera_osm_20151105_50_water_breakdown_drinking_water_walk_0.5_3.5
-
-- city: Cape Town
-  lnglat:
-  - 18.32
-  - -33.57
-  name: School Accessibility
-  description: This layer shows the accessibilities of all schools in Cape Town,
-    South Africa. Accessibilities are calculated for walking, biking, and for private cars
-    in uncongested conditions. The computation is exclusively based on
-    input data from OpenStreetMap.
-  zoom: 15
-  colorScale: -2.5:3.5
-  altsBy: Data Source
-  alternatives:
-    Normal:
-      column: walk
-      geoserver: accessibilities:za_capetown_osm_live_1000_school_walk_-2.5-3.5
-    Normal (OSM Live):
-      column: bike
-      geoserver: accessibilities:za_capetown_osm_live_1000_school_bike_-2.5-3.5
-    Breakdown Scenario:
-      column: freespeed
-      geoserver: accessibilities:za_capetown_osm_live_1000_school_freespeed_-2.5-3.5
+      geoserver: /kibera-accessibility/kibera-water-breakdown.geo.json
