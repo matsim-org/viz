@@ -74,12 +74,12 @@ class DataProvider {
   }
 
   public hasSnapshot(timestep: number) {
-    return this.snapshotCache.hasSnapshot(timestep)
+    const result = this.snapshotCache.hasSnapshot(timestep)
+    if (!result) this.snapshotCache.ensureSufficientCaching(timestep)
+    return result
   }
 
   public getSnapshot(timestep: number): Snapshot {
-    this.snapshotCache.ensureSufficientCaching(timestep)
-
     if (this.snapshotCache.hasSnapshot(timestep)) {
       return this.snapshotCache.getSnapshot(timestep)
     } else {

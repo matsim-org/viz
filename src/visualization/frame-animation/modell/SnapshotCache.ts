@@ -109,7 +109,10 @@ export default class SnapshotCache {
   }
 
   public hasSnapshot(timestep: number): boolean {
-    return this.getEntry(timestep).status === SnapshotEntryStatus.LOADED
+    if (this.isWithinBounds(timestep)) {
+      return this.getEntry(timestep).status === SnapshotEntryStatus.LOADED
+    }
+    return false
   }
 
   public getSnapshot(timestep: number): Snapshot {

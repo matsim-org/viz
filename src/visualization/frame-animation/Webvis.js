@@ -33,7 +33,7 @@ class Webvis {
   }
 
   set onTimestepChanged(value) {
-    this.playback.onTimestepChanged = value
+    this.playback.addTimestepChangedListener(value)
   }
 
   set onFetchingData(value) {
@@ -53,11 +53,8 @@ class Webvis {
     this.dataProvider.loadServerConfig()
     this.dataProvider.isFetchingDataChanged = () => this._handleIsFetchingDataChanged()
 
-    this.drawingController = new DrawingController()
-    this.drawingController.dataProvider = this.dataProvider
-
     this.playback = new Playback(this.dataProvider)
-    this.drawingController.playback = this.playback
+    this.drawingController = new DrawingController(this.playback, this.dataProvider)
   }
 
   /**
