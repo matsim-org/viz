@@ -5,11 +5,6 @@ import {
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 import DataFetcher from '@/visualization/frame-animation/modell/background/DataFetcher'
 
-interface SnapshotRequest {
-  fromIndex: number
-  toIndex: number
-}
-
 interface EmptyBlock {
   start: number
   end: number
@@ -148,7 +143,7 @@ export default class SnapshotCache {
     const toTimestep = Math.min(emptyBlock.end, fromTimestep + this.fetchSize * this.timestepSize)
     const parameters: SnapshotRequestParams = {
       fromTimestep: fromTimestep,
-      size: (toTimestep - fromTimestep) / this.timestepSize,
+      size: (toTimestep - fromTimestep) / this.timestepSize + 1,
       speedFactor: 1.0,
     }
 
@@ -194,9 +189,7 @@ export default class SnapshotCache {
 
   private getIndexForTimestep(timestep: number) {
     if (!this.isWithinBounds(timestep)) throw new Error('invalid timestep')
-    const index = (timestep - this._firstTimestep) / this._timestepSize
-    if (index < 0) return 0
-    return index
+    return Math.floor((timestep - this._firstTimestep) / this._timestepSize)
   }
 
   private getEntry(timestep: number) {
