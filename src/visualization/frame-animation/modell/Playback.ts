@@ -50,7 +50,7 @@ class Playback {
 
   public getSnapshotForCurrentTimestep(): Snapshot {
     try {
-      return this.dataProvider.getSnapshot(this.currentTimestep, this._speedFactor)
+      return this.dataProvider.getSnapshot(this.currentTimestep)
     } catch (error) {
       // if dataProvider has no snapshot we serve an emtpy one
       return {

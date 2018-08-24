@@ -23,6 +23,7 @@ class DataProvider {
   private lastRequestedTimestep = 0
   private maxConcurrentRequests = 1
   private ongoingRequests = 0
+  private minCacheSize = 200
 
   private _agentRequests = 0
   private _config = Configuration.getConfig()
@@ -84,15 +85,16 @@ class DataProvider {
     return this.snapshotCache.hasSnapshot(timestep)
   }
 
-  public getSnapshot(timestep: number, speedFactor: number): Snapshot {
+  public getSnapshot(timestep: number): Snapshot {
     this.lastRequestedTimestep = timestep
 
-    // 1. Get snapshot from chache if available
+    // 1. Schedule snapshot fetching if necessary
+    this.snapshotCache.ensureSufficientCaching(timestep)
+
+    // 2. get snapshots from cache if available
     if (this.snapshotCache.hasSnapshot(timestep)) {
       return this.snapshotCache.getSnapshot(timestep)
     } else {
-      // if not available schedule caching and throw an error
-      this.scheduleSnapshotFetching(timestep, speedFactor)
       throw new Error('no snapshot for timestep ' + timestep)
     }
 
@@ -176,19 +178,25 @@ class DataProvider {
     }
   }
 
-  private scheduleSnapshotFetching(timestep: number, speedFactor: number) {
+  /*private scheduleSnapshotFetching(timestep: number) {
     if (this.ongoingRequests < this.maxConcurrentRequests) {
-      this.ongoingRequests++
-      setTimeout((t: number, s: number) => this.loadSnapshots(t, s), 0, timestep, speedFactor)
-    }
-  }
+      // 1. check whether there are sufficient snapshots
+      const nextUncachedTimestep = this.snapshotCache.nextUnloadedTimestep(timestep)
+      const numberOfFramesAhead = (nextUncachedTimestep - timestep) / this.snapshotCache.timestepSize
 
-  private async loadSnapshots(fromTimestep: number, speedFactor: number) {
+      if (numberOfFramesAhead < this.minCacheSize) {
+        this.ongoingRequests++
+        setTimeout((t: number) => this.loadSnapshots(t), 0, timestep)
+      }
+    }
+  }*/
+
+  private async loadSnapshots(fromTimestep: number) {
     const requestSize = 100 // use a dynamic estimate later
     const params: SnapshotRequestParams = {
       fromTimestep: fromTimestep,
       size: requestSize,
-      speedFactor: speedFactor,
+      speedFactor: 1,
     }
 
     const response = await this.dataFetcher.fetchSnapshots(params)
@@ -202,7 +210,7 @@ class DataProvider {
     if (config.progress !== Progress.Done) {
       setTimeout(() => this.loadServerConfig(), 10000)
     } else {
-      this.snapshotCache = new SnapshotCache(config)
+      this.snapshotCache = new SnapshotCache(config, this.dataFetcher)
       this.loadNetworkData()
     }
   }
