@@ -4,6 +4,7 @@ import {
 } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 import DataFetcher from '@/visualization/frame-animation/modell/background/DataFetcher'
+import SnapshotFetcher from '@/visualization/frame-animation/modell/background/SnapshotFetcher'
 
 interface EmptyBlock {
   start: number
@@ -63,12 +64,12 @@ export default class SnapshotCache {
   private _firstTimestep: number
   private _lastTimestep: number
   private _timestepSize: number
-  private snapshots: SnapshotEntry[] = []
-  private emptyBlocks: EmptyBlock[] = []
+  private _snapshots: SnapshotEntry[] = []
+  private _emptyBlocks: EmptyBlock[] = []
 
-  private minCacheSize = 500
-  private fetchSize = 100
-  private dataFetcher: DataFetcher
+  private readonly _minCacheSize = 500
+  private readonly _fetchSize = 100
+  private readonly _snapshotFetcher: SnapshotFetcher
   private _isFetching: boolean = false
 
   get firstTimestep() {
@@ -87,11 +88,11 @@ export default class SnapshotCache {
     return this._isFetching
   }
 
-  constructor(config: ServerConfiguration, dataFetcher: DataFetcher) {
+  constructor(config: ServerConfiguration, snapshotFetcher: SnapshotFetcher) {
     this._firstTimestep = config.firstTimestep
     this._lastTimestep = config.lastTimestep
     this._timestepSize = config.timestepSize
-    this.dataFetcher = dataFetcher
+    this._snapshotFetcher = snapshotFetcher
     this.initEmptySnapshots()
   }
 
@@ -105,7 +106,7 @@ export default class SnapshotCache {
     }
 
     const index = this.getIndexForTimestep(snapshot.time)
-    this.snapshots[index] = SnapshotEntry.createLoadedEntry(snapshot)
+    this._snapshots[index] = SnapshotEntry.createLoadedEntry(snapshot)
   }
 
   public hasSnapshot(timestep: number): boolean {
@@ -128,11 +129,11 @@ export default class SnapshotCache {
   }
 
   public async ensureSufficientCaching(currentTimestep: number) {
-    if (this._isFetching || this.emptyBlocks.length === 0) {
+    if (this._isFetching || this._emptyBlocks.length === 0) {
       return
     }
-    const blockIndex = this.emptyBlocks.findIndex(block => {
-      return block.end >= currentTimestep && block.start <= currentTimestep + this.minCacheSize * this.timestepSize
+    const blockIndex = this._emptyBlocks.findIndex(block => {
+      return block.end >= currentTimestep && block.start <= currentTimestep + this._minCacheSize * this.timestepSize
     })
 
     if (blockIndex >= 0) {
@@ -141,9 +142,9 @@ export default class SnapshotCache {
   }
 
   private async fetchSnapshots(currentTimestep: number, emptyBlockIndex: number) {
-    const emptyBlock = this.emptyBlocks[emptyBlockIndex]
+    const emptyBlock = this._emptyBlocks[emptyBlockIndex]
     const fromTimestep = Math.max(emptyBlock.start, currentTimestep)
-    const toTimestep = Math.min(emptyBlock.end, fromTimestep + this.fetchSize * this.timestepSize)
+    const toTimestep = Math.min(emptyBlock.end, fromTimestep + this._fetchSize * this.timestepSize)
     const parameters: SnapshotRequestParams = {
       fromTimestep: fromTimestep,
       size: (toTimestep - fromTimestep) / this.timestepSize + 1,
@@ -151,7 +152,7 @@ export default class SnapshotCache {
     }
 
     this._isFetching = true
-    const snapshots = await this.dataFetcher.fetchSnapshots(parameters)
+    const snapshots = await this._snapshotFetcher.fetchSnapshots(parameters)
     this.addSnapshots(snapshots)
 
     this.updateEmtpyBlocks(fromTimestep, toTimestep, emptyBlock, emptyBlockIndex)
@@ -163,7 +164,7 @@ export default class SnapshotCache {
     if (fromTimestep > emptyBlock.start && toTimestep < emptyBlock.end) {
       const leftBlock = { start: emptyBlock.start, end: fromTimestep - this.timestepSize }
       const rightBlock = { start: toTimestep + this.timestepSize, end: emptyBlock.end }
-      this.emptyBlocks.splice(emptyBlockIndex, 1, leftBlock, rightBlock)
+      this._emptyBlocks.splice(emptyBlockIndex, 1, leftBlock, rightBlock)
     } // change start bounds of emtpy block
     else if (fromTimestep <= emptyBlock.start && toTimestep < emptyBlock.end) {
       emptyBlock.start = toTimestep
@@ -172,7 +173,7 @@ export default class SnapshotCache {
       emptyBlock.end = fromTimestep
     } // the whole block has been loaded. Remove it
     else {
-      this.emptyBlocks.splice(emptyBlockIndex, 1)
+      this._emptyBlocks.splice(emptyBlockIndex, 1)
     }
   }
 
@@ -180,10 +181,10 @@ export default class SnapshotCache {
     const length = (this._lastTimestep - this._firstTimestep) / this._timestepSize + 1
 
     for (let i = 0; i < length; i++) {
-      this.snapshots.push(SnapshotEntry.getEmtpyEntry())
+      this._snapshots.push(SnapshotEntry.getEmtpyEntry())
     }
 
-    this.emptyBlocks.push({ start: this.firstTimestep, end: this.lastTimestep })
+    this._emptyBlocks.push({ start: this.firstTimestep, end: this.lastTimestep })
   }
 
   private isWithinBounds(timestep: number) {
@@ -197,6 +198,6 @@ export default class SnapshotCache {
 
   private getEntry(timestep: number) {
     const index = this.getIndexForTimestep(timestep)
-    return this.snapshots[index]
+    return this._snapshots[index]
   }
 }

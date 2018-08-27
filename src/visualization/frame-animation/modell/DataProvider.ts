@@ -5,6 +5,7 @@ import Configuration from '../contracts/Configuration'
 import { Progress, ServerConfiguration } from '../communication/FrameAnimationAPI'
 import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
+import SnapshotFetcher from '@/visualization/frame-animation/modell/background/SnapshotFetcher'
 
 export default class DataProvider {
   // new caching
@@ -60,7 +61,7 @@ export default class DataProvider {
     }
     try {
       const config = await this.dataFetcher.fetchServerConfig()
-      this.handleServerConfigReceived(config)
+      await this.handleServerConfigReceived(config)
     } catch (error) {
       console.log(error)
       console.log('reatempting to connect to server in 5s')
@@ -133,13 +134,17 @@ export default class DataProvider {
     this.snapshotCache.clearSnapshots()
   }
 
-  private handleServerConfigReceived(config: ServerConfiguration) {
+  private async handleServerConfigReceived(config: ServerConfiguration) {
     Configuration.updateServerConfiguration(config)
 
     if (config.progress !== Progress.Done) {
       setTimeout(() => this.loadServerConfig(), 10000)
     } else {
-      this.snapshotCache = new SnapshotCache(config, this.dataFetcher)
+      const fetcher = await SnapshotFetcher.create({
+        dataUrl: this._config.dataUrl,
+        vizId: this._config.vizId,
+      })
+      this.snapshotCache = new SnapshotCache(config, fetcher)
       this.loadNetworkData()
       this.snapshotCache.ensureSufficientCaching(config.firstTimestep)
     }
