@@ -89,6 +89,8 @@ class Webvis {
    */
   setPlaybackSpeed(factor) {
     this.playback.speedFactor = factor
+    if ((factor === 0 + 0.001 || factor === 0 - 0.001) && this.isPlaying) this.stopPlayback()
+    else if (!this.isPlaying) this.startPlayback()
   }
 
   addGeoJsonLayer(geoJson, layerName, z, color) {

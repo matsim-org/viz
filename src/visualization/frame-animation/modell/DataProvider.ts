@@ -45,6 +45,7 @@ export default class DataProvider {
 
   public destroy() {
     this._planFetcher.destroy()
+    this._snapshotCache.destroy()
   }
 
   public async loadServerConfig() {
@@ -65,9 +66,9 @@ export default class DataProvider {
     if (this._networkDataChanged) this._networkDataChanged(network)
   }
 
-  public hasSnapshot(timestep: number) {
+  public hasSnapshot(timestep: number, speedFactor: number) {
     const result = this._snapshotCache.hasSnapshot(timestep)
-    this._snapshotCache.ensureSufficientCaching(timestep)
+    this._snapshotCache.ensureSufficientCaching(timestep, speedFactor)
     return result
   }
 
@@ -81,7 +82,7 @@ export default class DataProvider {
 
   public async loadPlan(id: number) {
     this._isLoadingPlan = true
-    this._onFetchingDataChanged()
+    this.onFetchingDataChanged()
     const plan = await this._planFetcher.fetchPlan({ idIndex: id })
     this._handlePlanDataReceived(plan)
   }
@@ -130,8 +131,8 @@ export default class DataProvider {
         vizId: this._config.vizId,
       })
       const planFetcherTask = PlanFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
-      this._snapshotCache = new SnapshotCache(config, await snapshotFetcherTask)
-      this._snapshotCache.ensureSufficientCaching(config.firstTimestep)
+      this._snapshotCache = new SnapshotCache(config, await snapshotFetcherTask, () => this.onFetchingDataChanged())
+      this._snapshotCache.ensureSufficientCaching(config.firstTimestep, 1.0)
       this._planFetcher = await planFetcherTask
     }
   }
@@ -142,7 +143,7 @@ export default class DataProvider {
     const name = 'selectedPlan'
     const layer = LayerData.createLayer(name, -9.0, this._config.colors.selectedPlan, data)
     this._layerData.addLayer(layer)
-    this._onFetchingDataChanged()
+    this.onFetchingDataChanged()
     if (this._geoJsonDataChanged) this._geoJsonDataChanged(name)
   }
 
@@ -152,7 +153,7 @@ export default class DataProvider {
     if (this._geoJsonDataChanged) this._geoJsonDataChanged(layer.name)
   }
 
-  private _onFetchingDataChanged() {
+  private onFetchingDataChanged() {
     if (this._isFetchingDataChanged) {
       this._isFetchingDataChanged()
     }

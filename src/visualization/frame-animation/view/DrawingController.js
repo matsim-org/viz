@@ -158,7 +158,7 @@ class DrawingController {
   }
 
   _loadSnapshot(timestep) {
-    if (this.dataProvider.hasSnapshot(timestep)) {
+    if (this.dataProvider.hasSnapshot(timestep, this.playback.speedFactor)) {
       const snapshot = this.dataProvider.getSnapshot(timestep)
       this._bufferHolder.updateAgentBufferAttribute('position', snapshot.position)
       this._bufferHolder.updateAgentBufferAttribute('nextPosition', snapshot.nextPosition)

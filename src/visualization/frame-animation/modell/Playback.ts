@@ -4,7 +4,7 @@ import DataProvider from '@/visualization/frame-animation/modell/DataProvider'
 class Playback {
   private _currentTimestep = 0
   private _currentTime = 0
-  private _speedFactor = 1.0
+  private _speedFactor = 0.0
   private _firstTimestep = 0
   private _lastTimestep = 0
   private _timestepSize = 0
@@ -35,7 +35,7 @@ class Playback {
   }
 
   constructor(dataProvider: DataProvider) {
-    this._config.subscribeServerConfigUpdated(() => this._onServerConfigUpdated())
+    this._config.subscribeServerConfigUpdated(() => this.onServerConfigUpdated())
     this._dataProvider = dataProvider
   }
 
@@ -44,24 +44,24 @@ class Playback {
   }
 
   public advanceTime() {
-    const nextTime = this._currentTime + this._timestepSize * this._speedFactor
+    this._currentTime = this._currentTime + this._timestepSize * this._speedFactor
 
     // if next time crosses a real timestep
-    if (nextTime <= this._currentTimestep || nextTime >= this._currentTimestep + this._timestepSize) {
+    if (this._currentTime <= this._currentTimestep || this._currentTime >= this._currentTimestep + this._timestepSize) {
       // check if a snapshot for that next timestep exsists
-      if (this._dataProvider.hasSnapshot(nextTime)) {
+      if (this._dataProvider.hasSnapshot(this._currentTime, this._speedFactor)) {
         // if so, set current time to next timestep
-        this.setCurrentTimestep(this._dataProvider.getSnapshot(nextTime).time)
+        this.setCurrentTimestep(this._dataProvider.getSnapshot(this._currentTime).time)
       } else {
         // maybe we have reached the end
-        if (nextTime <= this._firstTimestep) {
+        if (this._currentTime <= this._firstTimestep) {
           this.setCurrentTimestep(this._lastTimestep)
-        } else if (nextTime >= this._lastTimestep) {
+          this._currentTime = this._currentTimestep
+        } else if (this._currentTime >= this._lastTimestep) {
           this.setCurrentTimestep(this._firstTimestep)
+          this._currentTime = this._currentTimestep
         }
       }
-    } else {
-      this._currentTime = nextTime
     }
   }
 
@@ -72,17 +72,14 @@ class Playback {
 
     const modulo = timestep % this._timestepSize
     this.setCurrentTimestep(timestep - modulo)
-  }
-
-  public isBuffering(): boolean {
-    return this._dataProvider.isFetchingData
+    this._currentTime = this.currentTimestep
   }
 
   public destroy() {
     this._timestepChangedListeners = []
   }
 
-  private _onServerConfigUpdated() {
+  private onServerConfigUpdated() {
     this._currentTimestep = this._config.firstTimestep
     this._currentTime = this._config.firstTimestep
     this._firstTimestep = this._config.firstTimestep
@@ -92,7 +89,6 @@ class Playback {
 
   private setCurrentTimestep(time: number) {
     this._currentTimestep = time
-    this._currentTime = time
     this.callTimestepChangedListeners()
   }
 

@@ -70,6 +70,7 @@ export default class SnapshotCache {
   private readonly _fetchSize = 100
   private readonly _snapshotFetcher: SnapshotFetcher
   private _isFetching: boolean = false
+  private _isFetchingChanged: () => void
 
   get firstTimestep() {
     return this._firstTimestep
@@ -87,12 +88,17 @@ export default class SnapshotCache {
     return this._isFetching
   }
 
-  constructor(config: ServerConfiguration, snapshotFetcher: SnapshotFetcher) {
+  constructor(config: ServerConfiguration, snapshotFetcher: SnapshotFetcher, isFetchingChanged: () => void) {
     this._firstTimestep = config.firstTimestep
     this._lastTimestep = config.lastTimestep
     this._timestepSize = config.timestepSize
     this._snapshotFetcher = snapshotFetcher
+    this._isFetchingChanged = isFetchingChanged
     this.initEmptySnapshots()
+  }
+
+  public destroy() {
+    this._snapshotFetcher.destroy()
   }
 
   public addSnapshots(snapshots: Snapshot[]) {
@@ -127,35 +133,35 @@ export default class SnapshotCache {
     this.initEmptySnapshots()
   }
 
-  public async ensureSufficientCaching(currentTimestep: number) {
+  public async ensureSufficientCaching(currentTimestep: number, speedFactor: number) {
     if (this._isFetching || this._emptyBlocks.length === 0) {
       return
     }
-    const blockIndex = this._emptyBlocks.findIndex(block => {
-      return block.end >= currentTimestep && block.start <= currentTimestep + this._minCacheSize * this.timestepSize
-    })
+    const blockIndex = this._emptyBlocks.findIndex(block =>
+      this.shouldEmptyBlockBeFilled(block, currentTimestep, speedFactor)
+    )
 
     if (blockIndex >= 0) {
-      await this.fetchSnapshots(currentTimestep, blockIndex)
+      await this.fetchSnapshots(blockIndex, currentTimestep, speedFactor)
     }
   }
 
-  private async fetchSnapshots(currentTimestep: number, emptyBlockIndex: number) {
+  private async fetchSnapshots(emptyBlockIndex: number, currentTimestep: number, speedFactor: number) {
     const emptyBlock = this._emptyBlocks[emptyBlockIndex]
-    const fromTimestep = Math.max(emptyBlock.start, currentTimestep)
-    const toTimestep = Math.min(emptyBlock.end, fromTimestep + this._fetchSize * this.timestepSize)
+    const fromTimestep = this.calculateFromTimestep(emptyBlock, currentTimestep, speedFactor)
+    const toTimestep = this.calculateToTimestep(emptyBlock, fromTimestep)
     const parameters: SnapshotRequestParams = {
       fromTimestep: fromTimestep,
-      size: (toTimestep - fromTimestep) / this.timestepSize + 1,
+      size: this.calculateRequestSize(fromTimestep, toTimestep),
       speedFactor: 1.0,
     }
 
-    this._isFetching = true
+    this.setIsFetching(true)
     const snapshots = await this._snapshotFetcher.fetchSnapshots(parameters)
     this.addSnapshots(snapshots)
 
     this.updateEmtpyBlocks(fromTimestep, toTimestep, emptyBlock, emptyBlockIndex)
-    this._isFetching = false
+    this.setIsFetching(false)
   }
 
   private updateEmtpyBlocks(fromTimestep: number, toTimestep: number, emptyBlock: EmptyBlock, emptyBlockIndex: number) {
@@ -198,5 +204,35 @@ export default class SnapshotCache {
   private getEntry(timestep: number) {
     const index = this.getIndexForTimestep(timestep)
     return this._snapshots[index]
+  }
+
+  private shouldEmptyBlockBeFilled(block: EmptyBlock, currentTimestep: number, speedFactor: number) {
+    if (speedFactor >= 0) {
+      return block.end >= currentTimestep && block.start <= currentTimestep + this._minCacheSize * this.timestepSize
+    } else {
+      return block.start <= currentTimestep && block.end >= currentTimestep - this._minCacheSize * this.timestepSize
+    }
+  }
+
+  private calculateFromTimestep(block: EmptyBlock, currentTimestep: number, speedFactor: number) {
+    if (speedFactor >= 0) {
+      return Math.max(block.start, currentTimestep)
+    } else {
+      const startValue = Math.min(currentTimestep, block.end)
+      return Math.max(block.start, startValue - this._fetchSize * this._timestepSize)
+    }
+  }
+
+  private calculateToTimestep(block: EmptyBlock, fromTimestep: number) {
+    return Math.min(block.end, fromTimestep + this._fetchSize * this.timestepSize)
+  }
+
+  private calculateRequestSize(fromTimestep: number, toTimestep: number) {
+    return Math.floor((toTimestep - fromTimestep) / this.timestepSize + 1)
+  }
+
+  private setIsFetching(value: boolean) {
+    this._isFetching = value
+    this._isFetchingChanged()
   }
 }
