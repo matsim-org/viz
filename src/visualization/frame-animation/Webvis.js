@@ -2,6 +2,7 @@ import { DrawingController } from './view/DrawingController.js'
 import { Playback } from './modell/Playback'
 import DataProvider from './modell/DataProvider'
 import Configuration from './contracts/Configuration'
+import FrameAnimationAPI from './communication/FrameAnimationAPI'
 
 class Webvis {
   get firstTimestep() {
@@ -49,7 +50,9 @@ class Webvis {
     Configuration.createConfiguration(configParameters)
     this._config = Configuration.getConfig()
     this._config.subscribeServerConfigUpdated(() => this._handleServerConfigChanged())
-    this.dataProvider = new DataProvider()
+
+    const api = new FrameAnimationAPI(this._config.dataUrl, this._config.vizId)
+    this.dataProvider = new DataProvider(api)
     this.dataProvider.loadServerConfig()
     this.dataProvider.isFetchingDataChanged = () => this._handleIsFetchingDataChanged()
 

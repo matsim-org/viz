@@ -3,7 +3,6 @@ import {
   SnapshotRequestParams,
 } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
-import DataFetcher from '@/visualization/frame-animation/modell/background/DataFetcher'
 import SnapshotFetcher from '@/visualization/frame-animation/modell/background/SnapshotFetcher'
 
 interface EmptyBlock {

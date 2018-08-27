@@ -1,6 +1,7 @@
 import AsyncWorkerConnector from '@/visualization/frame-animation/modell/background/AsyncWorkerConnector'
-import BackgroundWorker, { ParseParams } from '@/visualization/frame-animation/modell/background/GeoJsonParser.worker'
-import { PARSE_GEO_JSON, INITIALIZE } from '@/visualization/frame-animation/modell/background/Contracts'
+import BackgroundWorker from '@/visualization/frame-animation/modell/background/GeoJsonParser.worker'
+import { INITIALIZE } from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
+import { ParseParams, MethodNames } from '@/visualization/frame-animation/modell/background/GeoJsonParserContract'
 
 export default class GeoJsonParser extends AsyncWorkerConnector {
   constructor() {
@@ -14,7 +15,7 @@ export default class GeoJsonParser extends AsyncWorkerConnector {
   }
 
   public async parseGeoJson(params: ParseParams) {
-    return this.postAsyncWorkerMessage(PARSE_GEO_JSON, params)
+    return this.postAsyncWorkerMessage(MethodNames.ParseGeoJson, params)
   }
 
   private async initialize() {

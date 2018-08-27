@@ -1,40 +1,30 @@
-import DataFetcher from './background/DataFetcher'
 import GeoJsonParser from './background/GeoJsonParser.worker'
 import { LayerData } from './LayerData.js'
 import Configuration from '../contracts/Configuration'
-import { Progress, ServerConfiguration } from '../communication/FrameAnimationAPI'
+import FrameAnimationAPI, { Progress, ServerConfiguration } from '../communication/FrameAnimationAPI'
 import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 import SnapshotFetcher from '@/visualization/frame-animation/modell/background/SnapshotFetcher'
+import NetworkReader from '@/visualization/frame-animation/contracts/NetworkReader'
+import PlanFetcher from '@/visualization/frame-animation/modell/background/PlanFetcher'
 
 export default class DataProvider {
   // new caching
-  private snapshotCache!: SnapshotCache
-  private dataFetcher!: DataFetcher
+  private _snapshotCache!: SnapshotCache
   private _layerData = new LayerData()
+  private readonly _api: FrameAnimationAPI
+  private _planFetcher!: PlanFetcher
 
   // old callbacks
   private _networkDataChanged?: (data: Float32Array) => void
   private _geoJsonDataChanged?: (layerName: string) => void
   private _isFetchingDataChanged?: () => void
 
-  private _agentRequests = 0
   private _config = Configuration.getConfig()
   private _isLoadingPlan = false
-  private _maxConcurrentSnapshotRequests = 1
 
   get isFetchingData(): boolean {
-    return this.snapshotCache.isFetching || this._isLoadingPlan
-  }
-
-  // is not correct anymore
-  get lastCachedTimestep() {
-    return this.snapshotCache.lastTimestep
-  }
-
-  // is not correct anymore
-  get firstCachedTimestep() {
-    return this.snapshotCache.firstTimestep
+    return this._snapshotCache.isFetching || this._isLoadingPlan
   }
 
   set networkDataChanged(callback: (data: Float32Array) => void) {
@@ -49,19 +39,18 @@ export default class DataProvider {
     this._isFetchingDataChanged = callback
   }
 
-  constructor() {}
+  constructor(api: FrameAnimationAPI) {
+    this._api = api
+  }
 
   public destroy() {
-    this.dataFetcher.destroy()
+    this._planFetcher.destroy()
   }
 
   public async loadServerConfig() {
-    if (!this.dataFetcher) {
-      this.dataFetcher = await DataFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
-    }
     try {
-      const config = await this.dataFetcher.fetchServerConfig()
-      await this.handleServerConfigReceived(config)
+      const config = await this._api.fetchConfiguration()
+      this.handleServerConfigReceived(config)
     } catch (error) {
       console.log(error)
       console.log('reatempting to connect to server in 5s')
@@ -70,41 +59,36 @@ export default class DataProvider {
   }
 
   public async loadNetworkData() {
-    const network = await this.dataFetcher.fetchNetwork()
+    const buffer = await this._api.fetchNetwork()
+    const reader = new NetworkReader(buffer)
+    const network = reader.parse()
     if (this._networkDataChanged) this._networkDataChanged(network)
   }
 
   public hasSnapshot(timestep: number) {
-    const result = this.snapshotCache.hasSnapshot(timestep)
-    this.snapshotCache.ensureSufficientCaching(timestep)
+    const result = this._snapshotCache.hasSnapshot(timestep)
+    this._snapshotCache.ensureSufficientCaching(timestep)
     return result
   }
 
   public getSnapshot(timestep: number): Snapshot {
-    if (this.snapshotCache.hasSnapshot(timestep)) {
-      return this.snapshotCache.getSnapshot(timestep)
+    if (this._snapshotCache.hasSnapshot(timestep)) {
+      return this._snapshotCache.getSnapshot(timestep)
     } else {
       throw new Error('no snapshot for timestep ' + timestep)
     }
   }
 
   public async loadPlan(id: number) {
-    const params = {
-      idIndex: id,
-    }
-
     this._isLoadingPlan = true
     this._onFetchingDataChanged()
-    const plan = await this.dataFetcher.fetchPlan(params)
+    const plan = await this._planFetcher.fetchPlan({ idIndex: id })
     this._handlePlanDataReceived(plan)
   }
 
   public getId(index: number, timestep: number) {
-    /*let snapshot = this.snapshotData.getSnapshot(timestep, this._speedFactor)
+    const snapshot = this._snapshotCache.getSnapshot(timestep)
     return snapshot.ids[index]
-    */
-
-    throw new Error('not implemented yet')
   }
 
   public async addGeoJsonLayer(geoJson: string, layerName: string, z: number, color: any) {
@@ -131,7 +115,7 @@ export default class DataProvider {
   }
 
   public clearCache() {
-    this.snapshotCache.clearSnapshots()
+    this._snapshotCache.clearSnapshots()
   }
 
   private async handleServerConfigReceived(config: ServerConfiguration) {
@@ -140,13 +124,15 @@ export default class DataProvider {
     if (config.progress !== Progress.Done) {
       setTimeout(() => this.loadServerConfig(), 10000)
     } else {
-      const fetcher = await SnapshotFetcher.create({
+      this.loadNetworkData()
+      const snapshotFetcherTask = SnapshotFetcher.create({
         dataUrl: this._config.dataUrl,
         vizId: this._config.vizId,
       })
-      this.snapshotCache = new SnapshotCache(config, fetcher)
-      this.loadNetworkData()
-      this.snapshotCache.ensureSufficientCaching(config.firstTimestep)
+      const planFetcherTask = PlanFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
+      this._snapshotCache = new SnapshotCache(config, await snapshotFetcherTask)
+      this._snapshotCache.ensureSufficientCaching(config.firstTimestep)
+      this._planFetcher = await planFetcherTask
     }
   }
 

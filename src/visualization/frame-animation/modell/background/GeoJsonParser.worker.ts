@@ -1,13 +1,9 @@
 import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
-import { MethodCall, PARSE_GEO_JSON, MethodResult } from '@/visualization/frame-animation/modell/background/Contracts'
-import AsyncBackgroundWorker from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
-
-export interface ParseParams {
-  geoJson: string
-  z: number
-  layerName: string
-  color?: number
-}
+import AsyncBackgroundWorker, {
+  MethodCall,
+  MethodResult,
+} from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
+import { ParseParams, MethodNames } from '@/visualization/frame-animation/modell/background/GeoJsonParserContract'
 
 class GeoJsonParser extends AsyncBackgroundWorker {
   constructor() {
@@ -20,7 +16,7 @@ class GeoJsonParser extends AsyncBackgroundWorker {
 
   public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
-      case PARSE_GEO_JSON:
+      case MethodNames.ParseGeoJson:
         return this.parseGeoJson(call.parameters)
       default:
         throw new Error('No method with name: ' + call.method)

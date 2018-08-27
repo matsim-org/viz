@@ -1,9 +1,9 @@
 import AsyncWorkerConnector from '@/visualization/frame-animation/modell/background/AsyncWorkerConnector'
 import BackgroundWorker from '@/visualization/frame-animation/modell/background/SnapshotFetcher.worker'
-import { INITIALIZE } from '@/visualization/frame-animation/modell/background/Contracts'
 import { SnapshotRequestParams } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 import { InitParams, MethodNames } from '@/visualization/frame-animation/modell/background/SnapshotFetcherContract'
+import { INITIALIZE } from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
 export default class SnapshotFetcher extends AsyncWorkerConnector {
   constructor() {

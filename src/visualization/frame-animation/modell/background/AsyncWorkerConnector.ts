@@ -1,10 +1,10 @@
 import {
-  TYPE_ERROR,
-  AsyncMethodResult,
   AsyncResult,
+  TYPE_ERROR,
   AsyncError,
   TYPE_RESULT,
-} from '@/visualization/frame-animation/modell/background/Contracts'
+  AsyncMethodResult,
+} from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
 interface ResolveReject {
   resolve: (value: any) => any

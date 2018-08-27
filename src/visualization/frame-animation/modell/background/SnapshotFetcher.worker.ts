@@ -1,5 +1,7 @@
-import AsyncBackgroundWorker from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
-import { MethodCall, MethodResult } from '@/visualization/frame-animation/modell/background/Contracts'
+import AsyncBackgroundWorker, {
+  MethodCall,
+  MethodResult,
+} from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 import FrameAnimationAPI, {
   SnapshotRequestParams,
 } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
