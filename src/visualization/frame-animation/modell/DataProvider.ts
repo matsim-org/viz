@@ -6,7 +6,7 @@ import { Progress, ServerConfiguration } from '../communication/FrameAnimationAP
 import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'
 import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
 
-class DataProvider {
+export default class DataProvider {
   // new caching
   private snapshotCache!: SnapshotCache
   private dataFetcher!: DataFetcher
@@ -75,7 +75,7 @@ class DataProvider {
 
   public hasSnapshot(timestep: number) {
     const result = this.snapshotCache.hasSnapshot(timestep)
-    if (!result) this.snapshotCache.ensureSufficientCaching(timestep)
+    this.snapshotCache.ensureSufficientCaching(timestep)
     return result
   }
 
@@ -167,5 +167,3 @@ class DataProvider {
     }
   }
 }
-
-export { DataProvider }

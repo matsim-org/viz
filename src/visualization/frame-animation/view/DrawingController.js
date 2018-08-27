@@ -126,7 +126,6 @@ class DrawingController {
 
   startPlayback() {
     if (!this.shouldRender) {
-      this._bufferHolder.loadAgentBuffer()
       this.shouldRender = true
       this.render()
     }

@@ -1,17 +1,15 @@
 import Configuration from '../contracts/Configuration'
-import { DataProvider } from '@/visualization/frame-animation/modell/DataProvider'
-import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotReader'
+import DataProvider from '@/visualization/frame-animation/modell/DataProvider'
 
 class Playback {
   private _currentTimestep = 0
   private _currentTime = 0
-  private _timestepFraction = 0
   private _speedFactor = 1.0
   private _firstTimestep = 0
   private _lastTimestep = 0
   private _timestepSize = 0
-  private dataProvider: DataProvider
-  private config = Configuration.getConfig()
+  private _dataProvider: DataProvider
+  private _config = Configuration.getConfig()
 
   // callbacks
   private _timestepChangedListeners: Array<(timestep: number) => void> = []
@@ -37,8 +35,8 @@ class Playback {
   }
 
   constructor(dataProvider: DataProvider) {
-    this.config.subscribeServerConfigUpdated(() => this._onServerConfigUpdated())
-    this.dataProvider = dataProvider
+    this._config.subscribeServerConfigUpdated(() => this._onServerConfigUpdated())
+    this._dataProvider = dataProvider
   }
 
   public addTimestepChangedListener(callback: (timestep: number) => void) {
@@ -51,9 +49,9 @@ class Playback {
     // if next time crosses a real timestep
     if (nextTime <= this._currentTimestep || nextTime >= this._currentTimestep + this._timestepSize) {
       // check if a snapshot for that next timestep exsists
-      if (this.dataProvider.hasSnapshot(nextTime)) {
+      if (this._dataProvider.hasSnapshot(nextTime)) {
         // if so, set current time to next timestep
-        this.setCurrentTimestep(this.dataProvider.getSnapshot(nextTime).time)
+        this.setCurrentTimestep(this._dataProvider.getSnapshot(nextTime).time)
       } else {
         // maybe we have reached the end
         if (nextTime <= this._firstTimestep) {
@@ -77,7 +75,7 @@ class Playback {
   }
 
   public isBuffering(): boolean {
-    return this.dataProvider.isFetchingData
+    return this._dataProvider.isFetchingData
   }
 
   public destroy() {
@@ -85,11 +83,11 @@ class Playback {
   }
 
   private _onServerConfigUpdated() {
-    this._currentTimestep = this.config.firstTimestep
-    this._currentTime = this.config.firstTimestep
-    this._firstTimestep = this.config.firstTimestep
-    this._lastTimestep = this.config.lastTimestep
-    this._timestepSize = this.config.timestepSize
+    this._currentTimestep = this._config.firstTimestep
+    this._currentTime = this._config.firstTimestep
+    this._firstTimestep = this._config.firstTimestep
+    this._lastTimestep = this._config.lastTimestep
+    this._timestepSize = this._config.timestepSize
   }
 
   private setCurrentTimestep(time: number) {

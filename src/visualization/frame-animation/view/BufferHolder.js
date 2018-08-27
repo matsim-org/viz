@@ -32,6 +32,7 @@ class BufferHolder {
     window.scene = this._scene
     window.THREE = THREE
     this._scene.background = new Color(this._config.colors.background)
+    this.loadAgentBuffer()
   }
 
   static AGENT_LAYER() {
