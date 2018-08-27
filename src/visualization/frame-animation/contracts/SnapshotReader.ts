@@ -1,33 +1,40 @@
-import { Reader } from './Reader.js'
+import { Reader } from '@/visualization/frame-animation/contracts/Reader'
 
-class SnapshotReader extends Reader {
-  constructor(byteArray) {
+export interface Snapshot {
+  time: number
+  position: Float32Array
+  nextPosition: Float32Array
+  ids: Float32Array
+  shouldInterpolate: Float32Array
+}
+
+export default class SnapshotReader extends Reader {
+  constructor(byteArray: ArrayBuffer) {
     super(byteArray, Float32Array.BYTES_PER_ELEMENT)
-    this.z = 0
   }
 
-  parse() {
-    let then = Date.now()
-    let result = this._parseAndMerge()
+  public parse() {
+    const then = Date.now()
+    const result = this._parseAndMerge()
     console.log('SnapshotReader: parsing ' + result.length + ' snapshots took: ' + (Date.now() - then) + 'ms')
     return result
   }
 
-  _parseAndMerge() {
-    let snapshots = []
+  private _parseAndMerge() {
+    const snapshots = []
 
     while (this.position < this.size) {
-      let time = this.getFloat32AndIncrementPosition()
-      let numberOfPositions = this.getFloat32AndIncrementPosition() / 3
+      const time = this.getFloat32AndIncrementPosition()
+      const numberOfPositions = this.getFloat32AndIncrementPosition() / 3
 
-      let snapshot = this._createEmptySnapshot(numberOfPositions)
+      const snapshot = this._createEmptySnapshot(numberOfPositions)
       snapshot.time = time
 
       let positionsIndex = 0
       let prevIdIndex = 0
       let idIndex = 0
 
-      let prevSnapshot
+      let prevSnapshot: Snapshot
 
       if (snapshots.length > 0) {
         prevSnapshot = snapshots[snapshots.length - 1]
@@ -35,13 +42,13 @@ class SnapshotReader extends Reader {
 
       this.parseArray(numberOfPositions, 1, () => {
         // write the data for the current snapshot
-        let x = this.getFloat32AndIncrementPosition()
-        let y = this.getFloat32AndIncrementPosition()
+        const x = this.getFloat32AndIncrementPosition()
+        const y = this.getFloat32AndIncrementPosition()
         snapshot.position[positionsIndex + 0] = x
         snapshot.position[positionsIndex + 1] = y
         snapshot.position[positionsIndex + 2] = this.z
 
-        let id = this.getFloat32AndIncrementPosition()
+        const id = this.getFloat32AndIncrementPosition()
         snapshot.ids[idIndex] = id
 
         // initialize default values for interpolation
@@ -82,7 +89,7 @@ class SnapshotReader extends Reader {
     return snapshots
   }
 
-  _createEmptySnapshot(numberOfPositions) {
+  private _createEmptySnapshot(numberOfPositions: number): Snapshot {
     return {
       time: 0,
       position: new Float32Array(numberOfPositions * 3),
@@ -92,5 +99,3 @@ class SnapshotReader extends Reader {
     }
   }
 }
-
-export { SnapshotReader }

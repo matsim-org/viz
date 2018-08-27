@@ -1,9 +1,9 @@
 import { JsogService } from 'jsog-typescript'
-import Project from '../entities/Project'
-import { ContentType, HeaderKeys, Method } from './Constants'
-import AuthenticatedRequest from '../auth/AuthenticatedRequest'
-import Config from '../config/Config'
-import { CreateVisualizationRequest, VisualizationType, Visualization } from '../entities/Visualization'
+import Project from '@/entities/Project'
+import { ContentType, HeaderKeys, Method } from '@/communication/Constants'
+import AuthenticatedRequest from '@/auth/AuthenticatedRequest'
+import Config from '@/config/Config'
+import { CreateVisualizationRequest, VisualizationType, Visualization } from '@/entities/Visualization'
 
 export default class FileAPI {
   private static PROJECT: string = Config.fileServer + '/projects'

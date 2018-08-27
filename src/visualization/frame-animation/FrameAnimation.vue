@@ -13,19 +13,16 @@
           .slider
             input.range(type="range" v-bind:min="firstTimestep" v-bind:max="lastTimestep" v-bind:step="timestepSize" v-bind:value="currentTimestep" v-on:input="handleRangeChanged($event)" v-on:mousedown="handleRangeMouseDown($event)" v-on:mouseup="handleRangeMouseUp($event)")
           .actions
-            button.playPause.ui.icon.button(v-on:click="togglePlayPause()")
-              i.pause.icon(v-if="isPlaying")
-              i.play.icon(v-else)
             .bufferState
               .ui.active.small.inline.loader(v-if="isFetchingData")
             .inputWithLabel
               label.description.speedLbl(for="speedInput") Playpack speed
               .speedControls
-                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(0.5)")
+                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(-0.1)")
                   i.ui.minus.icon
                 .ui.mini.input
                   input(name="speedInput" readonly v-model="speedFactor")
-                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(2)")
+                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(0.1)")
                   i.ui.plus.icon
             .inputWithLabel
               label.description(for="timestepInput") Time
@@ -63,9 +60,9 @@ export default Vue.extend({
       isRangeMouseDown: false,
       firstTimestep: 0,
       lastTimestep: 1,
-      currentTimestep: 0,
+      currentTimestep: 1,
       timestepSize: 1,
-      playbackSpeedFactor: 1,
+      playbackSpeedFactor: 0,
       progress: 'Done',
       connected: false,
     }
@@ -75,7 +72,7 @@ export default Vue.extend({
       return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
     },
     speedFactor: function() {
-      return this.playbackSpeedFactor * 60 * this.timestepSize
+      return Math.round(this.playbackSpeedFactor * 60 * this.timestepSize)
     },
     isDone: function() {
       return this.progress === 'Done'
@@ -92,19 +89,10 @@ export default Vue.extend({
     if (this.webvis) this.webvis.destroy()
   },
   methods: {
-    togglePlayPause: function() {
-      if (this.isPlaying) {
-        this.webvis!.stopPlayback()
-        this.isPlaying = false
-      } else {
-        this.webvis!.startPlayback()
-        this.isPlaying = true
-      }
-    },
-    changeSpeedFactor: function(multiplyBy: number) {
+    changeSpeedFactor: function(add: number) {
       if (this.webvis) {
-        this.playbackSpeedFactor = this.playbackSpeedFactor * multiplyBy
-        this.webvis.setPlaybackSpeed(this.playbackSpeedFactor)
+        this.playbackSpeedFactor = this.playbackSpeedFactor + add
+        this.webvis.setPlaybackSpeed(this.playbackSpeedFactor * this.playbackSpeedFactor * this.playbackSpeedFactor)
       }
     },
     handleRangeChanged(event: Event) {

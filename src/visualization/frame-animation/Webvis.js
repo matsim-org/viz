@@ -1,7 +1,8 @@
 import { DrawingController } from './view/DrawingController.js'
-import { Playback } from './modell/Playback.js'
-import { DataProvider } from './modell/DataProvider.js'
+import Playback from './modell/Playback'
+import DataProvider from './modell/DataProvider'
 import Configuration from './contracts/Configuration'
+import FrameAnimationAPI from './communication/FrameAnimationAPI'
 
 class Webvis {
   get firstTimestep() {
@@ -33,7 +34,7 @@ class Webvis {
   }
 
   set onTimestepChanged(value) {
-    this.playback.onTimestepChanged = value
+    this.playback.addTimestepChangedListener(value)
   }
 
   set onFetchingData(value) {
@@ -49,15 +50,14 @@ class Webvis {
     Configuration.createConfiguration(configParameters)
     this._config = Configuration.getConfig()
     this._config.subscribeServerConfigUpdated(() => this._handleServerConfigChanged())
-    this.dataProvider = new DataProvider()
+
+    const api = new FrameAnimationAPI(this._config.dataUrl, this._config.vizId)
+    this.dataProvider = new DataProvider(api)
     this.dataProvider.loadServerConfig()
     this.dataProvider.isFetchingDataChanged = () => this._handleIsFetchingDataChanged()
 
-    this.drawingController = new DrawingController()
-    this.drawingController.dataProvider = this.dataProvider
-
     this.playback = new Playback(this.dataProvider)
-    this.drawingController.playback = this.playback
+    this.drawingController = new DrawingController(this.playback, this.dataProvider)
   }
 
   /**
@@ -89,6 +89,8 @@ class Webvis {
    */
   setPlaybackSpeed(factor) {
     this.playback.speedFactor = factor
+    if ((factor === 0 + 0.001 || factor === 0 - 0.001) && this.isPlaying) this.stopPlayback()
+    else if (!this.isPlaying) this.startPlayback()
   }
 
   addGeoJsonLayer(geoJson, layerName, z, color) {

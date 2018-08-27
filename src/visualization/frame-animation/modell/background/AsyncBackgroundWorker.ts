@@ -1,13 +1,35 @@
-import {
-  AsyncMethodCall,
-  INITIALIZE,
-  MethodCall,
-  AsyncMethodResult,
-  TYPE_RESULT,
-  MethodResult,
-  TYPE_ERROR,
-  AsyncError,
-} from './Contracts'
+export interface MethodCall {
+  method: string
+  parameters: any
+}
+
+export interface AsyncMessage {
+  id: string
+}
+
+export interface AsyncResult extends AsyncMessage {
+  type: string
+}
+
+export interface AsyncMethodCall extends AsyncMessage {
+  call: MethodCall
+}
+
+export interface MethodResult {
+  data: any
+  transferrables?: any[]
+}
+
+export interface AsyncMethodResult extends AsyncResult {
+  result: MethodResult
+}
+
+export interface AsyncError extends AsyncResult {
+  error: any
+}
+export const INITIALIZE = 'initialize'
+export const TYPE_ERROR = 'error'
+export const TYPE_RESULT = 'result'
 
 /*  make sure typescript compiler knows that the global context is a worker context.
     also see: https://github.com/Microsoft/TypeScript/issues/582

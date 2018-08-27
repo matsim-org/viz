@@ -1,5 +1,5 @@
-import Config from '../config/Config'
-import { Method } from '../communication/Constants'
+import Config from '@/config/Config'
+import { Method } from '@/communication/Constants'
 
 export interface AuthenticationRequestVars {
   state: string

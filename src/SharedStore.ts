@@ -1,9 +1,9 @@
 'use strict'
 
 import Vue from 'vue'
-import FileAPI from './communication/FileAPI'
-import Project from './entities/Project'
-import { VisualizationType } from './entities/Visualization'
+import FileAPI from '@/communication/FileAPI'
+import Project from '@/entities/Project'
+import { VisualizationType } from '@/entities/Visualization'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/

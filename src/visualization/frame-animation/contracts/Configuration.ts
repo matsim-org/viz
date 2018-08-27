@@ -1,4 +1,4 @@
-import { ServerConfiguration, Progress } from '../communication/FrameAnimationAPI'
+import { ServerConfiguration, Progress } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 
 interface ConfigColors {
   background?: number

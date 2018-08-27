@@ -1,4 +1,4 @@
-import { Rectangle } from '../contracts/Rectangle.js'
+import Rectangle from '../contracts/Rectangle'
 import { MapState } from './MapState.js'
 import { MapInteractionController } from './MapInteractionController.js'
 import { BufferHolder } from './BufferHolder.js'
@@ -6,15 +6,13 @@ import Configuration from '../contracts/Configuration'
 import { WebGLRenderer, Raycaster, Vector3 } from 'three'
 
 class DrawingController {
-  constructor() {
+  constructor(playback, dataProvider) {
+    this._playback = playback
+    this._playback.addTimestepChangedListener(timestep => this._loadSnapshot(timestep))
+    this._dataProvider = dataProvider
+    this._dataProvider.networkDataChanged = data => this.onNetworkDataChanged(data)
+    this._dataProvider.geoJsonDataChanged = layerName => this.onGeoJsonDataChanged(layerName)
     this.initialize()
-  }
-
-  static AGENT_LAYER() {
-    return 'agent-layer'
-  }
-  static NETWORK_LAYER() {
-    return 'network-layer'
   }
 
   set mapState(mapState) {
@@ -36,18 +34,8 @@ class DrawingController {
     return this._interactionController
   }
 
-  set playback(value) {
-    this._playback = value
-  }
-
   get playback() {
     return this._playback
-  }
-
-  set dataProvider(dataProvider) {
-    this._dataProvider = dataProvider
-    this._dataProvider.networkDataChanged = data => this.onNetworkDataChanged(data)
-    this._dataProvider.geoJsonDataChanged = layerName => this.onGeoJsonDataChanged(layerName)
   }
 
   get dataProvider() {
@@ -138,7 +126,6 @@ class DrawingController {
 
   startPlayback() {
     if (!this.shouldRender) {
-      this._bufferHolder.loadAgentBuffer()
       this.shouldRender = true
       this.render()
     }
@@ -157,7 +144,7 @@ class DrawingController {
 
   renderOnce(isAnimationFrame) {
     if (isAnimationFrame) {
-      this.playback.incrementTime()
+      this.playback.advanceTime()
       this._animateAgents()
     }
     this.renderer.render(this._bufferHolder.scene, this.mapState.camera)
@@ -167,16 +154,19 @@ class DrawingController {
     if (!this.playback || !this._bufferHolder.hasAgentLayer || !this.shouldRender) {
       return
     }
+    this._bufferHolder.updateAgentBufferUniform('timestepFraction', this.playback.timestepFraction)
+  }
 
-    if (this.playback.shouldLoadNewSnapshot()) {
-      let snapshot = this.playback.getSnapshotForCurrentTimestep()
+  _loadSnapshot(timestep) {
+    if (this.dataProvider.hasSnapshot(timestep, this.playback.speedFactor)) {
+      const snapshot = this.dataProvider.getSnapshot(timestep)
       this._bufferHolder.updateAgentBufferAttribute('position', snapshot.position)
       this._bufferHolder.updateAgentBufferAttribute('nextPosition', snapshot.nextPosition)
       this._bufferHolder.updateAgentBufferAttribute('shouldInterpolate', snapshot.shouldInterpolate)
       this._bufferHolder.updateAgentBufferAttribute('id', snapshot.ids)
-    }
 
-    this._bufferHolder.updateAgentBufferUniform('timestepFraction', this.playback.timestepFraction)
+      if (!this.shouldRender) this.renderOnce(false)
+    }
   }
 }
 

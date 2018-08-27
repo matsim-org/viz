@@ -1,5 +1,5 @@
-import Entity from './Entity'
-import Project from './Project'
+import Entity from '@/entities/Entity'
+import Project from '@/entities/Project'
 
 export default interface FileEntry extends Entity {
   contentType: string
