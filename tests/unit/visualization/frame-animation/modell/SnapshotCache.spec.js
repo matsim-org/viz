@@ -1,7 +1,4 @@
 import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'
-import DataFetcher from '@/visualization/frame-animation/modell/background/DataFetcher'
-import { Rectangle } from '@/visualization/frame-animation/contracts/Rectangle'
-import { Progress } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 
 class DummyDataFetcher {
   constructor() {}

@@ -1,5 +1,5 @@
 import { DrawingController } from './view/DrawingController.js'
-import { Playback } from './modell/Playback'
+import Playback from './modell/Playback'
 import DataProvider from './modell/DataProvider'
 import Configuration from './contracts/Configuration'
 import FrameAnimationAPI from './communication/FrameAnimationAPI'

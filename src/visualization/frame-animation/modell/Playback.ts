@@ -1,7 +1,7 @@
 import Configuration from '../contracts/Configuration'
 import DataProvider from '@/visualization/frame-animation/modell/DataProvider'
 
-class Playback {
+export default class Playback {
   private _currentTimestep = 0
   private _currentTime = 0
   private _speedFactor = 0.0
@@ -98,5 +98,3 @@ class Playback {
     })
   }
 }
-
-export { Playback }
