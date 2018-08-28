@@ -7,6 +7,7 @@ import { Snapshot } from '@/visualization/frame-animation/contracts/SnapshotRead
 import SnapshotFetcher from '@/visualization/frame-animation/modell/background/SnapshotFetcher'
 import NetworkReader from '@/visualization/frame-animation/contracts/NetworkReader'
 import PlanFetcher from '@/visualization/frame-animation/modell/background/PlanFetcher'
+import Rectangle from '@/visualization/frame-animation/contracts/Rectangle'
 
 export default class DataProvider {
   // new caching
@@ -44,8 +45,8 @@ export default class DataProvider {
   }
 
   public destroy() {
-    this._planFetcher.destroy()
-    this._snapshotCache.destroy()
+    if (this._planFetcher) this._planFetcher.destroy()
+    if (this._snapshotCache) this._snapshotCache.destroy()
   }
 
   public async loadServerConfig() {
@@ -54,8 +55,13 @@ export default class DataProvider {
       this.handleServerConfigReceived(config)
     } catch (error) {
       console.log(error)
-      console.log('reatempting to connect to server in 5s')
-      setTimeout(() => this.loadServerConfig(), 5000)
+      Configuration.updateServerConfiguration({
+        bounds: new Rectangle(0, 0, 0, 0),
+        firstTimestep: 0,
+        lastTimestep: 0,
+        timestepSize: 0,
+        progress: Progress.Failed,
+      })
     }
   }
 
@@ -122,9 +128,9 @@ export default class DataProvider {
   private async handleServerConfigReceived(config: ServerConfiguration) {
     Configuration.updateServerConfiguration(config)
 
-    if (config.progress !== Progress.Done) {
+    if (config.progress !== Progress.Done && config.progress !== Progress.Failed) {
       setTimeout(() => this.loadServerConfig(), 10000)
-    } else {
+    } else if (config.progress !== Progress.Failed) {
       this.loadNetworkData()
       const snapshotFetcherTask = SnapshotFetcher.create({
         dataUrl: this._config.dataUrl,

@@ -2,6 +2,7 @@ enum Progress {
   Downloading = 'Downloading',
   Processing = 'Processing',
   Done = 'Done',
+  Failed = 'Failed',
 }
 
 interface ServerConfiguration {

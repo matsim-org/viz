@@ -4,7 +4,9 @@
           h1 Frame Based Animation
           span Id: {{vizId}}
         .canvasContainer
-          .loaderContainer(v-if="!isDone")
+          .loaderContainer(v-if="isFailed")
+            span Generating Visualization failed! Check your input files.
+          .loaderContainer(v-if="!isDone && !isFailed")
             .ui.active.indeterminate.small.inline.text.loader Server is processing files...
           .loaderContainer(v-if="!connected")
             .ui.active.small.inline.text.loader Connecting to server...
@@ -35,6 +37,7 @@
 import Vue from 'vue'
 import Webvis from './Webvis'
 import Config from '../../config/Config'
+import { Progress } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 
 interface FrameAnimationState {
   vizId: string
@@ -75,7 +78,10 @@ export default Vue.extend({
       return Math.round(this.playbackSpeedFactor * 60 * this.timestepSize)
     },
     isDone: function() {
-      return this.progress === 'Done'
+      return this.progress === Progress.Done
+    },
+    isFailed: function() {
+      return this.progress === Progress.Failed
     },
   },
   mounted: function() {
