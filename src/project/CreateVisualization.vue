@@ -5,7 +5,7 @@ modal(v-on:close-requested="cancel()")
       selection.selection(v-bind:options="sharedState.visualizationTypes"
                 label="Select Visualization-Type"
                 v-on:selection-changed="handleVizTypeChanged")
-        span(slot-scope="{option}") {{ option.key }}
+        span(slot-scope="{option}") {{ option.typeName }}
       div(v-if="selectedVizType")
         div(v-for="key in selectedVizType.requiredFileKeys")
           selection.selection(v-bind:options="project.files"
@@ -108,7 +108,7 @@ export default Vue.extend({
       }
     },
     handleVizTypeChanged: function(value: VisualizationType) {
-      this.request.typeKey = value.key
+      this.request.typeKey = value.typeName
       this.selectedVizType = value
     },
     handleFileChanged(key: string, event: any) {
