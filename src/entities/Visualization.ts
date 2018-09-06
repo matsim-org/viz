@@ -9,7 +9,7 @@ export interface CreateVisualizationRequest {
 }
 
 export interface VisualizationType extends Entity {
-  key: string
+  typeName: string
   requiresProcessing: boolean
   endpoint?: URL
   requiredFileKeys: string[]
