@@ -61,6 +61,8 @@ h6 {
   padding: 0px 0px;
 }
 
+body { background-color: white;}
+
 #app {
   background-color: white;
   display: grid;
@@ -81,7 +83,7 @@ h6 {
   height: 100%;
   margin-left: 0px;
   position: relative;
-  width: 300px;
+  width: 250px;
   transition: margin 0.25s;
 }
 
