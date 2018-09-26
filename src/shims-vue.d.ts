@@ -6,9 +6,10 @@ declare module '*.vue' {
 // this keeps typescript / semantic / jquery happy together:
 declare var $: any
 
-declare module 'vue-slider-component'
+declare module 'colormap'
 declare module 'convert-seconds'
 declare module 'read-blob'
+declare module 'vue-slider-component'
 
 declare module '*.worker' {
   class WebpackWorker extends Worker {

@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "serve-local": "vue-cli-service serve --mode local-backend",
+    "serve-local": "vue-cli-service serve --mode local-backend --https",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "@turf/turf": "^5.1.6",
+    "@types/xml2js": "^0.4.3",
     "ajv": "^6.5.3",
     "ajv-keywords": "^3.1.0",
     "colormap": "^2.3.0",
@@ -30,7 +32,8 @@
     "three": "^0.85.2",
     "vue": "^2.5.17",
     "vue-router": "^3.0.1",
-    "vue-slider-component": "^2.7.6"
+    "vue-slider-component": "^2.7.6",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",
