@@ -45,8 +45,8 @@ interface RouteDetails {
 }
 
 interface Network {
-  nodes: { [index: string]: NetworkNode }
-  links: { [index: string]: NetworkLink }
+  nodes: { [id: string]: NetworkNode }
+  links: { [id: string]: NetworkLink }
 }
 
 interface NetworkNode {
@@ -54,14 +54,24 @@ interface NetworkNode {
   y: number
 }
 
+interface NetworkInputs {
+  road: any
+  transit: any
+}
+
 interface NetworkLink {
-  readonly x: string
-  readonly y: string
+  readonly from: string
+  readonly to: string
 }
 
 interface TransitLine {
   id: string
   transitRoutes: any[]
+}
+
+class Departure {
+  public total: number = 0
+  public routes: Set<string> = new Set()
 }
 
 // Add various projections that we use here
@@ -71,22 +81,24 @@ proj4.defs(
 )
 
 // store is the component data store -- the state of the component.
-const store = {
+const store: any = {
   loadingText: 'MATSim Transit Inspector',
   routesOnLink: [],
-  selectedRoute: '',
+  selectedRoute: null,
   routeData: {},
 }
 
 let _map: mapboxgl.Map
+
+const _departures: { [linkID: string]: Departure } = {}
 const _network: Network = { nodes: {}, links: {} }
 const _stopFacilities: { [index: string]: NetworkNode } = {}
 const _transitLines: { [index: string]: TransitLine } = {}
 const _routeData: { [index: string]: RouteDetails } = store.routeData
-const _stopMarkers: any = []
-let _departures = {}
-let _linkData
+const _stopMarkers: any[] = []
+let _attachedRouteLayers: string[]
 
+let _linkData
 let _maximum = 0
 
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
@@ -143,7 +155,8 @@ async function mapIsReady() {
   } else {
     networks = await loadNetworks()
   }
-  processInputs(networks)
+
+  if (networks) processInputs(networks)
   setupKeyListeners()
 }
 
@@ -168,7 +181,7 @@ function convertCoords(projection: string) {
   for (const id in _network.nodes) {
     if (_network.nodes.hasOwnProperty(id)) {
       const node: NetworkNode = _network.nodes[id]
-      const z = proj4(projection, 'EPSG:4326', node)
+      const z = proj4(projection, 'EPSG:4326', node) as any
       node.x = z.x
       node.y = z.y
     }
@@ -182,7 +195,7 @@ function generateStopFacilitiesFromXML(xml: any) {
     attr.x = parseFloat(attr.x)
     attr.y = parseFloat(attr.y)
     // convert coords
-    const z = proj4(MY_PROJECTION, 'EPSG:4326', attr)
+    const z = proj4(MY_PROJECTION, 'EPSG:4326', attr) as any
     attr.x = z.x
     attr.y = z.y
 
@@ -251,17 +264,17 @@ async function processTransit(xml: any) {
 const nodeReadAsync = function(filename: string) {
   const fs = require('fs')
   return new Promise((resolve, reject) => {
-    fs.readFile(filename, 'utf8', (err:Error, data:string) => {
+    fs.readFile(filename, 'utf8', (err: Error, data: string) => {
       if (err) reject(err)
       else resolve(data)
     })
   })
 }
 
-const parseXML = function(xml:string) {
+const parseXML = function(xml: string) {
   const parser = new xml2js.Parser({ preserveChildrenOrder: true })
   return new Promise((resolve, reject) => {
-    parser.parseString(xml, function(err:Error, result:string) {
+    parser.parseString(xml, function(err: Error, result: string) {
       if (err) reject(err)
       else resolve(result)
     })
@@ -276,7 +289,7 @@ async function loadNetworksLocal() {
   store.loadingText = 'Loading transit network...'
   const transit = await nodeReadAsync(argv[2])
 
-  return { road, transit }
+  return { road: road, transit: transit }
 }
 
 async function loadNetworks() {
@@ -296,11 +309,11 @@ async function loadNetworks() {
     return { road, transit }
   } catch (e) {
     console.error(e)
-    return {}
+    return null
   }
 }
 
-async function processInputs(networks) {
+async function processInputs(networks: NetworkInputs) {
   const roadXML = await parseXML(networks.road)
   await processRoadXML(roadXML)
   await convertCoords(MY_PROJECTION)
@@ -321,7 +334,7 @@ async function addLinksToMap() {
   _map.addSource('link-data', {
     data: linksAsGeojson,
     type: 'geojson',
-  })
+  } as any)
 
   _map.addLayer({
     id: 'link-layer',
@@ -337,18 +350,19 @@ async function addLinksToMap() {
 
 async function processDepartures() {
   store.loadingText = 'Processing departures'
-  _departures = {}
 
-  for (let id in _transitLines) {
-    let transitLine = _transitLines[id]
-    for (let route of transitLine.transitRoutes) {
-      for (let linkID of route.route) {
-        if (!(linkID in _departures)) _departures[linkID] = { total: 0, routes: new Set() }
+  for (const id in _transitLines) {
+    if (_transitLines.hasOwnProperty(id)) {
+      const transitLine = _transitLines[id]
+      for (const route of transitLine.transitRoutes) {
+        for (const linkID of route.route) {
+          if (!(linkID in _departures)) _departures[linkID] = { total: 0, routes: new Set() }
 
-        _departures[linkID].total += route.departures
-        _departures[linkID].routes.add(route.id)
+          _departures[linkID].total += route.departures
+          _departures[linkID].routes.add(route.id)
 
-        _maximum = Math.max(_maximum, _departures[linkID].total)
+          _maximum = Math.max(_maximum, _departures[linkID].total)
+        }
       }
     }
   }
@@ -361,7 +375,7 @@ async function addTransitToMap() {
   _map.addSource('transit-source', {
     data: geodata,
     type: 'geojson',
-  })
+  } as any)
 
   _map.addLayer({
     id: 'transit-link',
@@ -374,12 +388,12 @@ async function addTransitToMap() {
     },
   })
 
-  _map.on('click', 'transit-link', function(e) {
+  _map.on('click', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
     clickedOnTransitLink(e)
   })
 
   // turn "hover cursor" into a pointer, so user knows they can click.
-  _map.on('mousemove', 'transit-link', function(e) {
+  _map.on('mousemove', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
     _map.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
   })
 
@@ -389,18 +403,18 @@ async function addTransitToMap() {
   })
 }
 
-async function processRoadXML(xml) {
-  const net_links = xml.network.links[0].link
-  const net_nodes = xml.network.nodes[0].node
+async function processRoadXML(xml: any) {
+  const netNodes = xml.network.nodes[0].node
+  const netLinks = xml.network.links[0].link
 
-  for (const node of net_nodes) {
+  for (const node of netNodes) {
     const attr = node.$
     attr.x = parseFloat(attr.x)
     attr.y = parseFloat(attr.y)
     _network.nodes[attr.id] = attr
   }
 
-  for (const link of net_links) {
+  for (const link of netLinks) {
     const attr = link.$
     _network.links[attr.id] = attr
   }
@@ -410,24 +424,25 @@ function constructGeoJsonFromLinkData() {
   const geojsonLinks = []
 
   for (const id in _network.links) {
-    let link = _network.links[id]
-    let fromNode = _network.nodes[link.from]
-    let toNode = _network.nodes[link.to]
+    if (_network.links.hasOwnProperty(id)) {
+      const link = _network.links[id]
+      const fromNode = _network.nodes[link.from]
+      const toNode = _network.nodes[link.to]
 
-    let coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
+      const coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
 
-    let featureJson = {
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: coordinates,
-      },
-      properties: { id: id, color: '#aaa' },
+      const featureJson = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates,
+        },
+        properties: { id: id, color: '#aaa' },
+      }
+
+      geojsonLinks.push(featureJson)
     }
-
-    geojsonLinks.push(featureJson)
   }
-
   _linkData = {
     type: 'FeatureCollection',
     features: geojsonLinks,
@@ -438,49 +453,51 @@ function constructGeoJsonFromLinkData() {
 
 async function constructDepartureFrequencyGeoJson() {
   store.loadingText = 'Construct departure frequencies'
-  let geojson = []
+  const geojson = []
 
   for (const linkID in _departures) {
-    const link = _network.links[linkID]
-    let coordinates = [
-      [_network.nodes[link.from].x, _network.nodes[link.from].y],
-      [_network.nodes[link.to].x, _network.nodes[link.to].y],
-    ]
+    if (_departures.hasOwnProperty(linkID)) {
+      const link = _network.links[linkID]
+      const coordinates = [
+        [_network.nodes[link.from].x, _network.nodes[link.from].y],
+        [_network.nodes[link.to].x, _network.nodes[link.to].y],
+      ]
 
-    const departures = _departures[linkID].total
-    lconstet colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / _maximum)
+      const departures = _departures[linkID].total
+      const colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / _maximum)
 
-    let isRail = false
-    for (let route of _departures[linkID].routes) {
-      if (_routeData[route].transportMode === 'rail') {
-        isRail = true
-        break
+      let isRail = false
+      for (const route of _departures[linkID].routes) {
+        if (_routeData[route].transportMode === 'rail') {
+          isRail = true
+          break
+        }
       }
-    }
 
-    let line = {
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: coordinates,
-      },
-      properties: {
-        width: Math.max(2.5, 0.01 * _departures[linkID].total),
-        color: isRail ? '#da4' : _colorScale[colorBin],
-        colorBin: colorBin,
-        departures: departures,
-        id: linkID,
-        isRail: isRail,
-        from: link.from, // _stopFacilities[fromNode].name || fromNode,
-        to: link.to, // _stopFacilities[toNode].name || toNode,
-      },
-    }
+      let line = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates,
+        },
+        properties: {
+          width: Math.max(2.5, 0.01 * _departures[linkID].total),
+          color: isRail ? '#da4' : _colorScale[colorBin],
+          colorBin: colorBin,
+          departures: departures,
+          id: linkID,
+          isRail: isRail,
+          from: link.from, // _stopFacilities[fromNode].name || fromNode,
+          to: link.to, // _stopFacilities[toNode].name || toNode,
+        },
+      }
 
-    line = offsetLineByMeters(line, -10)
-    geojson.push(line)
+      line = offsetLineByMeters(line, -10)
+      geojson.push(line)
+    }
   }
 
-  geojson.sort(function(a, b) {
+  geojson.sort(function(a: any, b: any) {
     if (a.isRail && !b.isRail) return -1
     if (b.isRail && !a.isRail) return 1
     return 0
@@ -490,7 +507,7 @@ async function constructDepartureFrequencyGeoJson() {
   return { type: 'FeatureCollection', features: geojson }
 }
 
-function offsetLineByMeters(line, metersToTheRight) {
+function offsetLineByMeters(line: any, metersToTheRight: number) {
   try {
     const offsetLine = turf.lineOffset(line, metersToTheRight, { units: 'meters' })
     return offsetLine
@@ -500,19 +517,20 @@ function offsetLineByMeters(line, metersToTheRight) {
   return line
 }
 
-function buildCoordinatesForRoute(transitRoute) {
-  let coords = []
-  let previousLink
+function buildCoordinatesForRoute(transitRoute: RouteDetails) {
+  const coords = []
+  let previousLink: boolean = false
 
-  for (let linkID of transitRoute.route) {
+  for (const linkID of transitRoute.route) {
     if (!previousLink) {
-      let x = _network.nodes[_network.links[linkID].from].x
-      let y = _network.nodes[_network.links[linkID].from].y
-      coords.push([x, y])
+      const x0 = _network.nodes[_network.links[linkID].from].x
+      const y0 = _network.nodes[_network.links[linkID].from].y
+      coords.push([x0, y0])
     }
-    let x = _network.nodes[_network.links[linkID].to].x
-    let y = _network.nodes[_network.links[linkID].to].y
+    const x = _network.nodes[_network.links[linkID].to].x
+    const y = _network.nodes[_network.links[linkID].to].y
     coords.push([x, y])
+    previousLink = true
   }
 
   const geojson = {
@@ -566,23 +584,23 @@ function showTransitStops() {
   }
 }
 
-function clickedOnMap(e) {
+function clickedOnMap(e: any) {
   console.log({ CLICKKED: e })
 }
 
-function clickedRouteDetails(routeID) {
+function clickedRouteDetails(routeID: string) {
   if (_stopMarkers) removeStopMarkers()
   showTransitRoute(routeID ? routeID : store.selectedRoute.id)
   showTransitStops()
 }
 
-function showTransitRoute(routeID) {
+function showTransitRoute(routeID: string) {
   const route = _routeData[routeID]
   console.log({ SELECTED_ROUTE: route })
 
   store.selectedRoute = route
 
-  let source = _map.getSource('selected-route-data')
+  const source = _map.getSource('selected-route-data') as any
   if (source) {
     source.setData(route.geojson)
   } else {
@@ -613,7 +631,7 @@ function removeSelectedRoute() {
   }
 }
 
-function clickedOnTransitLink(e) {
+function clickedOnTransitLink(e: any) {
   removeStopMarkers()
   removeSelectedRoute()
 
@@ -629,14 +647,12 @@ function clickedOnTransitLink(e) {
 
   // sort by highest departures first
   routes.sort(function(a, b) {
-    return a.departures < b.departures
+    return a.departures < b.departures ? -1 : 1
   })
 
   store.routesOnLink = routes
   highlightAllAttachedRoutes()
 }
-
-let _attachedRouteLayers = []
 
 function removeAttachedRoutes() {
   for (const layerID of _attachedRouteLayers) {
