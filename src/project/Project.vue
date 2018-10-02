@@ -197,7 +197,7 @@ export default Vue.extend({
       if (visualization) this.project.visualizations.push(visualization)
     },
     handleVisualizationClicked: function(viz: Visualization): void {
-      this.$router.push({ path: `/${viz.type.typeName}/${viz.id}` })
+      this.$router.push({ path: `/${viz.type.typeName}/${this.project.id}/${viz.id}` })
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files

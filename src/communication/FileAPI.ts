@@ -26,6 +26,13 @@ export default class FileAPI {
     return await this.request<VisualizationType[]>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
   }
 
+  public static async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
+    return await this.request<Visualization>(
+      this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
+      this.corsRequestOptions()
+    )
+  }
+
   public static async createProject(projectName: string): Promise<Project> {
     const options = this.postRequestOptions({ name: projectName })
     return await this.request<Project>(this.PROJECT, options)
