@@ -10,8 +10,6 @@
     "unit": "vue-cli-service test:unit"
   },
   "dependencies": {
-    "@turf/turf": "^5.1.6",
-    "@types/xml2js": "^0.4.3",
     "ajv": "^6.5.3",
     "ajv-keywords": "^3.1.0",
     "colormap": "^2.3.0",
@@ -36,6 +34,7 @@
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
+    "@turf/turf": "^5.1.6",
     "@types/jest": "^23.3.1",
     "@types/jquery": "^3.3.6",
     "@types/js-yaml": "^3.11.2",
@@ -45,6 +44,7 @@
     "@types/pako": "^1.0.0",
     "@types/proj4": "^2.3.4",
     "@types/sax": "^1.0.1",
+    "@types/xml2js": "^0.4.3",
     "@vue/cli-plugin-babel": "^3.0.1",
     "@vue/cli-plugin-typescript": "^3.0.1",
     "@vue/cli-plugin-unit-jest": "^3.0.1",
