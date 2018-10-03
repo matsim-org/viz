@@ -24,8 +24,11 @@ import * as turf from '@turf/turf'
 import xml2js from 'xml2js'
 import colormap from 'colormap'
 import proj4 from 'proj4'
+import readBlob from 'read-blob'
+import pako from 'pako'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
+import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
 
 const MY_PROJECTION = 'EPSG:2048'
@@ -126,8 +129,12 @@ export default {
   watch: {},
 }
 
-// mounted is called by Vue after this component is installed on the page
-function mounted() {
+async function getVizDetails() {
+  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  console.log(Object.assign({}, store.visualization.inputFiles))
+}
+
+function setupMap() {
   _map = new mapboxgl.Map({
     bearing: 0,
     center: [18.5, -33.8], // lnglat, not latlng
@@ -149,8 +156,6 @@ function mounted() {
   _map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
 }
 
-// this is a required workaround to get the mapbox token assigned in TypeScript
-// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
 mapboxgl.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
@@ -239,7 +244,6 @@ function buildTransitRouteDetails(route: any) {
   }
 
   routeDetails.geojson = buildCoordinatesForRoute(routeDetails)
-
   _routeData[routeDetails.id] = routeDetails
 
   return routeDetails
@@ -288,7 +292,7 @@ const parseXML = function(xml: string) {
 }
 
 async function loadNetworksLocal() {
-  const argv = require('electron').remote.process.argv
+  const argv = ['abc'] // require('electron').remote.process.argv
 
   store.loadingText = 'Loading road network...'
   const road = await nodeReadAsync(argv[1])
@@ -300,17 +304,19 @@ async function loadNetworksLocal() {
 
 async function loadNetworks() {
   try {
-    let response
+    const ROAD_NET = store.visualization.inputFiles.network.fileEntry.id
+    const TRANSIT_NET = store.visualization.inputFiles['transit schedule'].fileEntry.id
+    console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
-    const ROAD_NET = '/clean_network.xml'
-    response = await fetch(ROAD_NET)
-    const road = await response.text()
+    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
 
     store.loadingText = 'Loading transit network...'
-    const TRANSIT_NET = '/output_transitSchedule.xml'
-    response = await fetch(TRANSIT_NET)
-    const transit = await response.text()
+    const transitBlob = await FileAPI.downloadFile(TRANSIT_NET, store.projectId)
+
+    // get the blob data
+    const road = await readBlob.text(roadBlob)
+    const transit = await readBlob.text(transitBlob)
 
     return { road, transit }
   } catch (e) {
@@ -796,14 +802,14 @@ h3 {
 }
 
 .stop-marker {
-  background: url('./assets/icon-stop-triangle.png') no-repeat;
+  background: url('../assets/icon-stop-triangle.png') no-repeat;
   background-size: 100%;
   width: 8px;
   height: 8px;
 }
 
 .stop-marker-big {
-  background: url('./assets/icon-stop-triangle.png') no-repeat;
+  background: url('../assets/icon-stop-triangle.png') no-repeat;
   background-size: 100%;
   width: 16px;
   height: 16px;
