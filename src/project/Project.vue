@@ -176,7 +176,7 @@ export default Vue.extend({
     },
     handleFileClicked: async function(fileId: string): Promise<void> {
       try {
-        const blob = await FileAPI.downloadFile(fileId, this.project)
+        const blob = await FileAPI.downloadFile(fileId, this.project.id)
         window.open(URL.createObjectURL(blob))
       } catch (e) {
         console.log(e)

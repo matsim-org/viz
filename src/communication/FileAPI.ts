@@ -59,8 +59,8 @@ export default class FileAPI {
     return await this.request<Project>(url, options)
   }
 
-  public static async downloadFile(fileId: string, project: Project): Promise<Blob> {
-    const url = `${this.PROJECT}/${project.id}/files/${fileId}`
+  public static async downloadFile(fileId: string, projectId: string): Promise<Blob> {
+    const url = `${this.PROJECT}/${projectId}/files/${fileId}`
     const result = await AuthenticatedRequest.fetch(url, this.corsRequestOptions())
 
     if (result.ok) {
