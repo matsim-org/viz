@@ -83,9 +83,12 @@ proj4.defs(
 // store is the component data store -- the state of the component.
 const store: any = {
   loadingText: 'MATSim Transit Inspector',
+  routeData: {},
   routesOnLink: [],
   selectedRoute: null,
-  routeData: {},
+  projectId: null,
+  vizId: null,
+  visualization: null,
 }
 
 let _map: mapboxgl.Map
@@ -110,7 +113,10 @@ export default {
     return store
   },
   mounted: function() {
-    mounted()
+    store.projectId = this.$route.params.projectId
+    store.vizId = this.$route.params.vizId
+    getVizDetails()
+    setupMap()
   },
   components: {},
   methods: {
