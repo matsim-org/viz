@@ -10,6 +10,8 @@ declare module 'colormap'
 declare module 'convert-seconds'
 declare module 'read-blob'
 declare module 'vue-slider-component'
+declare module '@turf/nearest-point-to-line'
+declare module '@turf/point-to-line-distance'
 
 declare module '*.worker' {
   class WebpackWorker extends Worker {

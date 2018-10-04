@@ -6,12 +6,14 @@ import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkViz from '@/visualization/NetworkViz.vue'
+import TransitSupply from '@/visualization/TransitSupply.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
 import authenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
 Vue.use(Router)
+
 const AUTHENTICATION = '/authentication'
 
 const instance = new Router({
@@ -48,6 +50,13 @@ const instance = new Router({
       component: Project,
       name: 'Project',
       meta: { authRequired: true },
+    },
+    {
+      path: '/Transit Supply/:projectId/:vizId',
+      name: 'TransitSupply',
+      component: TransitSupply,
+      meta: { authRequired: true },
+      props: true,
     },
     {
       path: '/Animation/:vizId',
