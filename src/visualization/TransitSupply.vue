@@ -13,7 +13,6 @@
       p.details {{route.departures}} departures
       p.details First: {{route.firstDeparture}}
       p.details Last: {{route.lastDeparture}}
-
 </template>
 
 <script lang="ts">
@@ -27,7 +26,6 @@ import proj4 from 'proj4'
 import readBlob from 'read-blob'
 import pako from 'pako'
 import 'mapbox-gl/dist/mapbox-gl.css'
-
 import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
 
@@ -102,7 +100,7 @@ const _stopFacilities: { [index: string]: NetworkNode } = {}
 const _transitLines: { [index: string]: TransitLine } = {}
 const _routeData: { [index: string]: RouteDetails } = store.routeData
 const _stopMarkers: any[] = []
-let _attachedRouteLayers: string[]
+let _attachedRouteLayers: string[] = []
 
 let _linkData
 let _maximum = 0
@@ -111,7 +109,7 @@ const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 
 // this export is the Vue Component itself
 export default {
-  name: 'App',
+  name: 'TransitSupply',
   data() {
     return store
   },
@@ -329,10 +327,10 @@ async function processInputs(networks: NetworkInputs) {
   const roadXML = await parseXML(networks.road)
   await processRoadXML(roadXML)
   await convertCoords(MY_PROJECTION)
+  await addLinksToMap()
 
   const transitXML = await parseXML(networks.transit)
   await processTransit(transitXML)
-  await addLinksToMap()
   await processDepartures()
   await addTransitToMap()
 
@@ -659,7 +657,7 @@ function clickedOnTransitLink(e: any) {
 
   // sort by highest departures first
   routes.sort(function(a, b) {
-    return a.departures < b.departures ? -1 : 1
+    return a.departures > b.departures ? -1 : 1
   })
 
   store.routesOnLink = routes
@@ -746,6 +744,7 @@ p {
   background-color: white;
   opacity: 0.8;
   margin: auto 0;
+  padding: 10px 0px;
   text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
