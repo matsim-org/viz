@@ -96,9 +96,6 @@ export default Vue.extend({
       this.isRequesting = true
       try {
         const answer = await FileAPI.createVisualization(this.request)
-        if (answer.type.requiresProcessing && answer.type.endpoint) {
-          triggerVizGeneration(answer.type.endpoint.toString(), answer.id)
-        }
         this.close(answer)
       } catch (error) {
         this.isServerError = true
