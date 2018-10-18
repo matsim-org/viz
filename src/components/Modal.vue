@@ -11,7 +11,7 @@
                     slot(name="actions")
 </template>
 
-<style>
+<style scoped>
 .modal-mask {
   position: absolute;
   z-index: 9000;

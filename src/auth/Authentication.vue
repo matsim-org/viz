@@ -6,7 +6,7 @@
       button.ui.green.button(v-on:click="handleTryAgainClicked") Try again
 </template>
 
-<style>
+<style scoped>
 .authentication {
   display: flex;
   flex-direction: column;

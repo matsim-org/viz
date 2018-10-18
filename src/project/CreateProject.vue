@@ -59,7 +59,7 @@ export default Vue.extend({
 })
 </script>
 
-<style>
+<style scoped>
 .createProject {
   display: flex;
   flex-direction: column;

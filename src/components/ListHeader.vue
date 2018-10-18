@@ -7,7 +7,7 @@
         i.ui.plus.icon
 </template>
 
-<style>
+<style scoped>
 .listHeader {
   display: flex;
   flex-direction: row;

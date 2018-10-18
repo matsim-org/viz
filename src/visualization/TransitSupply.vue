@@ -704,7 +704,7 @@ function pressedEscape() {
 }
 </script>
 
-<style>
+<style scoped>
 html,
 body {
   margin: 0px 0px 0px 0px;

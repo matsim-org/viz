@@ -10,7 +10,7 @@
 
 </template>
 
-<style>
+<style scoped>
 .listItem {
   display: flex;
   flex-direction: row;
