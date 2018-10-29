@@ -1,6 +1,6 @@
 <template lang="pug">
   .projects
-    list-header(v-on:btnClicked="handleCreateClicked" title="Your Projects" btnTitle="Create Project")
+    list-header(v-on:btnClicked="handleCreateClicked" title="MATSim Viz: Projects" btnTitle="New Project")
 
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
@@ -17,9 +17,9 @@ import Vue from 'vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import CreateProject from '@/project/CreateProject.vue'
-import Project from '../entities/Project'
-import FileAPI from '../communication/FileAPI'
-import SharedStore, { SharedState } from '../SharedStore'
+import Project from '@/entities/Project'
+import FileAPI from '@/communication/FileAPI'
+import SharedStore, { SharedState } from '@/SharedStore'
 
 export default Vue.extend({
   components: {

@@ -116,8 +116,6 @@ a.sidebar-nav-item:focus {
   font-weight: bold;
 }
 
-/* ------ SFCTA ------ */
-
 .theme-base-01 .sidebar {
   background-color: #ddd;
   border-right-width: 1.5px;
@@ -141,7 +139,7 @@ h3 {
 .sidebar-logo {
   display: block;
   margin: 0px auto;
-  width: 100px;
+  width: 125px;
 }
 
 .lead {

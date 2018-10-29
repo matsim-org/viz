@@ -1,6 +1,6 @@
 <template lang="pug">
   .listHeader
-    h1 {{title}}
+    h2 {{title}}
     button.ui.animated.positive.button(v-on:click="$emit('btnClicked')")
       .ui.visible.content {{btnTitle}}
       .ui.hidden.content
