@@ -1,13 +1,12 @@
 <template lang="pug">
   .listItem
     button.clickContent(v-on:click="$emit('itemClicked')")
-      .title
+      .xtitle
         slot(name="title")
-      .main
+      .xmain
         slot(name="content")
     .accessory
       slot(name="accessory")
-
 </template>
 
 <style scoped>
@@ -36,11 +35,11 @@
   transition-duration: 0.25s;
 }
 
-.title {
+.xtitle {
   font-weight: bold;
 }
 
-.main {
+.xmain {
   font-weight: lighter;
   color: gray;
 }

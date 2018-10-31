@@ -7,6 +7,7 @@
 <script lang="ts">
 'use strict'
 
+import 'mapbox-gl/dist/mapbox-gl.css'
 import * as mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
@@ -214,6 +215,17 @@ function clickedOnTaz(e: MapElement) {
 </script>
 
 <style scoped>
+#container {
+  background-color: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto;
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+}
+
 #mymap {
   width: 100%;
   height: 100vh;
@@ -222,17 +234,6 @@ function clickedOnTaz(e: MapElement) {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   z-index: 1;
-}
-
-#container {
-  background-color: #fff;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
-  height: 100%;
-  max-height: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
 }
 
 .status-blob {

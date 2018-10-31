@@ -1,10 +1,10 @@
 <template lang="pug">
 .project
-  .header
-    .headline
-      h1 {{project.name}}
-      span {{project.id}}
-    span(v-if="isFetchingData") Fetching project data...
+  .hero.is-link.is-bold
+    .hero-body
+      h1.title {{project.name}}
+      h3.subtitle.small lorem ipsum &raquo; {{project.id}}
+      span(v-if="isFetchingData") Fetching project data...
 
   section
     list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
@@ -36,11 +36,11 @@
             .itemTitle(slot="title")
               span {{file.userFileName}}
               span {{readableFileSize(file.sizeInBytes)}}
+
             span(slot="content") {{file.id}}
-            button.ui.animated.negative.basic.button(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)")
-              .ui.visible.content Delete
-              .ui.hidden.content
-                i.ui.trash.icon
+
+            button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)") Delete
+
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="handleAddVisualizationClosed"
                         v-bind:project="project")
@@ -48,11 +48,11 @@
 
 <style scoped>
 section {
-  margin: 4rem 0 4rem 0;
+  margin: 4rem 1.5rem 4rem 1.5rem;
 }
 
 .project {
-  padding: 1rem;
+  padding-top: 2.8rem;
   display: flex;
   flex-direction: column;
 }

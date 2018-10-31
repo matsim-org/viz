@@ -1,19 +1,23 @@
 <template lang="pug">
 .main-content
-  h3 WELCOME TO MATSIM-VIZ.
+  h2 WELCOME TO MATSIM-VIZ.
 
   p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
   p Pick a dataset to explore from those below. More to come!
 
-  h3 SAMPLE VISUALIZATIONS
+  br
+  router-link.button.is-medium.is-link.is-rounded.sidebar-nav-item(to="/projects") Go to MY PROJECTS &raquo;
+
+  hr
+  h3 PUBLIC VISUALIZATIONS
   ul.visualizations
     li.viz-thumbnail(v-for="viz in visualizations")
       router-link(:to="viz.url")
         img.thumbnail-image(:src="viz.thumbnail")
         h5.thumbnail-title {{ viz.title }}
-  br
-  br
-  h3 ABOUT THIS SITE
+
+  hr
+  h3 ABOUT THIS APP
   p You can find out more about MATSim at&nbsp;
     a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
@@ -67,7 +71,8 @@ function mounted() {
 <style scoped>
 /* this is the initial start page layout */
 .main-content {
-  padding: 20px;
+  padding: 15px;
+  padding-top: 75px;
   overflow-y: auto;
 }
 

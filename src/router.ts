@@ -17,7 +17,7 @@ Vue.use(Router)
 const AUTHENTICATION = '/authentication'
 
 const instance = new Router({
-  // mode: 'history', // 'history' mode produces clean, normal URLs
+  mode: 'history', // 'history' mode produces clean, normal URLs
   routes: [
     {
       path: '/',

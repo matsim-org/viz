@@ -1,17 +1,12 @@
 <template lang="pug">
 #app
-  // global app sidebar
-  side-bar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
-
-  // vue-router replaces this element with the correct page contents
-  // see src/router/index.js to view/add route definitions
+  .banner
+    h5
+      router-link(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-blue.png" style="height: 24px")
+      a(style="float:right" href="/")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SETTINGS
+      a(style="float:right" href="/")  ACCOUNT
 
   router-view.main-content
-
-  // our cute hide/show button
-  #btn-toggle-sidepanel
-    button.ui.tiny.blue.icon.button(v-on:click="toggleSidePanel")
-      i.angle.white.double.icon(v-bind:class="{left: sharedState.isSidePanelExpanded, right: !sharedState.isSidePanelExpanded }")
 </template>
 
 <script lang="ts">
@@ -20,6 +15,7 @@
 import Vue from 'vue'
 import sharedStore from './SharedStore'
 import SideBar from '@/components/SideBar.vue'
+import 'bulma/css/bulma.css'
 
 const store = {
   sharedState: sharedStore.state,
@@ -61,7 +57,9 @@ h6 {
   padding: 0px 0px;
 }
 
-body { background-color: white;}
+body {
+  background-color: white;
+}
 
 #app {
   background-color: white;
@@ -69,26 +67,12 @@ body { background-color: white;}
   font-family: 'Lato', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  grid-template-columns: auto auto 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
   height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
   overflow: hidden;
-}
-
-.sidebar {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  height: 100%;
-  margin-left: 0px;
-  position: relative;
-  width: 250px;
-  transition: margin 0.25s;
-}
-
-.shrunken {
-  margin-left: -300px;
 }
 
 #btn-toggle-sidepanel {
@@ -103,15 +87,34 @@ body { background-color: white;}
 }
 
 .main-content {
-  grid-column: 2 / 4;
+  grid-column: 1 / 2;
   grid-row: 1 / 3;
   position: relative;
   z-index: 1;
 }
 
+.banner {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  padding: 10px 15px 5px 15px;
+  background-color: #eeeeeecc;
+  position: relative;
+  z-index: 5;
+}
+
 h2,
 h3 {
   color: #6666ff;
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
