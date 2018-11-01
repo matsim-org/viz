@@ -47,14 +47,14 @@ function setupMap() {
     bearing: 0,
     center: [13.4, 52.5], // lnglat, not latlng
     container: 'mymap',
-    logoPosition: 'bottom-right',
+    logoPosition: 'bottom-left',
     style: 'mapbox://styles/mapbox/dark-v9',
     pitch: 0,
     zoom: 11,
   })
 
   map.on('style.load', mapIsReady)
-  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
 
 function setupEventListeners() {
@@ -220,7 +220,7 @@ function clickedOnTaz(e: MapElement) {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto;
-  height: 100vh;
+  height: 100%;
   max-height: 100vh;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
@@ -228,7 +228,7 @@ function clickedOnTaz(e: MapElement) {
 
 #mymap {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background-color: white;
   overflow: hidden;
   grid-column: 1 / 2;
@@ -237,7 +237,7 @@ function clickedOnTaz(e: MapElement) {
 }
 
 .status-blob {
-  background-color: white;
+  background-color: #ccc;
   opacity: 0.7;
   margin: auto 0;
   padding: 15px 0px;

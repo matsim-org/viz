@@ -1,10 +1,9 @@
 <template lang="pug">
 #app
   .banner
-    h5
-      router-link(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-blue.png" style="height: 24px")
-      a(style="float:right" href="/")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SETTINGS
-      a(style="float:right" href="/")  ACCOUNT
+    router-link(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png" style="height: 24px")
+    a.banner-item(href="/")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SETTINGS
+    a.banner-item(href="/")  ACCOUNT
 
   router-view.main-content
 </template>
@@ -57,8 +56,12 @@ h6 {
   padding: 0px 0px;
 }
 
+html,
 body {
   background-color: white;
+  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 #app {
@@ -70,9 +73,9 @@ body {
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr;
   height: 100%;
+  max-height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
-  overflow: hidden;
 }
 
 #btn-toggle-sidepanel {
@@ -88,17 +91,15 @@ body {
 
 .main-content {
   grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  position: relative;
+  grid-row: 2 / 3;
   z-index: 1;
 }
 
 .banner {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 10px 15px 5px 15px;
-  background-color: #eeeeeecc;
-  position: relative;
+  padding: 10px 1.5rem 5px 1.5rem;
+  background-color: #454;
   z-index: 5;
 }
 
@@ -121,5 +122,10 @@ h3 {
 a:hover,
 a:focus {
   text-decoration: none;
+}
+
+.banner-item {
+  float: right;
+  color: #ccc;
 }
 </style>

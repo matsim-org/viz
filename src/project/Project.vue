@@ -4,10 +4,10 @@
     .hero-body
       h1.title {{project.name}}
       h3.subtitle.small lorem ipsum &raquo; {{project.id}}
-      span(v-if="isFetchingData") Fetching project data...
 
   section
     list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
+    span(v-if="isFetchingData") Fetching project data...
     .visualizations
       .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
         span No Visualizations yet. Add some!
@@ -52,7 +52,6 @@ section {
 }
 
 .project {
-  padding-top: 2.8rem;
   display: flex;
   flex-direction: column;
 }

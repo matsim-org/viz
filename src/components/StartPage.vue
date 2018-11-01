@@ -1,25 +1,25 @@
 <template lang="pug">
-.main-content
-  h2 WELCOME TO MATSIM-VIZ.
+.page-content
+  .hero.is-success.is-bold
+    .hero-body
+      p.title Welcome to MATSim-Viz
+      p.subtitle You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
 
-  p You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs.
-  p Pick a dataset to explore from those below. More to come!
+  .start-page-content
+    router-link.button.is-normal.is-link.is-rounded.sidebar-nav-item(to="/projects") to MY PROJECTS &raquo;
 
-  br
-  router-link.button.is-medium.is-link.is-rounded.sidebar-nav-item(to="/projects") Go to MY PROJECTS &raquo;
+    hr
+    h3 PUBLIC VISUALIZATIONS
+    ul.visualizations
+      li.viz-thumbnail(v-for="viz in visualizations")
+        router-link(:to="viz.url")
+          img.thumbnail-image(:src="viz.thumbnail")
+          h5.thumbnail-title {{ viz.title }}
 
-  hr
-  h3 PUBLIC VISUALIZATIONS
-  ul.visualizations
-    li.viz-thumbnail(v-for="viz in visualizations")
-      router-link(:to="viz.url")
-        img.thumbnail-image(:src="viz.thumbnail")
-        h5.thumbnail-title {{ viz.title }}
-
-  hr
-  h3 ABOUT THIS APP
-  p You can find out more about MATSim at&nbsp;
-    a(href="https://matsim.org" target="_blank") https://matsim.org
+    hr
+    h3 ABOUT THIS APP
+    p You can find out more about MATSim at&nbsp;
+      a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
 
 <script lang="ts">
@@ -70,9 +70,8 @@ function mounted() {
 
 <style scoped>
 /* this is the initial start page layout */
-.main-content {
-  padding: 15px;
-  padding-top: 75px;
+.start-page-content {
+  padding: 2rem 1.5rem;
   overflow-y: auto;
 }
 
@@ -83,7 +82,6 @@ function mounted() {
   border-width: 1px 1px;
   border-color: #aaa;
   display: table-cell;
-  height: 100%;
   opacity: 0.9;
   padding: 0 0 0.5rem 0;
   box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
