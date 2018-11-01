@@ -1,17 +1,24 @@
 <template lang="pug">
-#mymap
+#container
+  #mymap
+  .status-blob(v-if="loadingText"): h2 {{ loadingText }}
 </template>
 
 <script lang="ts">
 'use strict'
 
+import 'mapbox-gl/dist/mapbox-gl.css'
 import * as mapboxgl from 'mapbox-gl'
-
+import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
+import readBlob from 'read-blob'
 
 // store is the component data store -- the state of the component.
-const store = {}
+const store: any = {
+  loadingText: 'MATSim Volume Plot',
+  visualization: null,
+}
 
 // this export is the Vue Component itself
 export default {
@@ -21,30 +28,33 @@ export default {
     return store
   },
   mounted: function() {
+    store.projectId = (this as any).$route.params.projectId
+    store.vizId = (this as any).$route.params.vizId
     mounted()
   },
   methods: {},
   watch: {},
 }
 
-// mounted is called by Vue after this component is installed on the page
-function mounted() {
+async function mounted() {
+  setupEventListeners()
+  await getVizDetails()
+  setupMap()
+}
+
+function setupMap() {
   map = new mapboxgl.Map({
     bearing: 0,
     center: [13.4, 52.5], // lnglat, not latlng
     container: 'mymap',
-    logoPosition: 'bottom-right',
+    logoPosition: 'bottom-left',
     style: 'mapbox://styles/mapbox/dark-v9',
     pitch: 0,
     zoom: 11,
   })
 
-  // Start doing stuff AFTER the MapBox library has fully initialized
   map.on('style.load', mapIsReady)
-  map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
-
-  setupEventListeners()
-  EventBus.$emit('switch-sidebar', 'BonusSidebar')
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
 
 function setupEventListeners() {
@@ -60,18 +70,12 @@ function setupEventListeners() {
       }, delay)
     }
   })
-
-  EventBus.$on('change_theme', (theme: string) => {
-    console.log(theme)
-    changeTheme(theme)
-  })
 }
 
-function changeTheme(theme: string) {
-  map.setStyle('mapbox://styles/mapbox/' + theme + '-v9')
+async function getVizDetails() {
+  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  console.log(Object.assign({}, store.visualization))
 }
-
-const filename = '/network-viz/networkWGS84.geo.json'
 
 // this is a required workaround to get the mapbox token assigned in TypeScript
 // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
@@ -86,29 +90,50 @@ interface MapElement {
   features: any[]
 }
 
+async function loadNetwork() {
+  try {
+    const ROAD_NET = store.visualization.inputFiles.network.fileEntry.id
+    console.log({ ROAD_NET, PROJECT: store.projectId })
+    store.loadingText = 'Loading network...'
+    // get the blob data
+    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    let road = await readBlob.text(roadBlob)
+    road = JSON.parse(road)
+
+    return road
+  } catch (e) {
+    console.error(e)
+    return null
+  }
+}
+
 // Called immediately after MapBox is ready to draw the map
 async function mapIsReady() {
-  let json
-
-  try {
-    const resp = await fetch(filename)
-    json = await resp.json()
-  } catch (e) {
-    alert(e)
+  const json = await loadNetwork()
+  if (!json) {
+    store.loadingText('Problem loading network, sorry')
+    return
   }
 
+  calculateLinkProperties(json)
+  addJsonToMap(json)
+  setupMapListeners()
+  store.loadingText = ''
+}
+
+function calculateLinkProperties(json: any) {
   for (const link of json.features) {
     link.properties.width = link.properties['base case (demand)_agents'] / 200
     if (link.properties.width < 3) link.properties.width = 2
-    link.properties.vc = 1.0 * link.properties['base case (demand)_agents'] / link.properties.capacity
+    link.properties.vc = (1.0 * link.properties['base case (demand)_agents']) / link.properties.capacity
   }
+}
 
+function addJsonToMap(json: any) {
   map.addSource('my-data', {
     data: json,
     type: 'geojson',
   })
-
-  // console.log(map.getStyle().layers)
 
   map.addLayer(
     {
@@ -127,7 +152,9 @@ async function mapIsReady() {
     },
     'road-primary'
   ) // layer gets added just *above* this MapBox-defined layer.
+}
 
+function setupMapListeners() {
   map.on('click', 'my-layer', function(e: MapElement) {
     clickedOnTaz(e)
   })
@@ -188,10 +215,35 @@ function clickedOnTaz(e: MapElement) {
 </script>
 
 <style scoped>
-#mymap {
+#container {
+  background-color: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto;
   height: 100%;
+  max-height: 100vh;
+  margin: 0px 0px 0px 0px;
+  padding: 0px 0px 0px 0px;
+}
+
+#mymap {
   width: 100%;
+  height: 100%;
+  background-color: white;
   overflow: hidden;
-  background: #222;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  z-index: 1;
+}
+
+.status-blob {
+  background-color: #ccc;
+  opacity: 0.7;
+  margin: auto 0;
+  padding: 15px 0px;
+  text-align: center;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  z-index: 2;
 }
 </style>

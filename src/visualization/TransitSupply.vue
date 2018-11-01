@@ -1,18 +1,22 @@
 <template lang="pug">
 #container
-  #mymap
   .status-blob(v-if="loadingText"): h2 {{ loadingText }}
   .info-blob
-    h5.bigtitle Routes on link:
+    .info-header
+      h3(style="color: #ff8") ROUTES ON LINK
+
+    p.details(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
+
     .route(v-for="route in routesOnLink"
-           :key="route.uniqueRouteID"
-           :class="{highlightedRoute: selectedRoute && route.id === selectedRoute.id}"
-           @click="clickedRouteDetails(route.id)"
+          :key="route.uniqueRouteID"
+          :class="{highlightedRoute: selectedRoute && route.id === selectedRoute.id}"
+          @click="clickedRouteDetails(route.id)"
     )
-      h3.title {{route.id}}
+      h3.mytitle {{route.id}}
       p.details {{route.departures}} departures
       p.details First: {{route.firstDeparture}}
       p.details Last: {{route.lastDeparture}}
+  #mymap
 </template>
 
 <script lang="ts">
@@ -137,7 +141,7 @@ function setupMap() {
     bearing: 0,
     center: [18.5, -33.8], // lnglat, not latlng
     container: 'mymap',
-    logoPosition: 'bottom-left',
+    logoPosition: 'bottom-right',
     style: 'mapbox://styles/mapbox/light-v9',
     pitch: 0,
     zoom: 9,
@@ -151,7 +155,7 @@ function setupMap() {
   _map.on('moveend', updateZoomLevel)
   _map.on('click', clickedOnMap)
 
-  _map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
+  _map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
 
 mapboxgl.accessToken =
@@ -730,47 +734,30 @@ p {
 }
 
 #container {
-  background-color: #fff;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
   height: 100%;
-  max-height: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
 }
 
 .status-blob {
   background-color: white;
   opacity: 0.8;
-  margin: auto 0;
+  margin: auto 0px auto -10px;
   padding: 10px 0px;
-  text-align: center;
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  z-index: 2;
-}
-
-.info-blob {
-  background-color: white;
-  margin: 0 0;
-  width: 250px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  height: 100vh;
-  overflow-y: auto;
   text-align: center;
   grid-column: 2 / 3;
   grid-row: 1 / 2;
-  opacity: 0.95;
   z-index: 2;
 }
 
 #mymap {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background-color: white;
   overflow: hidden;
-  grid-column: 1 / 2;
+  grid-column: 1 / 3;
   grid-row: 1 / 2;
   z-index: 1;
 }
@@ -792,7 +779,7 @@ h3 {
   font-size: 16px;
 }
 
-.title {
+.mytitle {
   margin-left: 10px;
 }
 
@@ -823,5 +810,27 @@ h3 {
   font-style: italic;
   font-size: 20px;
   margin: 20px 0px;
+}
+
+.info-header {
+  background-color: #557;
+  border-radius: 8px 8px 0px 0px;
+  padding: 0.5rem 0rem;
+}
+
+.info-blob {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  background-color: white;
+  border-radius: 8px;
+  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  text-align: center;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  opacity: 0.95;
+  z-index: 2;
+  overflow-y: auto;
 }
 </style>

@@ -12,6 +12,7 @@
   "dependencies": {
     "ajv": "^6.5.3",
     "ajv-keywords": "^3.1.0",
+    "bulma": "^0.7.2",
     "colormap": "^2.3.0",
     "convert-seconds": "^1.0.1",
     "debounce": "^1.2.0",

@@ -1,14 +1,25 @@
 <template lang="pug">
-  .projects
-    list-header(v-on:btnClicked="handleCreateClicked" title="MATSim Viz: Projects" btnTitle="New Project")
+.projects
+  .hero.is-success.is-bold
+    .hero-body
+      p.title MATSim Viz: My Projects
+      p.subtitle &nbsp;
+
+  .page-contents
+    list-header(v-on:btnClicked="handleCreateClicked" title="My Projects" btnTitle="New Project")
 
     div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
       span No projects yet. Create one!
+
     .projectList(v-else)
-        button.projectItem(v-for="project in sharedState.personalProjects" v-on:click="handleProjectClicked(project.id)")
+        button.projectItem(
+          v-for="project in sharedState.personalProjects"
+          @click="handleProjectClicked(project.id)"
+        )
           list-element(v-bind:key="project.id")
             span(slot="title") {{project.name}}
             span(slot="content") {{project.id}}
+
     create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed")
 </template>
 
@@ -55,8 +66,8 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.projects {
-  padding: 1rem;
+.page-contents {
+  padding: 1.5rem 1.5rem;
 }
 
 .projectList {
