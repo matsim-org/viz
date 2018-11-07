@@ -1,6 +1,6 @@
 <template lang="pug">
 .page-content
-  .hero.is-success.is-bold
+  .hero.is-success
     .hero-body
       p.title Welcome to MATSim-Viz
       p.subtitle You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
@@ -11,13 +11,12 @@
     hr
     h3 PUBLIC VISUALIZATIONS
     ul.visualizations
-      li.viz-thumbnail(v-for="viz in visualizations")
-        router-link(:to="viz.url")
-          img.thumbnail-image(:src="viz.thumbnail")
-          h5.thumbnail-title {{ viz.title }}
+      p No public visualizations currently.
+      p [TBA]
+
 
     hr
-    h3 ABOUT THIS APP
+    h3 ABOUT MATSIM
     p You can find out more about MATSim at&nbsp;
       a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
