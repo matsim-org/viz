@@ -1,6 +1,6 @@
 <template lang="pug">
 .project
-  .hero.is-link.is-bold
+  .hero.is-link
     .hero-body
       h1.title {{project.name}}
       h3.subtitle.small lorem ipsum &raquo; {{project.id}}

@@ -99,7 +99,7 @@ body {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 10px 1.5rem 5px 1.5rem;
-  background-color: #454;
+  background-color: hsl(0, 0%, 29%);
   z-index: 5;
 }
 

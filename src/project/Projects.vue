@@ -1,6 +1,6 @@
 <template lang="pug">
 .projects
-  .hero.is-success.is-bold
+  .hero.is-success
     .hero-body
       p.title MATSim Viz: My Projects
       p.subtitle &nbsp;
