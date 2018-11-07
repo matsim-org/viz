@@ -6,6 +6,7 @@
     "serve": "vue-cli-service serve",
     "serve-local": "vue-cli-service serve --mode local-backend --https",
     "build": "vue-cli-service build",
+    "build-surge": "vue-cli-service build --mode development-surge",
     "lint": "vue-cli-service lint",
     "unit": "vue-cli-service test:unit"
   },
