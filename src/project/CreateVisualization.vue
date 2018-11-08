@@ -2,7 +2,7 @@
 modal(v-on:close-requested="cancel()")
     span(slot="header") Create Visualization
     div(slot="content")
-      selection.selection(v-bind:options="sharedState.visualizationTypes"
+      selection.selection(v-bind:options="Array.from(sharedState.visualizationTypes.values())"
                 label="Select Visualization-Type"
                 v-on:selection-changed="handleVizTypeChanged")
         span(slot-scope="{option}") {{ option.typeName }}
@@ -96,9 +96,6 @@ export default Vue.extend({
       this.isRequesting = true
       try {
         const answer = await FileAPI.createVisualization(this.request)
-        if (answer.type.requiresProcessing && answer.type.endpoint) {
-          triggerVizGeneration(answer.type.endpoint.toString(), answer.id)
-        }
         this.close(answer)
       } catch (error) {
         this.isServerError = true

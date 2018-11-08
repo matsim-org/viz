@@ -183,10 +183,6 @@ export default Vue.extend({
       this.project = await FileAPI.fetchProject(this.project.id)
       this.isFetchingData = false
     }
-
-    if (this.sharedState.visualizationTypes.length < 1) {
-      SharedStore.fetchVizTypes()
-    }
   },
   computed: {
     projectId: function(): string {

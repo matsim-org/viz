@@ -13,6 +13,14 @@ import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
+import SharedStore from '../SharedStore'
+
+// register component with the shared store
+SharedStore.addVisualizationType({
+  typeName: 'network-volume-plot',
+  requiredFileKeys: ['geoJson'],
+  requiredParamKeys: [],
+})
 
 // store is the component data store -- the state of the component.
 const store: any = {
