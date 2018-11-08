@@ -18,5 +18,5 @@ export interface Visualization extends Entity {
   inputFiles: string[]
   parameters: string[]
   project: Project
-  type: VisualizationType
+  type: string
 }

@@ -54,14 +54,14 @@ const instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/Transit Supply/:projectId/:vizId',
+      path: '/transit-supply/:projectId/:vizId',
       name: 'TransitSupply',
       component: TransitSupply,
       meta: { authRequired: true },
       props: true,
     },
     {
-      path: '/Animation/:vizId',
+      path: '/frame-animation/:projectId/:vizId',
       component: FrameAnimation,
       name: 'FrameAnimation',
       meta: { authRequired: true },
