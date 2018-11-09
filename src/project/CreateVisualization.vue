@@ -8,7 +8,7 @@ modal(v-on:close-requested="cancel()")
         aside.menu
           p.menu-label Select:
           ul.menu-list
-            li(v-for="viz in sharedState.visualizationTypes")
+            li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
               a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.typeName}}
         .viz-details(v-if="selectedVizType" )
           h3 {{selectedVizType.typeName}}

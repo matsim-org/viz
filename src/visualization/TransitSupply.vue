@@ -325,8 +325,10 @@ async function loadNetworksLocal() {
 
 async function loadNetworks() {
   try {
-    const ROAD_NET = store.visualization.inputFiles.network.fileEntry.id
-    const TRANSIT_NET = store.visualization.inputFiles['transit schedule'].fileEntry.id
+    console.log(store.visualization.inputFiles)
+
+    const ROAD_NET = store.visualization.inputFiles.roadNetwork.fileEntry.id
+    const TRANSIT_NET = store.visualization.inputFiles.transitNetwork.fileEntry.id
     console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
