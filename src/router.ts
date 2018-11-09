@@ -5,13 +5,15 @@ import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
-import NetworkViz from '@/visualization/NetworkViz.vue'
+import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
+import TransitSupply from '@/visualization/TransitSupply.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
 import authenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
 Vue.use(Router)
+
 const AUTHENTICATION = '/authentication'
 
 const instance = new Router({
@@ -23,9 +25,11 @@ const instance = new Router({
       component: StartPage,
     },
     {
-      path: '/network',
-      name: 'NetworkViz',
-      component: NetworkViz,
+      path: '/Network Links/:projectId/:vizId',
+      name: 'NetworkVolumePlot',
+      component: NetworkVolumePlot,
+      meta: { authRequired: true },
+      props: true,
     },
     {
       path: '/accessibility',
@@ -50,7 +54,14 @@ const instance = new Router({
       meta: { authRequired: true },
     },
     {
-      path: '/Animation/:vizId',
+      path: '/transit-supply/:projectId/:vizId',
+      name: 'TransitSupply',
+      component: TransitSupply,
+      meta: { authRequired: true },
+      props: true,
+    },
+    {
+      path: '/frame-animation/:projectId/:vizId',
       component: FrameAnimation,
       name: 'FrameAnimation',
       meta: { authRequired: true },

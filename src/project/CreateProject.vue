@@ -5,14 +5,8 @@
       text-input(label="Project Name" v-model="projectName")
       error(v-if="isServerError" v-bind:message="serverError")
     div(slot="actions")
-      button.ui.animated.negative.button(v-on:click="cancel()")
-        .ui.visible.content Cancel
-        .ui.hidden.content
-          i.ui.times.icon
-      button.ui.animated.positive.button(v-on:click="handleCreateClicked()")
-        .ui.visible.content Create
-        .ui.hidden.content
-          i.ui.check.icon
+      button.button.is-white.is-rounded(v-on:click="cancel()") Cancel
+      button.button.is-success.is-rounded(v-on:click="handleCreateClicked()") Create
 </template>
 
 <script lang="ts">
@@ -59,7 +53,7 @@ export default Vue.extend({
 })
 </script>
 
-<style>
+<style scoped>
 .createProject {
   display: flex;
   flex-direction: column;

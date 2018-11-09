@@ -1,9 +1,19 @@
 <template lang="pug">
-  .select
-    label.selectLabel {{ label }}
-    select.ui.input.selectInput(v-on:change="handleChanged('changed', $event)" v-model="selected")
-      option.option(v-for="option in options" v-bind:value="option")
-        slot(v-bind:option="option")
+    .dropdown.is-active
+      .dropdown-trigger
+        .button.button(aria-haspopup="true" aria-controls="dropdown-menu")
+          p {{label}}
+          span.icon.is-small
+            i.fas.fa-angle-down(aria-hidden="true")
+      .dropdown-menu(id="dropdown-menu" role="menu")
+        .dropdown-content
+          a.dropdown-item(
+            v-for="option in options"
+            v-bind:value="option"
+            v-model="selected"
+            @click="handleChanged('changed', $event)"
+          )
+            slot(v-bind:option="option")
 
 </template>
 

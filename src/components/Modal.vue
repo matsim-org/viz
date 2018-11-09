@@ -1,17 +1,18 @@
 <template lang="pug">
   transition(name="modal")
-    .modal-mask(v-on:click="$emit('close-requested')")
-        .modal-wrapper(v-on:click.stop="")
-            .ui.active.modal
-                .ui.header
-                    slot(name="header")
-                .ui.content
-                    slot(name="content")
-                .ui.actions
-                    slot(name="actions")
+    .modal.is-active
+      .modal-background(v-on:click="$emit('close-requested')")
+      .modal-content
+        header.modal-card-head
+            slot(name="header")
+        section.modal-card-body
+            slot(name="content")
+        footer.modal-card-foot
+            slot(name="actions")
+      .modal-close.is-large(aria-label="close")
 </template>
 
-<style>
+<style scoped>
 .modal-mask {
   position: absolute;
   z-index: 9000;
@@ -43,6 +44,10 @@
 .modal-leave-active .modal-wrapper {
   -webkit-transform: scale(0.5);
   transform: scale(0.5);
+}
+
+.modal-card-foot {
+  flex-direction: row-reverse;
 }
 </style>
 

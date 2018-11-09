@@ -1,13 +1,10 @@
 <template lang="pug">
   .listHeader
-    h1 {{title}}
-    button.ui.animated.positive.button(v-on:click="$emit('btnClicked')")
-      .ui.visible.content {{btnTitle}}
-      .ui.hidden.content
-        i.ui.plus.icon
+    h2 {{title}}
+    a.button.is-rounded.is-link(v-on:click="$emit('btnClicked')") {{btnTitle}}
 </template>
 
-<style>
+<style scoped>
 .listHeader {
   display: flex;
   flex-direction: row;
@@ -23,6 +20,7 @@ button.ui.green.button {
 
 <script lang="ts">
 import Vue from 'vue'
+
 export default Vue.extend({
   props: ['title', 'btnTitle'],
   name: 'listHeader',

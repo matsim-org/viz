@@ -8,10 +8,8 @@ export interface CreateVisualizationRequest {
   inputParameters: { [key: string]: string } // as with inputFiles
 }
 
-export interface VisualizationType extends Entity {
+export interface VisualizationType {
   typeName: string
-  requiresProcessing: boolean
-  endpoint?: URL
   requiredFileKeys: string[]
   requiredParamKeys: string[]
 }
@@ -20,5 +18,5 @@ export interface Visualization extends Entity {
   inputFiles: string[]
   parameters: string[]
   project: Project
-  type: VisualizationType
+  type: string
 }

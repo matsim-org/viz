@@ -26,6 +26,13 @@ export default class FileAPI {
     return await this.request<VisualizationType[]>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
   }
 
+  public static async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
+    return await this.request<Visualization>(
+      this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
+      this.corsRequestOptions()
+    )
+  }
+
   public static async createProject(projectName: string): Promise<Project> {
     const options = this.postRequestOptions({ name: projectName })
     return await this.request<Project>(this.PROJECT, options)
@@ -52,8 +59,8 @@ export default class FileAPI {
     return await this.request<Project>(url, options)
   }
 
-  public static async downloadFile(fileId: string, project: Project): Promise<Blob> {
-    const url = `${this.PROJECT}/${project.id}/files/${fileId}`
+  public static async downloadFile(fileId: string, projectId: string): Promise<Blob> {
+    const url = `${this.PROJECT}/${projectId}/files/${fileId}`
     const result = await AuthenticatedRequest.fetch(url, this.corsRequestOptions())
 
     if (result.ok) {

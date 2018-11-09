@@ -1,17 +1,11 @@
 <template lang="pug">
 #app
-  // global app sidebar
-  side-bar.sidebar(v-bind:class="{ shrunken: !sharedState.isSidePanelExpanded }")
-
-  // vue-router replaces this element with the correct page contents
-  // see src/router/index.js to view/add route definitions
+  .banner
+    router-link(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png" style="height: 24px")
+    a.banner-item(href="/")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SETTINGS
+    a.banner-item(href="/")  ACCOUNT
 
   router-view.main-content
-
-  // our cute hide/show button
-  #btn-toggle-sidepanel
-    button.ui.tiny.blue.icon.button(v-on:click="toggleSidePanel")
-      i.angle.white.double.icon(v-bind:class="{left: sharedState.isSidePanelExpanded, right: !sharedState.isSidePanelExpanded }")
 </template>
 
 <script lang="ts">
@@ -20,6 +14,7 @@
 import Vue from 'vue'
 import sharedStore from './SharedStore'
 import SideBar from '@/components/SideBar.vue'
+import 'bulma/css/bulma.css'
 
 const store = {
   sharedState: sharedStore.state,
@@ -31,9 +26,6 @@ export default Vue.extend({
   data() {
     return store
   },
-  methods: {
-    toggleSidePanel,
-  },
   mounted() {
     mounted(this)
   },
@@ -41,10 +33,6 @@ export default Vue.extend({
 
 // mounted is called by Vue after this component is installed on the page
 function mounted(component: any) {}
-
-function toggleSidePanel() {
-  sharedStore.toggleSidePanel()
-}
 </script>
 
 <style>
@@ -61,32 +49,26 @@ h6 {
   padding: 0px 0px;
 }
 
+html,
+body {
+  background-color: white;
+  height: 100vh;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
 #app {
   background-color: white;
   display: grid;
   font-family: 'Lato', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  grid-template-columns: auto auto 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
   height: 100%;
+  max-height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
-  overflow: hidden;
-}
-
-.sidebar {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  height: 100%;
-  margin-left: 0px;
-  position: relative;
-  width: 300px;
-  transition: margin 0.25s;
-}
-
-.shrunken {
-  margin-left: -300px;
 }
 
 #btn-toggle-sidepanel {
@@ -101,10 +83,17 @@ h6 {
 }
 
 .main-content {
-  grid-column: 2 / 4;
-  grid-row: 1 / 3;
-  position: relative;
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
   z-index: 1;
+}
+
+.banner {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  padding: 10px 1.5rem 5px 1.5rem;
+  background-color: hsl(0, 0%, 29%);
+  z-index: 5;
 }
 
 h2,
@@ -112,9 +101,24 @@ h3 {
   color: #6666ff;
 }
 
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
 /* `:focus` is linked to `:hover` for basic accessibility */
 a:hover,
 a:focus {
   text-decoration: none;
+}
+
+.banner-item {
+  float: right;
+  color: #ccc;
 }
 </style>

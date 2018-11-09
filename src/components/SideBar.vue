@@ -67,9 +67,7 @@ function mounted() {
 .sidebar {
   overflow-x: hidden;
   color: #666;
-  background-color: #eeeee9;
-  border-right: 1px solid;
-  border-color: #ccc;
+  background-color: #f2f2f2;
   z-index: 100;
 }
 
@@ -118,8 +116,6 @@ a.sidebar-nav-item:focus {
   font-weight: bold;
 }
 
-/* ------ SFCTA ------ */
-
 .theme-base-01 .sidebar {
   background-color: #ddd;
   border-right-width: 1.5px;
@@ -142,9 +138,8 @@ h3 {
 
 .sidebar-logo {
   display: block;
-  text-align: center;
-  margin: auto;
-  width: 150px;
+  margin: 0px auto;
+  width: 125px;
 }
 
 .lead {

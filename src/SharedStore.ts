@@ -12,10 +12,9 @@ import { VisualizationType } from '@/entities/Visualization'
 export const EventBus = new Vue()
 
 interface SharedState {
-  isSidePanelExpanded: boolean
   lastNavigation: string
   personalProjects: Project[]
-  visualizationTypes: VisualizationType[]
+  visualizationTypes: Map<string, VisualizationType>
 }
 
 class SharedStore {
@@ -24,12 +23,6 @@ class SharedStore {
 
   constructor() {
     this._state = this.initializeState()
-  }
-
-  public toggleSidePanel(): void {
-    this._state.isSidePanelExpanded = !this._state.isSidePanelExpanded
-    this.persistState()
-    EventBus.$emit('sidebar-toggled', this.state.isSidePanelExpanded)
   }
 
   public setLastNavigation(path: string): void {
@@ -42,8 +35,8 @@ class SharedStore {
     this._state.personalProjects = await FileAPI.fetchAllPersonalProjects()
   }
 
-  public async fetchVizTypes(): Promise<void> {
-    this._state.visualizationTypes = await FileAPI.fetchVisualizationTypes()
+  public addVisualizationType(type: VisualizationType) {
+    this._state.visualizationTypes.set(type.typeName, type)
   }
 
   get state(): SharedState {
@@ -64,21 +57,30 @@ class SharedStore {
 
   private defaultState(): SharedState {
     return {
-      isSidePanelExpanded: true,
       lastNavigation: '',
       personalProjects: [],
-      visualizationTypes: [],
+      visualizationTypes: new Map(),
     }
   }
 
   private persistState(): void {
-    sessionStorage.setItem(SharedStore.STATE_KEY, JSON.stringify(this.state))
+    sessionStorage.setItem(
+      SharedStore.STATE_KEY,
+      JSON.stringify({
+        lastNavigation: this._state.lastNavigation,
+      })
+    )
   }
 
   private loadState(): SharedState | null {
-    const state = sessionStorage.getItem(SharedStore.STATE_KEY)
-    if (state) {
-      return JSON.parse(state as string)
+    const persistedStateString = sessionStorage.getItem(SharedStore.STATE_KEY)
+    if (persistedStateString) {
+      const persistedState = JSON.parse(persistedStateString as string)
+      return {
+        lastNavigation: persistedState.lastNavigation,
+        personalProjects: [],
+        visualizationTypes: new Map(),
+      }
     }
     return null
   }

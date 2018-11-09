@@ -1,34 +1,45 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    span(slot="header") Create Visualization
-    div(slot="content")
-      selection.selection(v-bind:options="sharedState.visualizationTypes"
-                label="Select Visualization-Type"
-                v-on:selection-changed="handleVizTypeChanged")
-        span(slot-scope="{option}") {{ option.typeName }}
-      div(v-if="selectedVizType")
-        div(v-for="key in selectedVizType.requiredFileKeys")
-          selection.selection(v-bind:options="project.files"
-                            v-bind:label="key"
-                            v-on:selection-changed="handleFileChanged(key, $event)")
-            span(slot-scope="{option}") {{ option.userFileName }}
+    span(slot="header")
+      h3 Create Visualization
 
-        div(v-for="key in selectedVizType.requiredParamKeys")
-          text-input(v-bind:label="key" v-on:change="handleParamChanged(key, $event)")
-      error(v-if="isServerError" v-bind:message="serverError")
+    div(slot="content")
+      .viz-selector
+        aside.menu
+          p.menu-label Select:
+          ul.menu-list
+            li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
+              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.typeName}}
+        .viz-details(v-if="selectedVizType" )
+          h3 {{selectedVizType.typeName}}
+          p This visualization will eventually have a cute description.
+          br
+          .viz-files(v-for="key in selectedVizType.requiredFileKeys")
+            .viz-file
+              b {{key}}
+              .dropdown.is-right(style="float:right;" :class="{'is-active': openDropdown==key}")
+                .dropdown-trigger
+                  button.button.is-small(@click="toggleDropdown(key)" aria-haspopup="true" aria-controls="dropdown-menu")
+                    span {{ request.inputFiles[key] ? fileLookup[key] : 'Choose&hellip;' }}
+                    span.icon.is-small
+                      i.fas.fa-angle-down(aria-hidden="true")
+                .dropdown-menu(:id="'dropdown-menu'+key" role="menu")
+                  .dropdown-content
+                    a.dropdown-item(v-for="file in project.files" @click='handleFileChanged(key, file)') {{file.userFileName}}
+
+          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
+            .viz-file
+              b {{key}}
+              input.input(placeholder="Required" style="float:right;")
+
     div(slot="actions")
+      .bottom-panel
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
           button.ui.negative.button(v-on:click="cancel()") Cancel
-          button.ui.positive.button(v-on:click="createVisualization()") Create
+          button.button.is-link(v-on:click="createVisualization()") Create
 </template>
-
-<style scoped>
-.selection {
-  margin-bottom: 1rem;
-}
-</style>
 
 <script lang="ts">
 import Vue from 'vue'
@@ -44,8 +55,11 @@ import { CreateVisualizationRequest, VisualizationType } from '../entities/Visua
 import SharedStore, { SharedState } from '../SharedStore'
 
 interface CreateVisualizationState {
+  fileLookup: any
   isRequesting: boolean
   isServerError: boolean
+  isVizListOpen: boolean
+  openDropdown: string
   serverError: string
   request: CreateVisualizationRequest
   project?: Project
@@ -72,8 +86,10 @@ export default Vue.extend({
   },
   data(): CreateVisualizationState {
     return {
+      isVizListOpen: false,
       isRequesting: false,
       isServerError: false,
+      openDropdown: '',
       serverError: '',
       request: {
         projectId: this.project.id,
@@ -83,6 +99,7 @@ export default Vue.extend({
       },
       sharedState: SharedStore.state,
       selectedVizType: undefined,
+      fileLookup: {},
     }
   },
   methods: {
@@ -104,16 +121,51 @@ export default Vue.extend({
         this.isRequesting = false
       }
     },
+    handleToggleVizList: function() {
+      this.isVizListOpen = !this.isVizListOpen
+    },
     handleVizTypeChanged: function(value: VisualizationType) {
+      console.log(value)
       this.request.typeKey = value.typeName
       this.selectedVizType = value
     },
     handleFileChanged(key: string, event: any) {
       this.request.inputFiles[key] = event.id
+      this.fileLookup[key] = event.userFileName
+      this.toggleDropdown('')
     },
     handleParamChanged(key: string, value: string) {
       this.request.inputParameters[key] = value
     },
+    toggleDropdown(key: string) {
+      if (this.openDropdown === key) this.openDropdown = ''
+      else this.openDropdown = key
+    },
   },
 })
 </script>
+<style scoped>
+.selection {
+  margin-bottom: 1rem;
+}
+.bottom-panel {
+  width: 100%;
+  float: right;
+}
+.viz-selector {
+  display: flex;
+  flex-direction: row;
+  min-height: 20rem;
+}
+.viz-details {
+  padding-left: 30px;
+}
+.viz-files {
+  display: flex;
+  flex-direction: column;
+}
+.viz-file {
+  padding: 5px 0px;
+}
+</style>
+

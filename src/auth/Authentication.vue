@@ -1,12 +1,14 @@
 <template lang="pug">
   div.authentication
-    div.ui.active.text.loader(v-if="isRequesting") {{message}}
+    .requesting(v-if="isRequesting")
+      h4 {{message}}
+      div.loader
     div.authError(v-if="isFailed")
       span.errorMessage {{message}}
-      button.ui.green.button(v-on:click="handleTryAgainClicked") Try again
+      button.button.is-link(v-on:click="handleTryAgainClicked") Try again
 </template>
 
-<style>
+<style scoped>
 .authentication {
   display: flex;
   flex-direction: column;
