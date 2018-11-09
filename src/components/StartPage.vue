@@ -12,7 +12,7 @@
     h3 PUBLIC VISUALIZATIONS
     ul.visualizations
       p No public visualizations currently.
-      p [TBA]
+      p [Coming soon]
 
 
     hr

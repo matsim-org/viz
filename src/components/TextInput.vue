@@ -1,11 +1,13 @@
 <template lang="pug">
   .textInput
     label.inputLabel {{label}}
-    .ui.input
-        input(v-bind:value="text"
-              v-bind:change="text"
-              v-on:change="$emit('change', $event.target.value)"
-              type="text")
+    .field
+      .control
+        input.input.is-info(type="text" placeholder="Project name"
+          v-bind:value="text"
+          v-bind:change="text"
+          v-on:change="$emit('change', $event.target.value)"
+        )
 </template>
 <style scoped>
 .textInput {

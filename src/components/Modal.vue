@@ -45,6 +45,10 @@
   -webkit-transform: scale(0.5);
   transform: scale(0.5);
 }
+
+.modal-card-foot {
+  flex-direction: row-reverse;
+}
 </style>
 
 <script lang="ts">
