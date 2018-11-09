@@ -32,6 +32,7 @@ import pako from 'pako'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore, { EventBus } from '../SharedStore'
+import SharedStore from '../SharedStore'
 
 const MY_PROJECTION = 'EPSG:2048'
 const COLOR_CATEGORIES = 16
@@ -78,6 +79,13 @@ class Departure {
   public total: number = 0
   public routes: Set<string> = new Set()
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  typeName: 'transit-supply',
+  requiredFileKeys: ['transitNetwork', 'roadNetwork'],
+  requiredParamKeys: ['projection'],
+})
 
 // Add various projections that we use here
 proj4.defs(

@@ -26,9 +26,6 @@ export default Vue.extend({
   data() {
     return store
   },
-  methods: {
-    toggleSidePanel,
-  },
   mounted() {
     mounted(this)
   },
@@ -36,10 +33,6 @@ export default Vue.extend({
 
 // mounted is called by Vue after this component is installed on the page
 function mounted(component: any) {}
-
-function toggleSidePanel() {
-  sharedStore.toggleSidePanel()
-}
 </script>
 
 <style>

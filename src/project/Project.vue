@@ -183,10 +183,6 @@ export default Vue.extend({
       this.project = await FileAPI.fetchProject(this.project.id)
       this.isFetchingData = false
     }
-
-    if (this.sharedState.visualizationTypes.length < 1) {
-      SharedStore.fetchVizTypes()
-    }
   },
   computed: {
     projectId: function(): string {
@@ -224,7 +220,7 @@ export default Vue.extend({
       if (visualization) this.project.visualizations.push(visualization)
     },
     handleVisualizationClicked: function(viz: Visualization): void {
-      this.$router.push({ path: `/${viz.type.typeName}/${this.project.id}/${viz.id}` })
+      this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files

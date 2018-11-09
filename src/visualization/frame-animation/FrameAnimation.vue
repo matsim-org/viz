@@ -38,6 +38,7 @@ import Vue from 'vue'
 import Webvis from './Webvis'
 import Config from '../../config/Config'
 import { Progress } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
+import SharedStore from '@/SharedStore'
 
 interface FrameAnimationState {
   vizId: string
@@ -53,6 +54,13 @@ interface FrameAnimationState {
   connected: boolean
   webvis?: Webvis
 }
+
+// register frame animation with shared store
+SharedStore.addVisualizationType({
+  typeName: 'frame-animation',
+  requiredFileKeys: ['events', 'network', 'plans'],
+  requiredParamKeys: ['snapshotInterval'],
+})
 
 export default Vue.extend({
   data(): FrameAnimationState {
