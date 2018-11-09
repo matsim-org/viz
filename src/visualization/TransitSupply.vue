@@ -162,6 +162,7 @@ function setupMap() {
   _map.on('zoomend', updateZoomLevel)
   _map.on('moveend', updateZoomLevel)
   _map.on('click', clickedOnMap)
+  _map.keyboard.disable() // so arrow keys don't pan
 
   _map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
@@ -186,6 +187,16 @@ function setupKeyListeners() {
     if (event.keyCode === 27) {
       // ESC
       pressedEscape()
+    }
+  })
+  window.addEventListener('keydown', function(event) {
+    if (event.keyCode === 38) {
+      // UP
+      pressedArrowKey(-1)
+    }
+    if (event.keyCode === 40) {
+      // DOWN
+      pressedArrowKey(+1)
     }
   })
 }
@@ -713,6 +724,17 @@ function pressedEscape() {
 
   store.selectedRoute = null
   store.routesOnLink = []
+}
+
+function pressedArrowKey(delta: number) {
+  if (!store.selectedRoute) return
+
+  let i = store.routesOnLink.indexOf(store.selectedRoute)
+  i = i + delta
+
+  if (i < 0 || i >= store.routesOnLink.length) return
+
+  clickedRouteDetails(store.routesOnLink[i].id)
 }
 </script>
 
