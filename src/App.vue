@@ -98,7 +98,7 @@ body {
 
 h2,
 h3 {
-  color: #6666ff;
+  color: #3273dc;
 }
 
 h2 {
