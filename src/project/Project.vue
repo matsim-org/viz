@@ -20,7 +20,7 @@
               span(slot="content") lorem ipsum dolor et tu brute
 
   section
-    list-header(v-on:btnClicked="handleAddFileClicked" title="Project Files" btnTitle="Add File")
+    list-header(v-on:btnClicked="handleFileUploadClicked" title="Project Files" btnTitle="Add File")
     input.fileInput(type="file"
         id="fileInput"
         ref="fileInput"
@@ -53,10 +53,13 @@
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="handleAddVisualizationClosed"
                         v-bind:project="project")
+
+  file-upload(v-if="showFileUpload" v-on:close="handleFileUploadClosed")
 </template>
 <script lang="ts">
 import Vue from 'vue'
 import CreateVisualization from '@/project/CreateVisualization.vue'
+import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
@@ -74,12 +77,14 @@ interface ProjectState {
   project: Project
   isFetchingData: boolean
   showCreateVisualization: boolean
+  showFileUpload: boolean
   over: boolean
 }
 
 export default Vue.extend({
   components: {
     'create-visualization': CreateVisualization,
+    'file-upload': FileUpload,
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
@@ -98,6 +103,7 @@ export default Vue.extend({
       },
       isFetchingData: false,
       showCreateVisualization: false,
+      showFileUpload: false,
       over: false,
     }
   },
@@ -150,6 +156,12 @@ export default Vue.extend({
     },
     handleVisualizationClicked: function(viz: Visualization): void {
       this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+    },
+    handleFileUploadClicked: function(): void {
+      this.showFileUpload = true
+    },
+    handleFileUploadClosed: function(args: any): void {
+      this.showFileUpload = false
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files
