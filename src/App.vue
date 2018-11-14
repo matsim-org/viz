@@ -1,9 +1,16 @@
 <template lang="pug">
 #app
   .banner
-    router-link(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png" style="height: 24px")
-    a.banner-item(href="/")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SETTINGS
-    a.banner-item(href="/")  ACCOUNT
+    router-link.nav-logo(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png")
+
+    .breadcrumb-row
+      span(v-for="crumb in breadcrumbs" :key="crumb.title")
+        p.nav-breadcrumb &raquo;
+          router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
+
+    .nav-rightside
+      router-link.banner-item(:to="'#'")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Settings
+      router-link.banner-item(:to="'#'")  Account
 
   router-view.main-content
 </template>
@@ -12,12 +19,18 @@
 'use strict'
 
 import Vue from 'vue'
-import sharedStore from './SharedStore'
+import sharedStore, { EventBus } from '@/SharedStore'
 import SideBar from '@/components/SideBar.vue'
 import 'bulma/css/bulma.css'
 
+interface BreadCrumb {
+  title: string
+  link: string
+}
+
 const store = {
   sharedState: sharedStore.state,
+  breadcrumbs: [] as BreadCrumb[],
 }
 
 export default Vue.extend({
@@ -32,7 +45,11 @@ export default Vue.extend({
 })
 
 // mounted is called by Vue after this component is installed on the page
-function mounted(component: any) {}
+function mounted(component: any) {
+  EventBus.$on('set-breadcrumbs', (crumbs: BreadCrumb[]) => {
+    store.breadcrumbs = crumbs
+  })
+}
 </script>
 
 <style>
@@ -94,6 +111,9 @@ body {
   padding: 10px 1.5rem 5px 1.5rem;
   background-color: hsl(0, 0%, 29%);
   z-index: 5;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto;
 }
 
 h2,
@@ -120,5 +140,42 @@ a:focus {
 .banner-item {
   float: right;
   color: #ccc;
+}
+
+.sidebar-logo {
+  margin-right: 0.7rem;
+  height: 26px;
+}
+
+.breadcrumb-row {
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: row;
+}
+
+.nav-breadcrumb {
+  vertical-align: top;
+  color: #ccc;
+  margin-right: 0.25rem;
+  margin-bottom: 0px;
+  font-size: 1rem;
+}
+
+.nav-bread-link {
+  margin-left: 0.5rem;
+}
+a:hover {
+  color: #fff;
+}
+
+.nav-logo {
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+}
+
+.nav-rightside {
+  grid-row: 1 / 2;
+  grid-column: 3 / 4;
 }
 </style>
