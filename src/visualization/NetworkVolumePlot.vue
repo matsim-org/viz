@@ -26,6 +26,7 @@ SharedStore.addVisualizationType({
 const store: any = {
   loadingText: 'MATSim Volume Plot',
   visualization: null,
+  project: {},
 }
 
 // this export is the Vue Component itself
@@ -47,7 +48,16 @@ export default {
 async function mounted() {
   setupEventListeners()
   await getVizDetails()
+  setBreadcrumb()
   setupMap()
+}
+
+function setBreadcrumb() {
+  EventBus.$emit('set-breadcrumbs', [
+    { title: 'My Projects', link: '/projects' },
+    { title: store.project.name, link: '/project/' + store.projectId },
+    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
+  ])
 }
 
 function setupMap() {
@@ -82,6 +92,7 @@ function setupEventListeners() {
 
 async function getVizDetails() {
   store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  store.project = await FileAPI.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization))
 }
 
@@ -100,7 +111,7 @@ interface MapElement {
 
 async function loadNetwork() {
   try {
-    const ROAD_NET = store.visualization.inputFiles.network.fileEntry.id
+    const ROAD_NET = store.visualization.inputFiles.geoJson.fileEntry.id
     console.log({ ROAD_NET, PROJECT: store.projectId })
     store.loadingText = 'Loading network...'
     // get the blob data

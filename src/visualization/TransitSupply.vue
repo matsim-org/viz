@@ -100,6 +100,7 @@ const store: any = {
   routesOnLink: [],
   selectedRoute: null,
   projectId: null,
+  project: {},
   vizId: null,
   visualization: null,
 }
@@ -141,7 +142,17 @@ export default {
 
 async function getVizDetails() {
   store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  store.project = await FileAPI.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization.inputFiles))
+  setBreadcrumb()
+}
+
+function setBreadcrumb() {
+  EventBus.$emit('set-breadcrumbs', [
+    { title: 'My Projects', link: '/projects' },
+    { title: store.project.name, link: '/project/' + store.projectId },
+    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
+  ])
 }
 
 function setupMap() {

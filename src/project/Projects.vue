@@ -30,7 +30,7 @@ import ListElement from '@/components/ListElement.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
-import SharedStore, { SharedState } from '@/SharedStore'
+import SharedStore, { EventBus, SharedState } from '@/SharedStore'
 
 export default Vue.extend({
   components: {
@@ -61,6 +61,9 @@ export default Vue.extend({
     } catch (error) {
       console.error(error)
     }
+  },
+  mounted: function() {
+    EventBus.$emit('set-breadcrumbs', [{ title: 'My Projects', link: '/projects' }])
   },
 })
 </script>

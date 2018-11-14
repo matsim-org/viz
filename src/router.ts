@@ -32,6 +32,13 @@ const instance = new Router({
       props: true,
     },
     {
+      path: '/network-volume-plot/:projectId/:vizId',
+      name: 'Network Volume Plot',
+      component: NetworkVolumePlot,
+      meta: { authRequired: true },
+      props: true,
+    },
+    {
       path: '/accessibility',
       name: 'KiberaAccessibility',
       component: KiberaAccessibility,
@@ -55,7 +62,7 @@ const instance = new Router({
     },
     {
       path: '/transit-supply/:projectId/:vizId',
-      name: 'TransitSupply',
+      name: 'Transit Supply',
       component: TransitSupply,
       meta: { authRequired: true },
       props: true,
