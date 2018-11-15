@@ -3,6 +3,7 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "experimentalDecorators": true,
     "importHelpers": true,
     "jsx": "preserve",
     "module": "esnext",

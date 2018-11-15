@@ -8,12 +8,12 @@
   .page-contents
     list-header(v-on:btnClicked="handleCreateClicked" title="My Projects" btnTitle="New Project")
 
-    div.emptyMessage(v-if="sharedState.personalProjects.length === 0")
+    div.emptyMessage(v-if="Projects === 0")
       span No projects yet. Create one!
 
     .projectList(v-else)
         button.projectItem(
-          v-for="project in sharedState.personalProjects"
+          v-for="project in Projects"
           @click="handleProjectClicked(project.id)"
         )
           list-element(v-bind:key="project.id")
@@ -25,12 +25,49 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import Component from 'vue-class-component'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
 import SharedStore, { SharedState } from '@/SharedStore'
+import ProjectStore, { ProjectActions } from '@/store/ProjectStore'
+import Dispatcher from '@/store/Dispatcher'
+
+@Component({
+  props: { propMessage: String },
+  components: { 'list-header': ListHeader, 'list-element': ListElement, 'create-project': CreateProject },
+})
+export default class ProjectsViewModel extends Vue {
+  private sharedState = SharedStore.state
+  private showCreateProject = false
+
+  get Projects() {
+    return ProjectStore.State.projects
+  }
+
+  private handleCreateClicked() {
+    this.showCreateProject = true
+  }
+
+  private handleCreateProjectClosed() {
+    this.showCreateProject = false
+  }
+
+  private async created() {
+    try {
+      await Dispatcher.dispatch(ProjectActions.fetchProjects)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  private handleProjectClicked(id: string) {
+    this.$router.push({ path: `/project/${id}` })
+  }
+}
+/*
 
 export default Vue.extend({
   components: {
@@ -62,7 +99,7 @@ export default Vue.extend({
       console.error(error)
     }
   },
-})
+})*/
 </script>
 
 <style scoped>
