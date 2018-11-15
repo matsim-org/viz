@@ -63,6 +63,12 @@ export default class ProjectsViewModel extends Vue {
     }
   }
 
+  private data() {
+    return {
+      state: ProjectStore.State,
+    }
+  }
+
   private handleProjectClicked(id: string) {
     this.$router.push({ path: `/project/${id}` })
   }
