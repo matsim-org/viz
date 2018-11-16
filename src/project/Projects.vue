@@ -20,7 +20,7 @@
             span(slot="title") {{project.name}}
             span(slot="content") {{project.id}}
 
-    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed")
+    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:projects-store="projectsStore")
 </template>
 
 <script lang="ts">
@@ -32,13 +32,16 @@ import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
 import SharedStore, { SharedState } from '@/SharedStore'
-import ProjectStore, { ProjectActions } from '@/store/ProjectStore'
-import Dispatcher from '@/store/Dispatcher'
 import ProjectsStore, { ProjectsState } from '@/project/ProjectsStore'
 
-const projectsProps = Vue.extend({
+const vueInstance = Vue.extend({
   props: {
     projectsStore: ProjectsStore,
+  },
+  components: {
+    'list-header': ListHeader,
+    'list-element': ListElement,
+    'create-project': CreateProject,
   },
   data() {
     return {
@@ -47,10 +50,8 @@ const projectsProps = Vue.extend({
   },
 })
 
-@Component({
-  components: { 'list-header': ListHeader, 'list-element': ListElement, 'create-project': CreateProject },
-})
-export default class ProjectsViewModel extends projectsProps {
+@Component
+export default class ProjectsViewModel extends vueInstance {
   private showCreateProject = false
 
   private get projects() {
@@ -77,39 +78,6 @@ export default class ProjectsViewModel extends projectsProps {
     this.$router.push({ path: `/project/${id}` })
   }
 }
-/*
-
-export default Vue.extend({
-  components: {
-    'list-header': ListHeader,
-    'list-element': ListElement,
-    'create-project': CreateProject,
-  },
-  data() {
-    return {
-      sharedState: SharedStore.state,
-      showCreateProject: false,
-    }
-  },
-  methods: {
-    handleProjectClicked(id: string) {
-      this.$router.push({ path: `/project/${id}` })
-    },
-    handleCreateClicked() {
-      this.showCreateProject = true
-    },
-    handleCreateProjectClosed() {
-      this.showCreateProject = false
-    },
-  },
-  created: async function() {
-    try {
-      await SharedStore.fetchProjects()
-    } catch (error) {
-      console.error(error)
-    }
-  },
-})*/
 </script>
 
 <style scoped>

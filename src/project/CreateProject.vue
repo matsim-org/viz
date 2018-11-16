@@ -3,7 +3,7 @@
     span(slot="header") Create Project
     div(slot="content")
       text-input(label="Project Name" v-model="projectName")
-      error(v-if="isServerError" v-bind:message="serverError")
+      error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       button.button.is-white.is-rounded(v-on:click="cancel()") Cancel
       button.button.is-success.is-rounded(v-on:click="handleCreateClicked()") Create
@@ -15,42 +15,51 @@ import FileAPI from '../communication/FileAPI'
 import TextInput from '@/components/TextInput.vue'
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
-export default Vue.extend({
+import TextInputVue from '@/components/TextInput.vue'
+import ProjectsStore from '@/project/ProjectsStore'
+import Component from 'vue-class-component'
+
+const vueInstance = Vue.extend({
   components: {
     'text-input': TextInput,
     error: Error,
     modal: Modal,
   },
-  data() {
-    return {
-      projectName: '',
-      isServerError: false,
-      serverError: undefined,
-      isRequesting: false,
-    }
-  },
-  methods: {
-    handleCreateClicked: async function() {
-      try {
-        this.isRequesting = true
-        this.isServerError = false
-        const newProject = await FileAPI.createProject(this.projectName)
-        this.isRequesting = false
-        this.$router.push({ path: `/project/${newProject.id}` })
-      } catch (error) {
-        this.isServerError = true
-        this.serverError = error.message
-        this.isRequesting = false
-      }
-    },
-    cancel: function(): void {
-      this.close()
-    },
-    close: function(): void {
-      this.$emit('close')
-    },
+  props: {
+    projectsStore: ProjectsStore,
   },
 })
+
+@Component
+export default class CreateProjectViewModel extends vueInstance {
+  private projectName = ''
+  private errorMessage = ''
+
+  public static Close() {
+    return 'close'
+  }
+
+  private get isError() {
+    return this.errorMessage && this.errorMessage.length !== 0
+  }
+
+  private async handleCreateClicked() {
+    try {
+      const newProject = await this.projectsStore.createProject(this.projectName)
+      this.$router.push({ path: `/project/${newProject.id}` })
+    } catch (error) {
+      this.errorMessage = 'Uh oh, Could not create project.'
+    }
+  }
+
+  private cancel() {
+    this.close()
+  }
+
+  private close() {
+    this.$emit(CreateProjectViewModel.Close())
+  }
+}
 </script>
 
 <style scoped>

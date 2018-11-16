@@ -26,6 +26,17 @@ export default class ProjectsStore {
     }
   }
 
+  public async createProject(name: string) {
+    this.state.isFetching = true
+    try {
+      const project = await FileAPI.createProject(name)
+      this.state.projects.push(project)
+      return project
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   private getInitialState(): ProjectsState {
     return {
       projects: [],
