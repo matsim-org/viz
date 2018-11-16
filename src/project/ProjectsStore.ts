@@ -1,6 +1,6 @@
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
-import { CreateVisualizationRequest, Visualization } from '@/entities/Visualization'
+import { Visualization } from '@/entities/Visualization'
 
 export interface ProjectsState {
   projects: Project[]
