@@ -11,10 +11,12 @@ import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
 import authenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import ProjectsStore from './project/ProjectsStore'
 
 Vue.use(Router)
 
 const AUTHENTICATION = '/authentication'
+const projectsStore = new ProjectsStore()
 
 const instance = new Router({
   mode: 'history', // 'history' mode produces clean, normal URLs
@@ -46,6 +48,7 @@ const instance = new Router({
       name: 'Your Projects',
       component: Projects,
       meta: { authRequired: true },
+      props: { projectsStore: projectsStore },
     },
     {
       path: '/project/:projectId',

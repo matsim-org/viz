@@ -8,12 +8,12 @@
   .page-contents
     list-header(v-on:btnClicked="handleCreateClicked" title="My Projects" btnTitle="New Project")
 
-    div.emptyMessage(v-if="Projects === 0")
+    div.emptyMessage(v-if="projects === 0")
       span No projects yet. Create one!
 
     .projectList(v-else)
         button.projectItem(
-          v-for="project in Projects"
+          v-for="project in projects"
           @click="handleProjectClicked(project.id)"
         )
           list-element(v-bind:key="project.id")
@@ -34,17 +34,27 @@ import FileAPI from '@/communication/FileAPI'
 import SharedStore, { SharedState } from '@/SharedStore'
 import ProjectStore, { ProjectActions } from '@/store/ProjectStore'
 import Dispatcher from '@/store/Dispatcher'
+import ProjectsStore, { ProjectsState } from '@/project/ProjectsStore'
+
+const projectsProps = Vue.extend({
+  props: {
+    projectsStore: ProjectsStore,
+  },
+  data() {
+    return {
+      projectsState: this.projectsStore.State,
+    }
+  },
+})
 
 @Component({
-  props: { propMessage: String },
   components: { 'list-header': ListHeader, 'list-element': ListElement, 'create-project': CreateProject },
 })
-export default class ProjectsViewModel extends Vue {
-  private sharedState = SharedStore.state
+export default class ProjectsViewModel extends projectsProps {
   private showCreateProject = false
 
-  get Projects() {
-    return ProjectStore.State.projects
+  private get projects() {
+    return this.projectsState.projects
   }
 
   private handleCreateClicked() {
@@ -57,15 +67,9 @@ export default class ProjectsViewModel extends Vue {
 
   private async created() {
     try {
-      await Dispatcher.dispatch(ProjectActions.fetchProjects)
+      await this.projectsStore.fetchProjects()
     } catch (error) {
       console.error(error)
-    }
-  }
-
-  private data() {
-    return {
-      state: ProjectStore.State,
     }
   }
 
