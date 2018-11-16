@@ -54,7 +54,8 @@
                         v-on:close="onAddVisualizationClosed"
                         v-bind:projectsStore="projectsStore")
 
-  file-upload(v-if="showFileUpload" v-on:close="onAddFileClosed")
+  file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
+  v-bind:uploadStore="uploadStore", v-bind:selectedProject="project")
 </template>
 <script lang="ts">
 import Vue from 'vue'
@@ -73,6 +74,7 @@ import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
 import ProjectsStore from '@/project/ProjectsStore'
 import Component from 'vue-class-component'
+import UploadStore from '@/project/UploadStore'
 
 interface ProjectState {
   sharedState: SharedState
@@ -86,6 +88,7 @@ interface ProjectState {
 const vueInstance = Vue.extend({
   props: {
     projectsStore: ProjectsStore,
+    uploadStore: UploadStore,
     projectId: String,
   },
   components: {
@@ -137,8 +140,13 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private onAddFiles() {
-    const input = this.$refs.fileInput as HTMLInputElement
-    input.click()
+    /* const input = this.$refs.fileInput as HTMLInputElement
+    input.click()*/
+    this.showFileUpload = true
+  }
+
+  private onAddFilesClosed() {
+    this.showFileUpload = false
   }
 
   private async onFileInput() {

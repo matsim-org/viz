@@ -12,11 +12,13 @@ import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
 import authenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import ProjectsStore from './project/ProjectsStore'
+import UploadStore from './project/UploadStore'
 
 Vue.use(Router)
 
 const AUTHENTICATION = '/authentication'
-const projectsStore = new ProjectsStore()
+const uploadStore = new UploadStore()
+const projectsStore = new ProjectsStore(uploadStore)
 
 const instance = new Router({
   mode: 'history', // 'history' mode produces clean, normal URLs
@@ -59,6 +61,7 @@ const instance = new Router({
         return {
           projectId: route.params.projectId,
           projectsStore: projectsStore,
+          uploadStore: uploadStore,
         }
       },
     },

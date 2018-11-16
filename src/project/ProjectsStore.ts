@@ -1,6 +1,8 @@
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
 import { Visualization } from '@/entities/Visualization'
+import UploadStore from './UploadStore'
+import FileEntry from '@/entities/File'
 
 export interface ProjectsState {
   projects: Project[]
@@ -15,8 +17,9 @@ export default class ProjectsStore {
     return this.state
   }
 
-  constructor() {
+  constructor(uploadStore: UploadStore) {
     this.state = this.getInitialState()
+    uploadStore.FileUploadedEvent.addEventHandler(fileEntry => this.addFileEntry(fileEntry))
   }
 
   public async fetchProjects() {
@@ -43,6 +46,13 @@ export default class ProjectsStore {
     const foundProject = this.state.projects.find(project => project.id === id)
     if (foundProject) this.state.selectedProject = foundProject
     await this.fetchProject(id)
+  }
+
+  public addFileEntry(fileEntry: FileEntry) {
+    const project = this.state.projects.find(p => p.id === fileEntry.project.id)
+    if (project) {
+      project.files.push(fileEntry)
+    }
   }
 
   public async addFilesToSelectedProject(files: File[]) {
