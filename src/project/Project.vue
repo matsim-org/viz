@@ -3,7 +3,7 @@
   .hero.is-link
     .hero-body
       h1.title {{project.name}}
-      h3.subtitle.small lorem ipsum &raquo; {{project.id}}
+      h3.subtitle.small viz-{{project.id}}
 
   section
     list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
@@ -15,7 +15,7 @@
         .viz-item(v-for="viz in project.visualizations"
                   v-on:click="handleVisualizationClicked(viz)"
                   v-bind:key="viz.id")
-            viz-thumbnail
+            viz-thumbnail(@remove="handleRemoveViz(viz.id)" @share="handleShareViz(viz.id)")
               .itemTitle(slot="title"): span {{ viz.type }}
               span(slot="content") viz-{{ viz.id.substring(0,4) }}
 
@@ -156,6 +156,18 @@ export default Vue.extend({
     },
     handleVisualizationClicked: function(viz: Visualization): void {
       this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+    },
+    handleShareViz: function(viz: string) {
+      console.log('share viz', viz)
+    },
+    handleRemoveViz: async function(viz: string) {
+      console.log('remove viz', viz)
+      try {
+        const updatedProject = await FileAPI.deleteVisualization(viz)
+        // this.project = updatedProject
+      } catch (error) {
+        console.error(error)
+      }
     },
     onFileInputChanged: async function(): Promise<void> {
       const files = (this.$refs.fileInput as any).files
