@@ -1,5 +1,6 @@
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
+import { CreateVisualizationRequest, Visualization } from '@/entities/Visualization'
 
 export interface ProjectsState {
   projects: Project[]
@@ -52,6 +53,10 @@ export default class ProjectsStore {
     } finally {
       this.state.isFetching = false
     }
+  }
+
+  public async addVisualizationToSelectedProject(visualization: Visualization) {
+    this.state.selectedProject.visualizations.push(visualization)
   }
 
   public async fetchProject(id: string) {

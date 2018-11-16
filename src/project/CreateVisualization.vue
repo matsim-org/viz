@@ -9,8 +9,8 @@ modal(v-on:close-requested="cancel()")
           p.menu-label Select:
           ul.menu-list
             li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
-              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.typeName}}
-        .viz-details(v-if="selectedVizType" )
+              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.typeName}}
+        .viz-details(v-if="showDetails" )
           h3 {{selectedVizType.typeName}}
           p This visualization will eventually have a cute description.
           br
@@ -20,39 +20,38 @@ modal(v-on:close-requested="cancel()")
               .dropdown.is-right(style="float:right;" :class="{'is-active': openDropdown==key}")
                 .dropdown-trigger
                   button.button.is-small(@click="toggleDropdown(key)" aria-haspopup="true" aria-controls="dropdown-menu")
-                    span {{ request.inputFiles[key] ? fileLookup[key] : 'Choose&hellip;' }}
+                    span {{ request.inputFiles[key] ? fileLookup.get(key) : 'Choose&hellip;' }}
                     span.icon.is-small
                       i.fas.fa-angle-down(aria-hidden="true")
                 .dropdown-menu(:id="'dropdown-menu'+key" role="menu")
                   .dropdown-content
-                    a.dropdown-item(v-for="file in project.files" @click='handleFileChanged(key, file)') {{file.userFileName}}
+                    a.dropdown-item(v-for="file in project.files" @click='onFileChanged(key, file)') {{file.userFileName}}
 
           .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
             .viz-file
               b {{key}}
-              input.input(placeholder="Required" style="float:right;")
-
+              input.input(v-model="request.inputParameters[key]" placeholder="Required" style="float:right;")
+      error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       .bottom-panel
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
-        div(v-else)
+        div
           button.ui.negative.button(v-on:click="cancel()") Cancel
           button.button.is-link(v-on:click="createVisualization()") Create
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import TextInput from '@/components/TextInput.vue'
+import Component from 'vue-class-component'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
-import Selection from '@/components/Selection.vue'
-import { setTimeout } from 'timers'
 import FileAPI from '../communication/FileAPI'
 import Project from '../entities/Project'
 import { Visualization } from '../entities/Visualization'
 import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
 import SharedStore, { SharedState } from '../SharedStore'
+import ProjectsStore from '@/project/ProjectsStore'
 
 interface CreateVisualizationState {
   fileLookup: any
@@ -67,87 +66,120 @@ interface CreateVisualizationState {
   selectedVizType?: VisualizationType
 }
 
-async function triggerVizGeneration(endpoint: string, vizId: string) {
-  await fetch(endpoint + '/' + vizId, {
-    mode: 'cors',
-    method: 'PUT',
-  })
-}
-
-export default Vue.extend({
+const vueInstance = Vue.extend({
+  props: {
+    projectsStore: ProjectsStore,
+  },
   components: {
     modal: Modal,
-    'text-input': TextInput,
     error: Error,
-    selection: Selection,
   },
-  props: {
-    project: Object,
-  },
-  data(): CreateVisualizationState {
+  data() {
     return {
-      isVizListOpen: false,
-      isRequesting: false,
-      isServerError: false,
-      openDropdown: '',
-      serverError: '',
-      request: {
-        projectId: this.project.id,
-        typeKey: 'raw-files',
-        inputFiles: {},
-        inputParameters: {},
-      },
+      projectsState: this.projectsStore.State,
       sharedState: SharedStore.state,
-      selectedVizType: undefined,
-      fileLookup: {},
     }
   },
-  methods: {
-    cancel: function(): void {
-      this.close(null)
-    },
-    close: function(visualization: Visualization | null): void {
-      this.$emit('close', visualization)
-    },
-    createVisualization: async function(): Promise<void> {
-      this.isRequesting = true
-      try {
-        const answer = await FileAPI.createVisualization(this.request)
-        this.close(answer)
-      } catch (error) {
-        this.isServerError = true
-        this.serverError = error.message
-      } finally {
-        this.isRequesting = false
-      }
-    },
-    handleToggleVizList: function() {
-      this.isVizListOpen = !this.isVizListOpen
-    },
-    handleVizTypeChanged: function(value: VisualizationType) {
-      console.log(value)
-      this.request.typeKey = value.typeName
-      this.selectedVizType = value
-    },
-    handleFileChanged(key: string, event: any) {
-      this.request.inputFiles[key] = event.id
-      this.fileLookup[key] = event.userFileName
-      this.toggleDropdown('')
-    },
-    handleParamChanged(key: string, value: string) {
-      this.request.inputParameters[key] = value
-    },
-    toggleDropdown(key: string) {
-      if (this.openDropdown === key) this.openDropdown = ''
-      else this.openDropdown = key
-    },
-  },
 })
+
+@Component
+export default class CreateVisualizationViewModel extends vueInstance {
+  private isVizListOpen = false
+  private isRequesting = false
+  private errorMessage = ''
+  private selectedVizType: VisualizationType = this.createEmtpyVisualizationType()
+  private openDropdown = ''
+  private fileLookup: Map<string, string> = new Map()
+  private request = this.createEmptyRequest()
+
+  private get showDetails(): boolean {
+    return this.selectedVizType !== undefined
+  }
+
+  private get project() {
+    return this.projectsState.selectedProject
+  }
+
+  private get isError() {
+    return this.errorMessage && this.errorMessage.length !== 0
+  }
+
+  private created() {
+    this.request = {
+      projectId: this.projectsState.selectedProject.id,
+      typeKey: 'raw-files',
+      inputFiles: {},
+      inputParameters: {},
+    }
+  }
+
+  private cancel() {
+    this.close()
+  }
+
+  private close() {
+    this.$emit('close')
+  }
+
+  private async createVisualization() {
+    this.isRequesting = true
+    try {
+      const viz = await FileAPI.createVisualization(this.request)
+      this.projectsStore.addVisualizationToSelectedProject(viz)
+      this.close()
+    } catch (error) {
+      console.log(error)
+      this.errorMessage = 'Uh oh, something went wrong'
+    } finally {
+      this.isRequesting = false
+    }
+  }
+
+  private onVizTypeChanged(value: VisualizationType) {
+    this.clearRequest()
+    this.request.typeKey = value.typeName
+    this.selectedVizType = value
+  }
+
+  private onFileChanged(key: string, event: any) {
+    this.request.inputFiles[key] = event.id
+    this.fileLookup.set(key, event.userFileName)
+    this.toggleDropdown('')
+  }
+
+  private toggleDropdown(key: string) {
+    if (this.openDropdown === key) this.openDropdown = ''
+    else this.openDropdown = key
+  }
+
+  private createEmptyRequest(): CreateVisualizationRequest {
+    return {
+      projectId: '',
+      typeKey: 'raw-files',
+      inputFiles: {},
+      inputParameters: {},
+    }
+  }
+
+  private clearRequest() {
+    this.request = {
+      projectId: this.projectsState.selectedProject.id,
+      typeKey: 'raw-files',
+      inputFiles: {},
+      inputParameters: {},
+    }
+  }
+
+  private createEmtpyVisualizationType(): VisualizationType {
+    return {
+      typeName: '',
+      requiredFileKeys: [],
+      requiredParamKeys: [],
+    }
+  }
+}
 </script>
 <style scoped>
-.selection {
-  margin-bottom: 1rem;
-}
 .bottom-panel {
   width: 100%;
   float: right;

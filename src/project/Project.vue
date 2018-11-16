@@ -52,7 +52,7 @@
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
-                        v-bind:project="project")
+                        v-bind:projectsStore="projectsStore")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFileClosed")
 </template>
@@ -132,9 +132,8 @@ export default class ProjectViewModel extends vueInstance {
     this.showCreateVisualization = true
   }
 
-  private onAddVisualizationClosed(viz: Visualization) {
+  private onAddVisualizationClosed() {
     this.showCreateVisualization = false
-    if (viz) this.project.visualizations.push(viz)
   }
 
   private onAddFiles() {
