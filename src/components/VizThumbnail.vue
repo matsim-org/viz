@@ -3,9 +3,9 @@
   .card-image
     img.img-responsive(src="@/assets/transit-supply.jpg")
   .card-actions
-    a(title="Share...")
+    a(title="Share..." @click.stop="$emit('share')")
       i.fas.fa-share
-    a(title="Remove")
+    a(title="Remove" @click.stop="$emit('remove')")
       i.fas.fa-times
   .card-content
     .card-title
@@ -13,6 +13,11 @@
     .card-subtitle
       slot(name="content")
 </template>
+
+<script lang="ts">
+import Vue from 'vue'
+export default Vue.extend({})
+</script>
 
 <style scoped>
 .listItem {
