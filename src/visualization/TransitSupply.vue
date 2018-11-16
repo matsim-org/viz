@@ -83,8 +83,10 @@ class Departure {
 // register component with the SharedStore
 SharedStore.addVisualizationType({
   typeName: 'transit-supply',
-  requiredFileKeys: ['transitNetwork', 'roadNetwork'],
-  requiredParamKeys: ['projection'],
+  prettyName: 'Transit Supply',
+  description: 'Depicts the scheduled transit routes on a network.',
+  requiredFileKeys: ['Transit Schedule', 'Network'],
+  requiredParamKeys: ['Projection'],
 })
 
 // Add various projections that we use here
@@ -338,8 +340,8 @@ async function loadNetworks() {
   try {
     console.log(store.visualization.inputFiles)
 
-    const ROAD_NET = store.visualization.inputFiles.roadNetwork.fileEntry.id
-    const TRANSIT_NET = store.visualization.inputFiles.transitNetwork.fileEntry.id
+    const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
+    const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
     console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
