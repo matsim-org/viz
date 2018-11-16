@@ -6,33 +6,33 @@
       h3.subtitle.small lorem ipsum &raquo; {{project.id}}
 
   section
-    list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-    span(v-if="isFetchingData") Fetching project data...
+    list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
+    span(v-if="isFetching") Fetching project data...
     .visualizations
       .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
         span No Visualizations yet. Add some!
       .viz-table(v-else)
         .viz-item(v-for="viz in project.visualizations"
-                  v-on:click="handleVisualizationClicked(viz)"
+                  v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
             viz-thumbnail
               .itemTitle(slot="title"): span {{ viz.type.typeName}}
               span(slot="content") lorem ipsum dolor et tu brute
 
   section
-    list-header(v-on:btnClicked="handleFileUploadClicked" title="Project Files" btnTitle="Add File")
+    list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
     input.fileInput(type="file"
         id="fileInput"
         ref="fileInput"
         multiple
-        v-on:change="onFileInputChanged"
+        v-on:change="onFileInput"
         )
     .file-area
       drop.drop(
-        :class="{over}"
-        @dragover="over = true"
-        @dragleave="over = false"
-        @drop="handleDrop"
+        :class="{isDragOver}"
+        @dragover="isDragOver = true"
+        @dragleave="isDragOver = false"
+        @drop="onDrop"
         effect-allowed='all'
       ): b Drag/drop files here!
 
@@ -41,20 +41,20 @@
           b No files yet. Add some!
         .fileList(v-else)
           .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")
+            list-element( v-bind:key="file.id" v-on:itemClicked="onSelectFile(file.id)")
               .itemTitle(slot="title")
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
 
               span(slot="content") {{file.id}}
 
-              button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)") Delete
+              button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
   create-visualization(v-if="showCreateVisualization"
-                        v-on:close="handleAddVisualizationClosed"
+                        v-on:close="onAddVisualizationClosed"
                         v-bind:project="project")
 
-  file-upload(v-if="showFileUpload" v-on:close="handleFileUploadClosed")
+  file-upload(v-if="showFileUpload" v-on:close="onAddFileClosed")
 </template>
 <script lang="ts">
 import Vue from 'vue'
@@ -71,6 +71,8 @@ import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
+import ProjectsStore from '@/project/ProjectsStore'
+import Component from 'vue-class-component'
 
 interface ProjectState {
   sharedState: SharedState
@@ -81,7 +83,11 @@ interface ProjectState {
   over: boolean
 }
 
-export default Vue.extend({
+const vueInstance = Vue.extend({
+  props: {
+    projectsStore: ProjectsStore,
+    projectId: String,
+  },
   components: {
     'create-visualization': CreateVisualization,
     'file-upload': FileUpload,
@@ -91,101 +97,89 @@ export default Vue.extend({
     Drag,
     Drop,
   },
-  data(): ProjectState {
+  data() {
     return {
+      projectsState: this.projectsStore.State,
       sharedState: SharedStore.state,
-      project: {
-        id: this.$route.params.projectId,
-        name: '',
-        files: [],
-        creator: {},
-        visualizations: [],
-      },
-      isFetchingData: false,
-      showCreateVisualization: false,
-      showFileUpload: false,
-      over: false,
     }
-  },
-  created: async function(): Promise<void> {
-    const project = this.sharedState.personalProjects.find(element => element.id === this.project.id)
-    if (project) {
-      this.project = project
-    }
-
-    if (!project || !project.files) {
-      this.isFetchingData = true
-      this.project = await FileAPI.fetchProject(this.project.id)
-      this.isFetchingData = false
-    }
-  },
-  computed: {
-    projectId: function(): string {
-      return this.$route.params.id
-    },
-  },
-  methods: {
-    readableFileSize: function(bytes: number): string {
-      return filesize(bytes)
-    },
-    handleAddFileClicked: function(): void {
-      const input = this.$refs.fileInput as HTMLInputElement
-      input.click()
-    },
-    handleFileClicked: async function(fileId: string): Promise<void> {
-      try {
-        const blob = await FileAPI.downloadFile(fileId, this.project.id)
-        window.open(URL.createObjectURL(blob))
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    handleDeleteFileClicked: async function(fileId: string): Promise<void> {
-      try {
-        this.project = await FileAPI.deleteFile(fileId, this.project)
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    handleAddVisualizationClicked: function(): void {
-      this.showCreateVisualization = true
-    },
-    handleAddVisualizationClosed: function(visualization: Visualization): void {
-      this.showCreateVisualization = false
-      if (visualization) this.project.visualizations.push(visualization)
-    },
-    handleVisualizationClicked: function(viz: Visualization): void {
-      this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
-    },
-    handleFileUploadClicked: function(): void {
-      this.showFileUpload = true
-    },
-    handleFileUploadClosed: function(args: any): void {
-      this.showFileUpload = false
-    },
-    onFileInputChanged: async function(): Promise<void> {
-      const files = (this.$refs.fileInput as any).files
-      try {
-        const updatedProject = await FileAPI.uploadFiles(files, this.project)
-        this.project = updatedProject
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    handleDrop: async function(data: any, event: any) {
-      event.preventDefault()
-      this.over = false
-      const files = event.dataTransfer.files
-
-      try {
-        const updatedProject = await FileAPI.uploadFiles(files, this.project)
-        this.project = updatedProject
-      } catch (error) {
-        console.error(error)
-      }
-    },
   },
 })
+
+@Component
+export default class ProjectViewModel extends vueInstance {
+  private showCreateVisualization = false
+  private showFileUpload = false
+  private isDragOver = false
+
+  private get isFetching() {
+    return this.projectsState.isFetching
+  }
+
+  private get project() {
+    return this.projectsState.selectedProject
+  }
+
+  private async created() {
+    try {
+      await this.projectsStore.selectProject(this.projectId)
+    } catch (error) {
+      console.error(error)
+      // do some error handling
+    }
+  }
+
+  private onAddVisualization() {
+    this.showCreateVisualization = true
+  }
+
+  private onAddVisualizationClosed(viz: Visualization) {
+    this.showCreateVisualization = false
+    if (viz) this.project.visualizations.push(viz)
+  }
+
+  private onAddFiles() {
+    const input = this.$refs.fileInput as HTMLInputElement
+    input.click()
+  }
+
+  private async onFileInput() {
+    const files = (this.$refs.fileInput as any).files
+    try {
+      await this.projectsStore.addFilesToSelectedProject(files)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  private async onDrop(data: any, event: any) {
+    event.preventDefault()
+    this.isDragOver = false
+    const files = event.dataTransfer.files
+
+    try {
+      await this.projectsStore.addFilesToSelectedProject(files)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  private onSelectVisualization(viz: Visualization) {
+    this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+  }
+
+  private async onSelectFile(fileId: string) {
+    try {
+      const blob = await FileAPI.downloadFile(fileId, this.project.id)
+      window.open(URL.createObjectURL(blob))
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  private readableFileSize(bytes: number): string {
+    return filesize(bytes)
+  }
+}
 </script>
 <style scoped>
 section {

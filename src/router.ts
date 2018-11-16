@@ -55,6 +55,12 @@ const instance = new Router({
       component: Project,
       name: 'Project',
       meta: { authRequired: true },
+      props: route => {
+        return {
+          projectId: route.params.projectId,
+          projectsStore: projectsStore,
+        }
+      },
     },
     {
       path: '/transit-supply/:projectId/:vizId',
