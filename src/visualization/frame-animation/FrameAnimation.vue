@@ -58,6 +58,7 @@ interface FrameAnimationState {
 // register frame animation with shared store
 SharedStore.addVisualizationType({
   typeName: 'frame-animation',
+  prettyName: 'Frame Animation',
   requiredFileKeys: ['events', 'network', 'plans'],
   requiredParamKeys: ['snapshotInterval'],
 })

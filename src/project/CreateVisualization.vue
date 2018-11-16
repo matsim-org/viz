@@ -9,10 +9,10 @@ modal(v-on:close-requested="cancel()")
           p.menu-label Select:
           ul.menu-list
             li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
-              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.typeName}}
+              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="selectedVizType" )
-          h3 {{selectedVizType.typeName}}
-          p This visualization will eventually have a cute description.
+          h3 {{selectedVizType.prettyName}}
+          p(v-if="selectedVizType.description") {{selectedVizType.description}}
           br
           .viz-files(v-for="key in selectedVizType.requiredFileKeys")
             .viz-file

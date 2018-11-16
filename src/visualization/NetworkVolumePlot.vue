@@ -18,6 +18,8 @@ import SharedStore from '../SharedStore'
 // register component with the shared store
 SharedStore.addVisualizationType({
   typeName: 'network-volume-plot',
+  prettyName: 'Network Volume Plot',
+  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
   requiredFileKeys: ['geoJson'],
   requiredParamKeys: [],
 })

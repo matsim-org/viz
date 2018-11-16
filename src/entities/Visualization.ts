@@ -10,6 +10,8 @@ export interface CreateVisualizationRequest {
 
 export interface VisualizationType {
   typeName: string
+  prettyName: string
+  description?: string
   requiredFileKeys: string[]
   requiredParamKeys: string[]
 }
