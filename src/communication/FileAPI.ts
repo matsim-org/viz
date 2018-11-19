@@ -48,10 +48,12 @@ export default class FileAPI {
     return await this.request<Tag>(`${this.PROJECT}/${projectId}/tags`, options)
   }
 
-  public static async deleteVisualization(visualizationId: string): Promise<Project> {
-    const options = this.corsRequestOptions()
-    options.method = Method.DELETE
-    return await this.request<Project>(`${visualizationId}`, options)
+  public static async deleteVisualization(projectId: string, vizId: string) {
+    const options: RequestInit = {
+      mode: 'cors',
+      method: Method.DELETE,
+    }
+    return await this.request(`${this.PROJECT}/${projectId}/${this.VISUALIZATION}/${vizId}`, options)
   }
 
   public static async uploadFiles(files: File[], project: Project): Promise<Project> {
