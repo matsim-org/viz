@@ -43,6 +43,14 @@ export default class FileAPI {
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
   }
 
+  public static async deleteVisualization(projectId: string, vizId: string) {
+    const options: RequestInit = {
+      mode: 'cors',
+      method: Method.DELETE,
+    }
+    return await this.request(`${this.PROJECT}/${projectId}/${this.VISUALIZATION}/${vizId}`, options)
+  }
+
   public static async uploadFiles(files: File[], project: Project): Promise<Project> {
     const formData = new FormData()
     for (const file of files) {
