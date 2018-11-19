@@ -50,6 +50,15 @@
 
               button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
+    h3 Pending Uploads
+      .uploads
+        .fileItem(v-for="upload in uploads")
+          list-element
+            .itemTitle(slot="title")
+              span {{ upload.file.name }}
+              span {{ toPercentage(upload.progress) }}%
+            span(slot="content") {{ toStatus(upload.status) }}       
+
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
                         v-bind:projectsStore="projectsStore")
@@ -75,6 +84,7 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectsStore from '@/project/ProjectsStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
+import { stat } from 'fs'
 
 interface ProjectState {
   sharedState: SharedState
@@ -103,6 +113,7 @@ const vueInstance = Vue.extend({
   data() {
     return {
       projectsState: this.projectsStore.State,
+      uploadState: this.uploadStore.State,
       sharedState: SharedStore.state,
     }
   },
@@ -120,6 +131,10 @@ export default class ProjectViewModel extends vueInstance {
 
   private get project() {
     return this.projectsState.selectedProject
+  }
+
+  private get uploads() {
+    return this.uploadState.uploads.filter(upload => upload.project.id === this.project.id)
   }
 
   private async created() {
@@ -185,6 +200,23 @@ export default class ProjectViewModel extends vueInstance {
 
   private readableFileSize(bytes: number): string {
     return filesize(bytes)
+  }
+
+  private toPercentage(fraction: number): string | undefined {
+    return (fraction * 100).toFixed(0)
+  }
+
+  private toStatus(status: number): string {
+    switch (status) {
+      case 0:
+        return 'Waiting'
+      case 1:
+        return 'Uploading'
+      case 2:
+        return 'Finished'
+      default:
+        return 'Failed'
+    }
   }
 }
 </script>

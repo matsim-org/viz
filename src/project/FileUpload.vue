@@ -79,13 +79,15 @@ export default class FileUploadViewModel extends vueInstance {
   private async uploadFiles() {
     const uploads: FileUpload[] = this.selectedFiles.map(file => {
       return {
+        project: this.selectedProject,
         file: file,
         tags: [],
         status: UploadStatus.NotStarted,
         progress: 0,
       }
     })
-    const uploadPromise = this.uploadStore.uploadFiles(this.selectedProject, uploads)
+    this.uploadStore.uploadFiles(uploads)
+    this.close()
   }
 }
 </script>

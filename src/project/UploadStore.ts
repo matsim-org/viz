@@ -1,4 +1,3 @@
-import { ProjectsState } from './ProjectsStore'
 import Project from '@/entities/Project'
 import FileEntry from '@/entities/File'
 import Config from '@/config/Config'
@@ -13,7 +12,9 @@ export enum UploadStatus {
   Failed,
 }
 export interface UploadState {
-  testVar: string
+  // this must be a plain array to make vue's reactivity system play nicely with
+  // updates to properties of single FileUploads
+  uploads: FileUpload[]
 }
 
 // TODO this interface belongs somewhere else
@@ -24,6 +25,7 @@ export interface Tag {
 }
 
 export interface FileUpload {
+  project: Project
   file: File
   tags: Tag[]
   status: UploadStatus
@@ -33,8 +35,7 @@ export interface FileUpload {
 export default class UploadStore {
   private static jsogService = new JsogService()
   private state: UploadState
-  private uploads: Map<Project, FileUpload[]> = new Map()
-  private fileUploadedEvent: SimpleEvent<FileEntry> = new SimpleEventEmmiter()
+  private fileUploadedEvent: SimpleEventEmmiter<FileEntry> = new SimpleEventEmmiter()
 
   public get State() {
     return this.state
@@ -48,70 +49,74 @@ export default class UploadStore {
     this.state = this.getInitialState()
   }
 
-  public async uploadFiles(forProject: Project, files: FileUpload[]) {
+  public uploadFiles(files: FileUpload[]) {
+    // this forEach loop runs synchronosly. It starts all file uploads at once
+    // this is intended behavior
     files.forEach(async file => {
-      // put files into upload queue
-      let queuedUploads = this.uploads.get(forProject)
-      if (!queuedUploads) {
-        queuedUploads = []
-        this.uploads.set(forProject, queuedUploads)
+      this.state.uploads.push(file)
+
+      try {
+        const result = await this.uploadFile(file)
+        file.status = UploadStatus.Uploaded
+
+        const index = this.state.uploads.indexOf(file)
+        this.state.uploads.splice(index, 1)
+
+        this.emmitFileUploaded(result)
+      } catch (error) {
+        console.error(error)
+        file.status = UploadStatus.Failed
       }
-      queuedUploads.push(file)
-
-      // start a file upload for each
-      const result = await this.uploadFile(forProject, file)
-
-      // unqueue the uploaded file
-      const index = queuedUploads.indexOf(file)
-      queuedUploads.splice(index, 1)
-
-      // when finished, emit file uploaded event with uploaded file
-      this.emmitFileUploaded(result)
     })
   }
 
-  private async uploadFile(forProject: Project, upload: FileUpload): Promise<FileEntry> {
+  private async uploadFile(upload: FileUpload): Promise<FileEntry> {
+    // We are using XMLHttpReqeust instead of 'fetch' to get progress
     const request = new XMLHttpRequest()
     const promise = new Promise<FileEntry>((resolve, reject) => {
-      request.onloadstart = () => (upload.status = UploadStatus.Started)
-      request.onprogress = (event: ProgressEvent) => {
-        if (event.lengthComputable) upload.progress = event.loaded / event.total
-      }
-      request.onloadend = (event: ProgressEvent) => {
-        if (event.lengthComputable && event.loaded / event.total === 1) {
-          upload.status = UploadStatus.Uploaded
-        } else {
-          upload.status = UploadStatus.Failed
-        }
-      }
+      request.upload.onloadstart = () => (upload.status = UploadStatus.Started)
+      request.upload.onprogress = (event: ProgressEvent) => this.handleUploadProgress(event, upload)
       request.onreadystatechange = () => {
-        if (request.readyState === 4 && request.status === 200) {
+        if (this.isSuccess(request)) {
           const message = JSON.parse(request.responseText)
           const result = UploadStore.jsogService.deserialize(message) as FileEntry
           resolve(result)
-        } else if (request.readyState === 4) {
+        } else if (this.isFailed(request)) {
           reject('error on upload')
         }
       }
     })
-    // TODO: add auth header
+
     const formData = new FormData()
     formData.append('file', upload.file)
     formData.append('data', JSON.stringify({ tagIds: upload.tags }))
-
-    request.open('POST', `${Config.fileServer}/projects/${forProject.id}/files`)
+    request.open('POST', `${Config.fileServer}/projects/${upload.project.id}/files`)
     request.setRequestHeader('Authorization', 'Bearer ' + AuthenticationStore.state.accessToken)
     request.send(formData)
     return promise
   }
 
   private async emmitFileUploaded(file: FileEntry) {
-    throw new Error('not implemented')
+    this.fileUploadedEvent.emmit(file)
+  }
+
+  private isSuccess(request: XMLHttpRequest) {
+    return request.readyState === 4 && request.status === 200
+  }
+
+  private isFailed(request: XMLHttpRequest) {
+    return request.readyState === 4 && request.status !== 200
+  }
+
+  private handleUploadProgress(event: ProgressEvent, upload: FileUpload) {
+    if (event.lengthComputable) {
+      upload.progress = event.loaded / event.total
+    }
   }
 
   private getInitialState(): UploadState {
     return {
-      testVar: 'bla',
+      uploads: [],
     }
   }
 }
