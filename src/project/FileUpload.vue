@@ -1,25 +1,39 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
   span(slot="header")
-    h3 Upload Files
-  
+    .header
+      h3 Upload Files
+      .addFiles
+          button.button.is-primary(v-on:click="onAddFiles()") Select Files
+          input.fileInput(type="file"
+            id="fileInput"
+            ref="fileInput"
+            multiple
+            v-on:change="onFileInput"
+            )
+    
   div(slot="content")
     .header
-      button.button.is-primary(v-on:click="onAddFiles()") Select Files
-      input.fileInput(type="file"
-        id="fileInput"
-        ref="fileInput"
-        multiple
-        v-on:change="onFileInput"
-        )
+      .tags
+        .tag.is-primary(v-for="tag in selectedTags") {{ tag }}
+        .dropdown.is-active
+          .dropdown-trigger
+            input.input(type="text" v-model="tagFilter")
+          .dropdown-menu
+            .dropdown-content
+              .dropdown-item.hover-link(v-for="tag in filteredTags" @click="onSelectTag(tag)") {{ tag }}
+              hr.dropdown-divider
+              .dropdown-item.hover-link
+                span(@click="onAddTag()") Add Tag...
+      
     .fileList
-      .fileItem(v-for="file in selectedFiles")
-        list-element(v-bind:key="file.name")
+      .fileItem(v-for="upload in selectedUploads")
+        list-element(v-bind:key="upload.file.name")
           .itemTitle(slot="title")
-            span {{ file.name }}
-            span {{ file.type }}
-          span(slot="content") {{ file.size }}
-          button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(file)")
+            span {{ upload.file.name }}
+            span {{ upload.file.type }}
+          span(slot="content") {{ upload.file.size }}
+          button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(upload)")
     
   div(slot="actions")
     button.ui.negative.button(v-on:click="cancel()") Cancel
@@ -50,7 +64,15 @@ const vueInstance = Vue.extend({
 
 @Component
 export default class FileUploadViewModel extends vueInstance {
-  private selectedFiles: File[] = []
+  private selectedUploads: FileUpload[] = []
+  private sampleTags = ['Run001', 'run002', 'run003', 'nemo', 'Janek']
+  private selectedTags: string[] = []
+  private tagFilter = ''
+
+  private get filteredTags() {
+    if (!this.tagFilter) return this.sampleTags
+    else return this.sampleTags.filter(tag => tag.toLowerCase().includes(this.tagFilter.toLowerCase()))
+  }
 
   private cancel() {
     this.close()
@@ -68,25 +90,32 @@ export default class FileUploadViewModel extends vueInstance {
   private onFileInput() {
     const files = (this.$refs.fileInput as any).files as Iterable<File>
     for (const file of files) {
-      this.selectedFiles.push(file)
-    }
-  }
-
-  private onRemoveFile(file: File) {
-    this.selectedFiles = this.selectedFiles.filter(f => f !== file)
-  }
-
-  private async uploadFiles() {
-    const uploads: FileUpload[] = this.selectedFiles.map(file => {
-      return {
+      this.selectedUploads.push({
         project: this.selectedProject,
         file: file,
         tags: [],
         status: UploadStatus.NotStarted,
         progress: 0,
-      }
-    })
-    this.uploadStore.uploadFiles(uploads)
+      })
+    }
+  }
+
+  private onSelectTag(name: string) {
+    this.selectedTags.push(name)
+  }
+
+  private onAddTag() {
+    if (!this.tagFilter) return
+    this.selectedTags.push(this.tagFilter)
+    this.tagFilter = ''
+  }
+
+  private onRemoveFile(upload: FileUpload) {
+    this.selectedUploads = this.selectedUploads.filter(u => u !== upload)
+  }
+
+  private async uploadFiles() {
+    this.uploadStore.uploadFiles(this.selectedUploads)
     this.close()
   }
 }
@@ -101,5 +130,16 @@ export default class FileUploadViewModel extends vueInstance {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  min-height: 200px;
+}
+
+.hover-link:hover {
+  background-color: lightgray;
+  cursor: pointer;
 }
 </style>
