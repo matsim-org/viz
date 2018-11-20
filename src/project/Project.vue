@@ -64,7 +64,9 @@
                         v-bind:projectsStore="projectsStore")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-  v-bind:uploadStore="uploadStore", v-bind:selectedProject="project")
+  v-bind:uploadStore="uploadStore", v-bind:projectStore="projectsStore" v-bind:selectedProject="project")
+
+
 </template>
 <script lang="ts">
 import Vue from 'vue'
@@ -85,15 +87,7 @@ import ProjectsStore from '@/project/ProjectsStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { stat } from 'fs'
-
-interface ProjectState {
-  sharedState: SharedState
-  project: Project
-  isFetchingData: boolean
-  showCreateVisualization: boolean
-  showFileUpload: boolean
-  over: boolean
-}
+import Dropwdown from '@/components/Dropwdown.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -107,6 +101,7 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
+    dropwdown: Dropwdown,
     Drag,
     Drop,
   },

@@ -65,6 +65,23 @@ export default class ProjectsStore {
     }
   }
 
+  public async addTagToSelectedProject(name: string, type: string) {
+    this.state.isFetching = true
+    try {
+      const currentProject = this.state.selectedProject
+      const tag = await FileAPI.createTag(
+        {
+          name: name,
+          type: type,
+        },
+        currentProject.id
+      )
+      currentProject.tags.push(tag)
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   public async addVisualizationToSelectedProject(visualization: Visualization) {
     this.state.selectedProject.visualizations.push(visualization)
   }
@@ -95,6 +112,7 @@ export default class ProjectsStore {
         id: '',
         name: '',
         visualizations: [],
+        tags: [],
       },
     }
   }

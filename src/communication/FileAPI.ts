@@ -1,5 +1,5 @@
 import { JsogService } from 'jsog-typescript'
-import Project from '@/entities/Project'
+import Project, { CreateTagRequest, Tag } from '@/entities/Project'
 import { ContentType, HeaderKeys, Method } from '@/communication/Constants'
 import AuthenticatedRequest from '@/auth/AuthenticatedRequest'
 import Config from '@/config/Config'
@@ -41,6 +41,11 @@ export default class FileAPI {
   public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     const options = this.postRequestOptions(request)
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
+  }
+
+  public static async createTag(request: CreateTagRequest, projectId: string) {
+    const options = this.postRequestOptions(request)
+    return await this.request<Tag>(`${this.PROJECT}/${projectId}/tags`, options)
   }
 
   public static async uploadFiles(files: File[], project: Project): Promise<Project> {

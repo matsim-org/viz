@@ -1,4 +1,4 @@
-import Project from '@/entities/Project'
+import Project, { Tag } from '@/entities/Project'
 import FileEntry from '@/entities/File'
 import Config from '@/config/Config'
 import SimpleEvent, { SimpleEventEmmiter } from './Event'
@@ -15,13 +15,6 @@ export interface UploadState {
   // this must be a plain array to make vue's reactivity system play nicely with
   // updates to properties of single FileUploads
   uploads: FileUpload[]
-}
-
-// TODO this interface belongs somewhere else
-export interface Tag {
-  id: string
-  name: string
-  type: string
 }
 
 export interface FileUpload {
@@ -89,7 +82,8 @@ export default class UploadStore {
 
     const formData = new FormData()
     formData.append('file', upload.file)
-    formData.append('data', JSON.stringify({ tagIds: upload.tags }))
+    const tagIds = upload.tags.map(tag => tag.id)
+    formData.append('data', JSON.stringify({ tagIds: tagIds }))
     request.open('POST', `${Config.fileServer}/projects/${upload.project.id}/files`)
     request.setRequestHeader('Authorization', 'Bearer ' + AuthenticationStore.state.accessToken)
     request.send(formData)

@@ -13,41 +13,17 @@
 </template>
 
 <style scoped>
-.modal-mask {
-  position: absolute;
-  z-index: 9000;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: opacity 0.2s ease;
-}
-
-.modal-wrapper {
-  transition: all 0.2s ease;
-}
-
-.modal-enter {
-  opacity: 0;
-}
-
-.modal-leave-active {
-  opacity: 0;
-}
-
-.modal-enter .modal-wrapper,
-.modal-leave-active .modal-wrapper {
-  -webkit-transform: scale(0.5);
-  transform: scale(0.5);
-}
-
 .modal-card-foot {
   flex-direction: row-reverse;
+}
+
+.modal-card-head {
+  align-content: stretch;
+  align-items: stretch;
+}
+
+.modal-card-body {
+  flex: 1;
 }
 </style>
 
