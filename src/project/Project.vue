@@ -163,8 +163,8 @@ export default Vue.extend({
     handleRemoveViz: async function(viz: string) {
       console.log('remove viz', viz)
       try {
-        const updatedProject = await FileAPI.deleteVisualization(viz)
-        // this.project = updatedProject
+        const updatedProject = await FileAPI.deleteVisualization(this.projectId, viz)
+        this.project = updatedProject
       } catch (error) {
         console.error(error)
       }
