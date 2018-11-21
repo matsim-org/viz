@@ -2,12 +2,22 @@
 .card
   .card-image
     img.img-responsive(src="@/assets/transit-supply.jpg")
+  .card-actions
+    a(title="Share..." @click.stop="$emit('share')")
+      i.fas.fa-share
+    a(title="Remove" @click.stop="$emit('remove')")
+      i.fas.fa-times
   .card-content
     .card-title
       slot(name="title")
     .card-subtitle
       slot(name="content")
 </template>
+
+<script lang="ts">
+import Vue from 'vue'
+export default Vue.extend({})
+</script>
 
 <style scoped>
 .listItem {
@@ -49,12 +59,16 @@
   align-items: center;
 }
 
-/***
-* Cards
-*/
 .card .card-image {
   overflow: hidden;
   height: 150px;
+  grid-column: 1/2;
+  grid-row: 1/2;
+  z-index: 3;
+}
+
+.card .card-image:hover {
+  z-index: 1;
 }
 
 .card:hover {
@@ -64,8 +78,10 @@
 }
 
 .card {
+  display: grid;
   margin: 20px 20px 20px 0px;
-  position: relative;
+  grid-template-columns: auto;
+  grid-template-rows: auto auto;
   -webkit-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
   -moz-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
   box-shadow: 4 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
@@ -86,18 +102,31 @@
   font-size: 13px;
 }
 
-.card .card-action {
-  padding: 20px;
-  border-top: 1px solid rgba(160, 160, 160, 0.2);
+.card .card-actions {
+  background-color: #ffffffcc;
+  margin: 3px 3px auto auto;
+  padding: 5px;
+  border-radius: 4px;
+  grid-column: 1/2;
+  grid-row: 1/2;
+  z-index: 2;
 }
 
-.card .card-action a {
-  font-size: 15px;
-  text-transform: uppercase;
-  margin-right: 20px;
-}
-
-.card .card-action a:hover {
+.card .card-actions:hover {
+  z-index: 10;
   text-decoration: none;
+}
+
+.card .card-actions a {
+  font-size: 1rem;
+  color: green;
+  text-transform: uppercase;
+  padding: 8px;
+}
+
+.card .card-actions a:hover {
+  color: #cc2222;
+  background-color: #ffffffaa;
+  z-index: 4;
 }
 </style>

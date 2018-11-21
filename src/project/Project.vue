@@ -3,7 +3,7 @@
   .hero.is-link
     .hero-body
       h1.title {{project.name}}
-      h3.subtitle.small lorem ipsum &raquo; {{project.id}}
+      h3.subtitle.small viz-{{project.id}}
 
   section
     list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
@@ -15,7 +15,7 @@
         .viz-item(v-for="viz in project.visualizations"
                   v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
-            viz-thumbnail
+            viz-thumbnail(@remove="handleRemoveViz(viz.id)" @share="handleShareViz(viz.id)")
               .itemTitle(slot="title"): span {{ viz.type }}
               span(slot="content") viz-{{ viz.id.substring(0,4) }}
 
@@ -46,7 +46,7 @@
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
 
-              .tag-container(slot="content") 
+              .tag-container(slot="content")
                 .tag.is-info(v-for="tag in file.tags")
                   span {{ tag.name }}
 
@@ -59,15 +59,15 @@
             .itemTitle(slot="title")
               span {{ upload.file.name }}
               span {{ toPercentage(upload.progress) }}%
-            span(slot="content") {{ toStatus(upload.status) }}       
+            span(slot="content") {{ toStatus(upload.status) }}
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
                         v-bind:projectStore="projectStore")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-              v-bind:uploadStore="uploadStore" 
-              v-bind:projectStore="projectStore" 
+              v-bind:uploadStore="uploadStore"
+              v-bind:projectStore="projectStore"
               v-bind:selectedProject="project"
               v-bind:selectedFiles="selectedFiles")
 
@@ -221,6 +221,15 @@ export default class ProjectViewModel extends vueInstance {
         return 'Finished'
       default:
         return 'Failed'
+    }
+  }
+  private async onRemoveViz(viz: string) {
+    console.log('remove viz', viz)
+    try {
+      // const updatedProject = await FileAPI.deleteVisualization(viz)
+      // this.project = updatedProject
+    } catch (error) {
+      console.error(error)
     }
   }
 }
