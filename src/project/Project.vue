@@ -64,7 +64,10 @@
                         v-bind:projectsStore="projectsStore")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-  v-bind:uploadStore="uploadStore", v-bind:projectStore="projectsStore" v-bind:selectedProject="project")
+              v-bind:uploadStore="uploadStore" 
+              v-bind:projectStore="projectsStore" 
+              v-bind:selectedProject="project"
+              v-bind:selectedFiles="selectedFiles")
 
 
 </template>
@@ -119,6 +122,7 @@ export default class ProjectViewModel extends vueInstance {
   private showCreateVisualization = false
   private showFileUpload = false
   private isDragOver = false
+  private selectedFiles: File[] = []
 
   private get isFetching() {
     return this.projectsState.isFetching
@@ -132,7 +136,7 @@ export default class ProjectViewModel extends vueInstance {
     return this.uploadState.uploads.filter(upload => upload.project.id === this.project.id)
   }
 
-  private async created() {
+  public async created() {
     try {
       await this.projectsStore.selectProject(this.projectId)
     } catch (error) {
@@ -150,9 +154,8 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private onAddFiles() {
-    /* const input = this.$refs.fileInput as HTMLInputElement
-    input.click()*/
-    this.showFileUpload = true
+    const input = this.$refs.fileInput as HTMLInputElement
+    input.click()
   }
 
   private onAddFilesClosed() {
@@ -161,23 +164,16 @@ export default class ProjectViewModel extends vueInstance {
 
   private async onFileInput() {
     const files = (this.$refs.fileInput as any).files
-    try {
-      await this.projectsStore.addFilesToSelectedProject(files)
-    } catch (error) {
-      console.error(error)
-    }
+    this.selectedFiles = files
+    this.showFileUpload = true
   }
 
   private async onDrop(data: any, event: any) {
     event.preventDefault()
     this.isDragOver = false
     const files = event.dataTransfer.files
-
-    try {
-      await this.projectsStore.addFilesToSelectedProject(files)
-    } catch (error) {
-      console.error(error)
-    }
+    this.selectedFiles = files
+    this.showFileUpload = true
   }
 
   private onSelectVisualization(viz: Visualization) {

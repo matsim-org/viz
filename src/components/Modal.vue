@@ -17,13 +17,8 @@
   flex-direction: row-reverse;
 }
 
-.modal-card-head {
-  align-content: stretch;
-  align-items: stretch;
-}
-
-.modal-card-body {
-  flex: 1;
+.modal-content {
+  max-height: 80%;
 }
 </style>
 

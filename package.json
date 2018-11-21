@@ -34,6 +34,7 @@
     "vue": "^2.5.17",
     "vue-class-component": "^6.3.2",
     "vue-drag-drop": "^1.1.4",
+    "vue-property-decorator": "^7.2.0",
     "vue-router": "^3.0.1",
     "vue-slider-component": "^2.7.6",
     "vue2-dropzone": "^3.5.2",

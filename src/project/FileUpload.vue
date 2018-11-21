@@ -1,19 +1,11 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
   .header(slot="header")
-    h3 Upload Files
-    .addFiles
-        button.button.is-primary(v-on:click="onAddFiles()") Select Files
-        input.fileInput(type="file"
-          id="fileInput"
-          ref="fileInput"
-          multiple
-          v-on:change="onFileInput"
-          )
+    h3 Upload selectedFiles
     
-  .content(slot="content")
+  .tagsAndselectedFiles(slot="content")
     .tagWrapper
-      .tags
+      .tagsAndDropdown
         .selectedTags
           .tag.is-info(v-for="tag in selectedTags")
             span {{ tag.name }}
@@ -21,67 +13,74 @@ modal(v-on:close-requested="close()")
         .dropdown(:class="{'is-active': showTags && filteredTags.length > 0}")
           .dropdown-trigger 
             button.button.is-small(@click="showTags = !showTags")
-              span Add more tags
+              span Add tags
               span.icon.is-small
                 i.fas.fa-angle-down
           .dropdown-menu(role="menu")
             .dropdown-content
               a.dropdown-item(v-for="tag in filteredTags" @click="onTagSelected(tag)") {{ tag.name }}
       .addNewTag
-        input.input(type="text" v-model="newTagText")
-        button.button(@click="onAddTag") Add
+        input.input.is-small(type="text" v-model="newTagText" :class="{'is-danger': isInvalidNewTag }")
+        button.button.is-small(@click="onAddTag") Add
       
     .fileList
-      .fileItem(v-for="upload in selectedUploads")
-        list-element(v-bind:key="upload.file.name")
+      .fileItem(v-for="file in files")
+        list-element(v-bind:key="file.name")
           .itemTitle(slot="title")
-            span {{ upload.file.name }}
-            span {{ upload.file.type }}
-          span(slot="content") {{ upload.file.size }}
-          button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(upload)")
+            span {{ file.name }}
+            span {{ file.type }}
+          span(slot="content") {{ file.size }}
+          button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(file)")
     
   div(slot="actions")
     button.ui.negative.button(v-on:click="cancel()") Cancel
-    button.button.is-link(v-on:click="uploadFiles()") Upload
+    button.button.is-link(v-on:click="uploadselectedFiles()") Upload
     
 
 
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import TagsInput from '@johmun/vue-tags-input'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import ListElement from '@/components/ListElement.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
 import Project, { Tag } from '@/entities/Project'
-import Component from 'vue-class-component'
 import ProjectsStore from '@/project/ProjectsStore'
 
-const vueInstance = Vue.extend({
+@Component({
   components: {
     modal: Modal,
     'list-element': ListElement,
-    'tags-input': TagsInput,
-  },
-  props: {
-    projectStore: ProjectsStore,
-    uploadStore: UploadStore,
-    selectedProject: Object,
   },
 })
-
-@Component
-export default class FileUploadViewModel extends vueInstance {
+export default class FileUploadViewModel extends Vue {
   private newTagText: string = ''
   private showTags: boolean = false
   private tag: string = ''
-  private selectedUploads: FileUpload[] = []
   private selectedTags: Tag[] = []
   private tagFilter = ''
+  private isInvalidNewTag = false
+  private files: File[] = []
+
+  @Prop({ type: ProjectsStore, required: true })
+  private projectStore!: ProjectsStore
+  @Prop({ type: UploadStore, required: true })
+  private uploadStore!: UploadStore
+  @Prop({ type: Object as () => Project, required: true })
+  private selectedProject!: Project
+  @Prop({ type: FileList, required: true })
+  private selectedFiles!: FileList
 
   private get filteredTags() {
     return this.selectedProject.tags.filter((tag: Tag) => !this.selectedTags.includes(tag))
+  }
+
+  public created() {
+    // tslint:disable-next-line
+    for (let i = 0; i < this.selectedFiles.length; i++) {
+      this.files.push(this.selectedFiles[i])
+    }
   }
 
   private cancel() {
@@ -90,24 +89,6 @@ export default class FileUploadViewModel extends vueInstance {
 
   private close() {
     this.$emit('close')
-  }
-
-  private onAddFiles() {
-    const input = this.$refs.fileInput as HTMLInputElement
-    input.click()
-  }
-
-  private onFileInput() {
-    const files = (this.$refs.fileInput as any).files as Iterable<File>
-    for (const file of files) {
-      this.selectedUploads.push({
-        project: this.selectedProject,
-        file: file,
-        tags: [],
-        status: UploadStatus.NotStarted,
-        progress: 0,
-      })
-    }
   }
 
   private onTagSelected(tag: Tag) {
@@ -119,21 +100,33 @@ export default class FileUploadViewModel extends vueInstance {
   }
 
   private async onAddTag() {
-    const exsistingTag = this.selectedProject.tags.find((tag: Tag) => tag.name === this.newTagText)
+    const exsistingTag = this.selectedProject.tags.find(
+      (tag: Tag) => tag.name.toLowerCase() === this.newTagText.toLowerCase()
+    )
     if (!exsistingTag && this.newTagText !== '') {
+      this.isInvalidNewTag = false
       await this.projectStore.addTagToSelectedProject(this.newTagText, 'run')
+      this.newTagText = ''
+    } else {
+      this.isInvalidNewTag = true
     }
   }
 
-  private onRemoveFile(upload: FileUpload) {
-    this.selectedUploads = this.selectedUploads.filter(u => u !== upload)
+  private onRemoveFile(file: File) {
+    this.files = this.files.filter((f: File) => f !== file)
   }
 
-  private async uploadFiles() {
-    this.selectedUploads.forEach(upload => {
-      upload.tags = this.selectedTags
+  private async uploadselectedFiles() {
+    const uploads = this.files.map(file => {
+      return {
+        project: this.selectedProject,
+        file: file,
+        tags: this.selectedTags,
+        status: UploadStatus.NotStarted,
+        progress: 0,
+      }
     })
-    this.uploadStore.uploadFiles(this.selectedUploads)
+    this.uploadStore.uploadFiles(uploads)
     this.close()
   }
 }
@@ -142,9 +135,14 @@ export default class FileUploadViewModel extends vueInstance {
 
 
 <style scoped>
-.tags {
+.tagsAndDropdown {
   display: flex;
   flex-direction: row;
+  align-content: center;
+}
+
+.tagsAndselectedFiles {
+  min-height: 25rem;
 }
 
 .fileInput {
@@ -162,10 +160,6 @@ export default class FileUploadViewModel extends vueInstance {
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
-}
-
-.content {
-  min-height: 300px;
 }
 
 .tagWrapper {
