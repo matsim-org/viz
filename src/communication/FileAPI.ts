@@ -77,11 +77,11 @@ export default class FileAPI {
     }
   }
 
-  public static async deleteFile(fileId: string, project: Project): Promise<Project> {
+  public static async deleteFile(fileId: string, project: Project): Promise<void> {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
 
-    return await this.request<Project>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
+    return await this.request<void>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
   }
 
   private static postRequestOptions(body: any): RequestInit {
@@ -104,8 +104,15 @@ export default class FileAPI {
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
     const result = await AuthenticatedRequest.fetch(endpoint, options)
     if (result.ok) {
-      const message = await result.json()
-      return this.jsogService.deserialize(message) as any
+      if (result.status === 204) {
+        // if result is no-content, there is nothing to parse
+        // make the compiler happy about return types.
+        const promise = Promise.resolve() as unknown
+        return promise as Promise<T>
+      } else {
+        const message = await result.json()
+        return this.jsogService.deserialize(message) as any
+      }
     } else {
       throw await this.generateError(result)
     }
