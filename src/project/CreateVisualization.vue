@@ -9,7 +9,7 @@ modal(v-on:close-requested="cancel()")
           p.menu-label Select:
           ul.menu-list
             li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
-              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="handleVizTypeChanged(viz)") {{viz.prettyName}}
+              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
           h3 {{selectedVizType.prettyName}}
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
@@ -173,6 +173,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
   private createEmtpyVisualizationType(): VisualizationType {
     return {
       typeName: '',
+      prettyName: '',
       requiredFileKeys: [],
       requiredParamKeys: [],
     }

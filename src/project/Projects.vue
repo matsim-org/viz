@@ -59,9 +59,8 @@ export default class ProjectsViewModel extends vueInstance {
   }
 
   public mounted() {
-	EventBus.$emit('set-breadcrumbs', [{ title: 'My Projects', link: '/projects' }])
+    EventBus.$emit('set-breadcrumbs', [{ title: 'My Projects', link: '/projects' }])
   }
-  
 
   private handleCreateClicked() {
     this.showCreateProject = true

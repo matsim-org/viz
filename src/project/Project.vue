@@ -145,7 +145,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   public mounted() {
-	EventBus.$emit('set-breadcrumbs', [
+    EventBus.$emit('set-breadcrumbs', [
       { title: 'My Projects', link: '/projects' },
       { title: this.project.name, link: '/project/' + this.project.id },
     ])
