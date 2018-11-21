@@ -46,9 +46,11 @@
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
 
-              span(slot="content") {{file.id}}
+              .tag-container(slot="content") 
+                .tag.is-info(v-for="tag in file.tags")
+                  span {{ tag.name }}
 
-              button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+              button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
     h3 Pending Uploads
       .uploads
@@ -176,6 +178,14 @@ export default class ProjectViewModel extends vueInstance {
     this.showFileUpload = true
   }
 
+  private async onDeleteFile(fileId: string) {
+    try {
+      await this.projectsStore.deleteFile(fileId)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   private onSelectVisualization(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
   }
@@ -260,6 +270,14 @@ section {
   font-size: inherit;
   cursor: pointer;
   transition-duration: 0.2s;
+}
+
+.tag-container {
+  margin-top: 0.1rem;
+}
+
+.tag {
+  margin-right: 0.3rem;
 }
 
 .fileItem:hover {

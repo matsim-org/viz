@@ -55,11 +55,12 @@ export default class ProjectsStore {
     }
   }
 
-  public async addFilesToSelectedProject(files: File[]) {
+  public async deleteFile(id: string) {
+    const currentProject = this.state.selectedProject
     this.state.isFetching = true
     try {
-      const updatedProject = await FileAPI.uploadFiles(files, this.state.selectedProject)
-      this.state.selectedProject = updatedProject
+      await FileAPI.deleteFile(id, currentProject)
+      currentProject.files = currentProject.files.filter(file => file.id !== id)
     } finally {
       this.state.isFetching = false
     }
