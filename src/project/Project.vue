@@ -6,33 +6,33 @@
       h3.subtitle.small lorem ipsum &raquo; {{project.id}}
 
   section
-    list-header(v-on:btnClicked="handleAddVisualizationClicked" title="Visualizations" btnTitle="Add Viz")
-    span(v-if="isFetchingData") Fetching project data...
+    list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
+    span(v-if="isFetching") Fetching project data...
     .visualizations
       .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
         span No Visualizations yet. Add some!
       .viz-table(v-else)
         .viz-item(v-for="viz in project.visualizations"
-                  v-on:click="handleVisualizationClicked(viz)"
+                  v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
             viz-thumbnail
               .itemTitle(slot="title"): span {{ viz.type }}
               span(slot="content") viz-{{ viz.id.substring(0,4) }}
 
   section
-    list-header(v-on:btnClicked="handleAddFileClicked" title="Project Files" btnTitle="Add File")
+    list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
     input.fileInput(type="file"
         id="fileInput"
         ref="fileInput"
         multiple
-        v-on:change="onFileInputChanged"
+        v-on:change="onFileInput"
         )
     .file-area
       drop.drop(
-        :class="{over}"
-        @dragover="over = true"
-        @dragleave="over = false"
-        @drop="handleDrop"
+        :class="{isDragOver}"
+        @dragover="isDragOver = true"
+        @dragleave="isDragOver = false"
+        @drop="onDrop"
         effect-allowed='all'
       ): b Drag/drop files here!
 
@@ -41,22 +41,42 @@
           b No files yet. Add some!
         .fileList(v-else)
           .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id" v-on:itemClicked="handleFileClicked(file.id)")
+            list-element( v-bind:key="file.id" v-on:itemClicked="onSelectFile(file.id)")
               .itemTitle(slot="title")
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
 
-              span(slot="content") {{file.id}}
+              .tag-container(slot="content") 
+                .tag.is-info(v-for="tag in file.tags")
+                  span {{ tag.name }}
 
-              button.button.is-small.is-rounded.is-warning(slot="accessory" v-on:click="handleDeleteFileClicked(file.id)") Delete
+              button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+
+    h3 Pending Uploads
+      .uploads
+        .fileItem(v-for="upload in uploads")
+          list-element
+            .itemTitle(slot="title")
+              span {{ upload.file.name }}
+              span {{ toPercentage(upload.progress) }}%
+            span(slot="content") {{ toStatus(upload.status) }}       
 
   create-visualization(v-if="showCreateVisualization"
-                        v-on:close="handleAddVisualizationClosed"
-                        v-bind:project="project")
+                        v-on:close="onAddVisualizationClosed"
+                        v-bind:projectStore="projectStore")
+
+  file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
+              v-bind:uploadStore="uploadStore" 
+              v-bind:projectStore="projectStore" 
+              v-bind:selectedProject="project"
+              v-bind:selectedFiles="selectedFiles")
+
+
 </template>
 <script lang="ts">
 import Vue from 'vue'
 import CreateVisualization from '@/project/CreateVisualization.vue'
+import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
@@ -68,118 +88,142 @@ import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
+import ProjectStore from '@/project/ProjectStore'
+import Component from 'vue-class-component'
+import UploadStore from '@/project/UploadStore'
 
-interface ProjectState {
-  sharedState: SharedState
-  project: Project
-  isFetchingData: boolean
-  showCreateVisualization: boolean
-  over: boolean
-}
-
-export default Vue.extend({
+const vueInstance = Vue.extend({
+  props: {
+    projectStore: ProjectStore,
+    uploadStore: UploadStore,
+    projectId: String,
+  },
   components: {
     'create-visualization': CreateVisualization,
+    'file-upload': FileUpload,
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
     Drag,
     Drop,
   },
-  data(): ProjectState {
+  data() {
     return {
+      projectState: this.projectStore.State,
+      uploadState: this.uploadStore.State,
       sharedState: SharedStore.state,
-      project: {
-        id: this.$route.params.projectId,
-        name: '',
-        files: [],
-        creator: {},
-        visualizations: [],
-      },
-      isFetchingData: false,
-      showCreateVisualization: false,
-      over: false,
     }
   },
-  created: async function(): Promise<void> {
-    const project = this.sharedState.personalProjects.find(element => element.id === this.project.id)
-    if (project) {
-      this.project = project
-    }
+})
 
-    if (!project || !project.files) {
-      this.isFetchingData = true
-      this.project = await FileAPI.fetchProject(this.project.id)
-      this.isFetchingData = false
+@Component
+export default class ProjectViewModel extends vueInstance {
+  private showCreateVisualization = false
+  private showFileUpload = false
+  private isDragOver = false
+  private selectedFiles: File[] = []
+
+  private get isFetching() {
+    return this.projectState.isFetching
+  }
+
+  private get project() {
+    return this.projectState.selectedProject
+  }
+
+  private get uploads() {
+    return this.uploadState.uploads.filter(upload => upload.project.id === this.project.id)
+  }
+
+  public async created() {
+    try {
+      await this.projectStore.selectProject(this.projectId)
+    } catch (error) {
+      console.error(error)
+      // do some error handling
     }
-  },
-  mounted: function() {
+  }
+
+  public mounted() {
     EventBus.$emit('set-breadcrumbs', [
       { title: 'My Projects', link: '/projects' },
       { title: this.project.name, link: '/project/' + this.project.id },
     ])
-  },
-  computed: {
-    projectId: function(): string {
-      return this.$route.params.id
-    },
-  },
-  methods: {
-    readableFileSize: function(bytes: number): string {
-      return filesize(bytes)
-    },
-    handleAddFileClicked: function(): void {
-      const input = this.$refs.fileInput as HTMLInputElement
-      input.click()
-    },
-    handleFileClicked: async function(fileId: string): Promise<void> {
-      try {
-        const blob = await FileAPI.downloadFile(fileId, this.project.id)
-        window.open(URL.createObjectURL(blob))
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    handleDeleteFileClicked: async function(fileId: string): Promise<void> {
-      try {
-        this.project = await FileAPI.deleteFile(fileId, this.project)
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    handleAddVisualizationClicked: function(): void {
-      this.showCreateVisualization = true
-    },
-    handleAddVisualizationClosed: function(visualization: Visualization): void {
-      this.showCreateVisualization = false
-      if (visualization) this.project.visualizations.push(visualization)
-    },
-    handleVisualizationClicked: function(viz: Visualization): void {
-      this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
-    },
-    onFileInputChanged: async function(): Promise<void> {
-      const files = (this.$refs.fileInput as any).files
-      try {
-        const updatedProject = await FileAPI.uploadFiles(files, this.project)
-        this.project = updatedProject
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    handleDrop: async function(data: any, event: any) {
-      event.preventDefault()
-      this.over = false
-      const files = event.dataTransfer.files
+  }
 
-      try {
-        const updatedProject = await FileAPI.uploadFiles(files, this.project)
-        this.project = updatedProject
-      } catch (error) {
-        console.error(error)
-      }
-    },
-  },
-})
+  private onAddVisualization() {
+    this.showCreateVisualization = true
+  }
+
+  private onAddVisualizationClosed() {
+    this.showCreateVisualization = false
+  }
+
+  private onAddFiles() {
+    const input = this.$refs.fileInput as HTMLInputElement
+    input.click()
+  }
+
+  private onAddFilesClosed() {
+    this.showFileUpload = false
+  }
+
+  private async onFileInput() {
+    const files = (this.$refs.fileInput as any).files
+    this.selectedFiles = files
+    this.showFileUpload = true
+  }
+
+  private async onDrop(data: any, event: any) {
+    event.preventDefault()
+    this.isDragOver = false
+    const files = event.dataTransfer.files
+    this.selectedFiles = files
+    this.showFileUpload = true
+  }
+
+  private async onDeleteFile(fileId: string) {
+    try {
+      await this.projectStore.deleteFile(fileId)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  private onSelectVisualization(viz: Visualization) {
+    this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+  }
+
+  private async onSelectFile(fileId: string) {
+    try {
+      const blob = await FileAPI.downloadFile(fileId, this.project.id)
+      window.open(URL.createObjectURL(blob))
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  private readableFileSize(bytes: number): string {
+    return filesize(bytes)
+  }
+
+  private toPercentage(fraction: number): string | undefined {
+    return (fraction * 100).toFixed(0)
+  }
+
+  private toStatus(status: number): string {
+    switch (status) {
+      case 0:
+        return 'Waiting'
+      case 1:
+        return 'Uploading'
+      case 2:
+        return 'Finished'
+      default:
+        return 'Failed'
+    }
+  }
+}
 </script>
 <style scoped>
 section {
@@ -230,6 +274,14 @@ section {
   font-size: inherit;
   cursor: pointer;
   transition-duration: 0.2s;
+}
+
+.tag-container {
+  margin-top: 0.1rem;
+}
+
+.tag {
+  margin-right: 0.3rem;
 }
 
 .fileItem:hover {

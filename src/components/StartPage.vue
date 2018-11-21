@@ -120,7 +120,6 @@ function mounted() {
 
 h2,
 h3 {
-  color: #6666ff;
   margin-top: 15px;
   margin-bottom: 3px;
 }
