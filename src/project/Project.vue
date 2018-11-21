@@ -16,8 +16,8 @@
                   v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
             viz-thumbnail
-              .itemTitle(slot="title"): span {{ viz.type.typeName}}
-              span(slot="content") lorem ipsum dolor et tu brute
+              .itemTitle(slot="title"): span {{ viz.type }}
+              span(slot="content") viz-{{ viz.id.substring(0,4) }}
 
   section
     list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -80,7 +80,7 @@ import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
-import SharedStore, { SharedState } from '@/SharedStore'
+import SharedStore, { EventBus, SharedState } from '@/SharedStore'
 import Project from '@/entities/Project'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import { Visualization } from '@/entities/Visualization'
@@ -91,7 +91,6 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
-import { stat } from 'fs'
 
 const vueInstance = Vue.extend({
   props: {
@@ -143,6 +142,13 @@ export default class ProjectViewModel extends vueInstance {
       console.error(error)
       // do some error handling
     }
+  }
+
+  public mounted() {
+	EventBus.$emit('set-breadcrumbs', [
+      { title: 'My Projects', link: '/projects' },
+      { title: this.project.name, link: '/project/' + this.project.id },
+    ])
   }
 
   private onAddVisualization() {
@@ -310,7 +316,7 @@ section {
 }
 .drop {
   padding: 25px;
-  margin: 20px 10px 50px 0px;
+  margin: 20px 10px auto 0px;
   text-align: center;
   border: 5px dashed #ddd;
   border-radius: 10px;

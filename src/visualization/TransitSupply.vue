@@ -83,8 +83,10 @@ class Departure {
 // register component with the SharedStore
 SharedStore.addVisualizationType({
   typeName: 'transit-supply',
-  requiredFileKeys: ['transitNetwork', 'roadNetwork'],
-  requiredParamKeys: ['projection'],
+  prettyName: 'Transit Supply',
+  description: 'Depicts the scheduled transit routes on a network.',
+  requiredFileKeys: ['Transit Schedule', 'Network'],
+  requiredParamKeys: ['Projection'],
 })
 
 // Add various projections that we use here
@@ -100,6 +102,7 @@ const store: any = {
   routesOnLink: [],
   selectedRoute: null,
   projectId: null,
+  project: {},
   vizId: null,
   visualization: null,
 }
@@ -141,7 +144,17 @@ export default {
 
 async function getVizDetails() {
   store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  store.project = await FileAPI.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization.inputFiles))
+  setBreadcrumb()
+}
+
+function setBreadcrumb() {
+  EventBus.$emit('set-breadcrumbs', [
+    { title: 'My Projects', link: '/projects' },
+    { title: store.project.name, link: '/project/' + store.projectId },
+    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
+  ])
 }
 
 function setupMap() {
@@ -327,8 +340,8 @@ async function loadNetworks() {
   try {
     console.log(store.visualization.inputFiles)
 
-    const ROAD_NET = store.visualization.inputFiles.roadNetwork.fileEntry.id
-    const TRANSIT_NET = store.visualization.inputFiles.transitNetwork.fileEntry.id
+    const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
+    const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
     console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'

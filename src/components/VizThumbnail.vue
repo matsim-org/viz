@@ -54,6 +54,7 @@
 */
 .card .card-image {
   overflow: hidden;
+  height: 150px;
 }
 
 .card:hover {

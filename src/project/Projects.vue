@@ -31,7 +31,7 @@ import ListElement from '@/components/ListElement.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
-import SharedStore, { SharedState } from '@/SharedStore'
+import SharedStore, { SharedState, EventBus } from '@/SharedStore'
 import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 
 const vueInstance = Vue.extend({
@@ -57,6 +57,11 @@ export default class ProjectsViewModel extends vueInstance {
   private get projects() {
     return this.projectsState.projects
   }
+
+  public mounted() {
+	EventBus.$emit('set-breadcrumbs', [{ title: 'My Projects', link: '/projects' }])
+  }
+  
 
   private handleCreateClicked() {
     this.showCreateProject = true
