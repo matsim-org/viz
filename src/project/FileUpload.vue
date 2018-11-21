@@ -46,7 +46,7 @@ import Modal from '@/components/Modal.vue'
 import ListElement from '@/components/ListElement.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
 import Project, { Tag } from '@/entities/Project'
-import ProjectsStore from '@/project/ProjectsStore'
+import ProjectStore from '@/project/ProjectStore'
 
 @Component({
   components: {
@@ -63,8 +63,8 @@ export default class FileUploadViewModel extends Vue {
   private isInvalidNewTag = false
   private files: File[] = []
 
-  @Prop({ type: ProjectsStore, required: true })
-  private projectStore!: ProjectsStore
+  @Prop({ type: ProjectStore, required: true })
+  private projectStore!: ProjectStore
   @Prop({ type: UploadStore, required: true })
   private uploadStore!: UploadStore
   @Prop({ type: Object as () => Project, required: true })

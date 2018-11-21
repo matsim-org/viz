@@ -20,7 +20,7 @@
             span(slot="title") {{project.name}}
             span(slot="content") {{project.id}}
 
-    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:projects-store="projectsStore")
+    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:project-store="projectStore")
 </template>
 
 <script lang="ts">
@@ -32,11 +32,11 @@ import CreateProject from '@/project/CreateProject.vue'
 import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
 import SharedStore, { SharedState } from '@/SharedStore'
-import ProjectsStore, { ProjectsState } from '@/project/ProjectsStore'
+import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 
 const vueInstance = Vue.extend({
   props: {
-    projectsStore: ProjectsStore,
+    projectStore: ProjectStore,
   },
   components: {
     'list-header': ListHeader,
@@ -45,7 +45,7 @@ const vueInstance = Vue.extend({
   },
   data() {
     return {
-      projectsState: this.projectsStore.State,
+      projectsState: this.projectStore.State,
     }
   },
 })
@@ -68,7 +68,7 @@ export default class ProjectsViewModel extends vueInstance {
 
   private async created() {
     try {
-      await this.projectsStore.fetchProjects()
+      await this.projectStore.fetchProjects()
     } catch (error) {
       console.error(error)
     }

@@ -16,7 +16,7 @@ import TextInput from '@/components/TextInput.vue'
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
 import TextInputVue from '@/components/TextInput.vue'
-import ProjectsStore from '@/project/ProjectsStore'
+import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 
 const vueInstance = Vue.extend({
@@ -26,7 +26,7 @@ const vueInstance = Vue.extend({
     modal: Modal,
   },
   props: {
-    projectsStore: ProjectsStore,
+    projectStore: ProjectStore,
   },
 })
 
@@ -45,7 +45,7 @@ export default class CreateProjectViewModel extends vueInstance {
 
   private async handleCreateClicked() {
     try {
-      const newProject = await this.projectsStore.createProject(this.projectName)
+      const newProject = await this.projectStore.createProject(this.projectName)
       this.$router.push({ path: `/project/${newProject.id}` })
     } catch (error) {
       this.errorMessage = 'Uh oh, Could not create project.'

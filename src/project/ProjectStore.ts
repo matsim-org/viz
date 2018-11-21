@@ -4,14 +4,14 @@ import { Visualization } from '@/entities/Visualization'
 import UploadStore from './UploadStore'
 import FileEntry from '@/entities/File'
 
-export interface ProjectsState {
+export interface ProjectState {
   projects: Project[]
   selectedProject: Project
   isFetching: boolean
 }
 
-export default class ProjectsStore {
-  private state: ProjectsState
+export default class ProjectStore {
+  private state: ProjectState
 
   get State() {
     return this.state
@@ -103,7 +103,7 @@ export default class ProjectsStore {
     }
   }
 
-  private getInitialState(): ProjectsState {
+  private getInitialState(): ProjectState {
     return {
       projects: [],
       isFetching: false,

@@ -51,7 +51,7 @@ import Project from '../entities/Project'
 import { Visualization } from '../entities/Visualization'
 import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
 import SharedStore, { SharedState } from '../SharedStore'
-import ProjectsStore from '@/project/ProjectsStore'
+import ProjectStore from '@/project/ProjectStore'
 
 interface CreateVisualizationState {
   fileLookup: any
@@ -68,7 +68,7 @@ interface CreateVisualizationState {
 
 const vueInstance = Vue.extend({
   props: {
-    projectsStore: ProjectsStore,
+    projectStore: ProjectStore,
   },
   components: {
     modal: Modal,
@@ -76,7 +76,7 @@ const vueInstance = Vue.extend({
   },
   data() {
     return {
-      projectsState: this.projectsStore.State,
+      projectState: this.projectStore.State,
       sharedState: SharedStore.state,
     }
   },
@@ -97,7 +97,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
   }
 
   private get project() {
-    return this.projectsState.selectedProject
+    return this.projectState.selectedProject
   }
 
   private get isError() {
@@ -106,7 +106,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
 
   private created() {
     this.request = {
-      projectId: this.projectsState.selectedProject.id,
+      projectId: this.projectState.selectedProject.id,
       typeKey: 'raw-files',
       inputFiles: {},
       inputParameters: {},
@@ -125,7 +125,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
     this.isRequesting = true
     try {
       const viz = await FileAPI.createVisualization(this.request)
-      this.projectsStore.addVisualizationToSelectedProject(viz)
+      this.projectStore.addVisualizationToSelectedProject(viz)
       this.close()
     } catch (error) {
       console.log(error)
@@ -163,7 +163,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
 
   private clearRequest() {
     this.request = {
-      projectId: this.projectsState.selectedProject.id,
+      projectId: this.projectState.selectedProject.id,
       typeKey: 'raw-files',
       inputFiles: {},
       inputParameters: {},

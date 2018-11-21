@@ -63,11 +63,11 @@
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
-                        v-bind:projectsStore="projectsStore")
+                        v-bind:projectStore="projectStore")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
               v-bind:uploadStore="uploadStore" 
-              v-bind:projectStore="projectsStore" 
+              v-bind:projectStore="projectStore" 
               v-bind:selectedProject="project"
               v-bind:selectedFiles="selectedFiles")
 
@@ -88,15 +88,14 @@ import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
-import ProjectsStore from '@/project/ProjectsStore'
+import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { stat } from 'fs'
-import Dropwdown from '@/components/Dropwdown.vue'
 
 const vueInstance = Vue.extend({
   props: {
-    projectsStore: ProjectsStore,
+    projectStore: ProjectStore,
     uploadStore: UploadStore,
     projectId: String,
   },
@@ -106,13 +105,12 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
-    dropwdown: Dropwdown,
     Drag,
     Drop,
   },
   data() {
     return {
-      projectsState: this.projectsStore.State,
+      projectState: this.projectStore.State,
       uploadState: this.uploadStore.State,
       sharedState: SharedStore.state,
     }
@@ -127,11 +125,11 @@ export default class ProjectViewModel extends vueInstance {
   private selectedFiles: File[] = []
 
   private get isFetching() {
-    return this.projectsState.isFetching
+    return this.projectState.isFetching
   }
 
   private get project() {
-    return this.projectsState.selectedProject
+    return this.projectState.selectedProject
   }
 
   private get uploads() {
@@ -140,7 +138,7 @@ export default class ProjectViewModel extends vueInstance {
 
   public async created() {
     try {
-      await this.projectsStore.selectProject(this.projectId)
+      await this.projectStore.selectProject(this.projectId)
     } catch (error) {
       console.error(error)
       // do some error handling
@@ -180,7 +178,7 @@ export default class ProjectViewModel extends vueInstance {
 
   private async onDeleteFile(fileId: string) {
     try {
-      await this.projectsStore.deleteFile(fileId)
+      await this.projectStore.deleteFile(fileId)
     } catch (error) {
       console.log(error)
     }
