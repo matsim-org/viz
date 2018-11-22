@@ -12,6 +12,8 @@
 #find / -type f -name VSP_SSH_KEY 2> >(grep -v 'Permission denied' >&2) > tmp_vspsshkey
 #VSPKEY=$(cat tmp_vspsshkey)
 eval $(ssh-agent -s)
+# see bug with line endings at https://gitlab.com/gitlab-examples/ssh-private-key/issues/1
+# this needs a base64 -w0 encoded key
 ssh-add <(echo "$VSP_SSH_KEY"| base64 --decode)
 # set correct permissions
 #chmod 0600 $LOCATION/VSP_SSH_KEY
@@ -20,4 +22,5 @@ ssh-add <(echo "$VSP_SSH_KEY"| base64 --decode)
 ssh vizdeploy@viz.vsp.tu-berlin.de 'rm -r /var/www/viz-dev/*'
 # upload fresh built files
 #scp -i $LOCATION/VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
-scp $TRAVIS_BUILD_DIR/dist/* vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev/
+cd $TRAVIS_BUILD_DIR
+scp -r ./dist/* vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev/
