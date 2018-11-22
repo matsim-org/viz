@@ -27,7 +27,7 @@ deploy:
     # add ssh-keys
     #- id
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent)
+    - eval "$(ssh-agent -s)"
     - ssh-add <(echo "$VSP_SSH_KEY")
     # remove old website
     - ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
