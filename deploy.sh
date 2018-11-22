@@ -12,7 +12,7 @@
 #find / -type f -name VSP_SSH_KEY 2> >(grep -v 'Permission denied' >&2) > tmp_vspsshkey
 #VSPKEY=$(cat tmp_vspsshkey)
 eval $(ssh-agent -s)
-ssh-add <(echo "$VSP_SSH_KEY")
+ssh-add <(echo "$VSP_SSH_KEY"| base64 --decode)
 # set correct permissions
 #chmod 0600 $LOCATION/VSP_SSH_KEY
 # remove old webfiles
