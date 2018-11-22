@@ -26,6 +26,9 @@ deploy:
     branch: dev
   provider: script
   script:
+      - chmod 0600 VSP_SSH_KEY
+      - chmod +x deploy.sh
+      - bash deploy.sh
     # upload all files from ./dist folder and delete files on s3 which are not in current build
     #- aws s3 sync ./dist s3://matsim-viz-website --delete
     # add ssh-keys
@@ -33,9 +36,9 @@ deploy:
     #- eval $(ssh-agent -s)
     #- ssh-add <(echo "$VSP_SSH_KEY")
     # remove old website
-    - ssh -i VSP_SSH_KEY vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
+    #- ssh -i VSP_SSH_KEY vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
     # upload built files
-    - scp -i VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
+    #- scp -i VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
     # trigger nginx to reload the freshly deployed files
     #- ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo nginx -s reload'
 skip_cleanup: true
