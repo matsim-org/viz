@@ -8,6 +8,7 @@ env:
     # provide secret keys, so that awscli understands them
     - travis encrypt AWS_ACCESS_KEY_ID=$S3_KEY_ID --add
     - travis encrypt AWS_SECRET_ACCESS_KEY=$S3_KEY --add
+    - travis encrypt SSH_KEY=$VSP_SSH_KEY --add
 
 # build the webapp into ./dist
 script: npm run build && npm run unit
@@ -24,7 +25,7 @@ deploy:
     #- aws s3 sync ./dist s3://matsim-viz-website --delete
     # add ssh-keys
     - eval $(ssh-agent -s)
-    - ssh-add <(echo "$VSP_SSH_KEY")
+    - ssh-add <(echo "$SSH_KEY")
     # remove old website
     - ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
     # upload built files
