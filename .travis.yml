@@ -1,4 +1,5 @@
 language: node_js
+dist: trusty
 node_js:
   - '8'
 #env:
@@ -24,6 +25,8 @@ deploy:
     # upload all files from ./dist folder and delete files on s3 which are not in current build
     #- aws s3 sync ./dist s3://matsim-viz-website --delete
     # add ssh-keys
+    - id
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$VSP_SSH_KEY")
     # remove old website
