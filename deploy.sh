@@ -17,7 +17,7 @@ ssh-add <(echo "$VSP_SSH_KEY"| base64 --decode)
 #chmod 0600 $LOCATION/VSP_SSH_KEY
 # remove old webfiles
 #ssh -i $LOCATION/VSP_SSH_KEY vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
-ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
+ssh vizdeploy@viz.vsp.tu-berlin.de 'rm -r /var/www/viz-dev/*'
 # upload fresh built files
 #scp -i $LOCATION/VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
-scp ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
+scp $TRAVIS_BUILD_DIR/matsim-org/viz/dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
