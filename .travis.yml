@@ -13,13 +13,22 @@ env:
 script: npm run build && npm run unit
 
 # install awscli command line tool to sync files to s3
-before_deploy: pip install --user awscli
+# before_deploy: pip install --user awscli
 
 deploy:
   on:
-    branch: master
+    branch: dev
   provider: script
   script:
     # upload all files from ./dist folder and delete files on s3 which are not in current build
-    - aws s3 sync ./dist s3://matsim-viz-website --delete
+    #- aws s3 sync ./dist s3://matsim-viz-website --delete
+    # add ssh-keys
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$VSP_SSH_KEY")
+    # remove old website
+    - ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
+    # upload built files
+    - scp ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
+    # trigger nginx to reload the freshly deployed files
+    #- ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo nginx -s reload'
   skip_cleanup: true
