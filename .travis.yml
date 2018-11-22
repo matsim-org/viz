@@ -17,6 +17,10 @@ script: npm run build && npm run unit
 # install awscli command line tool to sync files to s3
 # before_deploy: pip install --user awscli
 
+before_deploy:
+- openssl aes-256-cbc -K $encrypted_c5f74b728438_key -iv $encrypted_c5f74b728438_iv
+  -in VSP_SSH_KEY.enc -out VSP_SSH_KEY -d
+
 deploy:
   on:
     branch: dev
@@ -35,6 +39,3 @@ deploy:
     # trigger nginx to reload the freshly deployed files
     #- ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo nginx -s reload'
 skip_cleanup: true
-before_deploy:
-- openssl aes-256-cbc -K $encrypted_c5f74b728438_key -iv $encrypted_c5f74b728438_iv
-  -in VSP_SSH_KEY.enc -out VSP_SSH_KEY -d
