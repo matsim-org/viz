@@ -17,6 +17,11 @@ script: npm run build && npm run unit
 # install awscli command line tool to sync files to s3
 # before_deploy: pip install --user awscli
 
+addons:
+  ssh_known_hosts:
+  - viz.vsp.tu-berlin.de
+  - viz-dev.vsp.tu-berlin.de
+
 before_deploy:
 - openssl aes-256-cbc -K $encrypted_c5f74b728438_key -iv $encrypted_c5f74b728438_iv
   -in VSP_SSH_KEY.enc -out VSP_SSH_KEY -d
