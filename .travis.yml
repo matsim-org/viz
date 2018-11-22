@@ -25,8 +25,7 @@ deploy:
   on:
     branch: dev
   provider: script
-  script: find . -type f -name VSP_SSH_KEY
-  #script: chmod 0600 VSP_SSH_KEY && chmod +x deploy.sh && bash deploy.sh
+  script: cd matsim-org/viz/ && chmod 0600 VSP_SSH_KEY && chmod +x deploy.sh && bash deploy.sh
     # upload all files from ./dist folder and delete files on s3 which are not in current build
     #- aws s3 sync ./dist s3://matsim-viz-website --delete
     # add ssh-keys
