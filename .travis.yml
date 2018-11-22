@@ -25,14 +25,14 @@ deploy:
     # upload all files from ./dist folder and delete files on s3 which are not in current build
     #- aws s3 sync ./dist s3://matsim-viz-website --delete
     # add ssh-keys
-    - id
-    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent -s)
-    - ssh-add <(echo "$VSP_SSH_KEY")
+    #- id
+    #- 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    #- eval $(ssh-agent -s)
+    #- ssh-add <(echo "$VSP_SSH_KEY")
     # remove old website
-    - ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
+    - ssh -i $VSP_SSH_KEY vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
     # upload built files
-    - scp ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
+    - scp -i $VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
     # trigger nginx to reload the freshly deployed files
     #- ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo nginx -s reload'
   skip_cleanup: true
