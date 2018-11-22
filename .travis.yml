@@ -9,7 +9,6 @@ node_js:
 # provide secret keys, so that awscli understands them
 #- travis encrypt AWS_ACCESS_KEY_ID=$S3_KEY_ID --add
 #- travis encrypt AWS_SECRET_ACCESS_KEY=$S3_KEY --add
-#- travis encrypt SSH_KEY=$VSP_SSH_KEY --add
 
 # build the webapp into ./dist
 script: npm run build && npm run unit
@@ -17,30 +16,16 @@ script: npm run build && npm run unit
 # install awscli command line tool to sync files to s3
 # before_deploy: pip install --user awscli
 
+# trust these hosts
 addons:
   ssh_known_hosts:
   - viz.vsp.tu-berlin.de
   - viz-dev.vsp.tu-berlin.de
-
-before_deploy:
-- openssl aes-256-cbc -K $encrypted_c5f74b728438_key -iv $encrypted_c5f74b728438_iv
-  -in VSP_SSH_KEY.enc -out VSP_SSH_KEY -d
 
 deploy:
   on:
     branch: dev
   provider: script
   script: bash deploy.sh
-    # upload all files from ./dist folder and delete files on s3 which are not in current build
-    #- aws s3 sync ./dist s3://matsim-viz-website --delete
-    # add ssh-keys
-    #- 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    #- eval $(ssh-agent -s)
-    #- ssh-add <(echo "$VSP_SSH_KEY")
-    # remove old website
-    #- ssh -i VSP_SSH_KEY vizdeploy@viz.vsp.tu-berlin.de 'sudo rm -r /var/www/viz-dev/*'
-    # upload built files
-    #- scp -i VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
-    # trigger nginx to reload the freshly deployed files
-    #- ssh vizdeploy@viz.vsp.tu-berlin.de 'sudo nginx -s reload'
+    # switch to script file because deploy part supports one command only
 skip_cleanup: true
