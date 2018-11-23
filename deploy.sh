@@ -6,7 +6,10 @@ eval $(ssh-agent -s)
 # and the content of var VSP_SSH_KEY_BASE64 to be in double-quotes (in Travis)
 #ssh-add <(echo "$VSP_SSH_KEY_BASE64"| base64 --decode)
 # another approach: convert line endings on the fly
-echo "$VSP_SSH_KEY" | dos2unix | ssh-add -
+# not working
+#echo "$VSP_SSH_KEY" | dos2unix | ssh-add -
+#
+echo "${VSP_SSH_KEY}" | tr -d '\r' | ssh-add - > /dev/null
 # remove old webfiles
 ssh vizdeploy@viz.vsp.tu-berlin.de 'rm -r /var/www/viz-dev/*'
 # upload fresh built files
