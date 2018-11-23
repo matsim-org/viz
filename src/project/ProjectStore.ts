@@ -1,13 +1,17 @@
-import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
-import { Visualization } from '@/entities/Visualization'
+
 import UploadStore from './UploadStore'
-import FileEntry from '@/entities/File'
+import { Project, FileEntry, Visualization } from '@/entities/Entities'
 
 export interface ProjectState {
   projects: Project[]
   selectedProject: Project
   isFetching: boolean
+}
+
+export enum ProjectVisibility {
+  Public,
+  Private,
 }
 
 export default class ProjectStore {
@@ -40,6 +44,25 @@ export default class ProjectStore {
     } finally {
       this.state.isFetching = false
     }
+  }
+
+  public async changeNameOfSelectedProject(newName: string) {
+    this.state.isFetching = true
+    try {
+      const currentProject = this.state.selectedProject
+      await FileAPI.patchProject(currentProject.id, newName)
+      currentProject.name = newName
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async changeVisibilityOfSelectedProject(visibility: ProjectVisibility) {
+    const currentProject = this.state.selectedProject
+    /*const publicPermission = currentProject.permissions.find(permission => permission.agentId === 'allUsers')
+    if (visibility === ProjectVisibility.Private && publicPermission) {
+      FileAPI.removePermission(currentProject.id, publicPermission.)
+    }*/
   }
 
   public async selectProject(id: string) {
@@ -114,6 +137,8 @@ export default class ProjectStore {
         name: '',
         visualizations: [],
         tags: [],
+        createdAt: 0,
+        permissions: [],
       },
     }
   }

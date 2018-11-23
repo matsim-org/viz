@@ -45,8 +45,8 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import ListElement from '@/components/ListElement.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
-import Project, { Tag } from '@/entities/Project'
 import ProjectStore from '@/project/ProjectStore'
+import { Tag, Project } from '@/entities/Entities'
 
 @Component({
   components: {

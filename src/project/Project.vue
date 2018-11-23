@@ -81,9 +81,7 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
 import SharedStore, { EventBus, SharedState } from '@/SharedStore'
-import Project from '@/entities/Project'
 import VizThumbnail from '@/components/VizThumbnail.vue'
-import { Visualization } from '@/entities/Visualization'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
@@ -91,6 +89,7 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
+import { Visualization } from '@/entities/Entities'
 
 const vueInstance = Vue.extend({
   props: {
