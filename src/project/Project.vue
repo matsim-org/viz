@@ -1,10 +1,14 @@
 <template lang="pug">
 .project
   .hero.is-link
-    .hero-body
-      editable-label(v-on:editing-ended="onNameChanged")
+    .heroContainer
+      .projectTitle
         h1.title(slot="content") {{project.name}}
-      h3.subtitle.small viz-{{project.id}}
+        h3.subtitle viz-{{project.id}}
+      .editButton
+        button.button.is-small(@click="showSettings = true") 
+                span.icon.is-small
+                    i.fas.fa-pen
 
   section
     list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
@@ -71,6 +75,9 @@
               v-bind:projectStore="projectStore"
               v-bind:selectedProject="project"
               v-bind:selectedFiles="selectedFiles")
+  
+  project-settings(v-if="showSettings" v-on:close="showSettings=false"
+                  v-bind:projectStore="projectStore")
 
 
 </template>
@@ -92,6 +99,7 @@ import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { Visualization } from '@/entities/Entities'
 import Editable from '@/components/EditableLable.vue'
+import ProjectSettings from '@/project/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -106,6 +114,7 @@ const vueInstance = Vue.extend({
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
     'editable-label': Editable,
+    'project-settings': ProjectSettings,
     Drag,
     Drop,
   },
@@ -122,6 +131,7 @@ const vueInstance = Vue.extend({
 export default class ProjectViewModel extends vueInstance {
   private showCreateVisualization = false
   private showFileUpload = false
+  private showSettings = false
   private isDragOver = false
   private selectedFiles: File[] = []
 
@@ -245,6 +255,12 @@ export default class ProjectViewModel extends vueInstance {
 }
 </script>
 <style scoped>
+.heroContainer {
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
 section {
   margin: 4rem 1.5rem 2rem 1.5rem;
 }
