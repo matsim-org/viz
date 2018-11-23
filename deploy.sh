@@ -22,4 +22,4 @@ ssh-add <(echo "$VSP_SSH_KEY"| base64 --decode)
 ssh vizdeploy@viz.vsp.tu-berlin.de 'rm -r /var/www/viz-dev/*'
 # upload fresh built files
 #scp -i $LOCATION/VSP_SSH_KEY ./dist vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev
-cd $TRAVIS_BUILD_DIR/dist && scp -r ./* vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev/
+scp -r ./dist/* vizdeploy@viz.vsp.tu-berlin.de:/var/www/viz-dev/
