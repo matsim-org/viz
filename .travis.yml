@@ -24,7 +24,10 @@ addons:
 
 # see https://github.com/travis-ci/travis-ci/issues/4006
 before_deploy:
+  # or simly delete .gitignore
   - sed -i '/dist/d' $TRAVIS_BUILD_DIR/.gitignore
+  # install dos2unix
+  - 'which dos2unix || (sudo apt-get update -y && sudo apt-get install dos2unix -y )'
 
 deploy:
   on:
