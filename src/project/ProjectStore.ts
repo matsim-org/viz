@@ -1,7 +1,7 @@
 import FileAPI from '@/communication/FileAPI'
 
 import UploadStore from './UploadStore'
-import { Project, FileEntry, Visualization } from '@/entities/Entities'
+import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
 
 export interface ProjectState {
   projects: Project[]
@@ -59,10 +59,19 @@ export default class ProjectStore {
 
   public async changeVisibilityOfSelectedProject(visibility: ProjectVisibility) {
     const currentProject = this.state.selectedProject
-    /*const publicPermission = currentProject.permissions.find(permission => permission.agentId === 'allUsers')
-    if (visibility === ProjectVisibility.Private && publicPermission) {
-      FileAPI.removePermission(currentProject.id, publicPermission.)
-    }*/
+    const publicPermission = currentProject.permissions.find(permission => permission.agent.authId === 'allUsers')
+    try {
+      this.state.isFetching = true
+      if (visibility === ProjectVisibility.Private && publicPermission) {
+        await FileAPI.removePermission(currentProject.id, publicPermission.agent.authId)
+        currentProject.permissions = currentProject.permissions.filter(p => p !== publicPermission)
+      } else if (visibility === ProjectVisibility.Public && !publicPermission) {
+        const permission = await FileAPI.addPermission(currentProject.id, 'allUsers', PermissionType.Read)
+        currentProject.permissions.push(permission)
+      }
+    } finally {
+      this.state.isFetching = false
+    }
   }
 
   public async selectProject(id: string) {

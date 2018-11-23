@@ -2,7 +2,8 @@
 .project
   .hero.is-link
     .hero-body
-      h1.title {{project.name}}
+      editable-label(v-on:editing-ended="onNameChanged")
+        h1.title(slot="content") {{project.name}}
       h3.subtitle.small viz-{{project.id}}
 
   section
@@ -90,6 +91,7 @@ import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { Visualization } from '@/entities/Entities'
+import Editable from '@/components/EditableLable.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -103,6 +105,7 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
+    'editable-label': Editable,
     Drag,
     Drop,
   },
@@ -179,6 +182,14 @@ export default class ProjectViewModel extends vueInstance {
     const files = event.dataTransfer.files
     this.selectedFiles = files
     this.showFileUpload = true
+  }
+
+  private async onNameChanged(name: string, event: any) {
+    try {
+      await this.projectStore.changeNameOfSelectedProject(name)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   private async onDeleteFile(fileId: string) {

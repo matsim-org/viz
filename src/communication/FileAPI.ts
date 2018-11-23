@@ -46,13 +46,8 @@ export default class FileAPI {
   }
 
   public static async patchProject(projectId: string, newProjectName: string) {
-    const options: RequestInit = {
-      method: Method.PATCH,
-      mode: 'cors',
-      body: JSON.stringify({
-        name: newProjectName,
-      }),
-    }
+    const options = this.postRequestOptions({ name: newProjectName })
+    options.method = Method.PATCH
     return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
   }
 
