@@ -35,9 +35,15 @@ before_deploy:
   #- 'which dos2unix || (sudo apt-get update -y && sudo apt-get install dos2unix -y )'
 
 deploy:
-  on:
-    branch: dev
-  provider: script
-  script: bash deploy.sh
-    # switch to script file because deploy part supports one command only
-  skip_cleanup: true
+  - on:
+      branch: dev
+    provider: script
+    script: bash deploy.sh "viz-dev"
+     # switch to script file because deploy part supports one command only
+    skip_cleanup: true
+  - on:
+      branch: master
+    provider: script
+    script: bash deploy.sh "viz"
+     # switch to script file because deploy part supports one command only
+    skip_cleanup: true
