@@ -1,5 +1,8 @@
 #!/bin/bash
 # VSP deploy script for travis CI
+DOMAIN=$1
+
+# check whether ssh-agent is present
 eval $(ssh-agent -s)
 # see bug with line endings at https://gitlab.com/gitlab-examples/ssh-private-key/issues/1
 # this works but needs a base64 encoded key with cmd "cat id_rsa | base64 -w0"
