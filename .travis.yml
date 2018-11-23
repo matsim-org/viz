@@ -32,4 +32,4 @@ deploy:
   provider: script
   script: bash deploy.sh
     # switch to script file because deploy part supports one command only
-skip_cleanup: true
+  skip_cleanup: true
