@@ -24,7 +24,7 @@ addons:
 
 # see https://github.com/travis-ci/travis-ci/issues/4006
 before_deploy:
-  script: sed -i '/dist/d' $TRAVIS_BUILD_DIR/.gitignore
+  - sed -i '/dist/d' $TRAVIS_BUILD_DIR/.gitignore
 
 deploy:
   on:
