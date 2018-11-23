@@ -1,7 +1,7 @@
 #!/bin/bash
 # VSP deploy script for travis CI
 DOMAIN=$1
-
+echo "domain is: $DOMAIN"
 # check whether ssh-agent is present
 eval $(ssh-agent -s)
 # see bug with line endings at https://gitlab.com/gitlab-examples/ssh-private-key/issues/1
