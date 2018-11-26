@@ -17,8 +17,7 @@ addons:
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
     npm run build && npm run unit;
-    fi
-  - if [ "$TRAVIS_BRANCH" != "master" ]; then
+    else
     npm run build-dev && npm run unit;
     fi
 
