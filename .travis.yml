@@ -1,25 +1,39 @@
 language: node_js
+dist: trusty
 node_js:
-  - '8'
-env:
-  global:
-    # include $HOME for aws command
-    - PATH=$HOME/.local/bin:$PATH
-    # provide secret keys, so that awscli understands them
-    - travis encrypt AWS_ACCESS_KEY_ID=$S3_KEY_ID --add
-    - travis encrypt AWS_SECRET_ACCESS_KEY=$S3_KEY --add
+- '8'
 
 # build the webapp into ./dist
 script: npm run build && npm run unit
 
-# install awscli command line tool to sync files to s3
-before_deploy: pip install --user awscli
+# trust these hosts
+addons:
+  ssh_known_hosts:
+  - viz.vsp.tu-berlin.de
+  - viz-dev.vsp.tu-berlin.de
+  # don't need this anymore but this is how it would work
+  # dos2unix pkg is approved, see https://github.com/travis-ci/apt-package-safelist
+  #apt:
+  #  packages:
+  #  - dos2unix
+
+# see https://github.com/travis-ci/travis-ci/issues/4006
+before_deploy:
+  # or simly delete .gitignore
+  - sed -i '/dist/d' $TRAVIS_BUILD_DIR/.gitignore
+  # install dos2unix work that way but --> now in addons section
+  #- 'which dos2unix || (sudo apt-get update -y && sudo apt-get install dos2unix -y )'
 
 deploy:
-  on:
-    branch: master
-  provider: script
-  script:
-    # upload all files from ./dist folder and delete files on s3 which are not in current build
-    - aws s3 sync ./dist s3://matsim-viz-website --delete
-  skip_cleanup: true
+  - on:
+      branch: dev
+    provider: script
+    script: bash deploy.sh viz-dev
+     # switch to script file because deploy part supports one command only
+    skip_cleanup: true
+  - on:
+      branch: master
+    provider: script
+    script: bash deploy.sh viz
+     # switch to script file because deploy part supports one command only
+    skip_cleanup: true
