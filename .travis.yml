@@ -1,21 +1,25 @@
 language: node_js
 dist: trusty
 node_js:
-- '8'
-
-# build the webapp into ./dist
-script: npm run build && npm run unit
-
+  - '8'
 # trust these hosts
 addons:
   ssh_known_hosts:
-  - viz.vsp.tu-berlin.de
-  - viz-dev.vsp.tu-berlin.de
+    - viz.vsp.tu-berlin.de
+    - viz-dev.vsp.tu-berlin.de
   # don't need this anymore but this is how it would work
   # dos2unix pkg is approved, see https://github.com/travis-ci/apt-package-safelist
   #apt:
   #  packages:
   #  - dos2unix
+
+# build the webapp into ./dist
+script:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    npm run build && npm run unit;
+    else
+    npm run build-dev && npm run unit;
+    fi
 
 # see https://github.com/travis-ci/travis-ci/issues/4006
 before_deploy:
@@ -28,12 +32,14 @@ deploy:
   - on:
       branch: dev
     provider: script
-    script: bash deploy.sh viz-dev
-     # switch to script file because deploy part supports one command only
+    script:
+      bash deploy.sh viz-dev
+      # switch to script file because deploy part supports one command only
     skip_cleanup: true
   - on:
       branch: master
     provider: script
-    script: bash deploy.sh viz
-     # switch to script file because deploy part supports one command only
+    script:
+      bash deploy.sh viz
+      # switch to script file because deploy part supports one command only
     skip_cleanup: true
