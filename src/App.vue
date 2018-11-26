@@ -9,7 +9,7 @@
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
-      router-link.banner-item(v-if="!isAuthenticated()" to="/projects") Log In
+      router-link.banner-item(to="/projects") {{ projectText }}
 
   router-view.main-content
 </template>
@@ -28,13 +28,14 @@ interface BreadCrumb {
 @Component
 export default class App extends Vue {
   private breadcrumbs: BreadCrumb[] = []
+  private authState = AuthenticationStore.state
 
   private get sharedState() {
     return sharedStore.state
   }
 
-  private get authState() {
-    return AuthenticationStore.state
+  private get projectText() {
+    return this.authState.status === AuthenticationStatus.Authenticated ? 'Projects' : 'Log In'
   }
 
   public mounted() {
@@ -43,7 +44,7 @@ export default class App extends Vue {
     })
   }
 
-  private isAuthenticated() {
+  private getProject() {
     return this.authState.status === AuthenticationStatus.Authenticated
   }
 }
@@ -69,7 +70,7 @@ h5,
 h6 {
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 700;
-  color: #3273dc;
+  color: #363636;
 }
 
 #app {

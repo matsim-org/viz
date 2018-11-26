@@ -135,6 +135,21 @@ export default class ProjectStore {
     }
   }
 
+  public async fetchVisualizationsForProject(project: Project) {
+    this.state.isFetching = true
+    try {
+      const fetchedVisualizations = await FileAPI.fetchVizualizationsForProject(project.id)
+      const stateProject = this.state.projects.find(p => p.id === project.id)
+      if (stateProject) {
+        stateProject.visualizations = fetchedVisualizations
+      } else {
+        throw new Error('couldn"t find project')
+      }
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   private getInitialState(): ProjectState {
     return {
       projects: [],

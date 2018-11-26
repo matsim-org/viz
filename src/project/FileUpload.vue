@@ -1,7 +1,7 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
   .header(slot="header")
-    h3 Upload selectedFiles
+    h3.title.is-3 Upload selectedFiles
     
   .tagsAndselectedFiles(slot="content")
     .tagWrapper
