@@ -98,7 +98,6 @@ import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { Visualization } from '@/entities/Entities'
-import Editable from '@/components/EditableLable.vue'
 import ProjectSettings from '@/project/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
@@ -113,7 +112,6 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
-    'editable-label': Editable,
     'project-settings': ProjectSettings,
     Drag,
     Drop,

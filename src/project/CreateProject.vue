@@ -12,16 +12,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import FileAPI from '../communication/FileAPI'
-import TextInput from '@/components/TextInput.vue'
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
-import TextInputVue from '@/components/TextInput.vue'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 
 const vueInstance = Vue.extend({
   components: {
-    'text-input': TextInput,
     error: Error,
     modal: Modal,
   },
