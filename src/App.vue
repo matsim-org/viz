@@ -53,31 +53,29 @@ function mounted(component: any) {
 </script>
 
 <style>
-body,
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
-  margin: 0px 0px;
-  padding: 0px 0px;
-}
-
 html,
 body {
   background-color: white;
   height: 100vh;
   min-height: 100vh;
   overflow-y: auto;
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  margin: 0px 0px;
+  padding: 0px 0px;
 }
 
 #app {
   background-color: white;
   display: grid;
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   grid-template-columns: 1fr;
