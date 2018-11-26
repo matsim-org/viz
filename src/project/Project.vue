@@ -262,7 +262,7 @@ export default class ProjectViewModel extends vueInstance {
   justify-content: space-between;
 }
 section {
-  margin: 4rem 1.5rem 2rem 1.5rem;
+  margin: 2rem 1.5rem 2rem 1.5rem;
 }
 
 .project {

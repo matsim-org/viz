@@ -1,6 +1,6 @@
 <template lang="pug">
   modal(v-on:close-requested="cancel()")
-    span(slot="header") Create Project
+    h3.title.is-3(slot="header") Create Project
     div(slot="content")
       text-input(label="Project Name" v-model="projectName")
       error(v-if="isError" v-bind:message="errorMessage")

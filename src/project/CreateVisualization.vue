@@ -1,7 +1,7 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
     span(slot="header")
-      h3 Create Visualization
+      h3.title.is-3 Create Visualization
 
     div(slot="content")
       .viz-selector

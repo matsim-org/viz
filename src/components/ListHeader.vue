@@ -1,6 +1,6 @@
 <template lang="pug">
   .listHeader
-    h2 {{title}}
+    h3.title.is-3 {{title}}
     a.button.is-rounded.is-link(v-on:click="$emit('btnClicked')") {{btnTitle}}
 </template>
 
@@ -9,7 +9,6 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-bottom: 1rem;
   border-bottom: 1px solid lightgray;
 }
 
