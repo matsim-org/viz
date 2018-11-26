@@ -57,14 +57,16 @@
 
               button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
-    h3 Pending Uploads
-      .uploads
-        .fileItem(v-for="upload in uploads")
-          list-element
-            .itemTitle(slot="title")
-              span {{ upload.file.name }}
-              span {{ toPercentage(upload.progress) }}%
-            span(slot="content") {{ toStatus(upload.status) }}
+    
+  section.uploads(v-if="uploads.length > 0")
+    .upload-header
+      h3.title.is-3 Pending Uploads
+    .fileItem(v-for="upload in uploads")
+      list-element
+        .itemTitle(slot="title")
+          span {{ upload.file.name }}
+          span {{ toPercentage(upload.progress) }}%
+        span(slot="content") {{ toStatus(upload.status) }}
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
@@ -372,5 +374,11 @@ section {
 
 .files {
   margin-left: 10px;
+}
+
+.upload-header {
+  border-bottom: 1px solid lightgray;
+  width: 100%;
+  padding-bottom: 1.5rem;
 }
 </style>
