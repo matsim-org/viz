@@ -33,27 +33,19 @@ export default class FrameAnimationAPI {
   private static PLAN = '/plan'
 
   private endpoint: URL
+  private accessToken: string
 
-  constructor(endpoint: string, vizId: string) {
+  constructor(endpoint: string, vizId: string, accessToken: string) {
     this.endpoint = new URL(endpoint + `/${vizId}`)
+    this.accessToken = accessToken
   }
 
   public async fetchConfiguration(): Promise<ServerConfiguration> {
-    const result = await fetch(this.endpoint + FrameAnimationAPI.CONFIGURATION, {
-      mode: 'cors',
-    })
-
-    if (result.ok) return await result.json()
-    else throw new Error(await result.text())
+    return this.fetchJson(this.endpoint + FrameAnimationAPI.CONFIGURATION)
   }
 
   public async fetchNetwork(): Promise<ArrayBuffer> {
-    const result = await fetch(this.endpoint + FrameAnimationAPI.NETWORK, {
-      mode: 'cors',
-    })
-
-    if (result.ok) return await result.arrayBuffer()
-    else throw new Error(await result.text())
+    return this.fetchArrayBuffer(this.endpoint + FrameAnimationAPI.NETWORK)
   }
 
   public async fetchSnapshots(params: SnapshotRequestParams): Promise<ArrayBuffer> {
@@ -62,19 +54,34 @@ export default class FrameAnimationAPI {
     url.searchParams.set('numberOfTimesteps', params.size.toString())
     url.searchParams.set('speedFactor', params.speedFactor.toString())
 
-    const result = await fetch(url.toString(), { mode: 'cors' })
-
-    if (result.ok) return result.arrayBuffer()
-    else throw new Error(await result.text())
+    return this.fetchArrayBuffer(url.toString())
   }
 
   public async fetchPlan(index: number): Promise<any> {
     const url = new URL(this.endpoint.toString() + FrameAnimationAPI.PLAN)
     url.searchParams.set('index', index.toString())
 
-    const result = await fetch(url.toString(), { mode: 'cors' })
+    return this.fetchJson(url.toString())
+  }
 
-    if (result.ok) return result.json()
+  private async fetchArrayBuffer(endpoint: string): Promise<ArrayBuffer> {
+    return this.fetch(endpoint, response => Promise.resolve(response.arrayBuffer()))
+  }
+
+  private async fetchJson(endpoint: string) {
+    return this.fetch(endpoint, response => response.json())
+  }
+
+  private async fetch<T>(endpoint: string, retreiveResponse: (response: Response) => Promise<T>): Promise<T> {
+    const headers = new Headers()
+    headers.append('Authorization', 'Bearer ' + this.accessToken)
+    const result = await fetch(endpoint, {
+      mode: 'cors',
+      headers: headers,
+    })
+
+    if (result.ok) return retreiveResponse(result)
+    else if (result.status === 401) throw new Error('Unauthorized')
     else throw new Error(await result.text())
   }
 }

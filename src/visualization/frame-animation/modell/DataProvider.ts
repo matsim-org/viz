@@ -8,6 +8,7 @@ import SnapshotFetcher from '@/visualization/frame-animation/modell/background/S
 import NetworkReader from '@/visualization/frame-animation/contracts/NetworkReader'
 import PlanFetcher from '@/visualization/frame-animation/modell/background/PlanFetcher'
 import Rectangle from '@/visualization/frame-animation/contracts/Rectangle'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export default class DataProvider {
   // new caching
@@ -135,8 +136,13 @@ export default class DataProvider {
       const snapshotFetcherTask = SnapshotFetcher.create({
         dataUrl: this._config.dataUrl,
         vizId: this._config.vizId,
+        accessToken: AuthenticationStore.state.accessToken,
       })
-      const planFetcherTask = PlanFetcher.create({ dataUrl: this._config.dataUrl, vizId: this._config.vizId })
+      const planFetcherTask = PlanFetcher.create({
+        dataUrl: this._config.dataUrl,
+        vizId: this._config.vizId,
+        accessToken: AuthenticationStore.state.accessToken,
+      })
       this._snapshotCache = new SnapshotCache(config, await snapshotFetcherTask, () => this.onFetchingDataChanged())
       this._snapshotCache.ensureSufficientCaching(config.firstTimestep, 1.0)
       this._planFetcher = await planFetcherTask

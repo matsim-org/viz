@@ -3,6 +3,7 @@ import Playback from './modell/Playback'
 import DataProvider from './modell/DataProvider'
 import Configuration from './contracts/Configuration'
 import FrameAnimationAPI from './communication/FrameAnimationAPI'
+import AuthenticationStore from '../../auth/AuthenticationStore'
 
 class Webvis {
   get firstTimestep() {
@@ -51,7 +52,7 @@ class Webvis {
     this._config = Configuration.getConfig()
     this._config.subscribeServerConfigUpdated(() => this._handleServerConfigChanged())
 
-    const api = new FrameAnimationAPI(this._config.dataUrl, this._config.vizId)
+    const api = new FrameAnimationAPI(this._config.dataUrl, this._config.vizId, AuthenticationStore.state.accessToken)
     this.dataProvider = new DataProvider(api)
     this.dataProvider.loadServerConfig()
     this.dataProvider.isFetchingDataChanged = () => this._handleIsFetchingDataChanged()
