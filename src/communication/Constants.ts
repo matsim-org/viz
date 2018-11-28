@@ -35,4 +35,8 @@ export class Method {
   static get DELETE(): string {
     return 'DELETE'
   }
+
+  static get PATCH(): string {
+    return 'PATCH'
+  }
 }

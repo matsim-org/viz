@@ -1,7 +1,7 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
   .header(slot="header")
-    h3 Upload selectedFiles
+    h3.title.is-3 Upload selectedFiles
     
   .tagsAndselectedFiles(slot="content")
     .tagWrapper
@@ -45,8 +45,8 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import ListElement from '@/components/ListElement.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
-import Project, { Tag } from '@/entities/Project'
 import ProjectStore from '@/project/ProjectStore'
+import { Tag, Project } from '@/entities/Entities'
 
 @Component({
   components: {

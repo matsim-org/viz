@@ -1,9 +1,14 @@
 <template lang="pug">
 .project
   .hero.is-link
-    .hero-body
-      h1.title {{project.name}}
-      h3.subtitle.small viz-{{project.id}}
+    .heroContainer
+      .projectTitle
+        h1.title(slot="content") {{project.name}}
+        h3.subtitle viz-{{project.id}}
+      .editButton
+        button.button.is-small(@click="showSettings = true") 
+                span.icon.is-small
+                    i.fas.fa-pen
 
   section
     list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
@@ -52,14 +57,16 @@
 
               button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
-    h3 Pending Uploads
-      .uploads
-        .fileItem(v-for="upload in uploads")
-          list-element
-            .itemTitle(slot="title")
-              span {{ upload.file.name }}
-              span {{ toPercentage(upload.progress) }}%
-            span(slot="content") {{ toStatus(upload.status) }}
+    
+  section.uploads(v-if="uploads.length > 0")
+    .upload-header
+      h3.title.is-3 Pending Uploads
+    .fileItem(v-for="upload in uploads")
+      list-element
+        .itemTitle(slot="title")
+          span {{ upload.file.name }}
+          span {{ toPercentage(upload.progress) }}%
+        span(slot="content") {{ toStatus(upload.status) }}
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
@@ -70,6 +77,9 @@
               v-bind:projectStore="projectStore"
               v-bind:selectedProject="project"
               v-bind:selectedFiles="selectedFiles")
+  
+  project-settings(v-if="showSettings" v-on:close="showSettings=false"
+                  v-bind:projectStore="projectStore")
 
 
 </template>
@@ -81,9 +91,7 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
 import SharedStore, { EventBus, SharedState } from '@/SharedStore'
-import Project from '@/entities/Project'
 import VizThumbnail from '@/components/VizThumbnail.vue'
-import { Visualization } from '@/entities/Visualization'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
@@ -91,6 +99,8 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
+import { Visualization } from '@/entities/Entities'
+import ProjectSettings from '@/project/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -104,6 +114,7 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'viz-thumbnail': VizThumbnail,
+    'project-settings': ProjectSettings,
     Drag,
     Drop,
   },
@@ -120,6 +131,7 @@ const vueInstance = Vue.extend({
 export default class ProjectViewModel extends vueInstance {
   private showCreateVisualization = false
   private showFileUpload = false
+  private showSettings = false
   private isDragOver = false
   private selectedFiles: File[] = []
 
@@ -182,6 +194,14 @@ export default class ProjectViewModel extends vueInstance {
     this.showFileUpload = true
   }
 
+  private async onNameChanged(name: string, event: any) {
+    try {
+      await this.projectStore.changeNameOfSelectedProject(name)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   private async onDeleteFile(fileId: string) {
     try {
       await this.projectStore.deleteFile(fileId)
@@ -235,8 +255,14 @@ export default class ProjectViewModel extends vueInstance {
 }
 </script>
 <style scoped>
+.heroContainer {
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
 section {
-  margin: 4rem 1.5rem 2rem 1.5rem;
+  margin: 2rem 1.5rem 2rem 1.5rem;
 }
 
 .project {
@@ -348,5 +374,11 @@ section {
 
 .files {
   margin-left: 10px;
+}
+
+.upload-header {
+  border-bottom: 1px solid lightgray;
+  width: 100%;
+  padding-bottom: 1.5rem;
 }
 </style>

@@ -1,9 +1,8 @@
-import Project, { Tag } from '@/entities/Project'
-import FileEntry from '@/entities/File'
 import Config from '@/config/Config'
 import SimpleEvent, { SimpleEventEmmiter } from './Event'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import { JsogService } from 'jsog-typescript'
+import { Project, Tag, FileEntry } from '@/entities/Entities'
 
 export enum UploadStatus {
   NotStarted,

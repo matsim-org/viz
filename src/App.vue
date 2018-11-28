@@ -9,18 +9,15 @@
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
-      router-link.banner-item(:to="'#'")  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Settings
-      router-link.banner-item(:to="'#'")  Account
+      router-link.banner-item(to="/projects") {{ projectText }}
 
   router-view.main-content
 </template>
 
 <script lang="ts">
-'use strict'
-
-import Vue from 'vue'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import sharedStore, { EventBus } from '@/SharedStore'
-import SideBar from '@/components/SideBar.vue'
+import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import 'bulma/css/bulma.css'
 
 interface BreadCrumb {
@@ -28,56 +25,57 @@ interface BreadCrumb {
   link: string
 }
 
-const store = {
-  sharedState: sharedStore.state,
-  breadcrumbs: [] as BreadCrumb[],
-}
+@Component
+export default class App extends Vue {
+  private breadcrumbs: BreadCrumb[] = []
+  private authState = AuthenticationStore.state
 
-export default Vue.extend({
-  name: 'App',
-  components: { SideBar },
-  data() {
-    return store
-  },
-  mounted() {
-    mounted(this)
-  },
-})
+  private get sharedState() {
+    return sharedStore.state
+  }
 
-// mounted is called by Vue after this component is installed on the page
-function mounted(component: any) {
-  EventBus.$on('set-breadcrumbs', (crumbs: BreadCrumb[]) => {
-    store.breadcrumbs = crumbs
-  })
+  private get projectText() {
+    return this.authState.status === AuthenticationStatus.Authenticated ? 'Projects' : 'Log In'
+  }
+
+  public mounted() {
+    EventBus.$on('set-breadcrumbs', (crumbs: BreadCrumb[]) => {
+      this.breadcrumbs = crumbs
+    })
+  }
+
+  private getProject() {
+    return this.authState.status === AuthenticationStatus.Authenticated
+  }
 }
 </script>
 
 <style>
-body,
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
-  margin: 0px 0px;
-  padding: 0px 0px;
-}
-
 html,
 body {
   background-color: white;
   height: 100vh;
   min-height: 100vh;
   overflow-y: auto;
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  margin: 0px 0px;
+  padding: 0px 0px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  color: #363636;
 }
 
 #app {
   background-color: white;
   display: grid;
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   grid-template-columns: 1fr;
@@ -86,17 +84,6 @@ body {
   max-height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
-}
-
-#btn-toggle-sidepanel {
-  background-color: transparent;
-  border-radius: 0px 4px 0px 0px;
-  padding: 4px 2px 4px 4px;
-  grid-column: 1 / 3;
-  grid-row: 2 / 3;
-  position: relative;
-  z-index: 1005;
-  margin-right: 0px;
 }
 
 .main-content {
@@ -114,21 +101,6 @@ body {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto;
-}
-
-h2,
-h3 {
-  color: #3273dc;
-}
-
-h2 {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-h3 {
-  font-size: 1.2rem;
-  font-weight: 700;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
@@ -167,11 +139,6 @@ a:focus {
 }
 a:hover {
   color: #fff;
-}
-
-.nav-logo {
-  grid-row: 1 / 2;
-  grid-column: 1 / 2;
 }
 
 .nav-rightside {

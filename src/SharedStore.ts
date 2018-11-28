@@ -1,9 +1,7 @@
 'use strict'
 
 import Vue from 'vue'
-import FileAPI from '@/communication/FileAPI'
-import Project from '@/entities/Project'
-import { VisualizationType } from '@/entities/Visualization'
+import { VisualizationType } from './entities/Entities'
 
 // shared event bus for cross-component communication
 // see https://alligator.io/vuejs/global-event-bus/
@@ -13,7 +11,6 @@ export const EventBus = new Vue()
 
 interface SharedState {
   lastNavigation: string
-  personalProjects: Project[]
   visualizationTypes: Map<string, VisualizationType>
 }
 
@@ -29,10 +26,6 @@ class SharedStore {
     this._state.lastNavigation = path
     this.persistState()
     EventBus.$emit('lastNavigation-changed', this.state.lastNavigation)
-  }
-
-  public async fetchProjects(): Promise<void> {
-    this._state.personalProjects = await FileAPI.fetchAllPersonalProjects()
   }
 
   public addVisualizationType(type: VisualizationType) {
@@ -58,7 +51,6 @@ class SharedStore {
   private defaultState(): SharedState {
     return {
       lastNavigation: '',
-      personalProjects: [],
       visualizationTypes: new Map(),
     }
   }
@@ -78,7 +70,6 @@ class SharedStore {
       const persistedState = JSON.parse(persistedStateString as string)
       return {
         lastNavigation: persistedState.lastNavigation,
-        personalProjects: [],
         visualizationTypes: new Map(),
       }
     }

@@ -1,13 +1,17 @@
-import Project from '@/entities/Project'
 import FileAPI from '@/communication/FileAPI'
-import { Visualization } from '@/entities/Visualization'
+
 import UploadStore from './UploadStore'
-import FileEntry from '@/entities/File'
+import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
 
 export interface ProjectState {
   projects: Project[]
   selectedProject: Project
   isFetching: boolean
+}
+
+export enum ProjectVisibility {
+  Public,
+  Private,
 }
 
 export default class ProjectStore {
@@ -37,6 +41,34 @@ export default class ProjectStore {
       const project = await FileAPI.createProject(name)
       this.state.projects.push(project)
       return project
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async changeNameOfSelectedProject(newName: string) {
+    this.state.isFetching = true
+    try {
+      const currentProject = this.state.selectedProject
+      await FileAPI.patchProject(currentProject.id, newName)
+      currentProject.name = newName
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async changeVisibilityOfSelectedProject(visibility: ProjectVisibility) {
+    const currentProject = this.state.selectedProject
+    const publicPermission = currentProject.permissions.find(permission => permission.agent.authId === 'allUsers')
+    try {
+      this.state.isFetching = true
+      if (visibility === ProjectVisibility.Private && publicPermission) {
+        await FileAPI.removePermission(currentProject.id, publicPermission.agent.authId)
+        currentProject.permissions = currentProject.permissions.filter(p => p !== publicPermission)
+      } else if (visibility === ProjectVisibility.Public && !publicPermission) {
+        const permission = await FileAPI.addPermission(currentProject.id, 'allUsers', PermissionType.Read)
+        currentProject.permissions.push(permission)
+      }
     } finally {
       this.state.isFetching = false
     }
@@ -103,6 +135,21 @@ export default class ProjectStore {
     }
   }
 
+  public async fetchVisualizationsForProject(project: Project) {
+    this.state.isFetching = true
+    try {
+      const fetchedVisualizations = await FileAPI.fetchVizualizationsForProject(project.id)
+      const stateProject = this.state.projects.find(p => p.id === project.id)
+      if (stateProject) {
+        stateProject.visualizations = fetchedVisualizations
+      } else {
+        throw new Error('couldn"t find project')
+      }
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   private getInitialState(): ProjectState {
     return {
       projects: [],
@@ -114,6 +161,8 @@ export default class ProjectStore {
         name: '',
         visualizations: [],
         tags: [],
+        createdAt: 0,
+        permissions: [],
       },
     }
   }

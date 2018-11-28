@@ -1,6 +1,6 @@
 <template lang="pug">
   modal(v-on:close-requested="cancel()")
-    span(slot="header") Create Project
+    h3.title.is-3(slot="header") Create Project
     div(slot="content")
       text-input(label="Project Name" v-model="projectName")
       error(v-if="isError" v-bind:message="errorMessage")
@@ -12,16 +12,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import FileAPI from '../communication/FileAPI'
-import TextInput from '@/components/TextInput.vue'
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
-import TextInputVue from '@/components/TextInput.vue'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 
 const vueInstance = Vue.extend({
   components: {
-    'text-input': TextInput,
     error: Error,
     modal: Modal,
   },

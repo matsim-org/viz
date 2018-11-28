@@ -1,9 +1,20 @@
-import { JsogService } from 'jsog-typescript'
-import Project, { CreateTagRequest, Tag } from '@/entities/Project'
+import { JsogService, JsonProperty } from 'jsog-typescript'
 import { ContentType, HeaderKeys, Method } from '@/communication/Constants'
 import AuthenticatedRequest from '@/auth/AuthenticatedRequest'
 import Config from '@/config/Config'
-import { CreateVisualizationRequest, VisualizationType, Visualization } from '@/entities/Visualization'
+import { Project, Visualization, Tag, Permission } from '@/entities/Entities'
+
+export interface CreateVisualizationRequest {
+  projectId?: string
+  typeKey?: string
+  inputFiles: { [key: string]: string } // use this notation since Map-type is not yet supported by (de)serialization
+  inputParameters: { [key: string]: string } // as with inputFiles
+}
+
+export interface CreateTagRequest {
+  name: string
+  type: string
+}
 
 export default class FileAPI {
   private static PROJECT: string = Config.fileServer + '/projects'
@@ -22,10 +33,6 @@ export default class FileAPI {
     return await this.request<Project>(this.PROJECT + '/' + projectId, this.corsRequestOptions())
   }
 
-  public static async fetchVisualizationTypes(): Promise<VisualizationType[]> {
-    return await this.request<VisualizationType[]>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
-  }
-
   public static async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
     return await this.request<Visualization>(
       this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
@@ -33,9 +40,22 @@ export default class FileAPI {
     )
   }
 
+  public static async fetchVizualizationsForProject(projectId: string): Promise<Visualization[]> {
+    return await this.request<Visualization[]>(
+      `${this.PROJECT}/${projectId}/${this.VISUALIZATION}`,
+      this.corsRequestOptions()
+    )
+  }
+
   public static async createProject(projectName: string): Promise<Project> {
     const options = this.postRequestOptions({ name: projectName })
     return await this.request<Project>(this.PROJECT, options)
+  }
+
+  public static async patchProject(projectId: string, newProjectName: string) {
+    const options = this.postRequestOptions({ name: newProjectName })
+    options.method = Method.PATCH
+    return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
   }
 
   public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
@@ -90,6 +110,17 @@ export default class FileAPI {
     options.method = Method.DELETE
 
     return await this.request<void>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
+  }
+
+  public static async addPermission(projectId: string, userAuthId: string, type: string) {
+    const options = this.postRequestOptions({ resourceId: projectId, userAuthId: userAuthId, type: type })
+    return await this.request<Permission>(`${this.PROJECT}/${projectId}/permissions`, options)
+  }
+
+  public static async removePermission(projectId: string, userAuthId: string) {
+    const options = this.corsRequestOptions()
+    options.method = Method.DELETE
+    return await this.request<void>(`${this.PROJECT}/${projectId}/permissions?userAuthId=${userAuthId}`, options)
   }
 
   private static postRequestOptions(body: any): RequestInit {
