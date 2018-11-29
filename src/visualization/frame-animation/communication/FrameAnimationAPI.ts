@@ -65,7 +65,7 @@ export default class FrameAnimationAPI {
   }
 
   private async fetchArrayBuffer(endpoint: string): Promise<ArrayBuffer> {
-    return this.fetch(endpoint, response => Promise.resolve(response.arrayBuffer()))
+    return this.fetch(endpoint, response => response.arrayBuffer())
   }
 
   private async fetchJson(endpoint: string) {
@@ -73,11 +73,11 @@ export default class FrameAnimationAPI {
   }
 
   private async fetch<T>(endpoint: string, retreiveResponse: (response: Response) => Promise<T>): Promise<T> {
-    const headers = new Headers()
-    headers.append('Authorization', 'Bearer ' + this.accessToken)
     const result = await fetch(endpoint, {
       mode: 'cors',
-      headers: headers,
+      headers: {
+        Authorization: 'Bearer ' + this.accessToken,
+      },
     })
 
     if (result.ok) return retreiveResponse(result)
