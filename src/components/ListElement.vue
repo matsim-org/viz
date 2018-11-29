@@ -1,9 +1,9 @@
 <template lang="pug">
   .listItem
     button.clickContent(v-on:click="$emit('itemClicked')")
-      .xtitle
+      .title.is-6
         slot(name="title")
-      .xmain
+      .subtitle.is-6
         slot(name="content")
     .accessory
       slot(name="accessory")

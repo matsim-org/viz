@@ -1,9 +1,20 @@
-import { JsogService } from 'jsog-typescript'
-import Project from '@/entities/Project'
+import { JsogService, JsonProperty } from 'jsog-typescript'
 import { ContentType, HeaderKeys, Method } from '@/communication/Constants'
 import AuthenticatedRequest from '@/auth/AuthenticatedRequest'
 import Config from '@/config/Config'
-import { CreateVisualizationRequest, VisualizationType, Visualization } from '@/entities/Visualization'
+import { Project, Visualization, Tag, Permission } from '@/entities/Entities'
+
+export interface CreateVisualizationRequest {
+  projectId?: string
+  typeKey?: string
+  inputFiles: { [key: string]: string } // use this notation since Map-type is not yet supported by (de)serialization
+  inputParameters: { [key: string]: string } // as with inputFiles
+}
+
+export interface CreateTagRequest {
+  name: string
+  type: string
+}
 
 export default class FileAPI {
   private static PROJECT: string = Config.fileServer + '/projects'
@@ -22,13 +33,16 @@ export default class FileAPI {
     return await this.request<Project>(this.PROJECT + '/' + projectId, this.corsRequestOptions())
   }
 
-  public static async fetchVisualizationTypes(): Promise<VisualizationType[]> {
-    return await this.request<VisualizationType[]>(this.VISUALIZATION_TYPE, this.corsRequestOptions())
-  }
-
   public static async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
     return await this.request<Visualization>(
       this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
+      this.corsRequestOptions()
+    )
+  }
+
+  public static async fetchVizualizationsForProject(projectId: string): Promise<Visualization[]> {
+    return await this.request<Visualization[]>(
+      `${this.PROJECT}/${projectId}/${this.VISUALIZATION}`,
       this.corsRequestOptions()
     )
   }
@@ -38,9 +52,20 @@ export default class FileAPI {
     return await this.request<Project>(this.PROJECT, options)
   }
 
+  public static async patchProject(projectId: string, newProjectName: string) {
+    const options = this.postRequestOptions({ name: newProjectName })
+    options.method = Method.PATCH
+    return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
+  }
+
   public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     const options = this.postRequestOptions(request)
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
+  }
+
+  public static async createTag(request: CreateTagRequest, projectId: string) {
+    const options = this.postRequestOptions(request)
+    return await this.request<Tag>(`${this.PROJECT}/${projectId}/tags`, options)
   }
 
   public static async deleteVisualization(projectId: string, vizId: string) {
@@ -80,11 +105,22 @@ export default class FileAPI {
     }
   }
 
-  public static async deleteFile(fileId: string, project: Project): Promise<Project> {
+  public static async deleteFile(fileId: string, project: Project): Promise<void> {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
 
-    return await this.request<Project>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
+    return await this.request<void>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
+  }
+
+  public static async addPermission(projectId: string, userAuthId: string, type: string) {
+    const options = this.postRequestOptions({ resourceId: projectId, userAuthId: userAuthId, type: type })
+    return await this.request<Permission>(`${this.PROJECT}/${projectId}/permissions`, options)
+  }
+
+  public static async removePermission(projectId: string, userAuthId: string) {
+    const options = this.corsRequestOptions()
+    options.method = Method.DELETE
+    return await this.request<void>(`${this.PROJECT}/${projectId}/permissions?userAuthId=${userAuthId}`, options)
   }
 
   private static postRequestOptions(body: any): RequestInit {
@@ -107,8 +143,15 @@ export default class FileAPI {
   private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
     const result = await AuthenticatedRequest.fetch(endpoint, options)
     if (result.ok) {
-      const message = await result.json()
-      return this.jsogService.deserialize(message) as any
+      if (result.status === 204) {
+        // if result is no-content, there is nothing to parse
+        // make the compiler happy about return types.
+        const promise = Promise.resolve() as unknown
+        return promise as Promise<T>
+      } else {
+        const message = await result.json()
+        return this.jsogService.deserialize(message) as any
+      }
     } else {
       throw await this.generateError(result)
     }
