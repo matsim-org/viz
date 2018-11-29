@@ -2,7 +2,7 @@
   modal(v-on:close-requested="cancel()")
     h3.title.is-3(slot="header") Create Project
     div(slot="content")
-      text-input(label="Project Name" v-model="projectName")
+      input.input(v-model="projectName" placeholder="Project Name")
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       button.button.is-white.is-rounded(v-on:click="cancel()") Cancel
@@ -60,38 +60,4 @@ export default class CreateProjectViewModel extends vueInstance {
 </script>
 
 <style scoped>
-.createProject {
-  display: flex;
-  flex-direction: column;
-  margin: 1rem;
-}
-
-.inputContainer {
-  display: flex;
-  flex-direction: column;
-  margin: 1rem 0 1rem 0;
-}
-
-.inputLabel {
-  font-size: 0.85rem;
-  color: rgb(138, 138, 138);
-}
-
-.error {
-  color: white;
-  background-color: #ef5350;
-  border-radius: 4px;
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
-  margin-bottom: 1rem;
-}
-
-.buttonContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-
-.loader {
-  margin-right: 1rem;
-}
 </style>

@@ -20,7 +20,7 @@
         .viz-item(v-for="viz in project.visualizations"
                   v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
-            viz-thumbnail(@remove="handleRemoveViz(viz.id)" @share="handleShareViz(viz.id)")
+            viz-thumbnail(@remove="onRemoveViz(viz.id)" @share="handleShareViz(viz.id)")
               .itemTitle(slot="title"): span {{ viz.type }}
               span(slot="content") viz-{{ viz.id.substring(0,4) }}
 
