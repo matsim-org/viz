@@ -6,13 +6,14 @@
                     v-for="viz in project.visualizations"
                     v-bind:key="viz.id"
                     v-on:click="$emit('viz-selected', viz)")
-                .card.bla
+                .card.hoverable
                     .card-image
                         img.img-responsive(src="@/assets/transit-supply.jpg")
                     .card-content
                         h6.card-title {{viz.type}}
                         .card-subtitle viz-{{viz.id.substring(0,4)}}
-        spinner(v-else)    
+        .spinnerContainer(v-else)               
+          spinner
 </template>
 
 <script lang="ts">
@@ -55,6 +56,8 @@ export default class ProjectListItem extends Vue {
 .project {
   list-style-type: none;
   padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .visualizations {
@@ -71,9 +74,14 @@ export default class ProjectListItem extends Vue {
   padding: -20px;
 }
 
-.bla:hover {
+.hoverable:hover {
   cursor: pointer;
   text-decoration: underline;
+}
+
+.spinnerContainer {
+  justify-self: center;
+  align-self: center;
 }
 </style>
 
