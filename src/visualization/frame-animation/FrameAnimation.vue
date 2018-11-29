@@ -3,7 +3,7 @@
       .header
         h1.title Frame Based Animation
         h5.subtitle Id: {{vizId}}
-      .canvasContainer
+      .mainContainer
         .loaderContainer(v-if="isFailed")
           span Generating Visualization failed! Check your input files.
         .loaderContainer(v-if="!isDone && !isFailed")
@@ -12,7 +12,8 @@
         .loaderContainer(v-if="!connected")
           spinner
           span Connecting to server...
-        canvas.canvas(ref="canvas" id="canvas")
+        .canvasContainer  
+          canvas.canvas(ref="canvas" id="canvas")
       .controls
         input.range(type="range" 
                     v-bind:min="firstTimestep" 
@@ -162,21 +163,29 @@ export default class FrameAnimation extends Vue {
 }
 
 .frameAnimation {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
 }
 
-.canvasContainer {
+.mainContainer {
   flex: 1;
   display: grid;
   grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
 }
 
+/* Having a container which fills the grid and a canvas filling the container, in addition
+    to the container being relative and canvas being absolutely positioned is important to 
+    support resizing in different browsers
+*/
+.canvasContainer {
+  position: relative;
+  grid-area: 1 / 1 / span 3 / span 3;
+}
+
 .canvas {
   height: 100%;
   width: 100%;
-  grid-area: 1 / 1 / span 3 / span 3;
+  position: absolute;
 }
 
 .loaderContainer {
@@ -190,23 +199,25 @@ export default class FrameAnimation extends Vue {
 
 .controls {
   display: grid;
-  grid-template-rows: 1 1;
+  grid-template-rows: auto auto;
   margin: 1rem 1.5rem;
+}
+
+/* seems firefox needs an extra motivation to stretch a range */
+.range {
+  width: 100%;
 }
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr 14rem 7rem;
+  grid-template-columns: 1fr auto auto;
   grid-column-gap: 1rem;
 }
 
 .speedControls {
-  display: flex;
-  flex-direction: row;
-}
-
-.speedInput {
-  margin: 0 0.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-column-gap: 0.5rem;
 }
 
 .bufferState {
