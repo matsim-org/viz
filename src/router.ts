@@ -81,6 +81,12 @@ const instance = new Router({
       path: '/frame-animation/:projectId/:vizId',
       component: FrameAnimation,
       name: 'FrameAnimation',
+      props: route => {
+        return {
+          vizId: route.params.vizId,
+          projectStore: projectStore,
+        }
+      },
     },
     {
       path: AUTHENTICATION,

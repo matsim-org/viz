@@ -14,5 +14,6 @@ export default Vue.extend({
   background-color: #ef5350;
   border-radius: 4px;
   padding: 0.5rem 0.5rem 0.5rem 1rem;
+  margin: 1rem 0 0 0;
 }
 </style>

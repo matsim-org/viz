@@ -13,7 +13,7 @@ class SnapshotFetcher extends AsyncBackgroundWorker {
 
   public handleInitialize(call: MethodCall) {
     const params = call.parameters as InitParams
-    this.api = new FrameAnimationAPI(params.dataUrl, params.vizId)
+    this.api = new FrameAnimationAPI(params.dataUrl, params.vizId, params.accessToken)
   }
 
   public async handleMethodCall(call: MethodCall): Promise<MethodResult> {

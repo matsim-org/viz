@@ -16,7 +16,6 @@ export default Vue.extend({})
 
 <style scoped>
 .spinner {
-  margin: 100px auto;
   width: 60px;
   height: 50px;
   text-align: center;
