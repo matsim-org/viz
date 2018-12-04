@@ -50,6 +50,7 @@ import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 import ProjectStore from '@/project/ProjectStore'
 import Spinner from '@/components/Spinner.vue'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 
 // register frame animation with shared store
 SharedStore.addVisualizationType({
@@ -104,6 +105,7 @@ export default class FrameAnimation extends Vue {
       canvasId: canvas.id,
       dataUrl: Config.frameAnimationServer,
       vizId: this.vizId,
+      accessToken: AuthenticationStore.state.accessToken,
     })
     this.webvis.onServerConfigChanged = () => this.onConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.onFetchingDataChanged(value)

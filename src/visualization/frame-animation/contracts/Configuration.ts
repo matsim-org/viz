@@ -14,14 +14,16 @@ interface ConfigCacheParams {
   oldSnapshotsToKeep?: number
 }
 
-interface ConfigParams {
+export interface ConfigParams {
   vizId: string
   canvasId: string
   dataUrl: string
+  accessToken: string
   colors?: ConfigColors
   cache?: ConfigCacheParams
 }
-class Config {
+
+export default class Config {
   get vizId() {
     return this._vizId
   }
@@ -53,11 +55,16 @@ class Config {
     return this._serverConfig.progress
   }
 
+  get accessToken() {
+    return this._accessToken
+  }
+
   private _listeners: Array<(() => void)> = []
 
   private _vizId = ''
   private _canvasId = ''
   private _dataUrl = ''
+  private _accessToken = ''
   private _colors: ConfigColors = {}
   private _cache: ConfigCacheParams = {}
   private _serverConfig: ServerConfiguration = {
@@ -74,6 +81,7 @@ class Config {
     this.setColors(parameters.colors || {})
     this.setCache(parameters.cache || {})
     this.setDataUrl(parameters.dataUrl)
+    this.setAccessToken(parameters.accessToken)
   }
 
   public destroy() {
@@ -89,15 +97,15 @@ class Config {
     this._listeners.splice(index, 1)
   }
 
+  public updateServerConfig(serverConfig: ServerConfiguration) {
+    this.setServerConfig(serverConfig)
+    this._broadCastServerConfigUpdated()
+  }
+
   public _broadCastServerConfigUpdated() {
     for (const listener of this._listeners) {
       listener()
     }
-  }
-
-  public _updateServerConfig(serverConfig: ServerConfiguration) {
-    this.setServerConfig(serverConfig)
-    this._broadCastServerConfigUpdated()
   }
 
   private setVizId(id: string) {
@@ -134,13 +142,17 @@ class Config {
   private setServerConfig(config: ServerConfiguration) {
     this._serverConfig = config
   }
+
+  private setAccessToken(token: string) {
+    this._accessToken = token
+  }
 }
 
-let instance: Config
+// let instance: Config
 
 // bc: this is essentially acting a singleton.
 // tslint:disable-next-line:variable-name
-const Configuration = {
+/*const Configuration = {
   createConfiguration: (parameters: ConfigParams) => {
     instance = new Config(parameters)
   },
@@ -155,6 +167,4 @@ const Configuration = {
     }
     return instance
   },
-}
-
-export default Configuration
+}*/

@@ -9,7 +9,7 @@ export default class Playback {
   private _lastTimestep = 0
   private _timestepSize = 0
   private _dataProvider: DataProvider
-  private _config = Configuration.getConfig()
+  private _config: Configuration
 
   // callbacks
   private _timestepChangedListeners: Array<(timestep: number) => void> = []
@@ -34,7 +34,8 @@ export default class Playback {
     return this._speedFactor
   }
 
-  constructor(dataProvider: DataProvider) {
+  constructor(dataProvider: DataProvider, config: Configuration) {
+    this._config = config
     this._config.subscribeServerConfigUpdated(() => this.onServerConfigUpdated())
     this._dataProvider = dataProvider
   }

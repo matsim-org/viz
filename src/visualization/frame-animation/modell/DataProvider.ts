@@ -8,7 +8,6 @@ import SnapshotFetcher from '@/visualization/frame-animation/modell/background/S
 import NetworkReader from '@/visualization/frame-animation/contracts/NetworkReader'
 import PlanFetcher from '@/visualization/frame-animation/modell/background/PlanFetcher'
 import Rectangle from '@/visualization/frame-animation/contracts/Rectangle'
-import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export default class DataProvider {
   // new caching
@@ -22,7 +21,7 @@ export default class DataProvider {
   private _geoJsonDataChanged?: (layerName: string) => void
   private _isFetchingDataChanged?: () => void
 
-  private _config = Configuration.getConfig()
+  private _config: Configuration
   private _isLoadingPlan = false
 
   get isFetchingData(): boolean {
@@ -41,8 +40,9 @@ export default class DataProvider {
     this._isFetchingDataChanged = callback
   }
 
-  constructor(api: FrameAnimationAPI) {
+  constructor(api: FrameAnimationAPI, config: Configuration) {
     this._api = api
+    this._config = config
   }
 
   public destroy() {
@@ -56,7 +56,7 @@ export default class DataProvider {
       this.handleServerConfigReceived(config)
     } catch (error) {
       console.log(error)
-      Configuration.updateServerConfiguration({
+      this._config.updateServerConfig({
         bounds: new Rectangle(0, 0, 0, 0),
         firstTimestep: 0,
         lastTimestep: 0,
@@ -127,7 +127,7 @@ export default class DataProvider {
   }
 
   private async handleServerConfigReceived(config: ServerConfiguration) {
-    Configuration.updateServerConfiguration(config)
+    this._config.updateServerConfig(config)
 
     if (config.progress !== Progress.Done && config.progress !== Progress.Failed) {
       setTimeout(() => this.loadServerConfig(), 10000)
@@ -136,12 +136,12 @@ export default class DataProvider {
       const snapshotFetcherTask = SnapshotFetcher.create({
         dataUrl: this._config.dataUrl,
         vizId: this._config.vizId,
-        accessToken: AuthenticationStore.state.accessToken,
+        accessToken: this._config.accessToken,
       })
       const planFetcherTask = PlanFetcher.create({
         dataUrl: this._config.dataUrl,
         vizId: this._config.vizId,
-        accessToken: AuthenticationStore.state.accessToken,
+        accessToken: this._config.accessToken,
       })
       this._snapshotCache = new SnapshotCache(config, await snapshotFetcherTask, () => this.onFetchingDataChanged())
       this._snapshotCache.ensureSufficientCaching(config.firstTimestep, 1.0)
