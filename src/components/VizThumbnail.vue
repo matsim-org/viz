@@ -1,7 +1,6 @@
 <template lang="pug">
 .card
   .card-image
-    img.img-responsive(src="@/assets/transit-supply.jpg")
   .card-actions
     a(title="Share..." @click.stop="$emit('share')")
       i.fas.fa-share
@@ -61,7 +60,6 @@ export default Vue.extend({})
 
 .card .card-image {
   overflow: hidden;
-  height: 150px;
   grid-column: 1/2;
   grid-row: 1/2;
   z-index: 3;
@@ -121,12 +119,17 @@ export default Vue.extend({})
   font-size: 1rem;
   color: green;
   text-transform: uppercase;
-  padding: 8px;
+  padding: 6px;
 }
 
 .card .card-actions a:hover {
   color: #cc2222;
   background-color: #ffffffaa;
   z-index: 4;
+}
+
+.card-image {
+  background-color: #aaaa99;
+  height: 2.5rem;
 }
 </style>

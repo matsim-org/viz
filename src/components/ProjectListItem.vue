@@ -1,5 +1,5 @@
 <template lang="pug">
-    li.project    
+    li.project
         h5.title.is-5 {{ project.name }}
         .visualizations(v-if="!isLoading")
             .visualization-item(
@@ -8,11 +8,10 @@
                     v-on:click="$emit('viz-selected', viz)")
                 .card.hoverable
                     .card-image
-                        img.img-responsive(src="@/assets/transit-supply.jpg")
                     .card-content
                         h6.card-title {{viz.type}}
                         .card-subtitle viz-{{viz.id.substring(0,4)}}
-        .spinnerContainer(v-else)               
+        .spinnerContainer(v-else)
           spinner
 </template>
 
@@ -61,7 +60,7 @@ export default class ProjectListItem extends Vue {
 }
 
 .visualizations {
-  min-height: 256px;
+  margin-bottom: 2rem;
   display: grid;
   grid-gap: 1rem;
   grid-template-columns: repeat(auto-fill, 240px);
@@ -82,6 +81,11 @@ export default class ProjectListItem extends Vue {
 .spinnerContainer {
   justify-self: center;
   align-self: center;
+}
+
+.card-image {
+  background-color: #aaaa99;
+  height: 2rem;
 }
 </style>
 
