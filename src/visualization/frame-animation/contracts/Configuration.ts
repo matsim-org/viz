@@ -147,24 +147,3 @@ export default class Config {
     this._accessToken = token
   }
 }
-
-// let instance: Config
-
-// bc: this is essentially acting a singleton.
-// tslint:disable-next-line:variable-name
-/*const Configuration = {
-  createConfiguration: (parameters: ConfigParams) => {
-    instance = new Config(parameters)
-  },
-
-  updateServerConfiguration: (parameters: ServerConfiguration) => {
-    instance._updateServerConfig(parameters)
-  },
-
-  getConfig: () => {
-    if (!instance) {
-      throw Error('configuration was not created yet')
-    }
-    return instance
-  },
-}*/
