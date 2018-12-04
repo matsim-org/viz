@@ -1,6 +1,6 @@
 <template lang="pug">
 #app
-  .banner
+  .topnavrow
     router-link.nav-logo(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png")
 
     .breadcrumb-row
@@ -9,7 +9,7 @@
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
-      router-link.banner-item(to="/projects") {{ projectText }}
+      router-link.topnavrow-item(to="/projects") {{ projectText }}
 
   router-view.main-content
 </template>
@@ -92,7 +92,7 @@ h6 {
   z-index: 1;
 }
 
-.banner {
+.topnavrow {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 10px 1.5rem 5px 1.5rem;
@@ -109,7 +109,7 @@ a:focus {
   text-decoration: none;
 }
 
-.banner-item {
+.topnavrow-item {
   float: right;
   color: #ccc;
 }
