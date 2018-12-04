@@ -2,11 +2,12 @@ import Rectangle from '../contracts/Rectangle'
 import { MapState } from './MapState.js'
 import { MapInteractionController } from './MapInteractionController.js'
 import { BufferHolder } from './BufferHolder.js'
-import Configuration from '../contracts/Configuration'
 import { WebGLRenderer, Raycaster, Vector3 } from 'three'
 
 class DrawingController {
-  constructor(playback, dataProvider) {
+  constructor(playback, dataProvider, config) {
+    this._config = config
+    this._config.subscribeServerConfigUpdated(() => this._onServerConfigUpdated())
     this._playback = playback
     this._playback.addTimestepChangedListener(timestep => this._loadSnapshot(timestep))
     this._dataProvider = dataProvider
@@ -43,17 +44,14 @@ class DrawingController {
   }
 
   initialize() {
-    this._config = Configuration.getConfig()
-    this._config.subscribeServerConfigUpdated(() => this._onServerConfigUpdated())
-
     let canvas = document.getElementById(this._config.canvasId)
     this.renderer = new WebGLRenderer({ canvas: canvas, antialias: true })
     this.renderer.setPixelRatio(window.devicePixelRatio)
 
-    this._bufferHolder = new BufferHolder()
+    this._bufferHolder = new BufferHolder(this._config)
     this._bufferHolder.redrawNeeded = () => this.renderOnce(false)
     this.mapState = new MapState(new Rectangle(0, 0, 0, 0))
-    this.interactionController = new MapInteractionController(this.mapState)
+    this.interactionController = new MapInteractionController(this.mapState, this._config)
     this._raycaster = new Raycaster()
 
     this.resize()

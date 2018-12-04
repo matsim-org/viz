@@ -18,7 +18,6 @@ import {
 } from 'three'
 /* eslint-disable */
 import { Shader } from './Shader.js'
-import Configuration from '../contracts/Configuration'
 
 /* eslint-disable */
 import triangle from './assets/triangle-64.png'
@@ -26,8 +25,8 @@ import circle from './assets/circle-64.png'
 /* eslint-enable */
 
 class BufferHolder {
-  constructor() {
-    this._config = Configuration.getConfig()
+  constructor(config) {
+    this._config = config
     this._scene = new Scene()
     window.scene = this._scene
     window.THREE = THREE
