@@ -2,11 +2,6 @@ import Playback from '@/visualization/frame-animation/modell/Playback'
 import Configuration from '../../../../../src/visualization/frame-animation/contracts/Configuration'
 
 describe('Playback', () => {
-  Configuration.createConfiguration({
-    vizId: 'id',
-    canvasId: 'canvas',
-    dataUrl: 'url',
-  })
   const timestepSize = 20
   const firstTimestep = 3
   const lastTimestep = 58
@@ -24,7 +19,15 @@ describe('Playback', () => {
         }
       },
     }
-    testObject = new Playback(dataProviderMock)
+    testObject = new Playback(
+      dataProviderMock,
+      new Configuration({
+        accessToken: 'token',
+        canvasId: 'id',
+        dataUrl: 'url',
+        vizId: 'id',
+      })
+    )
 
     // inject server config values
     testObject._firstTimestep = firstTimestep
