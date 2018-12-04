@@ -16,13 +16,13 @@ export default class DataProvider {
   private readonly _api: FrameAnimationAPI
   private _planFetcher!: PlanFetcher
 
-  // old callbacks
   private _networkDataChanged?: (data: Float32Array) => void
   private _geoJsonDataChanged?: (layerName: string) => void
   private _isFetchingDataChanged?: () => void
 
   private _config: Configuration
   private _isLoadingPlan = false
+  private _timeoutId = 0
 
   get isFetchingData(): boolean {
     return this._snapshotCache.isFetching || this._isLoadingPlan
@@ -48,6 +48,7 @@ export default class DataProvider {
   public destroy() {
     if (this._planFetcher) this._planFetcher.destroy()
     if (this._snapshotCache) this._snapshotCache.destroy()
+    window.clearTimeout(this._timeoutId)
   }
 
   public async loadServerConfig() {
@@ -130,7 +131,7 @@ export default class DataProvider {
     this._config.updateServerConfig(config)
 
     if (config.progress !== Progress.Done && config.progress !== Progress.Failed) {
-      setTimeout(() => this.loadServerConfig(), 10000)
+      this._timeoutId = window.setTimeout(() => this.loadServerConfig(), 10000)
     } else if (config.progress !== Progress.Failed) {
       this.loadNetworkData()
       const snapshotFetcherTask = SnapshotFetcher.create({
