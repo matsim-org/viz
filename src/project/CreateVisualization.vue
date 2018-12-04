@@ -1,7 +1,7 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
     span(slot="header")
-      h3 Create Visualization
+      h3.title.is-3 Create Visualization
 
     div(slot="content")
       .viz-selector
@@ -46,12 +46,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
-import FileAPI from '../communication/FileAPI'
-import Project from '../entities/Project'
-import { Visualization } from '../entities/Visualization'
-import { CreateVisualizationRequest, VisualizationType } from '../entities/Visualization'
+import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
+import { VisualizationType, Project } from '@/entities/Entities'
 
 interface CreateVisualizationState {
   fileLookup: any

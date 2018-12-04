@@ -1,59 +1,55 @@
 <template lang="pug">
     .frameAnimation
-        .header
-          h1 Frame Based Animation
-          span Id: {{vizId}}
-        .canvasContainer
-          .loaderContainer(v-if="isFailed")
-            span Generating Visualization failed! Check your input files.
-          .loaderContainer(v-if="!isDone && !isFailed")
-            .ui.active.indeterminate.small.inline.text.loader Server is processing files...
-          .loaderContainer(v-if="!connected")
-            .ui.active.small.inline.text.loader Connecting to server...
+      .header
+        h1.title Frame Based Animation
+        h5.subtitle Id: {{vizId}}
+      .mainContainer
+        .loaderContainer(v-if="isFailed")
+          span Generating Visualization failed! Check your input files.
+        .loaderContainer(v-if="!isDone && !isFailed")
+          spinner
+          span Server is processing files...
+        .loaderContainer(v-if="!connected")
+          spinner
+          span Connecting to server...
+        .canvasContainer  
           canvas.canvas(ref="canvas" id="canvas")
-        .controls
-          .slider
-            input.range(type="range" v-bind:min="firstTimestep" v-bind:max="lastTimestep" v-bind:step="timestepSize" v-bind:value="currentTimestep" v-on:input="handleRangeChanged($event)" v-on:mousedown="handleRangeMouseDown($event)" v-on:mouseup="handleRangeMouseUp($event)")
-          .actions
-            .bufferState
-              .ui.active.small.inline.loader(v-if="isFetchingData")
-            .inputWithLabel
-              label.description.speedLbl(for="speedInput") Playpack speed
-              .speedControls
-                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(-0.1)")
-                  i.ui.minus.icon
-                .ui.mini.input
-                  input(name="speedInput" readonly v-model="speedFactor")
-                button.speedBtn.ui.compact.icon.button(v-on:click="changeSpeedFactor(0.1)")
-                  i.ui.plus.icon
-            .inputWithLabel
-              label.description(for="timestepInput") Time
-              .ui.mini.input
-                input(type="text" readonly v-model="currentTime")
-
+      .controls
+        input.range(type="range" 
+                    v-bind:min="firstTimestep" 
+                    v-bind:max="lastTimestep" 
+                    v-bind:step="timestepSize" 
+                    v-bind:value="currentTimestep" 
+                    v-on:input="onRangeChanged($event)" 
+                    v-on:mousedown="onRangeMouseDown($event)"
+                    v-on:mouseup="onRangeMouseUp($event)")
+        .actions
+          .bufferState
+            spinner(v-if="isFetchingData")
+          .inputWithLabel
+            label.content.is-small(for="speedInput") Playpack speed
+            .speedControls
+              button.button(v-on:click="changeSpeedFactor(-0.1)")
+                span.icon.is-small
+                  i.fas.fa-minus
+              input.input.speedInput(name="speedInput" readonly v-model="speedFactor")
+              button.button(v-on:click="changeSpeedFactor(0.1)")
+                span.icon.is-small
+                  i.fas.fa-plus
+          .inputWithLabel
+            label.content.is-small(for="timestepInput") Time
+            input.input(type="text" readonly v-model="currentTime")
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Webvis from './Webvis'
 import Config from '../../config/Config'
 import { Progress } from '@/visualization/frame-animation/communication/FrameAnimationAPI'
 import SharedStore from '@/SharedStore'
-
-interface FrameAnimationState {
-  vizId: string
-  isPlaying: boolean
-  isFetchingData: boolean
-  isRangeMouseDown: boolean
-  firstTimestep: number
-  lastTimestep: number
-  currentTimestep: number
-  timestepSize: number
-  playbackSpeedFactor: number
-  progress: string
-  connected: boolean
-  webvis?: Webvis
-}
+import { Visualization } from '@/entities/Entities'
+import ProjectStore from '@/project/ProjectStore'
+import Spinner from '@/components/Spinner.vue'
 
 // register frame animation with shared store
 SharedStore.addVisualizationType({
@@ -63,172 +59,169 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['snapshotInterval'],
 })
 
-export default Vue.extend({
-  data(): FrameAnimationState {
-    return {
-      vizId: this.$route.params.vizId,
-      isPlaying: false,
-      isFetchingData: false,
-      isRangeMouseDown: false,
-      firstTimestep: 0,
-      lastTimestep: 1,
-      currentTimestep: 1,
-      timestepSize: 1,
-      playbackSpeedFactor: 0,
-      progress: 'Done',
-      connected: false,
-    }
-  },
-  computed: {
-    currentTime: function() {
-      return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
-    },
-    speedFactor: function() {
-      return Math.round(this.playbackSpeedFactor * 60 * this.timestepSize)
-    },
-    isDone: function() {
-      return this.progress === Progress.Done
-    },
-    isFailed: function() {
-      return this.progress === Progress.Failed
-    },
-  },
-  mounted: function() {
-    const canvas = this.$refs.canvas as HTMLElement
-    this.webvis = new Webvis({ canvasId: canvas.id, dataUrl: Config.frameAnimationServer, vizId: this.vizId })
-    this.webvis.onServerConfigChanged = () => this.handeConfigChanged()
-    this.webvis.onFetchingData = (value: boolean) => this.handleFetchingDataChanged(value)
-    this.webvis.onTimestepChanged = (value: number) => this.handleTimestepChanged(value)
-  },
-  beforeDestroy: function() {
-    if (this.webvis) this.webvis.destroy()
-  },
-  methods: {
-    changeSpeedFactor: function(add: number) {
-      if (this.webvis) {
-        this.playbackSpeedFactor = this.playbackSpeedFactor + add
-        this.webvis.setPlaybackSpeed(this.playbackSpeedFactor * this.playbackSpeedFactor * this.playbackSpeedFactor)
-      }
-    },
-    handleRangeChanged(event: Event) {
-      const target = event.target as HTMLInputElement
-      const step = parseFloat(target.value)
-      if (this.webvis) this.webvis.seekTimestep(step)
-    },
-    handleRangeMouseDown(event: Event) {
-      this.isRangeMouseDown = true
-    },
-    handleRangeMouseUp(event: Event) {
-      this.isRangeMouseDown = false
-    },
-    handeConfigChanged: function() {
-      if (this.webvis) {
-        this.connected = true
-        this.firstTimestep = this.webvis.firstTimestep
-        this.lastTimestep = this.webvis.lastTimestep
-        this.currentTimestep = this.webvis.firstTimestep
-        this.timestepSize = this.webvis.timestepSize
-        this.playbackSpeedFactor = this.webvis.playbackSpeedFactor
-        this.progress = this.webvis.progress
-      }
-    },
-    handleTimestepChanged: function(timestep: number) {
-      if (!this.isRangeMouseDown) this.currentTimestep = timestep
-    },
-    handleFetchingDataChanged: function(value: boolean) {
-      this.isFetchingData = value
-    },
+@Component({
+  components: {
+    spinner: Spinner,
   },
 })
+export default class FrameAnimation extends Vue {
+  @Prop({ type: String, required: true })
+  private vizId!: string
+  @Prop({ type: ProjectStore, required: true })
+  private projectStore!: ProjectStore
+
+  private isPlaying = false
+  private isFetchingData = false
+  private isRangeMouseDown = false
+  private firstTimestep = 0
+  private lastTimestep = 1
+  private currentTimestep = 0
+  private timestepSize = 1
+  private playbackSpeedFactor = 0
+  private progress = 'Done'
+  private connected = false
+  private webvis: any // convert webvis wrapper to ts to make this more specific
+
+  private get currentTime() {
+    return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
+  }
+
+  private get speedFactor() {
+    return Math.round(this.playbackSpeedFactor * 60 * this.timestepSize)
+  }
+
+  private get isDone() {
+    return this.progress === Progress.Done
+  }
+
+  private get isFailed() {
+    return this.progress === Progress.Failed
+  }
+
+  public mounted() {
+    const canvas = this.$refs.canvas as HTMLElement
+    this.webvis = new Webvis({
+      canvasId: canvas.id,
+      dataUrl: Config.frameAnimationServer,
+      vizId: this.vizId,
+    })
+    this.webvis.onServerConfigChanged = () => this.onConfigChanged()
+    this.webvis.onFetchingData = (value: boolean) => this.onFetchingDataChanged(value)
+    this.webvis.onTimestepChanged = (value: number) => this.onTimestepChanged(value)
+  }
+
+  public beforeDestroy() {
+    if (this.webvis) this.webvis.destroy()
+  }
+
+  private changeSpeedFactor(add: number) {
+    if (this.webvis) {
+      this.playbackSpeedFactor = this.playbackSpeedFactor + add
+      this.webvis.setPlaybackSpeed(this.playbackSpeedFactor * this.playbackSpeedFactor * this.playbackSpeedFactor)
+    }
+  }
+
+  private onRangeChanged(event: Event) {
+    const target = event.target as HTMLInputElement
+    const step = parseFloat(target.value)
+    if (this.webvis) this.webvis.seekTimestep(step)
+  }
+
+  private onRangeMouseDown(event: Event) {
+    this.isRangeMouseDown = true
+  }
+
+  private onRangeMouseUp(event: Event) {
+    this.isRangeMouseDown = false
+  }
+
+  private onConfigChanged() {
+    if (this.webvis) {
+      this.connected = true
+      this.firstTimestep = this.webvis.firstTimestep
+      this.lastTimestep = this.webvis.lastTimestep
+      this.currentTimestep = this.webvis.firstTimestep
+      this.timestepSize = this.webvis.timestepSize
+      this.playbackSpeedFactor = this.webvis.playbackSpeedFactor
+      this.progress = this.webvis.progress
+    }
+  }
+
+  private onTimestepChanged(timestep: number) {
+    if (!this.isRangeMouseDown) this.currentTimestep = timestep
+  }
+
+  private onFetchingDataChanged(value: boolean) {
+    this.isFetchingData = value
+  }
+}
 </script>
 
 <style scoped>
-.frameAnimation {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-}
-
 .header {
-  display: flex;
-  flex-direction: column;
+  margin: 1.5rem;
 }
 
-.canvasContainer {
-  display: flex;
+.frameAnimation {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.mainContainer {
   flex: 1;
+  display: grid;
+  grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;
 }
 
-.loaderContainer {
-  position: absolute;
-  z-index: 9000;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+/* Having a container which fills the grid and a canvas filling the container, in addition
+    to the container being relative and canvas being absolutely positioned is important to 
+    support resizing in different browsers
+*/
+.canvasContainer {
+  position: relative;
+  grid-area: 1 / 1 / span 3 / span 3;
 }
 
 .canvas {
   height: 100%;
   width: 100%;
+  position: absolute;
+}
+
+.loaderContainer {
+  grid-area: 2 / 2 / span 1 / span 1;
+  z-index: 10;
+  justify-self: center;
+  align-self: center;
+  display: grid;
+  justify-items: center;
 }
 
 .controls {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
+  display: grid;
+  grid-template-rows: auto auto;
+  margin: 1rem 1.5rem;
 }
 
-.slider {
-  display: flex;
-  flex-direction: row;
-}
-
+/* seems firefox needs an extra motivation to stretch a range */
 .range {
-  flex: 1;
-  margin: 0.5rem 0;
+  width: 100%;
 }
 
 .actions {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  grid-column-gap: 1rem;
 }
 
-.actions > *:not(:first-child) {
-  margin-left: 2rem;
-}
-
-.playPause {
-  min-width: 4rem;
-  min-height: 4rem;
-}
-
-.speedBtn {
-  margin: 0 0.5rem 0 0.5rem;
-}
-
-.description {
-  font-size: 0.8rem;
-  color: rgb(138, 138, 138);
-}
-
-.speedLbl {
-  margin-left: 0.5rem;
-}
-
-.inputWithLabel {
-  display: flex;
-  flex-direction: column;
+.speedControls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-column-gap: 0.5rem;
 }
 
 .bufferState {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  justify-self: right;
+  align-self: end;
 }
 </style>
