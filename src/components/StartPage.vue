@@ -6,9 +6,9 @@
       p.subtitle You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
 
   .start-page-content
-    h3.title.is-3 Available Visualizations
+    h3.title.is-3 Visualization Gallery
     ul.projects
-      project-list-item(v-for="project in projects" 
+      project-list-item(v-for="project in projects"
                         v-bind:key="project.id"
                         v-bind:project="project"
                         v-bind:project-store="projectStore"

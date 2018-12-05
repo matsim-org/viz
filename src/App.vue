@@ -5,7 +5,7 @@
 
     .breadcrumb-row
       span(v-for="crumb in breadcrumbs" :key="crumb.title")
-        p.nav-breadcrumb &raquo;
+        p.nav-breadcrumb &bull;
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
@@ -59,7 +59,7 @@ body {
   height: 100vh;
   min-height: 100vh;
   overflow-y: auto;
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Raleway', 'Open Sans', Helvetica, Arial, sans-serif;
   margin: 0px 0px;
   padding: 0px 0px;
 }
@@ -70,7 +70,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Raleway', 'Open Sans', Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: #363636;
 }

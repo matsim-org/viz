@@ -1,8 +1,8 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
   .header(slot="header")
-    h3.title.is-3 Upload selectedFiles
-    
+    h4.title.is-4 Upload selected files
+
   .tagsAndselectedFiles(slot="content")
     .tagWrapper
       .tagsAndDropdown
@@ -11,7 +11,7 @@ modal(v-on:close-requested="close()")
             span {{ tag.name }}
             button.delete.is-small(@click="onRemoveTag(tag)")
         .dropdown(:class="{'is-active': showTags && filteredTags.length > 0}")
-          .dropdown-trigger 
+          .dropdown-trigger
             button.button.is-small(@click="showTags = !showTags")
               span Add tags
               span.icon.is-small
@@ -22,7 +22,7 @@ modal(v-on:close-requested="close()")
       .addNewTag
         input.input.is-small(type="text" v-model="newTagText" :class="{'is-danger': isInvalidNewTag }")
         button.button.is-small(@click="onAddTag") Add
-      
+
     .fileList
       .fileItem(v-for="file in files")
         list-element(v-bind:key="file.name")
@@ -31,11 +31,11 @@ modal(v-on:close-requested="close()")
             span {{ file.type }}
           span(slot="content") {{ file.size }}
           button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(file)")
-    
+
   div(slot="actions")
     button.ui.negative.button(v-on:click="cancel()") Cancel
     button.button.is-link(v-on:click="uploadselectedFiles()") Upload
-    
+
 
 
 </template>
