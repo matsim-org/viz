@@ -105,6 +105,7 @@ const store: any = {
   project: {},
   vizId: null,
   visualization: null,
+  api: FileAPI,
 }
 
 let _map: mapboxgl.Map
@@ -125,8 +126,14 @@ const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 // this export is the Vue Component itself
 export default {
   name: 'TransitSupply',
+  props: {
+    fileApi: FileAPI,
+  },
   data() {
     return store
+  },
+  created() {
+    store.api = (this as any).fileApi
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -143,8 +150,8 @@ export default {
 }
 
 async function getVizDetails() {
-  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
-  store.project = await FileAPI.fetchProject(store.projectId)
+  store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
+  store.project = await store.api.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization.inputFiles))
   setBreadcrumb()
 }
@@ -345,10 +352,10 @@ async function loadNetworks() {
     console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
-    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    const roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
 
     store.loadingText = 'Loading transit network...'
-    const transitBlob = await FileAPI.downloadFile(TRANSIT_NET, store.projectId)
+    const transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
 
     // get the blob data
     const road = await readBlob.text(roadBlob)

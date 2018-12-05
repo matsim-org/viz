@@ -3,6 +3,7 @@ import { ContentType, HeaderKeys, Method } from '@/communication/Constants'
 import AuthenticatedRequest from '@/auth/AuthenticatedRequest'
 import Config from '@/config/Config'
 import { Project, Visualization, Tag, Permission } from '@/entities/Entities'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export interface CreateVisualizationRequest {
   projectId?: string
@@ -17,58 +18,63 @@ export interface CreateTagRequest {
 }
 
 export default class FileAPI {
-  private static PROJECT: string = Config.fileServer + '/projects'
-  private static FILE: string = Config.fileServer + '/file/'
-  private static FILE_UPLOAD: string = Config.fileServer + '/file/upload/'
-  private static VISUALIZATION: string = 'visualizations/'
-  private static VISUALIZATION_TYPE: string = Config.fileServer + '/visualization-types/'
+  private PROJECT: string = Config.fileServer + '/projects'
+  private FILE: string = Config.fileServer + '/file/'
+  private FILE_UPLOAD: string = Config.fileServer + '/file/upload/'
+  private VISUALIZATION: string = 'visualizations/'
+  private VISUALIZATION_TYPE: string = Config.fileServer + '/visualization-types/'
 
-  private static jsogService = new JsogService()
+  private jsogService = new JsogService()
+  private authenticatedRequester: AuthenticatedRequest
 
-  public static async fetchAllPersonalProjects(): Promise<Project[]> {
+  constructor(authStore: AuthenticationStore) {
+    this.authenticatedRequester = new AuthenticatedRequest(authStore)
+  }
+
+  public async fetchAllPersonalProjects(): Promise<Project[]> {
     return await this.request<Project[]>(this.PROJECT, this.corsRequestOptions())
   }
 
-  public static async fetchProject(projectId: string): Promise<Project> {
+  public async fetchProject(projectId: string): Promise<Project> {
     return await this.request<Project>(this.PROJECT + '/' + projectId, this.corsRequestOptions())
   }
 
-  public static async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
+  public async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
     return await this.request<Visualization>(
       this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
       this.corsRequestOptions()
     )
   }
 
-  public static async fetchVizualizationsForProject(projectId: string): Promise<Visualization[]> {
+  public async fetchVizualizationsForProject(projectId: string): Promise<Visualization[]> {
     return await this.request<Visualization[]>(
       `${this.PROJECT}/${projectId}/${this.VISUALIZATION}`,
       this.corsRequestOptions()
     )
   }
 
-  public static async createProject(projectName: string): Promise<Project> {
+  public async createProject(projectName: string): Promise<Project> {
     const options = this.postRequestOptions({ name: projectName })
     return await this.request<Project>(this.PROJECT, options)
   }
 
-  public static async patchProject(projectId: string, newProjectName: string) {
+  public async patchProject(projectId: string, newProjectName: string) {
     const options = this.postRequestOptions({ name: newProjectName })
     options.method = Method.PATCH
     return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
   }
 
-  public static async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
+  public async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     const options = this.postRequestOptions(request)
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
   }
 
-  public static async createTag(request: CreateTagRequest, projectId: string) {
+  public async createTag(request: CreateTagRequest, projectId: string) {
     const options = this.postRequestOptions(request)
     return await this.request<Tag>(`${this.PROJECT}/${projectId}/tags`, options)
   }
 
-  public static async deleteVisualization(projectId: string, vizId: string) {
+  public async deleteVisualization(projectId: string, vizId: string) {
     const options: RequestInit = {
       mode: 'cors',
       method: Method.DELETE,
@@ -76,7 +82,7 @@ export default class FileAPI {
     return await this.request(`${this.PROJECT}/${projectId}/${this.VISUALIZATION}/${vizId}`, options)
   }
 
-  public static async uploadFiles(files: File[], project: Project): Promise<Project> {
+  public async uploadFiles(files: File[], project: Project): Promise<Project> {
     const formData = new FormData()
     for (const file of files) {
       formData.append(file.name, file)
@@ -92,9 +98,9 @@ export default class FileAPI {
     return await this.request<Project>(url, options)
   }
 
-  public static async downloadFile(fileId: string, projectId: string): Promise<Blob> {
+  public async downloadFile(fileId: string, projectId: string): Promise<Blob> {
     const url = `${this.PROJECT}/${projectId}/files/${fileId}`
-    const result = await AuthenticatedRequest.fetch(url, this.corsRequestOptions())
+    const result = await this.authenticatedRequester.fetch(url, this.corsRequestOptions())
 
     if (result.ok) {
       const file = await result.blob()
@@ -105,25 +111,25 @@ export default class FileAPI {
     }
   }
 
-  public static async deleteFile(fileId: string, project: Project): Promise<void> {
+  public async deleteFile(fileId: string, project: Project): Promise<void> {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
 
     return await this.request<void>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
   }
 
-  public static async addPermission(projectId: string, userAuthId: string, type: string) {
+  public async addPermission(projectId: string, userAuthId: string, type: string) {
     const options = this.postRequestOptions({ resourceId: projectId, userAuthId: userAuthId, type: type })
     return await this.request<Permission>(`${this.PROJECT}/${projectId}/permissions`, options)
   }
 
-  public static async removePermission(projectId: string, userAuthId: string) {
+  public async removePermission(projectId: string, userAuthId: string) {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
     return await this.request<void>(`${this.PROJECT}/${projectId}/permissions?userAuthId=${userAuthId}`, options)
   }
 
-  private static postRequestOptions(body: any): RequestInit {
+  private postRequestOptions(body: any): RequestInit {
     const headers = new Headers()
     headers.append(HeaderKeys.CONTENT_TYPE, ContentType.APPLICATION_JSON)
     return {
@@ -134,14 +140,14 @@ export default class FileAPI {
     }
   }
 
-  private static corsRequestOptions(): RequestInit {
+  private corsRequestOptions(): RequestInit {
     return {
       mode: 'cors',
     }
   }
 
-  private static async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    const result = await AuthenticatedRequest.fetch(endpoint, options)
+  private async request<T>(endpoint: string, options: RequestInit): Promise<T> {
+    const result = await this.authenticatedRequester.fetch(endpoint, options)
     if (result.ok) {
       if (result.status === 204) {
         // if result is no-content, there is nothing to parse
@@ -157,7 +163,7 @@ export default class FileAPI {
     }
   }
 
-  private static async generateError(response: Response): Promise<Error> {
+  private async generateError(response: Response): Promise<Error> {
     const error = await response.json()
     console.error(error)
     return new Error(error.error_description)

@@ -16,7 +16,7 @@ export interface AuthenticationState {
   errorMessage: string
 }
 
-class AuthenticationStore {
+export default class AuthenticationStore {
   private authState: AuthenticationState
 
   private static get STATE_STORAGE_KEY(): string {
@@ -107,5 +107,3 @@ class AuthenticationStore {
     return null
   }
 }
-
-export default new AuthenticationStore()

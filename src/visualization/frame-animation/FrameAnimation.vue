@@ -70,6 +70,8 @@ export default class FrameAnimation extends Vue {
   private vizId!: string
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
 
   private isPlaying = false
   private isFetchingData = false
@@ -105,7 +107,7 @@ export default class FrameAnimation extends Vue {
       canvasId: canvas.id,
       dataUrl: Config.frameAnimationServer,
       vizId: this.vizId,
-      accessToken: AuthenticationStore.state.accessToken,
+      accessToken: this.authStore.state.accessToken,
     })
     this.webvis.onServerConfigChanged = () => this.onConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.onFetchingDataChanged(value)

@@ -28,6 +28,7 @@ export default class UploadStore {
   private static jsogService = new JsogService()
   private state: UploadState
   private fileUploadedEvent: SimpleEventEmmiter<FileEntry> = new SimpleEventEmmiter()
+  private authStore: AuthenticationStore
 
   public get State() {
     return this.state
@@ -37,7 +38,8 @@ export default class UploadStore {
     return this.fileUploadedEvent
   }
 
-  constructor() {
+  constructor(authStore: AuthenticationStore) {
+    this.authStore = authStore
     this.state = this.getInitialState()
   }
 
@@ -84,7 +86,7 @@ export default class UploadStore {
     const tagIds = upload.tags.map(tag => tag.id)
     formData.append('data', JSON.stringify({ tagIds: tagIds }))
     request.open('POST', `${Config.fileServer}/projects/${upload.project.id}/files`)
-    request.setRequestHeader('Authorization', 'Bearer ' + AuthenticationStore.state.accessToken)
+    request.setRequestHeader('Authorization', 'Bearer ' + this.authStore.state.accessToken)
     request.send(formData)
     return promise
   }

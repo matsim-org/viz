@@ -29,14 +29,19 @@ const store: any = {
   loadingText: 'MATSim Volume Plot',
   visualization: null,
   project: {},
+  api: FileAPI,
 }
 
 // this export is the Vue Component itself
 export default {
   name: 'NetworkViz',
+  props: ['fileApi'],
   components: {},
   data() {
     return store
+  },
+  created() {
+    store.api = (this as any).fileApi
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -93,8 +98,8 @@ function setupEventListeners() {
 }
 
 async function getVizDetails() {
-  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
-  store.project = await FileAPI.fetchProject(store.projectId)
+  store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
+  store.project = await store.api.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization))
 }
 
@@ -117,7 +122,7 @@ async function loadNetwork() {
     console.log({ ROAD_NET, PROJECT: store.projectId })
     store.loadingText = 'Loading network...'
     // get the blob data
-    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    const roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
     let road = await readBlob.text(roadBlob)
     road = JSON.parse(road)
 

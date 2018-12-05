@@ -46,7 +46,7 @@
           b No files yet. Add some!
         .fileList(v-else)
           .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id" v-on:itemClicked="onSelectFile(file.id)")
+            list-element( v-bind:key="file.id")
               .itemTitle(slot="title")
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
@@ -70,7 +70,8 @@
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
-                        v-bind:projectStore="projectStore")
+                        v-bind:projectStore="projectStore"
+                        v-bind:fileApi="fileApi")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
               v-bind:uploadStore="uploadStore"
@@ -107,6 +108,7 @@ const vueInstance = Vue.extend({
     projectStore: ProjectStore,
     uploadStore: UploadStore,
     projectId: String,
+    fileApi: FileAPI,
   },
   components: {
     'create-visualization': CreateVisualization,
@@ -212,15 +214,6 @@ export default class ProjectViewModel extends vueInstance {
 
   private onSelectVisualization(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
-  }
-
-  private async onSelectFile(fileId: string) {
-    try {
-      const blob = await FileAPI.downloadFile(fileId, this.project.id)
-      window.open(URL.createObjectURL(blob))
-    } catch (e) {
-      console.log(e)
-    }
   }
 
   private readableFileSize(bytes: number): string {

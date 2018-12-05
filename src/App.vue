@@ -28,7 +28,9 @@ interface BreadCrumb {
 @Component
 export default class App extends Vue {
   private breadcrumbs: BreadCrumb[] = []
-  private authState = AuthenticationStore.state
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
+  private authState = this.authStore.state
 
   private get sharedState() {
     return sharedStore.state
