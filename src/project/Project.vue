@@ -20,7 +20,7 @@
         .viz-item(v-for="viz in project.visualizations"
                   v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
-            viz-thumbnail(@edit="onEditViz(viz.id)" @remove="onRemoveViz(viz.id)" @share="onShareViz(viz.id)")
+            viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
               .itemTitle(slot="title"): p {{ viz.type }}
               p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
 
@@ -43,10 +43,10 @@
 
       .files
         .emptyMessage(v-if="project.files && project.files.length === 0")
-          b No files yet. Add some!
+          span No files yet. Add some!
         .fileList(v-else)
           .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id" v-on:itemClicked="onSelectFile(file.id)")
+            list-element( v-bind:key="file.id")
               .itemTitle(slot="title")
                 span {{file.userFileName}}
                 span {{readableFileSize(file.sizeInBytes)}}
@@ -68,7 +68,8 @@
 
   create-visualization(v-if="showCreateVisualization"
                         v-on:close="onAddVisualizationClosed"
-                        v-bind:projectStore="projectStore")
+                        v-bind:projectStore="projectStore"
+                        v-bind:fileApi="fileApi")
 
   file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
               v-bind:uploadStore="uploadStore"
@@ -104,6 +105,7 @@ const vueInstance = Vue.extend({
     projectStore: ProjectStore,
     uploadStore: UploadStore,
     projectId: String,
+    fileApi: FileAPI,
   },
   components: {
     'create-visualization': CreateVisualization,
@@ -211,15 +213,6 @@ export default class ProjectViewModel extends vueInstance {
     this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
   }
 
-  private async onSelectFile(fileId: string) {
-    try {
-      const blob = await FileAPI.downloadFile(fileId, this.project.id)
-      window.open(URL.createObjectURL(blob))
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
   private readableFileSize(bytes: number): string {
     return filesize(bytes)
   }
@@ -240,34 +233,20 @@ export default class ProjectViewModel extends vueInstance {
         return 'Failed'
     }
   }
-  private async onRemoveViz(viz: string) {
-    console.log('remove viz', viz)
+  private async onRemoveViz(viz: Visualization) {
     try {
-      console.log(this.projectId, viz)
-      await FileAPI.deleteVisualization(this.projectId, viz)
+      this.projectStore.deleteVisualization(viz)
     } catch (error) {
       console.error(error)
     }
   }
-  private async onEditViz(viz: string) {
-    console.log('edit viz', viz)
-    console.log(this.project.visualizations)
 
-    try {
-      // const updatedProject = await FileAPI.deleteVisualization(viz)
-      // this.project = updatedProject
-    } catch (error) {
-      console.error(error)
-    }
+  private async onEditViz(viz: Visualization) {
+    console.log('edit viz not yet implemented')
   }
-  private async onShareViz(viz: string) {
-    console.log('share viz', viz)
-    try {
-      // const updatedProject = await FileAPI.deleteVisualization(viz)
-      // this.project = updatedProject
-    } catch (error) {
-      console.error(error)
-    }
+
+  private async onShareViz(viz: Visualization) {
+    console.log('share viz not yet implemented')
   }
 }
 </script>

@@ -128,7 +128,8 @@ export default {
 }
 
 async function getVizDetails() {
-  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  // store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
+  console.error('enable proper dependency injection when using this component again.')
   console.log(Object.assign({}, store.visualization.inputFiles))
 }
 
@@ -307,10 +308,14 @@ async function loadNetworks() {
     console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
-    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    // const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    const roadBlob = new Blob()
+    console.error('enable proper dependency injection when using this component again.')
 
     store.loadingText = 'Loading transit network...'
-    const transitBlob = await FileAPI.downloadFile(TRANSIT_NET, store.projectId)
+    // const transitBlob = await FileAPI.downloadFile(TRANSIT_NET, store.projectId)
+    const transitBlob = new Blob()
+    console.error('enable proper dependency injection when using this component again.')
 
     // get the blob data
     const road = await readBlob.text(roadBlob)

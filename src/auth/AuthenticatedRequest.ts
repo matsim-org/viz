@@ -1,23 +1,28 @@
 import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export default class AuthenticatedRequest {
-  public static async fetch(endpoint: string, options: RequestInit): Promise<Response> {
-    options.headers = AuthenticatedRequest.appendAuthorizationHeader(options.headers)
+  private authStore: AuthenticationStore
 
+  constructor(authStore: AuthenticationStore) {
+    this.authStore = authStore
+  }
+
+  public async fetch(endpoint: string, options: RequestInit): Promise<Response> {
+    options.headers = this.appendAuthorizationHeader(options.headers)
     const response = await fetch(endpoint, options)
 
     if (response.status === 401) {
       // token was invalid try to request a new one
-      AuthenticationStore.resetState()
-      AuthenticationStore.requestAuthentication()
+      this.authStore.resetState()
+      this.authStore.requestAuthentication()
     }
 
     return response
   }
 
-  private static appendAuthorizationHeader(init: HeadersInit | undefined): Headers {
+  private appendAuthorizationHeader(init: HeadersInit | undefined): Headers {
     const headers = new Headers(init)
-    headers.append('Authorization', 'Bearer ' + AuthenticationStore.state.accessToken)
+    headers.append('Authorization', 'Bearer ' + this.authStore.state.accessToken)
     return headers
   }
 }

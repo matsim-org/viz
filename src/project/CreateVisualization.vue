@@ -42,8 +42,7 @@ modal(v-on:close-requested="cancel()")
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
@@ -51,37 +50,20 @@ import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
 import { VisualizationType, Project } from '@/entities/Entities'
 
-interface CreateVisualizationState {
-  fileLookup: any
-  isRequesting: boolean
-  isServerError: boolean
-  isVizListOpen: boolean
-  openDropdown: string
-  serverError: string
-  request: CreateVisualizationRequest
-  project?: Project
-  sharedState: SharedState
-  selectedVizType?: VisualizationType
-}
-
-const vueInstance = Vue.extend({
-  props: {
-    projectStore: ProjectStore,
-  },
+@Component({
   components: {
     modal: Modal,
     error: Error,
   },
-  data() {
-    return {
-      projectState: this.projectStore.State,
-      sharedState: SharedStore.state,
-    }
-  },
 })
+export default class CreateVisualizationViewModel extends Vue {
+  @Prop({ type: FileAPI, required: true })
+  private fileApi!: FileAPI
+  @Prop({ type: ProjectStore, required: true })
+  private projectStore!: ProjectStore
 
-@Component
-export default class CreateVisualizationViewModel extends vueInstance {
+  private sharedState = SharedStore.state
+
   private isVizListOpen = false
   private isRequesting = false
   private errorMessage = ''
@@ -92,6 +74,10 @@ export default class CreateVisualizationViewModel extends vueInstance {
 
   private get showDetails(): boolean {
     return this.selectedVizType !== undefined
+  }
+
+  private get projectState() {
+    return this.projectStore.State
   }
 
   private get project() {
@@ -122,7 +108,7 @@ export default class CreateVisualizationViewModel extends vueInstance {
   private async createVisualization() {
     this.isRequesting = true
     try {
-      const viz = await FileAPI.createVisualization(this.request)
+      const viz = await this.fileApi.createVisualization(this.request)
       this.projectStore.addVisualizationToSelectedProject(viz)
       this.close()
     } catch (error) {
