@@ -48,6 +48,16 @@ export default class ProjectStore {
     }
   }
 
+  public async deleteProject(project: Project) {
+    this.state.isFetching = true
+    try {
+      await this.api.deleteProject(project.id)
+      this.state.projects = this.state.projects.filter(p => p.id !== project.id)
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   public async changeNameOfSelectedProject(newName: string) {
     this.state.isFetching = true
     try {
@@ -119,6 +129,17 @@ export default class ProjectStore {
 
   public async addVisualizationToSelectedProject(visualization: Visualization) {
     this.state.selectedProject.visualizations.push(visualization)
+  }
+
+  public async deleteVisualization(visualization: Visualization) {
+    this.state.isFetching = true
+    try {
+      await this.api.deleteVisualization(visualization.project.id, visualization.id)
+      const project = this.State.projects.find(p => p.id === visualization.project.id)
+      if (project) project.visualizations = project.visualizations.filter(v => v.id !== visualization.id)
+    } finally {
+      this.State.isFetching = false
+    }
   }
 
   public async fetchProject(id: string) {

@@ -8,7 +8,12 @@ export default class AuthenticatedRequest {
   }
 
   public async fetch(endpoint: string, options: RequestInit): Promise<Response> {
-    options.headers = this.appendAuthorizationHeader(options.headers)
+    // options.headers = this.appendAuthorizationHeader(options.headers)
+
+    options.headers = {
+      ...options.headers,
+      Authorization: 'Bearer ' + this.authStore.state.accessToken,
+    }
 
     const response = await fetch(endpoint, options)
 

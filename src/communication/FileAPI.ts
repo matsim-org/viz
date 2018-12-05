@@ -18,17 +18,16 @@ export interface CreateTagRequest {
 }
 
 export default class FileAPI {
-  private PROJECT: string = Config.fileServer + '/projects'
-  private FILE: string = Config.fileServer + '/file/'
-  private FILE_UPLOAD: string = Config.fileServer + '/file/upload/'
+  private fileServerUrl: string
+  private PROJECT: string = this.fileServerUrl + '/projects'
   private VISUALIZATION: string = 'visualizations/'
-  private VISUALIZATION_TYPE: string = Config.fileServer + '/visualization-types/'
 
   private jsogService = new JsogService()
   private authenticatedRequester: AuthenticatedRequest
 
-  constructor(authStore: AuthenticationStore) {
+  constructor(authStore: AuthenticationStore, fileServerUrl: string) {
     this.authenticatedRequester = new AuthenticatedRequest(authStore)
+    this.fileServerUrl = fileServerUrl
   }
 
   public async fetchAllPersonalProjects(): Promise<Project[]> {
@@ -64,6 +63,14 @@ export default class FileAPI {
     return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
   }
 
+  public async deleteProject(projectId: string) {
+    const options: RequestInit = {
+      mode: 'cors',
+      method: Method.DELETE,
+    }
+    return await this.request(`${this.fileServerUrl}/projects/${projectId}`, options)
+  }
+
   public async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     const options = this.postRequestOptions(request)
     return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
@@ -79,7 +86,7 @@ export default class FileAPI {
       mode: 'cors',
       method: Method.DELETE,
     }
-    return await this.request(`${this.PROJECT}/${projectId}/${this.VISUALIZATION}/${vizId}`, options)
+    return await this.request(`${this.fileServerUrl}/projects/${projectId}/visualizations/${vizId}`, options)
   }
 
   public async uploadFiles(files: File[], project: Project): Promise<Project> {
