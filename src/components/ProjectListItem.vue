@@ -10,7 +10,7 @@
                     .card-image
                     .card-content
                         h6.card-title {{viz.type}}
-                        .card-subtitle viz-{{viz.id.substring(0,4)}}
+                        .card-subtitle {{viz.type}}: {{viz.id.substring(0,5)}}
         .spinnerContainer(v-else)
           spinner
 </template>

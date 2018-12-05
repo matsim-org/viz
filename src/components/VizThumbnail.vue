@@ -2,6 +2,8 @@
 .card
   .card-image
   .card-actions
+    a(title="Edit..." @click.stop="$emit('edit')")
+      i.fas.fa-edit
     a(title="Share..." @click.stop="$emit('share')")
       i.fas.fa-share
     a(title="Remove" @click.stop="$emit('remove')")
@@ -101,9 +103,9 @@ export default Vue.extend({})
 }
 
 .card .card-actions {
-  background-color: #ffffffcc;
-  margin: 3px 3px auto auto;
-  padding: 5px;
+  background-color: #ffffff88;
+  margin: 6px 3px auto auto;
+  padding: 2px;
   border-radius: 4px;
   grid-column: 1/2;
   grid-row: 1/2;
@@ -119,12 +121,12 @@ export default Vue.extend({})
   font-size: 1rem;
   color: green;
   text-transform: uppercase;
-  padding: 6px;
+  padding: 2px 6px;
 }
 
 .card .card-actions a:hover {
   color: #cc2222;
-  background-color: #ffffffaa;
+  background-color: #ffffff99;
   z-index: 4;
 }
 

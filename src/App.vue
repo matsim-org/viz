@@ -5,7 +5,7 @@
 
     .breadcrumb-row
       span(v-for="crumb in breadcrumbs" :key="crumb.title")
-        p.nav-breadcrumb &raquo;
+        p.nav-breadcrumb &bull;
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
