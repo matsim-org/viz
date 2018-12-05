@@ -8,13 +8,7 @@ export default class AuthenticatedRequest {
   }
 
   public async fetch(endpoint: string, options: RequestInit): Promise<Response> {
-    // options.headers = this.appendAuthorizationHeader(options.headers)
-
-    options.headers = {
-      ...options.headers,
-      Authorization: 'Bearer ' + this.authStore.state.accessToken,
-    }
-
+    options.headers = this.appendAuthorizationHeader(options.headers)
     const response = await fetch(endpoint, options)
 
     if (response.status === 401) {

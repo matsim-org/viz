@@ -27,7 +27,6 @@ async function setUpProjectStore() {
     deleteProject: projectId => {}, // does nothing
     deleteVisualization: (projectId, vizId) => {},
     fetchAllPersonalProjects: async () => {
-      console.log('called mock')
       return Promise.resolve([
         {
           id: 'first-id',

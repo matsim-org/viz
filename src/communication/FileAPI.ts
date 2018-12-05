@@ -19,9 +19,6 @@ export interface CreateTagRequest {
 
 export default class FileAPI {
   private fileServerUrl: string
-  private PROJECT: string = this.fileServerUrl + '/projects'
-  private VISUALIZATION: string = 'visualizations/'
-
   private jsogService = new JsogService()
   private authenticatedRequester: AuthenticatedRequest
 
@@ -31,36 +28,36 @@ export default class FileAPI {
   }
 
   public async fetchAllPersonalProjects(): Promise<Project[]> {
-    return await this.request<Project[]>(this.PROJECT, this.corsRequestOptions())
+    return await this.request<Project[]>(`${this.fileServerUrl}/projects`, this.corsRequestOptions())
   }
 
   public async fetchProject(projectId: string): Promise<Project> {
-    return await this.request<Project>(this.PROJECT + '/' + projectId, this.corsRequestOptions())
+    return await this.request<Project>(`${this.fileServerUrl}/projects/${projectId}`, this.corsRequestOptions())
   }
 
-  public async fetchVisualization(projectId: string, visualizationId: string): Promise<Visualization> {
+  public async fetchVisualization(projectId: string, vizId: string): Promise<Visualization> {
     return await this.request<Visualization>(
-      this.PROJECT + '/' + projectId + '/' + this.VISUALIZATION + visualizationId,
+      `${this.fileServerUrl}/projects/${projectId}/visualizations/${vizId}`,
       this.corsRequestOptions()
     )
   }
 
   public async fetchVizualizationsForProject(projectId: string): Promise<Visualization[]> {
     return await this.request<Visualization[]>(
-      `${this.PROJECT}/${projectId}/${this.VISUALIZATION}`,
+      `${this.fileServerUrl}/projects/${projectId}/visualizations/`,
       this.corsRequestOptions()
     )
   }
 
   public async createProject(projectName: string): Promise<Project> {
     const options = this.postRequestOptions({ name: projectName })
-    return await this.request<Project>(this.PROJECT, options)
+    return await this.request<Project>(`${this.fileServerUrl}/projects`, options)
   }
 
   public async patchProject(projectId: string, newProjectName: string) {
     const options = this.postRequestOptions({ name: newProjectName })
     options.method = Method.PATCH
-    return await this.request<void>(`${this.PROJECT}/${projectId}`, options)
+    return await this.request<void>(`${this.fileServerUrl}/projects/${projectId}`, options)
   }
 
   public async deleteProject(projectId: string) {
@@ -73,12 +70,15 @@ export default class FileAPI {
 
   public async createVisualization(request: CreateVisualizationRequest): Promise<Visualization> {
     const options = this.postRequestOptions(request)
-    return await this.request<Visualization>(`${this.PROJECT}/${request.projectId}/${this.VISUALIZATION}`, options)
+    return await this.request<Visualization>(
+      `${this.fileServerUrl}/projects/${request.projectId}/visualizations/`,
+      options
+    )
   }
 
   public async createTag(request: CreateTagRequest, projectId: string) {
     const options = this.postRequestOptions(request)
-    return await this.request<Tag>(`${this.PROJECT}/${projectId}/tags`, options)
+    return await this.request<Tag>(`${this.fileServerUrl}/projects/${projectId}/tags`, options)
   }
 
   public async deleteVisualization(projectId: string, vizId: string) {
@@ -101,12 +101,12 @@ export default class FileAPI {
       body: formData,
     }
 
-    const url = `${this.PROJECT}/${project.id}/files`
+    const url = `${this.fileServerUrl}/projects/${project.id}/files`
     return await this.request<Project>(url, options)
   }
 
   public async downloadFile(fileId: string, projectId: string): Promise<Blob> {
-    const url = `${this.PROJECT}/${projectId}/files/${fileId}`
+    const url = `${this.fileServerUrl}/projects/${projectId}/files/${fileId}`
     const result = await this.authenticatedRequester.fetch(url, this.corsRequestOptions())
 
     if (result.ok) {
@@ -122,18 +122,21 @@ export default class FileAPI {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
 
-    return await this.request<void>(`${this.PROJECT}/${project.id}/files/${fileId}`, options)
+    return await this.request<void>(`${this.fileServerUrl}/projects/${project.id}/files/${fileId}`, options)
   }
 
   public async addPermission(projectId: string, userAuthId: string, type: string) {
     const options = this.postRequestOptions({ resourceId: projectId, userAuthId: userAuthId, type: type })
-    return await this.request<Permission>(`${this.PROJECT}/${projectId}/permissions`, options)
+    return await this.request<Permission>(`${this.fileServerUrl}/projects/${projectId}/permissions`, options)
   }
 
   public async removePermission(projectId: string, userAuthId: string) {
     const options = this.corsRequestOptions()
     options.method = Method.DELETE
-    return await this.request<void>(`${this.PROJECT}/${projectId}/permissions?userAuthId=${userAuthId}`, options)
+    return await this.request<void>(
+      `${this.fileServerUrl}/projects/${projectId}/permissions?userAuthId=${userAuthId}`,
+      options
+    )
   }
 
   private postRequestOptions(body: any): RequestInit {

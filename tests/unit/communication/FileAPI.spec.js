@@ -1,9 +1,15 @@
 import fetchMock from 'fetch-mock'
-import sinon from 'sinon'
+import nodeFetch, { HeaderInit, Headers } from 'node-fetch'
 import FileAPI from '@/communication/FileAPI'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
 describe('FileAPI', () => {
+  beforeAll(() => {
+    // override the global Headers and HeadersInit type with node-fetch types, since it is not set by default in headless unit tests
+    global.HeadersInit = HeaderInit
+    global.Headers = Headers
+  })
+
   afterEach(() => {
     fetchMock.reset()
   })
@@ -18,7 +24,7 @@ describe('FileAPI', () => {
     // use delete project as an example
     await fileApi.deleteProject(projectId)
 
-    const authHeader = fetchMock.lastOptions().headers.Authorization
+    const authHeader = fetchMock.lastOptions().headers.get('Authorization')
     const corsOptions = fetchMock.lastOptions().mode
     expect(authHeader).toBeDefined()
     expect(authHeader).toEqual('Bearer ' + authStoreMock.state.accessToken)
