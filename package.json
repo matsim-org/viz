@@ -3,7 +3,7 @@
   "version": "0.11.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --https",
+    "serve": "vue-cli-service serve",
     "serve-local": "vue-cli-service serve --mode local-backend --https",
     "build": "vue-cli-service build",
     "build-dev": "vue-cli-service build --mode development-vsp-deploy",
