@@ -1,7 +1,7 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
     span(slot="header")
-      h3.title.is-3 Create Visualization
+      h4.title.is-4 Create Visualization
 
     div(slot="content")
       .viz-selector
@@ -11,7 +11,6 @@ modal(v-on:close-requested="cancel()")
             li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
               a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
-          h3 {{selectedVizType.prettyName}}
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
           br
           .viz-files(v-for="key in selectedVizType.requiredFileKeys")
@@ -30,7 +29,8 @@ modal(v-on:close-requested="cancel()")
           .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
             .viz-file
               b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="Required" style="float:right;")
+              input.input(v-model="request.inputParameters[key]" placeholder="Required")
+
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       .bottom-panel

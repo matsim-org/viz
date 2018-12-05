@@ -4,9 +4,9 @@
     .heroContainer
       .projectTitle
         h1.title(slot="content") {{project.name}}
-        h3.subtitle viz-{{project.id}}
+        h3.subtitle project: {{project.id.substring(0,6)}}
       .editButton
-        button.button.is-small(@click="showSettings = true") 
+        button.button.is-small(@click="showSettings = true")
                 span.icon.is-small
                     i.fas.fa-pen
 
@@ -20,9 +20,9 @@
         .viz-item(v-for="viz in project.visualizations"
                   v-on:click="onSelectVisualization(viz)"
                   v-bind:key="viz.id")
-            viz-thumbnail(@remove="onRemoveViz(viz.id)" @share="handleShareViz(viz.id)")
-              .itemTitle(slot="title"): span {{ viz.type }}
-              span(slot="content") viz-{{ viz.id.substring(0,4) }}
+            viz-thumbnail(@edit="onEditViz(viz.id)" @remove="onRemoveViz(viz.id)" @share="onShareViz(viz.id)")
+              .itemTitle(slot="title"): p {{ viz.type }}
+              p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
 
   section
     list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -34,7 +34,7 @@
         )
     .file-area
       drop.drop(
-        :class="{isDragOver}"
+        :class="{over:isDragOver}"
         @dragover="isDragOver = true"
         @dragleave="isDragOver = false"
         @drop="onDrop"
@@ -54,10 +54,8 @@
               .tag-container(slot="content")
                 .tag.is-info(v-for="tag in file.tags")
                   span {{ tag.name }}
-
               button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
-    
   section.uploads(v-if="uploads.length > 0")
     .upload-header
       h3.title.is-3 Pending Uploads
@@ -77,10 +75,9 @@
               v-bind:projectStore="projectStore"
               v-bind:selectedProject="project"
               v-bind:selectedFiles="selectedFiles")
-  
+
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
-
 
 </template>
 <script lang="ts">
@@ -246,6 +243,26 @@ export default class ProjectViewModel extends vueInstance {
   private async onRemoveViz(viz: string) {
     console.log('remove viz', viz)
     try {
+      console.log(this.projectId, viz)
+      await FileAPI.deleteVisualization(this.projectId, viz)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  private async onEditViz(viz: string) {
+    console.log('edit viz', viz)
+    console.log(this.project.visualizations)
+
+    try {
+      // const updatedProject = await FileAPI.deleteVisualization(viz)
+      // this.project = updatedProject
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  private async onShareViz(viz: string) {
+    console.log('share viz', viz)
+    try {
       // const updatedProject = await FileAPI.deleteVisualization(viz)
       // this.project = updatedProject
     } catch (error) {
@@ -362,8 +379,9 @@ section {
 }
 
 .drop.over {
-  border: 5px dashed blue;
-  background-color: #ccc;
+  border: 5px dashed #37f;
+  background-color: #ffa;
+  transform: translateY(3px);
 }
 
 .file-area {

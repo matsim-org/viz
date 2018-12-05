@@ -86,7 +86,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Transit Supply',
   description: 'Depicts the scheduled transit routes on a network.',
   requiredFileKeys: ['Transit Schedule', 'Network'],
-  requiredParamKeys: ['Projection'],
+  requiredParamKeys: ['Description', 'Projection'],
 })
 
 // Add various projections that we use here
