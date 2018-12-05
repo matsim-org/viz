@@ -34,7 +34,7 @@
         )
     .file-area
       drop.drop(
-        :class="{isDragOver}"
+        :class="{over:isDragOver}"
         @dragover="isDragOver = true"
         @dragleave="isDragOver = false"
         @drop="onDrop"
@@ -362,8 +362,9 @@ section {
 }
 
 .drop.over {
-  border: 5px dashed blue;
-  background-color: #ccc;
+  border: 5px dashed #37f;
+  background-color: #ffa;
+  transform: translateY(3px);
 }
 
 .file-area {
