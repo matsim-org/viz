@@ -14,11 +14,12 @@
     .projectList(v-else)
         button.projectItem(
           v-for="project in projects"
-          @click="handleProjectClicked(project.id)"
+          @click="onProjectSelected(project)"
         )
           list-element(v-bind:key="project.id")
             span(slot="title") {{project.name}}
             span(slot="content") {{project.id}}
+            button.delete.is-medium(slot="accessory" @click.stop="onDeleteProject(project)")
 
     create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:project-store="projectStore")
 </template>
@@ -32,6 +33,8 @@ import CreateProject from '@/project/CreateProject.vue'
 import FileAPI from '@/communication/FileAPI'
 import SharedStore, { SharedState, EventBus } from '@/SharedStore'
 import ProjectStore, { ProjectState } from '@/project/ProjectStore'
+import { Project } from '@/entities/Entities'
+import { Event } from '_debugger'
 
 const vueInstance = Vue.extend({
   props: {
@@ -77,8 +80,16 @@ export default class ProjectsViewModel extends vueInstance {
     }
   }
 
-  private handleProjectClicked(id: string) {
-    this.$router.push({ path: `/project/${id}` })
+  private onProjectSelected(project: Project) {
+    this.$router.push({ path: `/project/${project.id}` })
+  }
+
+  private async onDeleteProject(project: Project) {
+    try {
+      await this.projectStore.deleteProject(project)
+    } catch (error) {
+      console.log('error')
+    }
   }
 }
 </script>
