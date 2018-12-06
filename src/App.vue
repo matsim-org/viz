@@ -1,7 +1,7 @@
 <template lang="pug">
 #app
   .topnavrow
-    router-link.nav-logo(to="/"): img.sidebar-logo(src="@/assets/matsim-logo-white.png")
+    router-link.nav-link(to="/"): img.nav-logo(src="@/assets/matsim-logo-white.png")
 
     .breadcrumb-row
       span(v-for="crumb in breadcrumbs" :key="crumb.title")
@@ -9,8 +9,9 @@
           router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
-      router-link.topnavrow-item(to="/projects") {{ projectText }}
-
+      a.topnavrow-item(@click="onLogin()") {{ loginText }}
+      router-link.topnavrow-item(to="/projects" v-if="isLoggedIn") Projects
+      
   router-view.main-content
 </template>
 
@@ -36,8 +37,12 @@ export default class App extends Vue {
     return sharedStore.state
   }
 
-  private get projectText() {
-    return this.authState.status === AuthenticationStatus.Authenticated ? 'Projects' : 'Log In'
+  private get loginText() {
+    return this.isLoggedIn ? 'Log Out' : 'Log In'
+  }
+
+  private get isLoggedIn() {
+    return this.authState.status === AuthenticationStatus.Authenticated
   }
 
   public mounted() {
@@ -46,8 +51,13 @@ export default class App extends Vue {
     })
   }
 
-  private getProject() {
-    return this.authState.status === AuthenticationStatus.Authenticated
+  private onLogin() {
+    if (this.authState.status === AuthenticationStatus.Authenticated) {
+      this.authStore.logOut()
+      this.$router.push({ path: '/' })
+    } else {
+      this.$router.push({ path: '/authentication' })
+    }
   }
 }
 </script>
@@ -97,7 +107,7 @@ h6 {
 .topnavrow {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 10px 1.5rem 5px 1.5rem;
+  padding: 0.75rem 1.5rem 0.75rem 1.5rem;
   background-color: hsl(0, 0%, 29%);
   z-index: 5;
   display: grid;
@@ -112,11 +122,15 @@ a:focus {
 }
 
 .topnavrow-item {
-  float: right;
   color: #ccc;
+  margin-left: 1rem;
 }
 
-.sidebar-logo {
+.nav-link {
+  display: flex;
+}
+
+.nav-logo {
   margin-right: 0.7rem;
   height: 26px;
 }
@@ -144,7 +158,8 @@ a:hover {
 }
 
 .nav-rightside {
-  grid-row: 1 / 2;
-  grid-column: 3 / 4;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
 }
 </style>
