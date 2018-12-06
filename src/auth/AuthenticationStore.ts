@@ -1,6 +1,8 @@
 import AuthenticationRequest from '@/auth/AuthenticationRequest'
 import AuthenticationResponse from '@/auth/AuthenticationResponse'
 import ErrorResponse from '@/auth/ErrorResponse'
+import Config from '@/config/Config'
+import { Method } from '@/communication/Constants'
 
 export enum AuthenticationStatus {
   NotAuthenticated,
@@ -23,10 +25,6 @@ export default class AuthenticationStore {
     return 'Authentication-state'
   }
 
-  private static get TMP_STORAGE_KEY(): string {
-    return 'Authentication-tmp-variables'
-  }
-
   get state(): AuthenticationState {
     return this.authState
   }
@@ -42,6 +40,20 @@ export default class AuthenticationStore {
     AuthenticationRequest.persistVariables(request)
     this.persistState()
     request.submit()
+  }
+
+  public async logOut() {
+    this.resetState()
+    this.persistState()
+    try {
+      await fetch(`${Config.authServer}/logout`, {
+        mode: 'cors',
+        credentials: 'include',
+        method: Method.POST,
+      })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   public handleAuthenticationResponse(fragment: string) {
