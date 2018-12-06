@@ -69,7 +69,7 @@ body {
   height: 100vh;
   min-height: 100vh;
   overflow-y: auto;
-  font-family: 'Raleway', 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
   margin: 0px 0px;
   padding: 0px 0px;
 }
@@ -80,7 +80,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Raleway', 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: #363636;
 }
