@@ -203,15 +203,13 @@ export default class NOXPlot extends vueInstance {
     let id = 0
 
     for (const point of data) {
-      id++
-
       const coordinates = [point.lon, point.lat]
-
       const color = colormap(point.NOX)
+
       const featureJson: any = {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: coordinates },
-        properties: { id: id, color: color },
+        properties: { id: id++, color: color },
       }
 
       geojsonLinks.push(featureJson)
