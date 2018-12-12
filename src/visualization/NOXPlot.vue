@@ -24,17 +24,20 @@
 <script lang="ts">
 'use strict'
 
-import { Vue, Component, Watch } from 'vue-property-decorator'
-import sharedStore, { EventBus } from '../SharedStore'
 import * as mapboxgl from 'mapbox-gl'
+import * as timeConvert from 'convert-seconds'
+import pako from 'pako'
+import proj4 from 'proj4'
+import sharedStore, { EventBus } from '../SharedStore'
+import vueSlider from 'vue-slider-component'
+import { Vue, Component, Watch } from 'vue-property-decorator'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import { nSQL } from 'nano-sql'
-import pako from 'pako'
-import proj4 from 'proj4' // = require('proj4').default
-import readBlob from 'read-blob'
-import sax from 'sax'
-import * as timeConvert from 'convert-seconds'
-import vueSlider from 'vue-slider-component'
+import { inferno, viridis } from 'scale-color-perceptual'
+
+// choose your colormap: for emissions we'll use inferno
+// https://www.npmjs.com/package/scale-color-perceptual
+const colormap = inferno
 
 interface MapElement {
   lngLat: LngLat
@@ -66,17 +69,13 @@ const vueInstance = Vue.extend({
 
 @Component
 export default class NOXPlot extends vueInstance {
-  private get clockTime() {
-    return this.convertSecondsToClockTime(this.store.timeSliderValue)
-  }
+  private sharedState: any = sharedStore.state
 
   private token: string =
     'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
   private _linkData: any
   private mymap!: mapboxgl.Map
-
-  private sharedState: any = sharedStore.state
 
   private mySlider = {
     disabled: false,
@@ -130,38 +129,95 @@ export default class NOXPlot extends vueInstance {
     },
   }
 
+  private loadingMsg: string = this.store.loadingMsg
+  private timeSlider: any = this.mySlider
+  private timeSliderValue: number = this.store.timeSlider
+
+  private myGeoJson!: any
+
+  private get clockTime() {
+    return this.convertSecondsToClockTime(this.store.timeSliderValue)
+  }
+
   // VUE LIFECYCLE: created
   public created() {
     sharedStore.addVisualizationType({
       typeName: 'emissions',
       prettyName: 'NOX Emissions',
-      description: 'Show NOX emissions at the link level',
-      requiredFileKeys: ['Network', 'Events'],
-      requiredParamKeys: ['Projection'],
+      description: 'Show NOX emissions at gridpoints',
+      requiredFileKeys: ['JSON x/y/t/nox'],
+      requiredParamKeys: ['Map projection'],
     })
   }
 
   // VUE LIFECYCLE: mounted
-  public mounted() {
+  public async mounted() {
+    this.setupEventListeners()
+
     // this weird trick allows us to set mapbox token in typescript
     // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
     // tslint:disable-next-line:semicolon
     ;(mapboxgl as any).accessToken = this.token
 
+    const jsondata = await this.loadData()
+    this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
+
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      center: [14.35, 51.75], // lnglat, not latlng (think of it as: x,y)
+      center: [13.325, 52.52], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/light-v9',
+      style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
-      zoom: 11,
+      zoom: 14,
     })
 
     // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
-    this.setupEventListeners()
-    this.loadData()
+  }
+
+  private addJsonToMap() {
+    this.mymap.addSource('my-data', {
+      data: this.myGeoJson,
+      type: 'geojson',
+    })
+
+    console.log(this.myGeoJson)
+
+    this.mymap.addLayer(
+      {
+        id: 'my-layer',
+        source: 'my-data',
+        type: 'circle',
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': 20,
+        },
+      },
+      'road-primary'
+    ) // layer gets added just *above* this MapBox-defined layer.
+  }
+
+  private convertJsonToGeoJson(data: any) {
+    const geojsonLinks: any = []
+    let id = 0
+
+    for (const point of data) {
+      id++
+
+      const coordinates = [point.lon, point.lat]
+
+      const color = colormap(point.NOX)
+      const featureJson: any = {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: coordinates },
+        properties: { id: id, color: color },
+      }
+
+      geojsonLinks.push(featureJson)
+    }
+
+    return { type: 'FeatureCollection', features: geojsonLinks }
   }
 
   @Watch('timeSliderValue')
@@ -227,7 +283,8 @@ export default class NOXPlot extends vueInstance {
   }
 
   private mapIsReady() {
-    this.mymap.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
+    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+    this.addJsonToMap()
   }
 
   private setupEventListeners() {}
@@ -272,18 +329,11 @@ export default class NOXPlot extends vueInstance {
       type: 'geojson',
     })
 
-    console.log({ links: linksAsGeojson, boop: this.mymap.getStyle().layers })
-
     this.mymap.addLayer(
       {
         id: 'my-layer',
         source: 'my-data',
         type: 'line',
-        paint: {
-          'line-opacity': 1.0,
-          'line-width': 3, // ['get', 'width'],
-          'line-color': ['get', 'color'],
-        },
       },
       'road-primary'
     ) // layer gets added just *above* this MapBox-defined layer.
@@ -344,119 +394,23 @@ export default class NOXPlot extends vueInstance {
       })
   }
 
-  private async readEventsFile() {
-    this.store.loadingMsg = 'Loading Events'
-
-    const events: any[] = []
-    const timeIndex: any = {}
-    const typeIndex: any = {}
-
-    let idAutoInc = 0
-    const saxparser = sax.parser(true, {}) // strictmode=true
-
-    const parent = this
-    saxparser.onopentag = function(tag: any) {
-      if (tag.name === 'event') {
-        const attr = tag.attributes
-
-        attr.id = ++idAutoInc
-        const key = parseInt(attr.time, 10)
-        attr.time = key
-        events.push(attr)
-
-        // create indices, too
-        if (!timeIndex[key]) timeIndex[key] = []
-        timeIndex[key].push(attr.id)
-        if (!typeIndex[attr.type]) typeIndex[attr.type] = []
-        typeIndex[attr.type].push(attr.id)
-      }
-    }
-
-    saxparser.onend = function() {
-      parent.store.loadingMsg = 'Analyzing'
-      console.log('START CONVERTING INDEX', events.length, 'events')
-      const zTime = []
-      for (const id in timeIndex) {
-        if (timeIndex.hasOwnProperty(id)) zTime.push({ id: id, rows: timeIndex[id] })
-      }
-      const zType = []
-      for (const id in typeIndex) {
-        if (typeIndex.hasOwnProperty(id)) zType.push({ id: id, rows: typeIndex[id] })
-      }
-
-      console.log('START RAW EVENT DB IMPORT', events.length, 'events')
-      nSQL()
-        .rawImport({
-          events: events,
-          _events_idx_time: zTime,
-          _events_idx_type: zType,
-        })
-        .then(() => {
-          console.log('DONE EVENTS')
-          parent.aggregate15minutes()
-        })
-    }
-
-    console.log('Start EVENTS')
-
-    try {
-      const url = '/data-cottbus/events.xml.gz'
-      const resp = await fetch(url, { mode: 'no-cors' })
-      const blob = await resp.blob()
-      // get the blob data
-      readBlob.arraybuffer(blob).then((content: any) => {
-        const xml = pako.inflate(content, { to: 'string' })
-        saxparser.write(xml).close()
-      })
-    } catch (e) {
-      this.store.msg = 'ERR>>'
-      console.log(e)
-    }
-  }
-
-  private async readNetworkFile() {
-    this.store.loadingMsg = 'Reading Network'
-    const saxparser = sax.parser(true, {}) // strictmode=true
-
-    const parent = this
-    saxparser.onopentag = function(tag: any) {
-      const attr = tag.attributes
-
-      if (tag.name === 'node') {
-        attr.x = parseFloat(attr.x)
-        attr.y = parseFloat(attr.y)
-        parent.store.nodes[attr.id] = attr
-      }
-
-      if (tag.name === 'link') {
-        parent.store.links[attr.id] = attr
-      }
-    }
-
-    const COTTBUS_PROJECTION = '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-
-    saxparser.onend = function() {
-      parent.convertCoords(COTTBUS_PROJECTION)
-    }
-
-    try {
-      const url = '/data-cottbus/network.xml.gz'
-      const resp = await fetch(url, { mode: 'no-cors' })
-      const blob = await resp.blob()
-      // get the blob data
-      readBlob.arraybuffer(blob).then((content: any) => {
-        const xml = pako.inflate(content, { to: 'string' })
-        saxparser.write(xml).close()
-      })
-    } catch (e) {
-      this.store.msg = 'ERR>>'
-      console.log(e)
-    }
-  }
-
   private async loadData() {
-    this.readNetworkFile()
-    this.readEventsFile()
+    return await this.readJSONFile()
+  }
+
+  private async readJSONFile() {
+    this.store.loadingMsg = 'Reading data'
+
+    try {
+      const url = '/fake-nox.json'
+      const resp = await fetch(url, { mode: 'no-cors' })
+      const j = await resp.json()
+      return j
+    } catch (e) {
+      this.store.msg = 'ERR >> '
+      console.log(e)
+      return []
+    }
   }
 
   // MapBox requires long/lat
@@ -526,12 +480,14 @@ export default class NOXPlot extends vueInstance {
 
 #clock {
   color: #36f;
-  background-color: #fffb;
-  margin: 10px 10px;
+  background-color: #ffffffee;
+  margin: 10px 50px;
   padding: 0px 10px;
   border: solid 1px;
   border-color: #bbb;
+  border-radius: 4px;
   box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
+  font-size: 1.5rem;
 }
 
 .controls {
@@ -549,54 +505,6 @@ export default class NOXPlot extends vueInstance {
   flex-direction: column;
   flex-grow: 1;
   margin-bottom: 5px;
-}
-
-.shrunken {
-  margin-left: 38px;
-}
-
-.viz-thumbnail {
-  background: #dde8ff;
-  background-color: #fff;
-  border-style: solid;
-  border-width: 1px 1px;
-  border-color: #aaa;
-  display: table-cell;
-  height: 100%;
-  opacity: 0.9;
-  padding: 0 0 0.5rem 0;
-  box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
-  vertical-align: top;
-  width: 20rem;
-}
-
-.viz-thumbnail:hover {
-  background-color: #fff;
-  opacity: 1;
-  box-shadow: 3px 3px 10px rgba(0, 0, 80, 0.3);
-  transition: all ease 0.2s;
-  transform: translateY(-1px);
-  border-color: #999;
-}
-
-.viz-thumbnail:active {
-  opacity: 1;
-  box-shadow: 3px 3px 6px rgba(0, 0, 80, 0.4);
-  transform: translateY(1px);
-}
-
-.thumbnail-image {
-  vertical-align: top;
-  width: 20rem;
-  margin-bottom: 5px;
-}
-
-.thumbnail-title {
-  color: #3333aa;
-  margin-top: 0px;
-  padding-bottom: 10px;
-  padding-left: 5px;
-  padding-right: 2px;
 }
 
 h2,
@@ -618,14 +526,6 @@ a:focus {
   text-decoration: none;
 }
 
-.visualizations {
-  margin-top: 10px;
-}
-
-.post {
-  margin-top: 20px;
-}
-
 .clock-labels {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
@@ -633,7 +533,7 @@ a:focus {
   width: 100%;
   font-size: 10px;
   margin-bottom: 0px;
-  margin-top: -27px;
+  margin-top: 0px;
   pointer-events: none;
   z-index: 2;
 }

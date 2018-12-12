@@ -6,6 +6,7 @@ import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
+import NOXPlot from '@/visualization/NOXPlot.vue'
 import TransitSupply from '@/visualization/TransitSupply.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
@@ -59,6 +60,11 @@ export default class AppRouter {
           path: '/flows',
           name: 'NetworkFlows',
           component: NetworkFlows,
+        },
+        {
+          path: '/nox',
+          name: 'NOXPlot',
+          component: NOXPlot,
         },
         {
           path: '/projects',
