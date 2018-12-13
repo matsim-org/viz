@@ -97,7 +97,7 @@ export default class NOXPlot extends vueInstance {
     dotSize: 24,
     height: 10,
     min: 0,
-    max: 86399,
+    max: 86399999,
     piecewise: false,
     show: true,
     tooltip: 'always',
@@ -123,7 +123,7 @@ export default class NOXPlot extends vueInstance {
       borderColor: '#f05b72',
     },
     formatter: function(index: number) {
-      return '10' // convertSecondsToClockTimeMinutes(index)
+      return '10' // convertMilliSecondsToClockTimeMinutes(index)
     },
   }
 
@@ -163,6 +163,8 @@ export default class NOXPlot extends vueInstance {
       requiredFileKeys: ['JSON x/y/t/nox'],
       requiredParamKeys: ['Map projection'],
     })
+
+    // this.sortTest()
   }
 
   // VUE LIFECYCLE: mounted
@@ -192,6 +194,16 @@ export default class NOXPlot extends vueInstance {
     this.mymap.on('style.load', this.mapIsReady)
   }
 
+  private sortTest() {
+    const ar = [1000, 5000, 5000, 9000, 10000]
+
+    const test = [0, 1000, 1500, 5000, 9500, 10000, 11000]
+    for (const z of test) {
+      const answer = this.getUpperBoundEventForTimepoint(ar, z, (a: number, b: number) => a - b)
+      console.log({ z, answer })
+    }
+  }
+
   /**
    * Build lookup database of NOX events from input data
    */
@@ -217,7 +229,7 @@ export default class NOXPlot extends vueInstance {
     // sort each location's events by timestamp
     for (const location in this._locations) {
       if (!this._locations.hasOwnProperty(location)) continue
-      this._locations[location].sort((a: any, b: any) => a.t > b.t)
+      this._locations[location].sort((a: any, b: any) => a._timestamp - b._timestamp)
     }
     console.log({ LOCATIONS: this._locations })
   }
@@ -246,16 +258,16 @@ export default class NOXPlot extends vueInstance {
 
   private convertJsonToGeoJson(data: any) {
     const geojsonLinks: any = []
-    let id = 0
 
     for (const point of data) {
       const coordinates = [point.lon, point.lat]
       const color = colormap(point.NOX)
+      const id = point.lon.toString() + '/' + point.lat.toString()
 
       const featureJson: any = {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: coordinates },
-        properties: { id: id++, color: color },
+        properties: { id: id, color: color },
       }
 
       geojsonLinks.push(featureJson)
@@ -269,13 +281,13 @@ export default class NOXPlot extends vueInstance {
     this.updateFlowsForTimeValue(seconds)
   }
 
-  private convertSecondsToClockTimeMinutes(index: number) {
+  private convertMilliSecondsToClockTimeMinutes(index: number) {
     try {
-      const hms = timeConvert(index)
+      const hms = timeConvert(index / 1000)
       const minutes = ('00' + hms.minutes).slice(-2)
       return `${hms.hours}:${minutes}`
     } catch (e) {
-      return ''
+      return '0'
     }
   }
 
@@ -286,9 +298,39 @@ export default class NOXPlot extends vueInstance {
     return `${hms.hours}:${minutes}:${seconds}`
   }
 
-  private updateFlowsForTimeValue(seconds: number) {
-    const segment = Math.floor(seconds / 900) // 15 minutes
+  private updateFlowsForTimeValue(milliseconds: number) {
+    console.log(milliseconds)
 
+    const lookup: any = {}
+
+    for (const point in this._locations) {
+      if (!this._locations.hasOwnProperty(point)) continue
+      const location = this._locations[point]
+      console.log(location)
+      // for each point, find the new time
+      const timeIndex = this.getUpperBoundEventForTimepoint(location, milliseconds, (a: any, b: number) => a - b)
+      console.log(timeIndex)
+      if (timeIndex === -1) continue
+
+      const noxEvent = location[timeIndex]
+      console.log({ timeIndex, noxEvent })
+
+      lookup[noxEvent.id] = colormap(noxEvent.NOX)
+    }
+
+    console.log({ lookup })
+
+    for (const feature of this.myGeoJson.features) {
+      if (lookup[feature.properties.id]) {
+        feature.properties.color = lookup[feature.properties.id]
+      }
+    }
+
+    const z: any = this.mymap.getSource('my-data')
+    z.setData(this.myGeoJson)
+
+    // if new time is same as old time, we're done
+    /*
     // nothing to do if segment hasn't changed
     if (segment === this.store.currentTimeSegment) return
 
@@ -303,6 +345,7 @@ export default class NOXPlot extends vueInstance {
     z.setData(this._linkData)
 
     if (sharedStore.debug) console.log('done')
+    */
   }
 
   private updateTimeSliderSegmentColors(segments: number[]) {
@@ -365,78 +408,7 @@ export default class NOXPlot extends vueInstance {
     return this._linkData
   }
 
-  private addLinksToMap() {
-    const linksAsGeojson: any = this.constructGeoJsonFromLinkData()
-
-    this.mymap.addSource('my-data', {
-      data: linksAsGeojson,
-      type: 'geojson',
-    })
-
-    this.mymap.addLayer(
-      {
-        id: 'my-layer',
-        source: 'my-data',
-        type: 'line',
-      },
-      'water'
-    ) // layer gets added just *above* this MapBox-defined layer.
-
-    const parent = this
-    this.mymap.on('click', 'my-layer', function(e: MapElement) {
-      parent.clickedOnLink(e)
-    })
-
-    // turn "hover cursor" into a pointer, so user knows they can click.
-    this.mymap.on('mousemove', 'my-layer', function(e: MapElement) {
-      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
-    })
-
-    // and back to normal when they mouse away
-    this.mymap.on('mouseleave', 'my-layer', function() {
-      parent.mymap.getCanvas().style.cursor = '-webkit-grab'
-    })
-  }
-
-  private calculateColorFromVolume(id: string) {
-    const volume = this.store.flows[id]
-      ? this.store.flows[id][this.store.currentTimeSegment]
-        ? this.store.flows[id][this.store.currentTimeSegment]
-        : 0
-      : 0
-
-    if (volume === 0) return '#aaa'
-    if (volume < 20) return '#69f'
-    if (volume < 100) return '#fc6'
-
-    return '#f66'
-  }
-
   private clickedOnLink(e: MapElement) {}
-
-  private async aggregate15minutes(): Promise<void> {
-    console.log('START 15-MIN AGGREGATION')
-    this.store.loadingMsg = 'Aggregating'
-
-    nSQL('events')
-      .query('select')
-      // .where(['type', 'IN', ['left link', 'vehicle leaves traffic']])
-      .exec()
-      .then(rows => {
-        console.log('got so many rows:', rows.length)
-        for (const row of rows) {
-          const period = Math.floor(row.time / 900)
-          if (!this.store.flows[row.link]) this.store.flows[row.link] = {}
-          if (!this.store.flows[row.link][period]) this.store.flows[row.link][period] = 0
-          this.store.flows[row.link][period]++
-          this.store.flowSummary[period]++
-        }
-        console.log({ flows: this.store.flowSummary })
-        this.updateTimeSliderSegmentColors(this.store.flowSummary)
-        this.addLinksToMap()
-        this.store.loadingMsg = ''
-      })
-  }
 
   private async loadData() {
     return await this.readJSONFile()
@@ -469,24 +441,6 @@ export default class NOXPlot extends vueInstance {
     }
   }
 
-  private doNSQLstuff() {
-    nSQL('events')
-      .config({ mode: 'TEMP' })
-      .model([
-        { key: 'id', type: 'int', props: ['pk'] },
-        { key: 'time', type: 'int', props: ['idx'] },
-        { key: 'actType', type: 'string' },
-        { key: 'person', type: 'string' },
-        { key: 'type', type: 'string', props: ['idx'] },
-        { key: 'link', type: 'string' },
-        { key: 'vehicle', type: 'string', props: ['idx'] },
-        { key: 'networkMode', type: 'string', props: ['idx'] },
-        { key: 'legMode', type: 'string', props: [] },
-        { key: 'relativePosition', type: 'string', props: [] },
-      ])
-    nSQL().connect()
-  }
-
   /*
    * Binary search in JavaScript.
    * Returns the index of of the element in a sorted array or (-n-1) where n is the insertion point for the new element.
@@ -499,6 +453,11 @@ export default class NOXPlot extends vueInstance {
    *        a positive number of a is greater than b.
    * The array may contain duplicate elements. If there are more than one equal elements in the array,
    * the returned value can be the index of any one of the equal elements.
+   * More explicitly, this returns:
+   *    the index, if the key is found
+   *    -1, if the element is lower than anything found in the array
+   *    -n-1, thus use (-n + 2) to get the index of the upper-bound element
+   *
    */
   private binarySearch(ar: any, el: any, compareFn: any) {
     let m = 0
@@ -506,7 +465,7 @@ export default class NOXPlot extends vueInstance {
     while (m <= n) {
       // tslint:disable-next-line:no-bitwise
       const k = (n + m) >> 1
-      const cmp = compareFn(el, ar[k])
+      const cmp = compareFn(el, ar[k]._timestamp)
       if (cmp > 0) {
         m = k + 1
       } else if (cmp < 0) {
@@ -516,6 +475,14 @@ export default class NOXPlot extends vueInstance {
       }
     }
     return -m - 1
+  }
+
+  // use binary search to get the latest event that has already happened
+  private getUpperBoundEventForTimepoint(ar: any, el: any, compareFn: any) {
+    const bAnswer = this.binarySearch(ar, el, compareFn)
+    console.log(bAnswer)
+    if (bAnswer >= -1) return bAnswer
+    return -bAnswer - 2
   }
 }
 </script>
