@@ -44,6 +44,19 @@ interface MapElement {
   features: any[]
 }
 
+interface NOXEntry {
+  id: string
+  time: number
+  nox: number
+}
+
+interface Point {
+  id: string
+  lon: number
+  lat: number
+  events: any[]
+}
+
 interface StoreType {
   sharedStore: any
   currentTimeSegment: number
@@ -76,6 +89,8 @@ export default class NOXPlot extends vueInstance {
 
   private _linkData: any
   private mymap!: mapboxgl.Map
+
+  private _locations: any
 
   private mySlider = {
     disabled: false,
@@ -161,6 +176,7 @@ export default class NOXPlot extends vueInstance {
 
     const jsondata = await this.loadData()
     this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
+    await this.buildEventDatabase(jsondata)
 
     this.mymap = new mapboxgl.Map({
       bearing: 0,
@@ -174,6 +190,36 @@ export default class NOXPlot extends vueInstance {
 
     // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
+  }
+
+  /**
+   * Build lookup database of NOX events from input data
+   */
+  private buildEventDatabase(data: any) {
+    this._locations = {}
+    console.log(this._locations)
+
+    for (const row of data) {
+      // generate a row-id if there isn't one
+      if (!row.id) row.id = row.lon.toString() + '/' + row.lat.toString()
+
+      // generate a timestamp integer from the text-timestamp
+      row._timestamp = Date.parse(row.t)
+
+      // save the row
+      if (!this._locations.hasOwnProperty(row.id)) {
+        console.log('creating ' + row.id)
+        this._locations[row.id] = []
+      }
+      this._locations[row.id].push(row)
+    }
+
+    // sort each location's events by timestamp
+    for (const location in this._locations) {
+      if (!this._locations.hasOwnProperty(location)) continue
+      this._locations[location].sort((a: any, b: any) => a.t > b.t)
+    }
+    console.log({ LOCATIONS: this._locations })
   }
 
   private addJsonToMap() {
@@ -191,10 +237,10 @@ export default class NOXPlot extends vueInstance {
         type: 'circle',
         paint: {
           'circle-color': ['get', 'color'],
-          'circle-radius': 20,
+          'circle-radius': 60,
         },
       },
-      'road-primary'
+      'water'
     ) // layer gets added just *above* this MapBox-defined layer.
   }
 
@@ -333,7 +379,7 @@ export default class NOXPlot extends vueInstance {
         source: 'my-data',
         type: 'line',
       },
-      'road-primary'
+      'water'
     ) // layer gets added just *above* this MapBox-defined layer.
 
     const parent = this
@@ -439,6 +485,37 @@ export default class NOXPlot extends vueInstance {
         { key: 'relativePosition', type: 'string', props: [] },
       ])
     nSQL().connect()
+  }
+
+  /*
+   * Binary search in JavaScript.
+   * Returns the index of of the element in a sorted array or (-n-1) where n is the insertion point for the new element.
+   * Parameters:
+   *     ar - A sorted array
+   *     el - An element to search for
+   *     compareFn - A comparator function. The function takes two arguments: (a, b) and returns:
+   *        a negative number  if a is less than b;
+   *        0 if a is equal to b;
+   *        a positive number of a is greater than b.
+   * The array may contain duplicate elements. If there are more than one equal elements in the array,
+   * the returned value can be the index of any one of the equal elements.
+   */
+  private binarySearch(ar: any, el: any, compareFn: any) {
+    let m = 0
+    let n = ar.length - 1
+    while (m <= n) {
+      // tslint:disable-next-line:no-bitwise
+      const k = (n + m) >> 1
+      const cmp = compareFn(el, ar[k])
+      if (cmp > 0) {
+        m = k + 1
+      } else if (cmp < 0) {
+        n = k - 1
+      } else {
+        return k
+      }
+    }
+    return -m - 1
   }
 }
 </script>
