@@ -2,20 +2,9 @@
 .main-content
   #mymap
   .controls
-    .slider-things
-      vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
-      .clock-labels
-        .hour &nbsp;0:00
-        .hour 3:00
-        .hour 6:00
-        .hour 9:00
-        .hour 12:00
-        .hour 15:00
-        .hour 18:00
-        .hour 21:00
-        .hour &nbsp;
+    time-slider.time-slider(@change="changedSlider")
   .right-overlay
-    h1#clock {{clockTime}}
+    h1.clock {{clockTime}}
   .loading-message.ui.segment(v-show='loadingMsg')
     .ui.inverted.active.dimmer
       .ui.text.loader {{ loadingMsg }}
@@ -29,7 +18,7 @@ import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
 import sharedStore, { EventBus } from '../SharedStore'
-import vueSlider from 'vue-slider-component'
+import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import { nSQL } from 'nano-sql'
@@ -57,99 +46,33 @@ interface Point {
   events: any[]
 }
 
-interface StoreType {
-  sharedStore: any
-  currentTimeSegment: number
-  nodes: any
-  links: any
-  msg: string
-  timeSlider: any
-  timeSliderValue: number
-  setTimeSegment: any
-  loadingMsg: string
-}
-
 const vueInstance = Vue.extend({
   props: {
     projectId: String,
+    parentData: Number,
   },
   components: {
-    'vue-slider': vueSlider,
+    'time-slider': TimeSlider,
   },
 })
 
 @Component
 export default class NOXPlot extends vueInstance {
+  public currentTime: number = 0
+
   private sharedState: any = sharedStore.state
 
   private token: string =
     'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
-  private _linkData: any
-  private mymap!: mapboxgl.Map
-
+  private loadingMsg: string = ''
   private _locations: any
-
   private _firstEventTime: number = 0
-
-  private mySlider = {
-    disabled: false,
-    dotSize: 24,
-    height: 10,
-    min: 0,
-    max: 86399,
-    piecewise: false,
-    show: true,
-    tooltip: 'always',
-    width: '100%',
-    tooltipDir: 'center',
-    sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
-    tooltipStyle: [
-      {
-        backgroundColor: '#f05b72',
-        borderColor: '#f05b72',
-      },
-      {
-        backgroundColor: '#3498db',
-        borderColor: '#3498db',
-      },
-    ],
-    bgStyle: {
-      backgroundImage: '-webkit-linear-gradient(left, #eee, #eee)',
-      boxShadow: '1px 1px 2px 1px rgba(0,0,0,.36)',
-    },
-    processStyle: {
-      backgroundColor: '#00bb5588',
-      borderColor: '#f05b72',
-    },
-    formatter: (index: number) => {
-      return this.convertSecondsToClockTimeMinutes(index)
-    },
-  }
-
-  // store is the component data store -- the state of the component.
-  private store: StoreType = {
-    sharedStore: sharedStore.state,
-    currentTimeSegment: 0,
-    nodes: {},
-    links: {},
-    loadingMsg: '',
-    msg: '',
-    timeSlider: this.mySlider,
-    timeSliderValue: 0,
-    setTimeSegment: function(segment: number) {
-      this.currentTimeSegment = segment
-    },
-  }
-
-  private loadingMsg: string = this.store.loadingMsg
-  private timeSlider: any = this.mySlider
-  private timeSliderValue: number = this.store.timeSlider
-
+  private mymap!: mapboxgl.Map
   private myGeoJson!: any
 
   private get clockTime() {
-    return this.convertSecondsToClockTime(this.store.timeSliderValue)
+    return this.convertSecondsToClockTime(this.currentTime)
   }
 
   // VUE LIFECYCLE: created
@@ -269,14 +192,14 @@ export default class NOXPlot extends vueInstance {
       geojsonLinks.push(featureJson)
     }
     console.log('TIME:' + this._firstEventTime)
-    this.store.timeSliderValue = this._firstEventTime
+    this.currentTime = this._firstEventTime
 
     return { type: 'FeatureCollection', features: geojsonLinks }
   }
 
-  @Watch('timeSliderValue')
-  private sliderChangedEvent(seconds: number) {
-    this.store.timeSliderValue = seconds
+  private changedSlider(seconds: number) {
+    console.log(seconds)
+    this.currentTime = seconds
     this.updateFlowsForTimeValue(seconds)
   }
 
@@ -319,7 +242,7 @@ export default class NOXPlot extends vueInstance {
     for (const feature of this.myGeoJson.features) {
       if (lookup[feature.properties.id]) {
         feature.properties.color = lookup[feature.properties.id]
-        feature.properties.radius = 10
+        feature.properties.radius = 20
       } else {
         feature.properties.radius = 0
       }
@@ -329,32 +252,12 @@ export default class NOXPlot extends vueInstance {
     z.setData(this.myGeoJson)
   }
 
-  private updateTimeSliderSegmentColors(segments: number[]) {
-    let gradient = '-webkit-linear-gradient(left'
-    const total = segments.reduce((sum, current) => sum + current)
-
-    for (const segment of segments) {
-      if (sharedStore.debug) console.log(segment)
-
-      const percent = (100.0 * segment) / total
-      let color = ',#eee'
-      if (percent > 50) color = ',#04f'
-      else if (percent > 20) color = ',#33c'
-      else if (percent > 10) color = ',#669'
-      else if (percent > 5) color = ',#99c'
-      else if (percent > 0) color = ',#aaf'
-      gradient += color
-    }
-    gradient += ')'
-
-    this.store.timeSlider.bgStyle.backgroundImage = gradient
-  }
-
   private mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.addJsonToMap()
     this.updateFlowsForTimeValue(this._firstEventTime)
-    this.timeSliderValue = this._firstEventTime
+    this.currentTime = this._firstEventTime
+    EventBus.$emit('set-time', this.currentTime)
   }
 
   private setupEventListeners() {}
@@ -364,15 +267,16 @@ export default class NOXPlot extends vueInstance {
   }
 
   private async readJSONFile() {
-    this.store.loadingMsg = 'Reading data'
+    this.loadingMsg = 'Reading data'
 
     try {
       const url = '/fake-nox.json'
       const resp = await fetch(url, { mode: 'no-cors' })
       const j = await resp.json()
+      this.loadingMsg = ''
       return j
     } catch (e) {
-      this.store.msg = 'ERR >> '
+      this.loadingMsg = 'ERR >> '
       console.log(e)
       return []
     }
@@ -381,13 +285,14 @@ export default class NOXPlot extends vueInstance {
   // MapBox requires long/lat
   private convertCoords(projection: any) {
     console.log('starting conversion', projection)
-
+    /*
     for (const key of Object.keys(this.store.nodes)) {
       const node = this.store.nodes[key]
       const z = proj4(projection, 'WGS84', node) as any
       node.x = z.x
       node.y = z.y
     }
+    */
   }
 
   /*
@@ -468,7 +373,7 @@ export default class NOXPlot extends vueInstance {
   pointer-events: none;
 }
 
-#clock {
+.clock {
   color: #36f;
   background-color: #ffffffee;
   margin: 10px 50px;
@@ -480,21 +385,16 @@ export default class NOXPlot extends vueInstance {
   font-size: 1.5rem;
 }
 
+.time-slider {
+  width: 100%;
+}
+
 .controls {
   color: white;
-  display: flex;
   grid-row: 2 / 3;
   grid-column: 1 / 3;
   padding: 4px 28px 4px 5px;
-  width: 100%;
   background-color: #00000099;
-}
-
-.slider-things {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  margin-bottom: 5px;
 }
 
 h2,
@@ -514,17 +414,5 @@ h3 {
 a:hover,
 a:focus {
   text-decoration: none;
-}
-
-.clock-labels {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
-  grid-template-rows: auto;
-  width: 100%;
-  font-size: 10px;
-  margin-bottom: 0px;
-  margin-top: 0px;
-  pointer-events: none;
-  z-index: 2;
 }
 </style>
