@@ -5,7 +5,7 @@
     .slider-things
       vue-slider.time-slider(v-bind="timeSlider" v-model="timeSliderValue")
       .clock-labels
-        .hour &nbsp;
+        .hour &nbsp;0:00
         .hour 3:00
         .hour 6:00
         .hour 9:00
@@ -64,7 +64,7 @@ interface StoreType {
   links: any
   msg: string
   timeSlider: any
-  timeSliderValue: 0
+  timeSliderValue: number
   setTimeSegment: any
   loadingMsg: string
 }
@@ -89,6 +89,8 @@ export default class NOXPlot extends vueInstance {
   private mymap!: mapboxgl.Map
 
   private _locations: any
+
+  private _firstEventTime: number = 0
 
   private mySlider = {
     disabled: false,
@@ -120,8 +122,8 @@ export default class NOXPlot extends vueInstance {
       backgroundColor: '#00bb5588',
       borderColor: '#f05b72',
     },
-    formatter: function(index: number) {
-      return '10' // convertMilliSecondsToClockTimeMinutes(index)
+    formatter: (index: number) => {
+      return this.convertSecondsToClockTimeMinutes(index)
     },
   }
 
@@ -251,7 +253,10 @@ export default class NOXPlot extends vueInstance {
   private convertJsonToGeoJson(data: any) {
     const geojsonLinks: any = []
 
+    this._firstEventTime = 1e20
+
     for (const point of data) {
+      this._firstEventTime = Math.min(this._firstEventTime, point.time)
       const coordinates = [point.lon, point.lat]
       const id = point.lon.toString() + '/' + point.lat.toString()
 
@@ -263,12 +268,15 @@ export default class NOXPlot extends vueInstance {
 
       geojsonLinks.push(featureJson)
     }
+    console.log('TIME:' + this._firstEventTime)
+    this.store.timeSliderValue = this._firstEventTime
 
     return { type: 'FeatureCollection', features: geojsonLinks }
   }
 
   @Watch('timeSliderValue')
   private sliderChangedEvent(seconds: number) {
+    this.store.timeSliderValue = seconds
     this.updateFlowsForTimeValue(seconds)
   }
 
@@ -313,7 +321,6 @@ export default class NOXPlot extends vueInstance {
         feature.properties.color = lookup[feature.properties.id]
         feature.properties.radius = 10
       } else {
-        feature.properties.color = '#000000'
         feature.properties.radius = 0
       }
     }
@@ -346,6 +353,8 @@ export default class NOXPlot extends vueInstance {
   private mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.addJsonToMap()
+    this.updateFlowsForTimeValue(this._firstEventTime)
+    this.timeSliderValue = this._firstEventTime
   }
 
   private setupEventListeners() {}
