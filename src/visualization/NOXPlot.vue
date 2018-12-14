@@ -62,8 +62,6 @@ interface StoreType {
   currentTimeSegment: number
   nodes: any
   links: any
-  flows: any
-  flowSummary: number[]
   msg: string
   timeSlider: any
   timeSliderValue: 0
@@ -97,7 +95,7 @@ export default class NOXPlot extends vueInstance {
     dotSize: 24,
     height: 10,
     min: 0,
-    max: 86399999,
+    max: 86399,
     piecewise: false,
     show: true,
     tooltip: 'always',
@@ -134,8 +132,6 @@ export default class NOXPlot extends vueInstance {
     nodes: {},
     links: {},
     loadingMsg: '',
-    flows: {},
-    flowSummary: Array.apply(null, new Array(96)).map(() => 0),
     msg: '',
     timeSlider: this.mySlider,
     timeSliderValue: 0,
@@ -215,12 +211,8 @@ export default class NOXPlot extends vueInstance {
       // generate a row-id if there isn't one
       if (!row.id) row.id = row.lon.toString() + '/' + row.lat.toString()
 
-      // generate a timestamp integer from the text-timestamp
-      row._timestamp = Date.parse(row.t)
-
       // save the row
       if (!this._locations.hasOwnProperty(row.id)) {
-        console.log('creating ' + row.id)
         this._locations[row.id] = []
       }
       this._locations[row.id].push(row)
@@ -229,7 +221,7 @@ export default class NOXPlot extends vueInstance {
     // sort each location's events by timestamp
     for (const location in this._locations) {
       if (!this._locations.hasOwnProperty(location)) continue
-      this._locations[location].sort((a: any, b: any) => a._timestamp - b._timestamp)
+      this._locations[location].sort((a: any, b: any) => a.time - b.time)
     }
     console.log({ LOCATIONS: this._locations })
   }
@@ -249,7 +241,7 @@ export default class NOXPlot extends vueInstance {
         type: 'circle',
         paint: {
           'circle-color': ['get', 'color'],
-          'circle-radius': 60,
+          'circle-radius': ['get', 'radius'],
         },
       },
       'water'
@@ -261,13 +253,12 @@ export default class NOXPlot extends vueInstance {
 
     for (const point of data) {
       const coordinates = [point.lon, point.lat]
-      const color = colormap(point.NOX)
       const id = point.lon.toString() + '/' + point.lat.toString()
 
       const featureJson: any = {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: coordinates },
-        properties: { id: id, color: color },
+        properties: { id: id, radius: 0, color: '#000000' },
       }
 
       geojsonLinks.push(featureJson)
@@ -281,9 +272,9 @@ export default class NOXPlot extends vueInstance {
     this.updateFlowsForTimeValue(seconds)
   }
 
-  private convertMilliSecondsToClockTimeMinutes(index: number) {
+  private convertSecondsToClockTimeMinutes(index: number) {
     try {
-      const hms = timeConvert(index / 1000)
+      const hms = timeConvert(index)
       const minutes = ('00' + hms.minutes).slice(-2)
       return `${hms.hours}:${minutes}`
     } catch (e) {
@@ -298,54 +289,37 @@ export default class NOXPlot extends vueInstance {
     return `${hms.hours}:${minutes}:${seconds}`
   }
 
-  private updateFlowsForTimeValue(milliseconds: number) {
-    console.log(milliseconds)
-
+  private updateFlowsForTimeValue(seconds: number) {
     const lookup: any = {}
 
+    // loop on all point-ids and get NOX value for each at this timepoint
     for (const point in this._locations) {
       if (!this._locations.hasOwnProperty(point)) continue
       const location = this._locations[point]
-      console.log(location)
       // for each point, find the new time
-      const timeIndex = this.getUpperBoundEventForTimepoint(location, milliseconds, (a: any, b: number) => a - b)
-      console.log(timeIndex)
+      const timeIndex = this.getUpperBoundEventForTimepoint(location, seconds, (a: any, b: number) => a - b)
       if (timeIndex === -1) continue
 
       const noxEvent = location[timeIndex]
-      console.log({ timeIndex, noxEvent })
 
-      lookup[noxEvent.id] = colormap(noxEvent.NOX)
+      if (noxEvent.NOX) {
+        lookup[noxEvent.id] = colormap(noxEvent.NOX)
+      }
     }
 
-    console.log({ lookup })
-
+    // loop on all features and get NOX if it exists
     for (const feature of this.myGeoJson.features) {
       if (lookup[feature.properties.id]) {
         feature.properties.color = lookup[feature.properties.id]
+        feature.properties.radius = 10
+      } else {
+        feature.properties.color = '#000000'
+        feature.properties.radius = 0
       }
     }
 
     const z: any = this.mymap.getSource('my-data')
     z.setData(this.myGeoJson)
-
-    // if new time is same as old time, we're done
-    /*
-    // nothing to do if segment hasn't changed
-    if (segment === this.store.currentTimeSegment) return
-
-    this.store.setTimeSegment(segment)
-
-    for (const link of this._linkData.features) {
-      const id = link.properties.id
-      link.properties.color = this.calculateColorFromVolume(id)
-    }
-
-    const z: any = this.mymap.getSource('my-data')
-    z.setData(this._linkData)
-
-    if (sharedStore.debug) console.log('done')
-    */
   }
 
   private updateTimeSliderSegmentColors(segments: number[]) {
@@ -375,40 +349,6 @@ export default class NOXPlot extends vueInstance {
   }
 
   private setupEventListeners() {}
-
-  private constructGeoJsonFromLinkData() {
-    const geojsonLinks = []
-
-    for (const id in this.store.links) {
-      if (this.store.links.hasOwnProperty(id)) {
-        const link = this.store.links[id]
-        const fromNode = this.store.nodes[link.from]
-        const toNode = this.store.nodes[link.to]
-
-        const coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
-
-        const featureJson = {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: coordinates,
-          },
-          properties: { id: id, color: '#aaa' },
-        }
-
-        geojsonLinks.push(featureJson)
-      }
-    }
-
-    this._linkData = {
-      type: 'FeatureCollection',
-      features: geojsonLinks,
-    }
-
-    return this._linkData
-  }
-
-  private clickedOnLink(e: MapElement) {}
 
   private async loadData() {
     return await this.readJSONFile()
@@ -459,13 +399,13 @@ export default class NOXPlot extends vueInstance {
    *    -n-1, thus use (-n + 2) to get the index of the upper-bound element
    *
    */
-  private binarySearch(ar: any, el: any, compareFn: any) {
+  private binaryTimeSearch(ar: any, el: any, compareFn: any) {
     let m = 0
     let n = ar.length - 1
     while (m <= n) {
       // tslint:disable-next-line:no-bitwise
       const k = (n + m) >> 1
-      const cmp = compareFn(el, ar[k]._timestamp)
+      const cmp = compareFn(el, ar[k].time)
       if (cmp > 0) {
         m = k + 1
       } else if (cmp < 0) {
@@ -479,8 +419,7 @@ export default class NOXPlot extends vueInstance {
 
   // use binary search to get the latest event that has already happened
   private getUpperBoundEventForTimepoint(ar: any, el: any, compareFn: any) {
-    const bAnswer = this.binarySearch(ar, el, compareFn)
-    console.log(bAnswer)
+    const bAnswer = this.binaryTimeSearch(ar, el, compareFn)
     if (bAnswer >= -1) return bAnswer
     return -bAnswer - 2
   }
