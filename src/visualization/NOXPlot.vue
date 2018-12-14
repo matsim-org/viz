@@ -451,7 +451,7 @@ export default class NOXPlot extends vueInstance {
   grid-row: 1 / 2;
   grid-column: 1 / 3;
   overflow: hidden;
-  background: #eee;
+  background: #222;
 }
 
 .loading-message {
@@ -481,13 +481,13 @@ export default class NOXPlot extends vueInstance {
 }
 
 .controls {
+  color: white;
   display: flex;
-  border-top: solid 1px;
-  border-color: #ddd;
   grid-row: 2 / 3;
   grid-column: 1 / 3;
   padding: 4px 28px 4px 5px;
   width: 100%;
+  background-color: #00000099;
 }
 
 .slider-things {
