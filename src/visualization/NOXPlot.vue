@@ -1,9 +1,9 @@
 <template lang="pug">
 .main-content
   #mymap
-  .controls
+  .slider-box
     time-slider.time-slider(@change="changedSlider")
-  .right-overlay
+  .left-overlay
     h1.clock {{clockTime}}
   .loading-message.ui.segment(v-show='loadingMsg')
     .ui.inverted.active.dimmer
@@ -70,6 +70,7 @@ export default class NOXPlot extends vueInstance {
   private _firstEventTime: number = 0
   private mymap!: mapboxgl.Map
   private myGeoJson!: any
+  private mapExtentXYXY: any = [180, 90, -180, -90]
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
@@ -103,7 +104,7 @@ export default class NOXPlot extends vueInstance {
 
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      center: [13.325, 52.52], // lnglat, not latlng (think of it as: x,y)
+      // center: [13.325, 52.52], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
       style: 'mapbox://styles/mapbox/dark-v9',
@@ -173,15 +174,24 @@ export default class NOXPlot extends vueInstance {
     ) // layer gets added just *above* this MapBox-defined layer.
   }
 
+  private updateMapExtent(coordinates: any) {
+    this.mapExtentXYXY[0] = Math.min(this.mapExtentXYXY[0], coordinates[0])
+    this.mapExtentXYXY[1] = Math.min(this.mapExtentXYXY[1], coordinates[1])
+    this.mapExtentXYXY[2] = Math.max(this.mapExtentXYXY[2], coordinates[0])
+    this.mapExtentXYXY[3] = Math.max(this.mapExtentXYXY[3], coordinates[1])
+  }
+
   private convertJsonToGeoJson(data: any) {
     const geojsonLinks: any = []
 
     this._firstEventTime = 1e20
 
     for (const point of data) {
-      this._firstEventTime = Math.min(this._firstEventTime, point.time)
       const coordinates = [point.lon, point.lat]
       const id = point.lon.toString() + '/' + point.lat.toString()
+
+      this._firstEventTime = Math.min(this._firstEventTime, point.time)
+      this.updateMapExtent(coordinates)
 
       const featureJson: any = {
         type: 'Feature',
@@ -191,14 +201,12 @@ export default class NOXPlot extends vueInstance {
 
       geojsonLinks.push(featureJson)
     }
-    console.log('TIME:' + this._firstEventTime)
     this.currentTime = this._firstEventTime
 
     return { type: 'FeatureCollection', features: geojsonLinks }
   }
 
   private changedSlider(seconds: number) {
-    console.log(seconds)
     this.currentTime = seconds
     this.updateFlowsForTimeValue(seconds)
   }
@@ -256,6 +264,10 @@ export default class NOXPlot extends vueInstance {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.addJsonToMap()
     this.updateFlowsForTimeValue(this._firstEventTime)
+
+    this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
+    this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
+
     this.currentTime = this._firstEventTime
     EventBus.$emit('set-time', this.currentTime)
   }
