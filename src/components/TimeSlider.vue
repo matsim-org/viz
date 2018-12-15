@@ -1,5 +1,5 @@
 <template lang="pug">
-.main-content
+.time-slider-main-content
   vue-slider.time-slider(v-bind="timeSlider" v-model="currentTime")
   .clock-labels
     .hour &nbsp;0:00
@@ -10,7 +10,6 @@
     .hour 15:00
     .hour 18:00
     .hour 21:00
-    .hour &nbsp;
 </template>
 
 <script lang="ts">
@@ -59,6 +58,7 @@ export default class TimeSlider extends Vue {
 
   // VUE LIFECYCLE HOOKS
   public created() {}
+
   public mounted() {
     EventBus.$on('set-time', (seconds: number) => {
       this.resetTime(seconds)
@@ -94,28 +94,33 @@ export default class TimeSlider extends Vue {
 </script>
 
 <style scoped>
-.main-content {
+.time-slider-main-content {
   display: grid;
-  grid-template-columns: auto;
   grid-template-rows: auto auto;
-  padding: 0px;
+  grid-template-columns: auto;
+  width: 100%;
+  padding: 0px 28px 2px 4px;
 }
 
 .time-slider {
   grid-row: 1 / 2;
   grid-column: 1 / 2;
 }
+
 .clock-labels {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
-  grid-template-rows: auto;
-  width: 100%;
-  font-size: 10px;
-  margin-bottom: 0px;
-  margin-top: 0px;
-  pointer-events: none;
-  z-index: 2;
   grid-row: 2 / 3;
   grid-column: 1 / 2;
+  color: white;
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: repeat(auto-fit, 1fr);
+  width: 100%;
+  font-size: 10px;
+  margin-top: 0px;
+  pointer-events: none;
+}
+
+.hour {
+  grid-row: 1/2;
 }
 </style>

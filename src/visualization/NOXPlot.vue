@@ -344,7 +344,7 @@ export default class NOXPlot extends vueInstance {
 /* this is the initial start page layout */
 .main-content {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr auto;
   height: 100%;
   padding: 0px;
@@ -353,48 +353,48 @@ export default class NOXPlot extends vueInstance {
 #mymap {
   height: 100%;
   width: 100%;
-  grid-row: 1 / 2;
-  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  grid-column: 1 / 4;
   overflow: hidden;
   background: #222;
 }
 
 .loading-message {
   grid-row: 1 / 2;
-  grid-column: 1 / 3;
+  grid-column: 1 / 4;
   overflow: hidden;
   opacity: 0.8;
 }
 
-.right-overlay {
+.left-overlay {
   grid-row: 1 / 3;
-  grid-column: 2 / 3;
+  grid-column: 1 / 2;
   z-index: 5000;
   pointer-events: none;
 }
 
 .clock {
-  color: #36f;
-  background-color: #ffffffee;
-  margin: 10px 50px;
-  padding: 0px 10px;
+  color: #ccc;
+  background-color: #333377cc;
+  margin: 0.5rem;
+  padding: 0px 5px;
   border: solid 1px;
-  border-color: #bbb;
+  border-color: #222;
   border-radius: 4px;
   box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
   font-size: 1.5rem;
 }
 
-.time-slider {
-  width: 100%;
-}
-
-.controls {
-  color: white;
+.slider-box {
   grid-row: 2 / 3;
-  grid-column: 1 / 3;
-  padding: 4px 28px 4px 5px;
-  background-color: #00000099;
+  grid-column: 1 / 4;
+  background-color: #333377ee;
+  margin: 0.5rem;
+  z-index: 2;
+  border: solid 1px;
+  border-color: #222;
+  border-radius: 4px;
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
 }
 
 h2,
@@ -414,5 +414,12 @@ h3 {
 a:hover,
 a:focus {
   text-decoration: none;
+}
+</style>
+
+<style>
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+  opacity: 0.7;
+  background-color: #444;
 }
 </style>
