@@ -2,7 +2,7 @@
 .main-content
   #mymap
   .slider-box
-    time-slider.time-slider(@change="changedSlider")
+    time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
   .left-overlay
     h1.clock {{clockTime}}
   .loading-message.ui.segment(v-show='loadingMsg')
@@ -12,17 +12,23 @@
 
 <script lang="ts">
 'use strict'
-
 import * as mapboxgl from 'mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '../SharedStore'
 import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
-import { nSQL } from 'nano-sql'
 import { inferno, viridis } from 'scale-color-perceptual'
+
+sharedStore.addVisualizationType({
+  typeName: 'emissions',
+  prettyName: 'NOX Emissions',
+  description: 'Show NOX emissions at gridpoints',
+  requiredFileKeys: ['JSON x/y/t/nox'],
+  requiredParamKeys: ['Map projection'],
+})
 
 // choose your colormap: for emissions we'll use inferno
 // https://www.npmjs.com/package/scale-color-perceptual
@@ -46,31 +52,21 @@ interface Point {
   events: any[]
 }
 
-const vueInstance = Vue.extend({
-  props: {
-    projectId: String,
-    parentData: Number,
-  },
-  components: {
-    'time-slider': TimeSlider,
-  },
+@Component({
+  components: { 'time-slider': TimeSlider },
+  props: { projectId: String },
 })
-
-@Component
-export default class NOXPlot extends vueInstance {
-  public currentTime: number = 0
-
-  private sharedState: any = sharedStore.state
-
-  private token: string =
-    'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
-
+export default class NOXPlot extends Vue {
+  private currentTime: number = 0
+  private firstEventTime: number = 0
   private loadingMsg: string = ''
-  private _locations: any
-  private _firstEventTime: number = 0
   private mymap!: mapboxgl.Map
   private myGeoJson!: any
   private mapExtentXYXY: any = [180, 90, -180, -90]
+  private noxLocations: any
+  private sharedState: any = sharedStore.state
+  private token: string =
+    'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
@@ -78,14 +74,6 @@ export default class NOXPlot extends vueInstance {
 
   // VUE LIFECYCLE: created
   public created() {
-    sharedStore.addVisualizationType({
-      typeName: 'emissions',
-      prettyName: 'NOX Emissions',
-      description: 'Show NOX emissions at gridpoints',
-      requiredFileKeys: ['JSON x/y/t/nox'],
-      requiredParamKeys: ['Map projection'],
-    })
-
     // this.sortTest()
   }
 
@@ -130,26 +118,26 @@ export default class NOXPlot extends vueInstance {
    * Build lookup database of NOX events from input data
    */
   private buildEventDatabase(data: any) {
-    this._locations = {}
-    console.log(this._locations)
+    this.noxLocations = {}
+    console.log(this.noxLocations)
 
     for (const row of data) {
       // generate a row-id if there isn't one
       if (!row.id) row.id = row.lon.toString() + '/' + row.lat.toString()
 
       // save the row
-      if (!this._locations.hasOwnProperty(row.id)) {
-        this._locations[row.id] = []
+      if (!this.noxLocations.hasOwnProperty(row.id)) {
+        this.noxLocations[row.id] = []
       }
-      this._locations[row.id].push(row)
+      this.noxLocations[row.id].push(row)
     }
 
     // sort each location's events by timestamp
-    for (const location in this._locations) {
-      if (!this._locations.hasOwnProperty(location)) continue
-      this._locations[location].sort((a: any, b: any) => a.time - b.time)
+    for (const location in this.noxLocations) {
+      if (!this.noxLocations.hasOwnProperty(location)) continue
+      this.noxLocations[location].sort((a: any, b: any) => a.time - b.time)
     }
-    console.log({ LOCATIONS: this._locations })
+    console.log({ LOCATIONS: this.noxLocations })
   }
 
   private addJsonToMap() {
@@ -184,13 +172,13 @@ export default class NOXPlot extends vueInstance {
   private convertJsonToGeoJson(data: any) {
     const geojsonLinks: any = []
 
-    this._firstEventTime = 1e20
+    this.firstEventTime = 1e20
 
     for (const point of data) {
       const coordinates = [point.lon, point.lat]
       const id = point.lon.toString() + '/' + point.lat.toString()
 
-      this._firstEventTime = Math.min(this._firstEventTime, point.time)
+      this.firstEventTime = Math.min(this.firstEventTime, point.time)
       this.updateMapExtent(coordinates)
 
       const featureJson: any = {
@@ -201,7 +189,7 @@ export default class NOXPlot extends vueInstance {
 
       geojsonLinks.push(featureJson)
     }
-    this.currentTime = this._firstEventTime
+    this.currentTime = this.firstEventTime
 
     return { type: 'FeatureCollection', features: geojsonLinks }
   }
@@ -229,12 +217,14 @@ export default class NOXPlot extends vueInstance {
   }
 
   private updateFlowsForTimeValue(seconds: number) {
+    if (!this.noxLocations || !this.myGeoJson) return
+
     const lookup: any = {}
 
     // loop on all point-ids and get NOX value for each at this timepoint
-    for (const point in this._locations) {
-      if (!this._locations.hasOwnProperty(point)) continue
-      const location = this._locations[point]
+    for (const point in this.noxLocations) {
+      if (!this.noxLocations.hasOwnProperty(point)) continue
+      const location = this.noxLocations[point]
       // for each point, find the new time
       const timeIndex = this.getUpperBoundEventForTimepoint(location, seconds, (a: any, b: number) => a - b)
       if (timeIndex === -1) continue
@@ -263,13 +253,12 @@ export default class NOXPlot extends vueInstance {
   private mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.addJsonToMap()
-    this.updateFlowsForTimeValue(this._firstEventTime)
+    this.updateFlowsForTimeValue(this.firstEventTime)
 
     this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
     this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
 
-    this.currentTime = this._firstEventTime
-    EventBus.$emit('set-time', this.currentTime)
+    this.currentTime = this.firstEventTime
   }
 
   private setupEventListeners() {}

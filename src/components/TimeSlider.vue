@@ -1,6 +1,6 @@
 <template lang="pug">
 .time-slider-main-content
-  vue-slider.time-slider(v-bind="timeSlider" v-model="currentTime")
+  vue-slider.time-slider(v-bind="timeSlider" v-model="sliderValue")
   .clock-labels
     .hour &nbsp;0:00
     .hour 3:00
@@ -16,17 +16,10 @@
 import * as timeConvert from 'convert-seconds'
 import vueSlider from 'vue-slider-component'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { EventBus } from '../SharedStore'
 
-@Component({ components: { 'vue-slider': vueSlider } })
+@Component({ components: { 'vue-slider': vueSlider }, props: { initialTime: Number } })
 export default class TimeSlider extends Vue {
-  private get clockTime() {
-    return this.convertSecondsToClockTime(this.currentTime)
-  }
-
-  private currentTime: number = 0
-
-  // INTERNAL STRUCTURES
+  private sliderValue: number = 0
   private timeSlider = {
     disabled: false,
     dotSize: 24,
@@ -56,16 +49,20 @@ export default class TimeSlider extends Vue {
     },
   }
 
-  // VUE LIFECYCLE HOOKS
-  public created() {}
-
-  public mounted() {
-    EventBus.$on('set-time', (seconds: number) => {
-      this.resetTime(seconds)
-    })
+  private get clockTime() {
+    return this.convertSecondsToClockTime(this.sliderValue)
   }
 
-  @Watch('currentTime')
+  // VUE LIFECYCLE HOOKS
+  public created() {}
+  public mounted() {}
+
+  @Watch('initialTime')
+  private initialTimeChanged(seconds: number) {
+    this.sliderValue = seconds
+  }
+
+  @Watch('sliderValue')
   private sliderChangedEvent(seconds: number) {
     this.$emit('change', seconds)
   }
@@ -78,10 +75,6 @@ export default class TimeSlider extends Vue {
     } catch (e) {
       return '0:00'
     }
-  }
-
-  private resetTime(seconds: number) {
-    this.currentTime = seconds
   }
 
   private convertSecondsToClockTime(index: number) {
