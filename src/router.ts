@@ -62,9 +62,12 @@ export default class AppRouter {
           component: NetworkFlows,
         },
         {
-          path: '/nox',
+          path: '/nox/:projectId/:vizId',
           name: 'NOXPlot',
           component: NOXPlot,
+          props: {
+            fileApi: fileApi,
+          },
         },
         {
           path: '/projects',

@@ -16,14 +16,16 @@ import * as mapboxgl from 'mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
-import sharedStore from '../SharedStore'
+import readBlob from 'read-blob'
+import sharedStore, { EventBus } from '../SharedStore'
+import FileAPI from '@/communication/FileAPI'
 import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import { inferno, viridis } from 'scale-color-perceptual'
 
 sharedStore.addVisualizationType({
-  typeName: 'emissions',
+  typeName: 'nox',
   prettyName: 'NOX Emissions',
   description: 'Show NOX emissions at gridpoints',
   requiredFileKeys: ['JSON x/y/t/nox'],
@@ -54,7 +56,7 @@ interface Point {
 
 @Component({
   components: { 'time-slider': TimeSlider },
-  props: { projectId: String },
+  props: { projectId: String, fileApi: Object },
 })
 export default class NOXPlot extends Vue {
   private currentTime: number = 0
@@ -68,23 +70,37 @@ export default class NOXPlot extends Vue {
   private token: string =
     'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
+  // store is the component data store -- the state of the component.
+  private store: any = {
+    loadingText: 'NOX Emissions Plot',
+    visualization: null,
+    project: {},
+    api: FileAPI,
+  }
+
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
   }
 
   // VUE LIFECYCLE: created
   public created() {
+    this.store.api = (this as any).fileApi
     // this.sortTest()
   }
 
   // VUE LIFECYCLE: mounted
   public async mounted() {
-    this.setupEventListeners()
-
     // this weird trick allows us to set mapbox token in typescript
     // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
     // tslint:disable-next-line:semicolon
     ;(mapboxgl as any).accessToken = this.token
+
+    this.store.projectId = (this as any).$route.params.projectId
+    this.store.vizId = (this as any).$route.params.vizId
+    this.store.visualization = await this.store.api.fetchVisualization(this.store.projectId, this.store.vizId)
+    this.store.project = await this.store.api.fetchProject(this.store.projectId)
+
+    this.setBreadcrumb()
 
     const jsondata = await this.loadData()
     this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
@@ -112,6 +128,14 @@ export default class NOXPlot extends Vue {
       const answer = this.getUpperBoundEventForTimepoint(ar, z, (a: number, b: number) => a - b)
       console.log({ z, answer })
     }
+  }
+
+  private setBreadcrumb() {
+    EventBus.$emit('set-breadcrumbs', [
+      { title: 'My Projects', link: '/projects' },
+      { title: this.store.project.name, link: '/project/' + this.store.projectId },
+      { title: 'nox-' + this.store.vizId.substring(0, 4), link: '#' },
+    ])
   }
 
   /**
@@ -261,25 +285,24 @@ export default class NOXPlot extends Vue {
     this.currentTime = this.firstEventTime
   }
 
-  private setupEventListeners() {}
-
   private async loadData() {
-    return await this.readJSONFile()
+    return await this.loadXYJsonData()
   }
 
-  private async readJSONFile() {
-    this.loadingMsg = 'Reading data'
-
+  private async loadXYJsonData() {
     try {
-      const url = '/fake-nox.json'
-      const resp = await fetch(url, { mode: 'no-cors' })
-      const j = await resp.json()
-      this.loadingMsg = ''
-      return j
+      const XYDATA = this.store.visualization.inputFiles['JSON x/y/t/nox'].fileEntry.id
+      console.log({ XYDATA, PROJECT: this.store.projectId })
+      this.store.loadingText = 'Loading X/Y data...'
+      // get the blob data
+      const dataBlob = await this.store.api.downloadFile(XYDATA, this.store.projectId)
+      let data = await readBlob.text(dataBlob)
+      data = JSON.parse(data)
+
+      return data
     } catch (e) {
-      this.loadingMsg = 'ERR >> '
-      console.log(e)
-      return []
+      console.error(e)
+      return null
     }
   }
 
@@ -376,7 +399,7 @@ export default class NOXPlot extends Vue {
 
 .clock {
   color: #ccc;
-  background-color: #333377cc;
+  background-color: #667;
   margin: 0.5rem;
   padding: 0px 5px;
   border: solid 1px;
@@ -389,7 +412,7 @@ export default class NOXPlot extends Vue {
 .slider-box {
   grid-row: 2 / 3;
   grid-column: 1 / 4;
-  background-color: #333377ee;
+  background-color: #667;
   margin: 0.5rem;
   z-index: 2;
   border: solid 1px;
