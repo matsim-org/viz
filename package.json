@@ -30,6 +30,7 @@
     "read-blob": "^1.1.0",
     "request": "^2.88.0",
     "sax": "^1.2.4",
+    "scale-color-perceptual": "^1.1.2",
     "three": "^0.85.2",
     "vue": "^2.5.17",
     "vue-class-component": "^6.3.2",

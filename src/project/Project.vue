@@ -252,11 +252,12 @@ export default class ProjectViewModel extends vueInstance {
 </script>
 <style scoped>
 .heroContainer {
-  padding: 3rem 1rem;
+  padding: 3rem 1.5rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
+
 section {
   margin: 2rem 1.5rem 2rem 1.5rem;
 }
