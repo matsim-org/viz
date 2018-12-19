@@ -21,6 +21,7 @@ import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import 'bulma/css/bulma.css'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface BreadCrumb {
   title: string

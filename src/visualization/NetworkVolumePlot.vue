@@ -7,7 +7,6 @@
 <script lang="ts">
 'use strict'
 
-// import 'mapbox-gl/dist/mapbox-gl.css'
 import * as mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
