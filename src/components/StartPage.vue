@@ -24,38 +24,35 @@
 import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import ProjectStore from '@/project/ProjectStore'
+import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
 import { Visualization } from '@/entities/Entities'
 
 @Component({
-  components: {
-    'project-list-item': ProjectListItem,
-  },
+  components: { 'project-list-item': ProjectListItem },
 })
 export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
 
-  private projectState!: any //  = this.projectStore.State
-
   private get projects() {
-    return this.projectState.projects
+    return this.projectStore.State.projects
   }
 
-  public async created() {
+  public created() {}
+
+  public async mounted() {
     try {
-      //      await this.projectStore.fetchProjects()
-      //      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
+      await this.projectStore.fetchProjects()
+      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }
-  }
-
-  public mounted() {
     EventBus.$emit('set-breadcrumbs', [])
   }
+
+  public async thingie() {}
 
   private onVizSelected(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })
