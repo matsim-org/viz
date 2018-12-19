@@ -12,8 +12,8 @@
       span No projects yet. Create one!
 
     .projectList(v-else)
-      list-element(v-for="project in projects" 
-                    v-bind:key="project.id" 
+      list-element(v-for="project in projects"
+                    v-bind:key="project.id"
                     v-on:itemClicked="onProjectSelected(project)")
         span(slot="title") {{project.name}}
         span(slot="content") {{project.id}}
@@ -29,7 +29,8 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import FileAPI from '@/communication/FileAPI'
-import SharedStore, { SharedState, EventBus } from '@/SharedStore'
+import SharedStore, { SharedState } from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import { Project } from '@/entities/Entities'
 import { Event } from '_debugger'

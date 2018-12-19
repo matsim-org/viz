@@ -11,15 +11,17 @@
     .nav-rightside
       a.topnavrow-item(@click="onLogin()") {{ loginText }}
       router-link.topnavrow-item(to="/projects" v-if="isLoggedIn") Projects
-      
+
   router-view.main-content
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import sharedStore, { EventBus } from '@/SharedStore'
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import 'bulma/css/bulma.css'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 interface BreadCrumb {
   title: string

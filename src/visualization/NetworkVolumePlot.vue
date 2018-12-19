@@ -7,13 +7,14 @@
 <script lang="ts">
 'use strict'
 
-import 'mapbox-gl/dist/mapbox-gl.css'
 import * as mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
+import Vue from 'vue'
 
 // register component with the shared store
 SharedStore.addVisualizationType({
@@ -33,7 +34,7 @@ const store: any = {
 }
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'NetworkViz',
   props: ['fileApi'],
   components: {},
@@ -50,7 +51,7 @@ export default {
   },
   methods: {},
   watch: {},
-}
+})
 
 async function mounted() {
   setupEventListeners()

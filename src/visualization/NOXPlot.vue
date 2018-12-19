@@ -17,7 +17,8 @@ import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
 import readBlob from 'read-blob'
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '../SharedStore'
+import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
@@ -111,7 +112,7 @@ export default class NOXPlot extends Vue {
       // center: [13.325, 52.52], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/dark-v9',
+      style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
       zoom: 14,
     })
@@ -399,7 +400,7 @@ export default class NOXPlot extends Vue {
 
 .clock {
   color: #ccc;
-  background-color: #667;
+  background-color: #99a;
   margin: 0.5rem;
   padding: 0px 5px;
   border: solid 1px;
@@ -412,7 +413,7 @@ export default class NOXPlot extends Vue {
 .slider-box {
   grid-row: 2 / 3;
   grid-column: 1 / 4;
-  background-color: #667;
+  background-color: #99a;
   margin: 0.5rem;
   z-index: 2;
   border: solid 1px;
@@ -438,12 +439,5 @@ h3 {
 a:hover,
 a:focus {
   text-decoration: none;
-}
-</style>
-
-<style>
-.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
-  opacity: 0.7;
-  background-color: #444;
 }
 </style>

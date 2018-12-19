@@ -9,6 +9,14 @@
       slot(name="accessory")
 </template>
 
+<script lang="ts">
+import Vue from 'vue'
+
+export default Vue.extend({
+  name: 'listElement',
+})
+</script>
+
 <style scoped>
 .listItem {
   display: flex;

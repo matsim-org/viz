@@ -3,12 +3,6 @@
 import Vue from 'vue'
 import { VisualizationType } from './entities/Entities'
 
-// shared event bus for cross-component communication
-// see https://alligator.io/vuejs/global-event-bus/
-
-// tslint:disable-next-line:variable-name
-export const EventBus = new Vue()
-
 interface SharedState {
   lastNavigation: string
   visualizationTypes: Map<string, VisualizationType>
@@ -25,7 +19,6 @@ class SharedStore {
   public setLastNavigation(path: string): void {
     this._state.lastNavigation = path
     this.persistState()
-    EventBus.$emit('lastNavigation-changed', this.state.lastNavigation)
   }
 
   public addVisualizationType(type: VisualizationType) {
