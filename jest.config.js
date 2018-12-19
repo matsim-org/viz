@@ -11,7 +11,7 @@ module.exports = {
   },
   snapshotSerializers: ['jest-serializer-vue'],
   testMatch: ['**/tests/unit/**/*.spec.(js|jsx|ts|tsx)|**/__tests__/*.(js|jsx|ts|tsx)'],
-  setupFiles: ['<rootDir>/tests/unit/setup'],
+  setupFiles: ['jest-localstorage-mock', '<rootDir>/tests/unit/setup'],
   collectCoverage: false,
   coverageDirectory: '<rootDir>/tests/unit/coverage',
   collectCoverageFrom: ['src/**/*.{js,vue}', '!src/main.ts', '!src/router.ts', '!**/node_modules/**'],
