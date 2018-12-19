@@ -25,8 +25,8 @@
 
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
-
-import { EventBus } from '../SharedStore'
+import Vue from 'vue'
+import EventBus from '@/EventBus.vue'
 
 const SERVER_ADDR = 'http://geo.vsp.tu-berlin.de'
 const SERVER_PARAMS =
@@ -58,7 +58,7 @@ const store = {
 }
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'KiberaAccessibility',
   components: {},
   data() {
@@ -72,7 +72,7 @@ export default {
     clickedAlternative: userChoseAlternative,
   },
   watch: {},
-}
+})
 
 // mounted is called by Vue after this component is installed on the page
 async function mounted() {

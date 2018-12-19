@@ -17,7 +17,7 @@ import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
 import readBlob from 'read-blob'
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '../SharedStore'
 import FileAPI from '@/communication/FileAPI'
 import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
@@ -131,7 +131,7 @@ export default class NOXPlot extends Vue {
   }
 
   private setBreadcrumb() {
-    EventBus.$emit('set-breadcrumbs', [
+    this.$emit('set-breadcrumbs', [
       { title: 'My Projects', link: '/projects' },
       { title: this.store.project.name, link: '/project/' + this.store.projectId },
       { title: 'nox-' + this.store.vizId.substring(0, 4), link: '#' },

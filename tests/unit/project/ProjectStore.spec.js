@@ -1,5 +1,7 @@
 import ProjectStore from '@/project/ProjectStore'
 
+export default setUpProjectStore
+
 describe('ProjectStore', () => {
   it('removes projects after the server deleted them', async () => {
     const projectStore = await setUpProjectStore()

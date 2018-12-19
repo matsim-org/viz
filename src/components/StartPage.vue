@@ -21,7 +21,8 @@
 </template>
 
 <script lang="ts">
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import FileAPI from '@/communication/FileAPI'
@@ -37,7 +38,7 @@ export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
 
-  private projectState = this.projectStore.State
+  private projectState!: any //  = this.projectStore.State
 
   private get projects() {
     return this.projectState.projects
@@ -45,9 +46,8 @@ export default class StartPage extends Vue {
 
   public async created() {
     try {
-      await this.projectStore.fetchProjects()
-
-      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
+      //      await this.projectStore.fetchProjects()
+      //      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }

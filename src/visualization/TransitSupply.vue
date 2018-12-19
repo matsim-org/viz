@@ -29,10 +29,11 @@ import colormap from 'colormap'
 import proj4 from 'proj4'
 import readBlob from 'read-blob'
 import pako from 'pako'
-import 'mapbox-gl/dist/mapbox-gl.css'
+// import 'mapbox-gl/dist/mapbox-gl.css'
 import FileAPI from '@/communication/FileAPI'
-import sharedStore, { EventBus } from '../SharedStore'
-import SharedStore from '../SharedStore'
+import EventBus from '@/EventBus.vue'
+import SharedStore from '@/SharedStore'
+import Vue from 'vue'
 
 const MY_PROJECTION = 'EPSG:2048'
 const COLOR_CATEGORIES = 16
@@ -124,7 +125,7 @@ let _maximum = 0
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'TransitSupply',
   props: {
     fileApi: FileAPI,
@@ -147,7 +148,7 @@ export default {
     pressedEscape,
   },
   watch: {},
-}
+})
 
 async function getVizDetails() {
   store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
