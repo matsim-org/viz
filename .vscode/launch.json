@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach Chrome",
+      "url": "http://localhost:8080",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}"
+    },
+    {
       "type": "firefox",
       "request": "launch",
       "name": "Firefox VueJS",
