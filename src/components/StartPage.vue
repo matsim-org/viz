@@ -36,19 +36,24 @@ export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
 
+  // this assignment is necessary to make vue watch the state
+  private projectState = this.projectStore.State
+
   private get projects() {
-    return this.projectStore.State.projects
+    return this.projectState.projects
   }
 
-  public created() {}
-
-  public async mounted() {
+  public async created() {
+    // start fetching data as soon as possible. Hence do this in 'created' callback
     try {
       await this.projectStore.fetchProjects()
       this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }
+  }
+
+  public mounted() {
     EventBus.$emit('set-breadcrumbs', [])
   }
 
