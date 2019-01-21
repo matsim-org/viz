@@ -54,7 +54,6 @@ export default Vue.extend({
 })
 
 async function mounted() {
-  setupEventListeners()
   await getVizDetails()
   setBreadcrumb()
   setupMap()
@@ -81,21 +80,6 @@ function setupMap() {
 
   map.on('style.load', mapIsReady)
   map.addControl(new mapboxgl.NavigationControl(), 'top-right')
-}
-
-function setupEventListeners() {
-  EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
-    if (sharedStore.debug) console.log(`Sidebar is now: ${isVisible} :)`)
-
-    // map needs to be force-recentered, and it is slow.
-    // TODO look into making the sidebar an overlay instead of side-by-side with the map;
-    // which will improve performance drastically but then the left edge of the map is hidden
-    for (const delay of [50, 100, 150, 200, 250, 300]) {
-      setTimeout(function() {
-        map.resize()
-      }, delay)
-    }
-  })
 }
 
 async function getVizDetails() {

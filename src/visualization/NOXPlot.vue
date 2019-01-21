@@ -86,7 +86,6 @@ export default class NOXPlot extends Vue {
   // VUE LIFECYCLE: created
   public created() {
     this.store.api = (this as any).fileApi
-    // this.sortTest()
   }
 
   // VUE LIFECYCLE: mounted
@@ -277,6 +276,7 @@ export default class NOXPlot extends Vue {
 
   private mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
     this.addJsonToMap()
     this.updateFlowsForTimeValue(this.firstEventTime)
 
@@ -310,7 +310,8 @@ export default class NOXPlot extends Vue {
   // MapBox requires long/lat
   private convertCoords(projection: any) {
     console.log('starting conversion', projection)
-    /*
+    /* TODO: convert from any EPSG:xxxx that Proj4 supports
+
     for (const key of Object.keys(this.store.nodes)) {
       const node = this.store.nodes[key]
       const z = proj4(projection, 'WGS84', node) as any
