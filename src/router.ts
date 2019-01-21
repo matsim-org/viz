@@ -8,6 +8,7 @@ import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import NOXPlot from '@/visualization/NOXPlot.vue'
 import TransitSupply from '@/visualization/TransitSupply.vue'
+import AdvancedClass from '@/visualization/advanced-class-viz.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
@@ -107,6 +108,16 @@ export default class AppRouter {
               vizId: route.params.vizId,
               projectStore: projectStore,
               authStore: authStore,
+            }
+          },
+        },
+        {
+          path: '/advanced-class/:projectId/:vizId',
+          component: AdvancedClass,
+          name: 'AdvancedClass',
+          props: route => {
+            return {
+              vizId: route.params.vizId,
             }
           },
         },
