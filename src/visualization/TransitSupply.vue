@@ -187,9 +187,6 @@ function setupMap() {
   _map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
 
-mapboxgl.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
-
 async function mapIsReady() {
   let networks
   if (process.versions && process.versions.hasOwnProperty('electron')) {

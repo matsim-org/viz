@@ -7,7 +7,7 @@
 <script lang="ts">
 'use strict'
 
-import * as mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
@@ -87,12 +87,6 @@ async function getVizDetails() {
   store.project = await store.api.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization))
 }
-
-// this is a required workaround to get the mapbox token assigned in TypeScript
-// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-const writableMapBox: any = mapboxgl
-writableMapBox.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 let map: mapboxgl.Map
 

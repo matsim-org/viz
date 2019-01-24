@@ -22,6 +22,14 @@ import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import 'bulma/css/bulma.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import mapboxgl from 'mapbox-gl'
+
+// MAPBOX TOKEN
+// this is a required workaround to get the mapbox token assigned in TypeScript
+// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
+const writableMapBox: any = mapboxgl
+writableMapBox.accessToken =
+  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 interface BreadCrumb {
   title: string
