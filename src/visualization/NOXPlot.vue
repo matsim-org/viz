@@ -12,7 +12,7 @@
 
 <script lang="ts">
 'use strict'
-import * as mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
@@ -68,8 +68,6 @@ export default class NOXPlot extends Vue {
   private mapExtentXYXY: any = [180, 90, -180, -90]
   private noxLocations: any
   private sharedState: any = sharedStore.state
-  private token: string =
-    'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
   // store is the component data store -- the state of the component.
   private store: any = {
@@ -90,11 +88,6 @@ export default class NOXPlot extends Vue {
 
   // VUE LIFECYCLE: mounted
   public async mounted() {
-    // this weird trick allows us to set mapbox token in typescript
-    // see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-    // tslint:disable-next-line:semicolon
-    ;(mapboxgl as any).accessToken = this.token
-
     this.store.projectId = (this as any).$route.params.projectId
     this.store.vizId = (this as any).$route.params.vizId
     this.store.visualization = await this.store.api.fetchVisualization(this.store.projectId, this.store.vizId)

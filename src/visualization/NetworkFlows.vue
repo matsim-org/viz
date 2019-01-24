@@ -28,7 +28,7 @@ import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
-import * as mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
@@ -39,13 +39,7 @@ import Vue from 'vue'
 
 let _linkData: any
 
-// this is a required workaround to get the mapbox token assigned in TypeScript
-// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-// TODO: move mapbox access token to sharedstore
 let mymap: mapboxgl.Map
-const writableMapBox: any = mapboxgl
-writableMapBox.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 const mySlider = {
   disabled: false,
