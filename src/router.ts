@@ -4,6 +4,7 @@ import Project from '@/project/Project.vue'
 import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
+import MyViz from '@/visualization/MyViz.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import NOXPlot from '@/visualization/NOXPlot.vue'
@@ -102,6 +103,18 @@ export default class AppRouter {
           path: '/frame-animation/:projectId/:vizId',
           component: FrameAnimation,
           name: 'FrameAnimation',
+          props: route => {
+            return {
+              vizId: route.params.vizId,
+              projectStore: projectStore,
+              authStore: authStore,
+            }
+          },
+        },
+        {
+          path: '/my-viz/:projectId/:vizId',
+          component: MyViz,
+          name: 'hithere',
           props: route => {
             return {
               vizId: route.params.vizId,

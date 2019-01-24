@@ -13,6 +13,7 @@
 <script lang="ts">
 'use strict'
 import * as mapboxgl from 'mapbox-gl'
+import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
@@ -22,7 +23,6 @@ import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import TimeSlider from '../components/TimeSlider.vue'
 import { Vue, Component, Watch } from 'vue-property-decorator'
-import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import { inferno, viridis } from 'scale-color-perceptual'
 
 sharedStore.addVisualizationType({
