@@ -33,9 +33,6 @@ const SERVER_PARAMS =
   '/geoserver/accessibilities/ows?service=WFS' +
   '&version=1.0.0&request=GetFeature&outputFormat=application%2Fjson&typeName='
 
-mapboxgl.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
-
 const STARTING_MODE = 'Walk'
 
 // some global variables save some state for us.
