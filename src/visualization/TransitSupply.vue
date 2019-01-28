@@ -361,28 +361,25 @@ async function loadNetworks() {
   store.loadingText = 'Loading road network...'
   roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
 
-  const url = '/network.xml.gz'
-  const resp = await fetch(url)
-  const fakeBlob = await resp.blob()
-  console.log('HARD CODE: size ' + fakeBlob.size)
-
   store.loadingText = 'Loading transit network...'
-  // transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
+  transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
 
   // get the blob data
   console.log('2')
-  const road = await getDataFromBlobOrGZBlob(fakeBlob) // roadBlob
-  const transit = null // await getDataFromBlobOrGZBlob(transitBlob)
+  const road = await getDataFromBlobOrGZBlob(roadBlob)
+  const transit = await getDataFromBlobOrGZBlob(transitBlob)
 
-  return { road, transit }
+  return { road, undefined }
   //} catch (e) {
   //  console.error(e)
   //  return null
   //}
 }
 
-async function getDataFromBlobOrGZBlob(blob: any) {
+async function getDataFromBlobOrGZBlob(blob: Blob) {
   console.log('3')
+  console.log('blob size is: ' + blob.size)
+  console.log('blob is:' + (await BlobUtil.blobToBinaryString(blob)))
   // first, try reading as text
   /*
   try {
@@ -396,9 +393,9 @@ async function getDataFromBlobOrGZBlob(blob: any) {
   }
   */
 
-  const gzdata: string = await BlobUtil.blobToBinaryString(blob)
+  const gzdata: any = await BlobUtil.blobToArrayBuffer(blob)
   const s = pako.ungzip(gzdata, { to: 'string' })
-
+  s
   console.log(s)
   return s
 }
