@@ -112,18 +112,6 @@ export default class AppRouter {
           },
         },
         {
-          path: '/my-viz/:projectId/:vizId',
-          component: MyViz,
-          name: 'hithere',
-          props: route => {
-            return {
-              vizId: route.params.vizId,
-              projectStore: projectStore,
-              authStore: authStore,
-            }
-          },
-        },
-        {
           path: AUTHENTICATION,
           name: 'Authentication',
           component: Authentication,
