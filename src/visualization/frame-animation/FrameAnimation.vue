@@ -1,8 +1,5 @@
 <template lang="pug">
     .frameAnimation
-      .header
-        h1.title Frame Based Animation
-        h5.subtitle Id: {{vizId}}
       .mainContainer
         .loaderContainer(v-if="isFailed")
           span Generating Visualization failed! Check your input files.
@@ -24,6 +21,14 @@
                     v-on:mousedown="onRangeMouseDown($event)"
                     v-on:mouseup="onRangeMouseUp($event)")
         .actions
+          
+          button.button.playPause(v-on:click="togglePlayPause()")
+            template(v-if="isPlaying")
+              span.icon.is-small
+                i.fas.fa-pause
+            template(v-else)
+              span.icon.is-small
+                i.fas.fa-play
           .bufferState
             spinner(v-if="isFetchingData")
           .inputWithLabel
@@ -83,7 +88,7 @@ export default class FrameAnimation extends Vue {
   private playbackSpeedFactor = 0
   private progress = 'Done'
   private connected = false
-  private webvis: any // convert webvis wrapper to ts to make this more specific
+  private webvis!: Webvis // convert webvis wrapper to ts to make this more specific
 
   private get currentTime() {
     return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
@@ -123,6 +128,21 @@ export default class FrameAnimation extends Vue {
       this.playbackSpeedFactor = this.playbackSpeedFactor + add
       this.webvis.setPlaybackSpeed(this.playbackSpeedFactor * this.playbackSpeedFactor * this.playbackSpeedFactor)
     }
+  }
+
+  private togglePlayPause() {
+    if (this.webvis) {
+      if (this.webvis.isPlaying) {
+        this.webvis.stopPlayback()
+      } else {
+        if (this.playbackSpeedFactor <= 0 + 0.001 && this.playbackSpeedFactor >= 0 - 0.001) {
+          this.playbackSpeedFactor = 1
+        }
+        this.webvis.startPlayback()
+        this.webvis.setPlaybackSpeed(this.playbackSpeedFactor)
+      }
+    }
+    this.isPlaying = this.webvis.isPlaying as boolean
   }
 
   private onRangeChanged(event: Event) {
@@ -168,7 +188,7 @@ export default class FrameAnimation extends Vue {
 
 .frameAnimation {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 1fr auto;
 }
 
 .mainContainer {
@@ -214,8 +234,17 @@ export default class FrameAnimation extends Vue {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto;
   grid-column-gap: 1rem;
+}
+
+.playPause {
+  height: 3.3rem;
+  width: 3.5rem;
+  align-self: end;
+}
+
+.playPauseIcon {
 }
 
 .speedControls {
