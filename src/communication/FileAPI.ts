@@ -111,7 +111,7 @@ export default class FileAPI {
 
     if (result.ok) {
       const file = await result.blob()
-      console.log('downloaded blop with size: ' + file.size)
+      console.log('downloaded blob with size: ' + file.size)
       return file
     } else {
       throw await this.generateError(result)
