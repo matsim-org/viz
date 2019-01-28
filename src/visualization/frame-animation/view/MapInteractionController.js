@@ -49,11 +49,13 @@ class MapInteractionController {
 
   onPointerUp(args) {
     this._isMouseDown = false
-    if (!this._mouseMoved) {
+    /*   if (!this._mouseMoved) {
       let point = this._mapState.transformCoordinate(args.offsetX, args.offsetY)
       this._clicked(point)
     }
     this._mouseMoved = false
+    */
+    console.log('selecting agents is disabled.')
   }
 
   onPointerMove(args) {
