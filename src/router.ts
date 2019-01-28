@@ -112,6 +112,18 @@ export default class AppRouter {
           },
         },
         {
+          path: '/my-viz/:projectId/:vizId',
+          component: MyViz,
+          name: 'MyVisualization',
+          props: route => {
+            return {
+              vizId: route.params.vizId,
+              projectId: route.params.projectId,
+              fileApi: fileApi,
+            }
+          },
+        },
+        {
           path: AUTHENTICATION,
           name: 'Authentication',
           component: Authentication,
