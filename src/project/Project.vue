@@ -215,7 +215,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private readableFileSize(bytes: number): string {
-    return filesize(bytes)
+    return '' + bytes // filesize(bytes)
   }
 
   private toPercentage(fraction: number): string | undefined {
