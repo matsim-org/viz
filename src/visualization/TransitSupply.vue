@@ -391,26 +391,20 @@ async function loadNetworks() {
 }
 
 async function getDataFromBlobOrGZBlob(blob: Blob) {
-  // first, try reading as text
-  /*
+  // data may be gzipped or double-gzipped!
   try {
-
-    const answer = await readBlob.text(blob)
-    console.log({ answer })
-    return answer
+    const data: any = await BlobUtil.blobToArrayBuffer(blob)
+    const gunzip1 = pako.inflate(data)
+    // server seems to double-gzip .gz files.
+    // see https://github.com/matsim-org/viz-server/issues/75
+    const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
+    return gunzip2
   } catch (e) {
-    console.log('ya')
-    // didn't work
+    console.log('data not compressed, trying as regular text')
   }
-  */
 
-  // server seems to double-gzip .gz files.
-  // see https://github.com/matsim-org/viz-server/issues/75
-  const gzdata: any = await BlobUtil.blobToArrayBuffer(blob)
-  const gunzip1 = pako.inflate(gzdata)
-  const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
-  console.log(gunzip2)
-  return gunzip2
+  const text: any = await BlobUtil.blobToBinaryString(blob)
+  return text
 }
 
 async function processInputs(networks: NetworkInputs) {
