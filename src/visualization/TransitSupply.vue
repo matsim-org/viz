@@ -36,7 +36,8 @@ import SharedStore from '@/SharedStore'
 import Vue from 'vue'
 import { start } from 'repl'
 
-const MY_PROJECTION = 'EPSG:2048'
+const MY_PROJECTION = 'EPSG:4326' // 31468' // 2048'
+
 const COLOR_CATEGORIES = 16
 const SHOW_STOPS_AT_ZOOM_LEVEL = 11
 
@@ -92,10 +93,25 @@ SharedStore.addVisualizationType({
 })
 
 // Add various projections that we use here
-proj4.defs(
-  'EPSG:2048',
-  '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
-)
+proj4.defs([
+  [
+    // south africa
+    'EPSG:2048',
+    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  ],
+  [
+    // berlin
+    'EPSG:31468',
+    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
+  ],
+  [
+    // cottbus
+    'EPSG:25833',
+    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
+  ],
+])
+
+console.log(proj4.defs)
 
 // store is the component data store -- the state of the component.
 const store: any = {
@@ -673,8 +689,13 @@ function clickedOnMap(e: any) {
 }
 
 function clickedRouteDetails(routeID: string) {
+  if (!routeID && !store.selectedRoute) return
+
   if (_stopMarkers) removeStopMarkers()
-  showTransitRoute(routeID ? routeID : store.selectedRoute.id)
+
+  if (routeID) showTransitRoute(routeID)
+  else showTransitRoute(store.selectedRoute.id)
+
   showTransitStops()
 }
 
