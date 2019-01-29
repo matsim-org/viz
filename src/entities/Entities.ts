@@ -51,11 +51,18 @@ export interface VisualizationType {
   requiredFileKeys: string[]
   requiredParamKeys: string[]
 }
+
 export interface Visualization extends Entity {
   type: string
-  inputFiles: string[]
+  inputFiles: { [id: string]: InputFile }
   parameters: string[]
   project: Project
+}
+
+export interface InputFile extends Entity {
+  fileEntry: FileEntry
+  inputKey: string
+  visualization: Visualization
 }
 
 export interface FileEntry extends Entity {
