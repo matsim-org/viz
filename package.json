@@ -15,6 +15,7 @@
   "dependencies": {
     "ajv": "^6.5.3",
     "ajv-keywords": "^3.1.0",
+    "blob-util": "^2.0.2",
     "bulma": "^0.7.2",
     "colormap": "^2.3.0",
     "convert-seconds": "^1.0.1",
@@ -24,6 +25,7 @@
     "jwt-decode": "^2.2.0",
     "keyword-extractor": "0.0.15",
     "mapbox-gl": "^0.44.2",
+    "minizlib": "^1.2.1",
     "nano-sql": "^1.7.6",
     "node-yaml": "^3.1.1",
     "pako": "^1.0.6",
@@ -40,7 +42,8 @@
     "vue-router": "^3.0.1",
     "vue-slider-component": "^2.7.6",
     "vue2-dropzone": "^3.5.2",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "zlib": "^1.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",

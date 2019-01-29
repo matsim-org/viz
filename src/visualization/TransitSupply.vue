@@ -23,16 +23,18 @@
 'use strict'
 
 import mapboxgl from 'mapbox-gl'
+import zlib from 'zlib'
 import * as turf from '@turf/turf'
 import xml2js from 'xml2js'
 import colormap from 'colormap'
 import proj4 from 'proj4'
-import readBlob from 'read-blob'
+import * as BlobUtil from 'blob-util'
 import pako from 'pako'
 import FileAPI from '@/communication/FileAPI'
 import EventBus from '@/EventBus.vue'
 import SharedStore from '@/SharedStore'
 import Vue from 'vue'
+import { start } from 'repl'
 
 const MY_PROJECTION = 'EPSG:2048'
 const COLOR_CATEGORIES = 16
@@ -329,6 +331,9 @@ const parseXML = function(xml: string) {
   })
 }
 
+/**
+ * Only used in stand-alone Electron app mode
+ */
 async function loadNetworksLocal() {
   const argv = ['abc'] // require('electron').remote.process.argv
 
@@ -341,28 +346,55 @@ async function loadNetworksLocal() {
 }
 
 async function loadNetworks() {
+  let roadBlob: any
+  let transitBlob: any
+
   try {
-    console.log(store.visualization.inputFiles)
+    if (SharedStore.debug) console.log(store.visualization.inputFiles)
 
     const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
     const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
-    console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
+
+    if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
     store.loadingText = 'Loading road network...'
-    const roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
+    roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
 
     store.loadingText = 'Loading transit network...'
-    const transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
+    transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
 
     // get the blob data
-    const road = await readBlob.text(roadBlob)
-    const transit = await readBlob.text(transitBlob)
+    const road = await getDataFromBlobOrGZBlob(roadBlob)
+    const transit = await getDataFromBlobOrGZBlob(transitBlob)
 
     return { road, transit }
   } catch (e) {
     console.error(e)
     return null
   }
+}
+
+async function getDataFromBlobOrGZBlob(blob: Blob) {
+  // first, try reading as text
+  /*
+  try {
+
+    const answer = await readBlob.text(blob)
+    console.log({ answer })
+    return answer
+  } catch (e) {
+    console.log('ya')
+    // didn't work
+  }
+  */
+
+  // server seems to double-gzip .gz files.
+  // see https://github.com/matsim-org/viz-server/issues/75
+  const gzdata: any = await BlobUtil.blobToArrayBuffer(blob)
+  const gunzip1 = pako.inflate(gzdata)
+  const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
+  console.log(gunzip2)
+  return gunzip2
 }
 
 async function processInputs(networks: NetworkInputs) {
