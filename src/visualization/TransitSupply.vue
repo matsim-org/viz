@@ -349,37 +349,32 @@ async function loadNetworks() {
   let roadBlob: any
   let transitBlob: any
 
-  //try {
-  if (SharedStore.debug) console.log(store.visualization.inputFiles)
+  try {
+    if (SharedStore.debug) console.log(store.visualization.inputFiles)
 
-  const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
-  const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
+    const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
+    const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
 
-  if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
+    if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
 
-  console.log('1')
-  store.loadingText = 'Loading road network...'
-  roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
+    store.loadingText = 'Loading road network...'
+    roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
 
-  store.loadingText = 'Loading transit network...'
-  transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
+    store.loadingText = 'Loading transit network...'
+    transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
 
-  // get the blob data
-  console.log('2')
-  const road = await getDataFromBlobOrGZBlob(roadBlob)
-  const transit = await getDataFromBlobOrGZBlob(transitBlob)
+    // get the blob data
+    const road = await getDataFromBlobOrGZBlob(roadBlob)
+    const transit = await getDataFromBlobOrGZBlob(transitBlob)
 
-  return { road, undefined }
-  //} catch (e) {
-  //  console.error(e)
-  //  return null
-  //}
+    return { road, transit }
+  } catch (e) {
+    console.error(e)
+    return null
+  }
 }
 
 async function getDataFromBlobOrGZBlob(blob: Blob) {
-  console.log('3')
-  console.log('blob size is: ' + blob.size)
-  console.log('blob is:' + (await BlobUtil.blobToBinaryString(blob)))
   // first, try reading as text
   /*
   try {
@@ -393,11 +388,13 @@ async function getDataFromBlobOrGZBlob(blob: Blob) {
   }
   */
 
+  // server seems to double-gzip .gz files.
+  // see https://github.com/matsim-org/viz-server/issues/75
   const gzdata: any = await BlobUtil.blobToArrayBuffer(blob)
-  const s = pako.ungzip(gzdata, { to: 'string' })
-  s
-  console.log(s)
-  return s
+  const gunzip1 = pako.inflate(gzdata)
+  const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
+  console.log(gunzip2)
+  return gunzip2
 }
 
 async function processInputs(networks: NetworkInputs) {
