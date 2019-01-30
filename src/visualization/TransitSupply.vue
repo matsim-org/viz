@@ -22,19 +22,19 @@
 <script lang="ts">
 'use strict'
 
-import mapboxgl from 'mapbox-gl'
-import zlib from 'zlib'
 import * as turf from '@turf/turf'
-import xml2js from 'xml2js'
-import colormap from 'colormap'
-import proj4 from 'proj4'
 import * as BlobUtil from 'blob-util'
+import colormap from 'colormap'
+import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
+import proj4 from 'proj4'
 import pako from 'pako'
-import FileAPI from '@/communication/FileAPI'
+import xml2js from 'xml2js'
+import { Vue, Component, Prop } from 'vue-property-decorator'
+
 import EventBus from '@/EventBus.vue'
+import FileAPI from '@/communication/FileAPI'
 import SharedStore from '@/SharedStore'
-import Vue from 'vue'
-import { start } from 'repl'
+import { Visualization } from '@/entities/Entities'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -111,234 +111,681 @@ proj4.defs([
   ],
 ])
 
-// store is the component data store -- the state of the component.
-const store: any = {
-  loadingText: 'MATSim Transit Inspector',
-  routeData: {},
-  routesOnLink: [],
-  selectedRoute: null,
-  projectId: null,
-  project: {},
-  vizId: null,
-  visualization: null,
-  projection: DEFAULT_PROJECTION,
-  api: FileAPI,
+@Component
+export default class TransitSupply extends Vue {
+  @Prop({ type: String, required: true })
+  private vizId!: string
+
+  @Prop({ type: String, required: true })
+  private projectId!: string
+
+  @Prop({ type: FileAPI, required: true })
+  private fileApi!: FileAPI
+
+  // -------------------------- //
+
+  private loadingText: string = 'MATSim Transit Inspector'
+  private mymap!: mapboxgl.Map
+  private project: any = {}
+  private projection: string = DEFAULT_PROJECTION
+  private routesOnLink: any = []
+  private selectedRoute: any = {}
+  private visualization!: Visualization
+
+  private _attachedRouteLayers!: string[]
+  private _departures!: { [linkID: string]: Departure }
+  private _linkData!: any
+  private _mapExtentXYXY!: any
+  private _maximum!: number
+  private _network!: Network
+  private _routeData!: { [index: string]: RouteDetails }
+  private _stopFacilities!: { [index: string]: NetworkNode }
+  private _stopMarkers!: any[]
+  private _transitLines!: { [index: string]: TransitLine }
+
+  public created() {
+    this._attachedRouteLayers = []
+    this._departures = {}
+    this._mapExtentXYXY = [180, 90, -180, -90]
+    this._maximum = 0
+    this._network = { nodes: {}, links: {} }
+    this._routeData = {}
+    this._stopFacilities = {}
+    this._stopMarkers = []
+    this._transitLines = {}
+    this.selectedRoute = null
+  }
+
+  public async mounted() {
+    this.projectId = (this as any).$route.params.projectId
+    this.vizId = (this as any).$route.params.vizId
+
+    await this.getVizDetails()
+    this.setBreadcrumb()
+    this.setupMap()
+  }
+
+  private async getVizDetails() {
+    this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
+    this.project = await this.fileApi.fetchProject(this.projectId)
+    console.log(this.visualization)
+
+    if (this.visualization.parameters.Projection) {
+      this.projection = this.visualization.parameters.Projection.value
+    }
+  }
+
+  private setBreadcrumb() {
+    console.log({ PROJECT: this.visualization })
+    EventBus.$emit('set-breadcrumbs', [
+      { title: 'My Projects', link: '/projects' },
+      { title: this.project.name, link: '/project/' + this.projectId },
+      { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
+    ])
+  }
+
+  private setupMap() {
+    this.mymap = new mapboxgl.Map({
+      bearing: 0,
+      // center: [18.5, -33.8], // lnglat, not latlng
+      container: 'mymap',
+      logoPosition: 'bottom-right',
+      style: 'mapbox://styles/mapbox/light-v9',
+      pitch: 0,
+      // zoom: 9,
+    })
+
+    // Start doing stuff AFTER the MapBox library has fully initialized
+    this.mymap.on('load', this.mapIsReady)
+
+    this.mymap.on('zoomstart', this.removeStopMarkers)
+    this.mymap.on('zoomend', this.updateZoomLevel)
+    this.mymap.on('moveend', this.updateZoomLevel)
+    this.mymap.on('click', this.clickedOnMap)
+    this.mymap.keyboard.disable() // so arrow keys don't pan
+
+    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+  }
+
+  private clickedRouteDetails(routeID: string) {
+    if (!routeID && !this.selectedRoute) return
+
+    if (this._stopMarkers) this.removeStopMarkers()
+
+    if (routeID) this.showTransitRoute(routeID)
+    else this.showTransitRoute(this.selectedRoute.id)
+
+    this.showTransitStops()
+  }
+
+  private async mapIsReady() {
+    const networks = await this.loadNetworks()
+    if (networks) this.processInputs(networks)
+
+    this.setupKeyListeners()
+  }
+
+  private setupKeyListeners() {
+    const parent = this
+    window.addEventListener('keyup', function(event) {
+      if (event.keyCode === 27) {
+        // ESC
+        parent.pressedEscape()
+      }
+    })
+    window.addEventListener('keydown', function(event) {
+      if (event.keyCode === 38) {
+        // UP
+        parent.pressedArrowKey(-1)
+      }
+      if (event.keyCode === 40) {
+        // DOWN
+        parent.pressedArrowKey(+1)
+      }
+    })
+  }
+
+  private updateZoomLevel() {
+    // repost stops after a brief hiatus; mapbox weirdness
+    if (this._stopMarkers) setTimeout(this.clickedRouteDetails, 200)
+  }
+
+  // MapBox requires long/lat
+  private convertCoords() {
+    this.loadingText = 'CONVERT COORDINATES ' + this.projection
+
+    for (const id in this._network.nodes) {
+      if (this._network.nodes.hasOwnProperty(id)) {
+        const node: NetworkNode = this._network.nodes[id]
+        const z = proj4(this.projection, 'EPSG:4326', node) as any
+        node.x = z.x
+        node.y = z.y
+      }
+    }
+  }
+
+  private generateStopFacilitiesFromXML(xml: any) {
+    const stopFacilities = xml.transitSchedule.transitStops[0].stopFacility
+
+    for (const stop of stopFacilities) {
+      const attr = stop.$
+      attr.x = parseFloat(attr.x)
+      attr.y = parseFloat(attr.y)
+      // convert coords
+      const z = proj4(this.projection, 'EPSG:4326', attr) as any
+      attr.x = z.x
+      attr.y = z.y
+
+      this._stopFacilities[attr.id] = attr
+    }
+  }
+
+  private buildTransitRouteDetails(route: any) {
+    const allDepartures = route.departures[0].departure
+    allDepartures.sort(function(a: any, b: any) {
+      const timeA = a.$.departureTime
+      const timeB = b.$.departureTime
+      if (timeA < timeB) return -1
+      if (timeA > timeB) return 1
+      return 0
+    })
+
+    const routeDetails: RouteDetails = {
+      id: route.$.id,
+      transportMode: route.transportMode[0],
+      routeProfile: [],
+      route: [],
+      departures: route.departures[0].departure.length,
+      firstDeparture: allDepartures[0].$.departureTime,
+      lastDeparture: allDepartures[allDepartures.length - 1].$.departureTime,
+      geojson: '',
+    }
+
+    for (const stop of route.routeProfile[0].stop) {
+      routeDetails.routeProfile.push(stop.$)
+    }
+
+    for (const link of route.route[0].link) {
+      routeDetails.route.push(link.$.refId)
+    }
+
+    routeDetails.geojson = this.buildCoordinatesForRoute(routeDetails)
+    this._routeData[routeDetails.id] = routeDetails
+
+    return routeDetails
+  }
+
+  private async processTransit(xml: any) {
+    this.loadingText = 'Parsing Transit Network'
+
+    this.generateStopFacilitiesFromXML(xml)
+    let uniqueRouteID = 0
+
+    const transitLines = xml.transitSchedule.transitLine
+    for (const line of transitLines) {
+      const attr: TransitLine = {
+        id: line.$.id,
+        transitRoutes: [],
+      }
+
+      for (const route of line.transitRoute) {
+        const details: RouteDetails = this.buildTransitRouteDetails(route)
+        details.uniqueRouteID = uniqueRouteID++
+        attr.transitRoutes.push(details)
+      }
+      this._transitLines[attr.id] = attr
+    }
+  }
+
+  private async loadNetworks() {
+    let roadBlob: any
+    let transitBlob: any
+
+    try {
+      if (SharedStore.debug) console.log(this.visualization.inputFiles)
+
+      const ROAD_NET = this.visualization.inputFiles.Network.fileEntry.id
+      const TRANSIT_NET = this.visualization.inputFiles['Transit Schedule'].fileEntry.id
+
+      if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: this.projectId })
+
+      this.loadingText = 'Loading road network...'
+      roadBlob = await this.fileApi.downloadFile(ROAD_NET, this.projectId)
+
+      this.loadingText = 'Loading transit network...'
+      transitBlob = await this.fileApi.downloadFile(TRANSIT_NET, this.projectId)
+
+      // get the blob data
+      const road = await this.getDataFromBlob(roadBlob)
+      const transit = await this.getDataFromBlob(transitBlob)
+
+      return { road, transit }
+    } catch (e) {
+      console.error(e)
+      return null
+    }
+  }
+
+  private async getDataFromBlob(blob: Blob) {
+    // data may be gzipped or double-gzipped!
+    try {
+      const data: any = await BlobUtil.blobToArrayBuffer(blob)
+      const gunzip1 = pako.inflate(data, { to: 'string' })
+      return gunzip1
+    } catch (e) {
+      console.log('data not compressed, trying as regular text')
+    }
+
+    const text: any = await BlobUtil.blobToBinaryString(blob)
+    return text
+  }
+
+  private async processInputs(networks: NetworkInputs) {
+    this.loadingText = 'Crunching road network...'
+
+    const roadXML = await parseXML(networks.road)
+    await this.processRoadXML(roadXML)
+    await this.convertCoords()
+    // await this.addLinksToMap()  --no links for now
+
+    this.loadingText = 'Crunching transit network...'
+
+    const transitXML = await parseXML(networks.transit)
+    await this.processTransit(transitXML)
+    await this.processDepartures()
+    await this.addTransitToMap()
+    this.mymap.fitBounds(this._mapExtentXYXY, { padding: 150 })
+
+    this.loadingText = ''
+  }
+
+  private async addLinksToMap() {
+    const linksAsGeojson = this.constructGeoJsonFromLinkData()
+
+    this.mymap.addSource('link-data', {
+      data: linksAsGeojson,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer({
+      id: 'link-layer',
+      source: 'link-data',
+      type: 'line',
+      paint: {
+        'line-opacity': 1.0,
+        'line-width': 3, // ['get', 'width'],
+        'line-color': '#ccf', // ['get', 'color'],
+      },
+    })
+  }
+
+  private async processDepartures() {
+    this.loadingText = 'Processing departures'
+
+    for (const id in this._transitLines) {
+      if (this._transitLines.hasOwnProperty(id)) {
+        const transitLine = this._transitLines[id]
+        for (const route of transitLine.transitRoutes) {
+          for (const linkID of route.route) {
+            if (!(linkID in this._departures)) this._departures[linkID] = { total: 0, routes: new Set() }
+
+            this._departures[linkID].total += route.departures
+            this._departures[linkID].routes.add(route.id)
+
+            this._maximum = Math.max(this._maximum, this._departures[linkID].total)
+          }
+        }
+      }
+    }
+  }
+
+  private async addTransitToMap() {
+    const geodata = await this.constructDepartureFrequencyGeoJson()
+
+    this.mymap.addSource('transit-source', {
+      data: geodata,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer({
+      id: 'transit-link',
+      source: 'transit-source',
+      type: 'line',
+      paint: {
+        'line-opacity': 1.0,
+        'line-width': ['get', 'width'],
+        'line-color': ['get', 'color'],
+      },
+    })
+
+    const parent = this
+    this.mymap.on('click', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
+      parent.clickedOnTransitLink(e)
+    })
+
+    // turn "hover cursor" into a pointer, so user knows they can click.
+    this.mymap.on('mousemove', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
+    })
+
+    // and back to normal when they mouse away
+    this.mymap.on('mouseleave', 'transit-link', function() {
+      parent.mymap.getCanvas().style.cursor = '-webkit-grab'
+    })
+  }
+
+  private processRoadXML(xml: any) {
+    const netNodes = xml.network.nodes[0].node
+    const netLinks = xml.network.links[0].link
+
+    for (const node of netNodes) {
+      const attr = node.$
+      attr.x = parseFloat(attr.x)
+      attr.y = parseFloat(attr.y)
+      this._network.nodes[attr.id] = attr
+    }
+
+    for (const link of netLinks) {
+      const attr = link.$
+      this._network.links[attr.id] = attr
+    }
+  }
+
+  private constructGeoJsonFromLinkData() {
+    const geojsonLinks = []
+
+    for (const id in this._network.links) {
+      if (this._network.links.hasOwnProperty(id)) {
+        const link = this._network.links[id]
+        const fromNode = this._network.nodes[link.from]
+        const toNode = this._network.nodes[link.to]
+
+        const coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
+
+        const featureJson = {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: coordinates,
+          },
+          properties: { id: id, color: '#aaa' },
+        }
+
+        geojsonLinks.push(featureJson)
+      }
+    }
+
+    this._linkData = {
+      type: 'FeatureCollection',
+      features: geojsonLinks,
+    }
+    return this._linkData
+  }
+
+  private async constructDepartureFrequencyGeoJson() {
+    this.loadingText = 'Construct departure frequencies'
+    const geojson = []
+
+    for (const linkID in this._departures) {
+      if (this._departures.hasOwnProperty(linkID)) {
+        const link = this._network.links[linkID]
+        const coordinates = [
+          [this._network.nodes[link.from].x, this._network.nodes[link.from].y],
+          [this._network.nodes[link.to].x, this._network.nodes[link.to].y],
+        ]
+
+        const departures = this._departures[linkID].total
+        const colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / this._maximum)
+
+        let isRail = false
+        for (const route of this._departures[linkID].routes) {
+          if (this._routeData[route].transportMode === 'rail') {
+            isRail = true
+            break
+          }
+        }
+
+        let line = {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: coordinates,
+          },
+          properties: {
+            width: Math.max(2.5, 0.01 * this._departures[linkID].total),
+            color: isRail ? '#da4' : _colorScale[colorBin],
+            colorBin: colorBin,
+            departures: departures,
+            id: linkID,
+            isRail: isRail,
+            from: link.from, // _stopFacilities[fromNode].name || fromNode,
+            to: link.to, // _stopFacilities[toNode].name || toNode,
+          },
+        }
+
+        line = this.offsetLineByMeters(line, -10)
+        geojson.push(line)
+      }
+    }
+
+    geojson.sort(function(a: any, b: any) {
+      if (a.isRail && !b.isRail) return -1
+      if (b.isRail && !a.isRail) return 1
+      return 0
+    })
+
+    console.log('MAX DEPARTURES: ', this._maximum)
+    return { type: 'FeatureCollection', features: geojson }
+  }
+
+  private offsetLineByMeters(line: any, metersToTheRight: number) {
+    try {
+      const offsetLine = turf.lineOffset(line, metersToTheRight, { units: 'meters' })
+      return offsetLine
+    } catch (e) {
+      // offset can fail if points are exactly on top of each other; ignore.
+    }
+    return line
+  }
+
+  private updateMapExtent(coordinates: any) {
+    this._mapExtentXYXY[0] = Math.min(this._mapExtentXYXY[0], coordinates[0])
+    this._mapExtentXYXY[1] = Math.min(this._mapExtentXYXY[1], coordinates[1])
+    this._mapExtentXYXY[2] = Math.max(this._mapExtentXYXY[2], coordinates[0])
+    this._mapExtentXYXY[3] = Math.max(this._mapExtentXYXY[3], coordinates[1])
+  }
+
+  private buildCoordinatesForRoute(transitRoute: RouteDetails) {
+    const coords = []
+    let previousLink: boolean = false
+
+    for (const linkID of transitRoute.route) {
+      if (!previousLink) {
+        const x0 = this._network.nodes[this._network.links[linkID].from].x
+        const y0 = this._network.nodes[this._network.links[linkID].from].y
+        coords.push([x0, y0])
+      }
+      const x = this._network.nodes[this._network.links[linkID].to].x
+      const y = this._network.nodes[this._network.links[linkID].to].y
+      coords.push([x, y])
+      previousLink = true
+    }
+
+    // save the extent of this line so map can zoom in on startup
+    if (coords.length > 0) {
+      this.updateMapExtent(coords[0])
+      this.updateMapExtent(coords[coords.length - 1])
+    }
+
+    const geojson = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: coords,
+      },
+      properties: {
+        id: transitRoute.id,
+        from: coords[0],
+        to: coords[coords.length - 1],
+      },
+    }
+    return geojson
+  }
+
+  private removeStopMarkers() {
+    for (const marker of this._stopMarkers) {
+      marker.remove()
+    }
+  }
+
+  private showTransitStops() {
+    this.removeStopMarkers()
+
+    const route = this.selectedRoute
+    const stopSizeClass = this.mymap.getZoom() > SHOW_STOPS_AT_ZOOM_LEVEL ? 'stop-marker-big' : 'stop-marker'
+
+    let bearing
+    for (const [i, stop] of route.routeProfile.entries()) {
+      const coord = [this._stopFacilities[stop.refId].x, this._stopFacilities[stop.refId].y]
+      // recalc bearing for every node except the last
+      if (i < route.routeProfile.length - 1) {
+        const point1 = turf.point(coord)
+        const point2 = turf.point([
+          this._stopFacilities[route.routeProfile[i + 1].refId].x,
+          this._stopFacilities[route.routeProfile[i + 1].refId].y,
+        ])
+        bearing = turf.bearing(point1, point2)
+      }
+      const el = document.createElement('div')
+      el.className = stopSizeClass
+
+      const marker = new mapboxgl.Marker(el).setLngLat(coord)
+      this._stopMarkers.push(marker)
+      marker.addTo(this.mymap)
+
+      // rotation only works after element is added to document
+      el.style.transform += ` rotate(${bearing}deg)`
+    }
+  }
+
+  private clickedOnMap(e: any) {
+    console.log({ CLICKKED: e })
+  }
+
+  private showTransitRoute(routeID: string) {
+    if (!routeID) return
+
+    const route = this._routeData[routeID]
+    console.log({ SELECTED_ROUTE: route })
+
+    this.selectedRoute = route
+
+    const source = this.mymap.getSource('selected-route-data') as any
+    if (source) {
+      source.setData(route.geojson)
+    } else {
+      this.mymap.addSource('selected-route-data', {
+        data: route.geojson,
+        type: 'geojson',
+      })
+    }
+
+    if (!this.mymap.getLayer('selected-route')) {
+      this.mymap.addLayer({
+        id: 'selected-route',
+        source: 'selected-route-data',
+        type: 'line',
+        paint: {
+          'line-opacity': 1.0,
+          'line-width': 5, // ['get', 'width'],
+          'line-color': '#f00', // ['get', 'color'],
+        },
+      })
+    }
+  }
+
+  private removeSelectedRoute() {
+    if (this.selectedRoute) {
+      this.mymap.removeLayer('selected-route')
+      this.selectedRoute = null
+    }
+  }
+
+  private clickedOnTransitLink(e: any) {
+    this.removeStopMarkers()
+    this.removeSelectedRoute()
+
+    // the browser delivers some details that we need, in the fn argument 'e'
+    const props = e.features[0].properties
+
+    const routeIDs = this._departures[props.id].routes
+
+    const routes = []
+    for (const id of routeIDs) {
+      routes.push(this._routeData[id])
+    }
+
+    // sort by highest departures first
+    routes.sort(function(a, b) {
+      return a.departures > b.departures ? -1 : 1
+    })
+
+    this.routesOnLink = routes
+    this.highlightAllAttachedRoutes()
+  }
+
+  private removeAttachedRoutes() {
+    for (const layerID of this._attachedRouteLayers) {
+      this.mymap.removeLayer('route-' + layerID)
+      this.mymap.removeSource('source-route-' + layerID)
+    }
+    this._attachedRouteLayers = []
+  }
+
+  private highlightAllAttachedRoutes() {
+    this.removeAttachedRoutes()
+
+    for (const route of this.routesOnLink) {
+      this.mymap.addSource('source-route-' + route.id, {
+        data: route.geojson,
+        type: 'geojson',
+      })
+      this.mymap.addLayer({
+        id: 'route-' + route.id,
+        source: 'source-route-' + route.id,
+        type: 'line',
+        paint: {
+          'line-opacity': 0.7,
+          'line-width': 10, // ['get', 'width'],
+          'line-color': '#ccff33', // ['get', 'color'],
+        },
+      })
+      this._attachedRouteLayers.push(route.id)
+    }
+  }
+
+  private pressedEscape() {
+    this.removeSelectedRoute()
+    this.removeStopMarkers()
+    this.removeAttachedRoutes()
+
+    this.selectedRoute = null
+    this.routesOnLink = []
+  }
+
+  private pressedArrowKey(delta: number) {
+    if (!this.selectedRoute) return
+
+    let i = this.routesOnLink.indexOf(this.selectedRoute)
+    i = i + delta
+
+    if (i < 0 || i >= this.routesOnLink.length) return
+
+    this.clickedRouteDetails(this.routesOnLink[i].id)
+  }
 }
-
-let _map: mapboxgl.Map
-
-const _departures: { [linkID: string]: Departure } = {}
-const _mapExtentXYXY: any = [180, 90, -180, -90]
-const _network: Network = { nodes: {}, links: {} }
-const _stopFacilities: { [index: string]: NetworkNode } = {}
-const _transitLines: { [index: string]: TransitLine } = {}
-const _routeData: { [index: string]: RouteDetails } = store.routeData
-const _stopMarkers: any[] = []
-
-let _attachedRouteLayers: string[] = []
-
-let _linkData
-let _maximum = 0
 
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
-
-// this export is the Vue Component itself
-export default Vue.extend({
-  name: 'TransitSupply',
-  props: {
-    fileApi: FileAPI,
-  },
-  data() {
-    return store
-  },
-  created() {
-    store.api = (this as any).fileApi
-  },
-  mounted: function() {
-    store.projectId = (this as any).$route.params.projectId
-    store.vizId = (this as any).$route.params.vizId
-
-    getVizDetails()
-    setBreadcrumb()
-    setupMap()
-  },
-  components: {},
-  methods: {
-    clickedRouteDetails,
-    pressedEscape,
-  },
-  watch: {},
-})
-
-async function getVizDetails() {
-  store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
-  store.project = await store.api.fetchProject(store.projectId)
-
-  if (store.visualization.parameters.Projection) {
-    store.projection = store.visualization.parameters.Projection.value
-  }
-}
-
-function setBreadcrumb() {
-  EventBus.$emit('set-breadcrumbs', [
-    { title: 'My Projects', link: '/projects' },
-    { title: store.project.name, link: '/project/' + store.projectId },
-    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
-  ])
-}
-
-function updateMapExtent(coordinates: any) {
-  _mapExtentXYXY[0] = Math.min(_mapExtentXYXY[0], coordinates[0])
-  _mapExtentXYXY[1] = Math.min(_mapExtentXYXY[1], coordinates[1])
-  _mapExtentXYXY[2] = Math.max(_mapExtentXYXY[2], coordinates[0])
-  _mapExtentXYXY[3] = Math.max(_mapExtentXYXY[3], coordinates[1])
-}
-
-function setupMap() {
-  _map = new mapboxgl.Map({
-    bearing: 0,
-    // center: [18.5, -33.8], // lnglat, not latlng
-    container: 'mymap',
-    logoPosition: 'bottom-right',
-    style: 'mapbox://styles/mapbox/light-v9',
-    pitch: 0,
-    // zoom: 9,
-  })
-
-  // Start doing stuff AFTER the MapBox library has fully initialized
-  _map.on('load', mapIsReady)
-
-  _map.on('zoomstart', removeStopMarkers)
-  _map.on('zoomend', updateZoomLevel)
-  _map.on('moveend', updateZoomLevel)
-  _map.on('click', clickedOnMap)
-  _map.keyboard.disable() // so arrow keys don't pan
-
-  _map.addControl(new mapboxgl.NavigationControl(), 'top-right')
-}
-
-async function mapIsReady() {
-  let networks
-  if (process.versions && process.versions.hasOwnProperty('electron')) {
-    networks = await loadNetworksLocal()
-  } else {
-    networks = await loadNetworks()
-  }
-
-  if (networks) processInputs(networks)
-
-  setupKeyListeners()
-}
-
-function setupKeyListeners() {
-  window.addEventListener('keyup', function(event) {
-    if (event.keyCode === 27) {
-      // ESC
-      pressedEscape()
-    }
-  })
-  window.addEventListener('keydown', function(event) {
-    if (event.keyCode === 38) {
-      // UP
-      pressedArrowKey(-1)
-    }
-    if (event.keyCode === 40) {
-      // DOWN
-      pressedArrowKey(+1)
-    }
-  })
-}
-
-function updateZoomLevel() {
-  // repost stops after a brief hiatus; mapbox weirdness
-  if (_stopMarkers) setTimeout(clickedRouteDetails, 200)
-}
-
-// MapBox requires long/lat
-function convertCoords() {
-  store.loadingText = 'CONVERT COORDINATES ' + store.projection
-
-  for (const id in _network.nodes) {
-    if (_network.nodes.hasOwnProperty(id)) {
-      const node: NetworkNode = _network.nodes[id]
-      const z = proj4(store.projection, 'EPSG:4326', node) as any
-      node.x = z.x
-      node.y = z.y
-    }
-  }
-}
-
-function generateStopFacilitiesFromXML(xml: any) {
-  const stopFacilities = xml.transitSchedule.transitStops[0].stopFacility
-  for (const stop of stopFacilities) {
-    const attr = stop.$
-    attr.x = parseFloat(attr.x)
-    attr.y = parseFloat(attr.y)
-    // convert coords
-    const z = proj4(store.projection, 'EPSG:4326', attr) as any
-    attr.x = z.x
-    attr.y = z.y
-
-    _stopFacilities[attr.id] = attr
-  }
-}
-
-function buildTransitRouteDetails(route: any) {
-  const allDepartures = route.departures[0].departure
-  allDepartures.sort(function(a: any, b: any) {
-    const timeA = a.$.departureTime
-    const timeB = b.$.departureTime
-    if (timeA < timeB) return -1
-    if (timeA > timeB) return 1
-    return 0
-  })
-
-  const routeDetails: RouteDetails = {
-    id: route.$.id,
-    transportMode: route.transportMode[0],
-    routeProfile: [],
-    route: [],
-    departures: route.departures[0].departure.length,
-    firstDeparture: allDepartures[0].$.departureTime,
-    lastDeparture: allDepartures[allDepartures.length - 1].$.departureTime,
-    geojson: '',
-  }
-
-  for (const stop of route.routeProfile[0].stop) {
-    routeDetails.routeProfile.push(stop.$)
-  }
-
-  for (const link of route.route[0].link) {
-    routeDetails.route.push(link.$.refId)
-  }
-
-  routeDetails.geojson = buildCoordinatesForRoute(routeDetails)
-  _routeData[routeDetails.id] = routeDetails
-
-  return routeDetails
-}
-
-async function processTransit(xml: any) {
-  store.loadingText = 'Parsing Transit Network'
-
-  generateStopFacilitiesFromXML(xml)
-  let uniqueRouteID = 0
-
-  const transitLines = xml.transitSchedule.transitLine
-  for (const line of transitLines) {
-    const attr: TransitLine = {
-      id: line.$.id,
-      transitRoutes: [],
-    }
-
-    for (const route of line.transitRoute) {
-      const details: RouteDetails = buildTransitRouteDetails(route)
-      details.uniqueRouteID = uniqueRouteID++
-      attr.transitRoutes.push(details)
-    }
-    _transitLines[attr.id] = attr
-  }
-}
 
 const nodeReadAsync = function(filename: string) {
   const fs = require('fs')
@@ -361,472 +808,6 @@ const parseXML = function(xml: string) {
       }
     })
   })
-}
-
-/**
- * Only used in stand-alone Electron app mode
- */
-async function loadNetworksLocal() {
-  const argv = ['abc'] // require('electron').remote.process.argv
-
-  store.loadingText = 'Loading road network...'
-  const road = await nodeReadAsync(argv[1])
-  store.loadingText = 'Loading transit network...'
-  const transit = await nodeReadAsync(argv[2])
-
-  return { road: road, transit: transit }
-}
-
-async function loadNetworks() {
-  let roadBlob: any
-  let transitBlob: any
-
-  try {
-    if (SharedStore.debug) console.log(store.visualization.inputFiles)
-
-    const ROAD_NET = store.visualization.inputFiles.Network.fileEntry.id
-    const TRANSIT_NET = store.visualization.inputFiles['Transit Schedule'].fileEntry.id
-
-    if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: store.projectId })
-
-    store.loadingText = 'Loading road network...'
-    roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
-
-    store.loadingText = 'Loading transit network...'
-    transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
-
-    // get the blob data
-    const road = await getDataFromBlob(roadBlob)
-    const transit = await getDataFromBlob(transitBlob)
-
-    return { road, transit }
-  } catch (e) {
-    console.error(e)
-    return null
-  }
-}
-
-async function getDataFromBlob(blob: Blob) {
-  // data may be gzipped or double-gzipped!
-  try {
-    const data: any = await BlobUtil.blobToArrayBuffer(blob)
-    const gunzip1 = pako.inflate(data, { to: 'string' })
-    return gunzip1
-  } catch (e) {
-    console.log('data not compressed, trying as regular text')
-  }
-
-  const text: any = await BlobUtil.blobToBinaryString(blob)
-  return text
-}
-
-async function processInputs(networks: NetworkInputs) {
-  const roadXML = await parseXML(networks.road)
-  store.loadingText = 'Crunching road network...'
-  await processRoadXML(roadXML)
-  await convertCoords()
-  await addLinksToMap()
-
-  const transitXML = await parseXML(networks.transit)
-  store.loadingText = 'Crunching transit network...'
-  await processTransit(transitXML)
-  await processDepartures()
-  await addTransitToMap()
-  _map.fitBounds(_mapExtentXYXY, { padding: 200 })
-
-  // _map.jumpTo({ center: [_mapExtentXYXY[0], _mapExtentXYXY[1]], zoom: 13 })
-  // _map.fitBounds(_mapExtentXYXY, { padding: 100 })
-
-  store.loadingText = ''
-}
-
-async function addLinksToMap() {
-  const linksAsGeojson = constructGeoJsonFromLinkData()
-
-  _map.addSource('link-data', {
-    data: linksAsGeojson,
-    type: 'geojson',
-  } as any)
-  /*
-  _map.addLayer({
-    id: 'link-layer',
-    source: 'link-data',
-    type: 'line',
-    paint: {
-      'line-opacity': 1.0,
-      'line-width': 3, // ['get', 'width'],
-      'line-color': '#ccf', // ['get', 'color'],
-    },
-  })
-  */
-}
-
-async function processDepartures() {
-  store.loadingText = 'Processing departures'
-
-  for (const id in _transitLines) {
-    if (_transitLines.hasOwnProperty(id)) {
-      const transitLine = _transitLines[id]
-      for (const route of transitLine.transitRoutes) {
-        for (const linkID of route.route) {
-          if (!(linkID in _departures)) _departures[linkID] = { total: 0, routes: new Set() }
-
-          _departures[linkID].total += route.departures
-          _departures[linkID].routes.add(route.id)
-
-          _maximum = Math.max(_maximum, _departures[linkID].total)
-        }
-      }
-    }
-  }
-}
-
-async function addTransitToMap() {
-  const geodata = await constructDepartureFrequencyGeoJson()
-
-  _map.addSource('transit-source', {
-    data: geodata,
-    type: 'geojson',
-  } as any)
-
-  _map.addLayer({
-    id: 'transit-link',
-    source: 'transit-source',
-    type: 'line',
-    paint: {
-      'line-opacity': 1.0,
-      'line-width': ['get', 'width'],
-      'line-color': ['get', 'color'],
-    },
-  })
-
-  _map.on('click', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
-    clickedOnTransitLink(e)
-  })
-
-  // turn "hover cursor" into a pointer, so user knows they can click.
-  _map.on('mousemove', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
-    _map.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
-  })
-
-  // and back to normal when they mouse away
-  _map.on('mouseleave', 'transit-link', function() {
-    _map.getCanvas().style.cursor = '-webkit-grab'
-  })
-}
-
-async function processRoadXML(xml: any) {
-  const netNodes = xml.network.nodes[0].node
-  const netLinks = xml.network.links[0].link
-
-  for (const node of netNodes) {
-    const attr = node.$
-    attr.x = parseFloat(attr.x)
-    attr.y = parseFloat(attr.y)
-    _network.nodes[attr.id] = attr
-  }
-
-  for (const link of netLinks) {
-    const attr = link.$
-    _network.links[attr.id] = attr
-  }
-}
-
-function constructGeoJsonFromLinkData() {
-  const geojsonLinks = []
-
-  for (const id in _network.links) {
-    if (_network.links.hasOwnProperty(id)) {
-      const link = _network.links[id]
-      const fromNode = _network.nodes[link.from]
-      const toNode = _network.nodes[link.to]
-
-      const coordinates = [[fromNode.x, fromNode.y], [toNode.x, toNode.y]]
-
-      const featureJson = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates,
-        },
-        properties: { id: id, color: '#aaa' },
-      }
-
-      geojsonLinks.push(featureJson)
-    }
-  }
-  _linkData = {
-    type: 'FeatureCollection',
-    features: geojsonLinks,
-  }
-
-  return _linkData
-}
-
-async function constructDepartureFrequencyGeoJson() {
-  store.loadingText = 'Construct departure frequencies'
-  const geojson = []
-
-  for (const linkID in _departures) {
-    if (_departures.hasOwnProperty(linkID)) {
-      const link = _network.links[linkID]
-      const coordinates = [
-        [_network.nodes[link.from].x, _network.nodes[link.from].y],
-        [_network.nodes[link.to].x, _network.nodes[link.to].y],
-      ]
-
-      const departures = _departures[linkID].total
-      const colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / _maximum)
-
-      let isRail = false
-      for (const route of _departures[linkID].routes) {
-        if (_routeData[route].transportMode === 'rail') {
-          isRail = true
-          break
-        }
-      }
-
-      let line = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates,
-        },
-        properties: {
-          width: Math.max(2.5, 0.01 * _departures[linkID].total),
-          color: isRail ? '#da4' : _colorScale[colorBin],
-          colorBin: colorBin,
-          departures: departures,
-          id: linkID,
-          isRail: isRail,
-          from: link.from, // _stopFacilities[fromNode].name || fromNode,
-          to: link.to, // _stopFacilities[toNode].name || toNode,
-        },
-      }
-
-      line = offsetLineByMeters(line, -10)
-      geojson.push(line)
-    }
-  }
-
-  geojson.sort(function(a: any, b: any) {
-    if (a.isRail && !b.isRail) return -1
-    if (b.isRail && !a.isRail) return 1
-    return 0
-  })
-
-  console.log('MAX DEPARTURES: ', _maximum)
-  return { type: 'FeatureCollection', features: geojson }
-}
-
-function offsetLineByMeters(line: any, metersToTheRight: number) {
-  try {
-    const offsetLine = turf.lineOffset(line, metersToTheRight, { units: 'meters' })
-    return offsetLine
-  } catch (e) {
-    // offset can fail if points are exactly on top of each other; ignore.
-  }
-  return line
-}
-
-function buildCoordinatesForRoute(transitRoute: RouteDetails) {
-  const coords = []
-  let previousLink: boolean = false
-
-  for (const linkID of transitRoute.route) {
-    if (!previousLink) {
-      const x0 = _network.nodes[_network.links[linkID].from].x
-      const y0 = _network.nodes[_network.links[linkID].from].y
-      coords.push([x0, y0])
-    }
-    const x = _network.nodes[_network.links[linkID].to].x
-    const y = _network.nodes[_network.links[linkID].to].y
-    coords.push([x, y])
-    previousLink = true
-  }
-
-  // save the extent of this line so map can zoom in on startup
-  if (coords.length > 0) {
-    updateMapExtent(coords[0])
-    updateMapExtent(coords[coords.length - 1])
-  }
-
-  const geojson = {
-    type: 'Feature',
-    geometry: {
-      type: 'LineString',
-      coordinates: coords,
-    },
-    properties: {
-      id: transitRoute.id,
-      from: coords[0],
-      to: coords[coords.length - 1],
-    },
-  }
-  return geojson
-}
-
-function removeStopMarkers() {
-  for (const marker of _stopMarkers) {
-    marker.remove()
-  }
-}
-
-function showTransitStops() {
-  removeStopMarkers()
-
-  const route = store.selectedRoute
-  const stopSizeClass = _map.getZoom() > SHOW_STOPS_AT_ZOOM_LEVEL ? 'stop-marker-big' : 'stop-marker'
-
-  let bearing
-  for (const [i, stop] of route.routeProfile.entries()) {
-    const coord = [_stopFacilities[stop.refId].x, _stopFacilities[stop.refId].y]
-    // recalc bearing for every node except the last
-    if (i < route.routeProfile.length - 1) {
-      const point1 = turf.point(coord)
-      const point2 = turf.point([
-        _stopFacilities[route.routeProfile[i + 1].refId].x,
-        _stopFacilities[route.routeProfile[i + 1].refId].y,
-      ])
-      bearing = turf.bearing(point1, point2)
-    }
-    const el = document.createElement('div')
-    el.className = stopSizeClass
-
-    const marker = new mapboxgl.Marker(el).setLngLat(coord)
-    _stopMarkers.push(marker)
-    marker.addTo(_map)
-
-    // rotation only works after element is added to document
-    el.style.transform += ` rotate(${bearing}deg)`
-  }
-}
-
-function clickedOnMap(e: any) {
-  console.log({ CLICKKED: e })
-}
-
-function clickedRouteDetails(routeID: string) {
-  if (!routeID && !store.selectedRoute) return
-
-  if (_stopMarkers) removeStopMarkers()
-
-  if (routeID) showTransitRoute(routeID)
-  else showTransitRoute(store.selectedRoute.id)
-
-  showTransitStops()
-}
-
-function showTransitRoute(routeID: string) {
-  if (!routeID) return
-
-  const route = _routeData[routeID]
-  console.log({ SELECTED_ROUTE: route })
-
-  store.selectedRoute = route
-
-  const source = _map.getSource('selected-route-data') as any
-  if (source) {
-    source.setData(route.geojson)
-  } else {
-    _map.addSource('selected-route-data', {
-      data: route.geojson,
-      type: 'geojson',
-    })
-  }
-
-  if (!_map.getLayer('selected-route')) {
-    _map.addLayer({
-      id: 'selected-route',
-      source: 'selected-route-data',
-      type: 'line',
-      paint: {
-        'line-opacity': 1.0,
-        'line-width': 5, // ['get', 'width'],
-        'line-color': '#f00', // ['get', 'color'],
-      },
-    })
-  }
-}
-
-function removeSelectedRoute() {
-  if (store.selectedRoute) {
-    _map.removeLayer('selected-route')
-    store.selectedRoute = null
-  }
-}
-
-function clickedOnTransitLink(e: any) {
-  removeStopMarkers()
-  removeSelectedRoute()
-
-  // the browser delivers some details that we need, in the fn argument 'e'
-  const props = e.features[0].properties
-
-  const routeIDs = _departures[props.id].routes
-
-  const routes = []
-  for (const id of routeIDs) {
-    routes.push(_routeData[id])
-  }
-
-  // sort by highest departures first
-  routes.sort(function(a, b) {
-    return a.departures > b.departures ? -1 : 1
-  })
-
-  store.routesOnLink = routes
-  highlightAllAttachedRoutes()
-}
-
-function removeAttachedRoutes() {
-  for (const layerID of _attachedRouteLayers) {
-    _map.removeLayer('route-' + layerID)
-    _map.removeSource('source-route-' + layerID)
-  }
-  _attachedRouteLayers = []
-}
-
-function highlightAllAttachedRoutes() {
-  removeAttachedRoutes()
-
-  for (const route of store.routesOnLink) {
-    _map.addSource('source-route-' + route.id, {
-      data: route.geojson,
-      type: 'geojson',
-    })
-    _map.addLayer({
-      id: 'route-' + route.id,
-      source: 'source-route-' + route.id,
-      type: 'line',
-      paint: {
-        'line-opacity': 0.7,
-        'line-width': 10, // ['get', 'width'],
-        'line-color': '#ccff33', // ['get', 'color'],
-      },
-    })
-    _attachedRouteLayers.push(route.id)
-  }
-}
-
-function pressedEscape() {
-  removeSelectedRoute()
-  removeStopMarkers()
-  removeAttachedRoutes()
-
-  store.selectedRoute = null
-  store.routesOnLink = []
-}
-
-function pressedArrowKey(delta: number) {
-  if (!store.selectedRoute) return
-
-  let i = store.routesOnLink.indexOf(store.selectedRoute)
-  i = i + delta
-
-  if (i < 0 || i >= store.routesOnLink.length) return
-
-  clickedRouteDetails(store.routesOnLink[i].id)
 }
 </script>
 

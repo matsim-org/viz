@@ -95,8 +95,12 @@ export default class AppRouter {
           path: '/transit-supply/:projectId/:vizId',
           name: 'Transit Supply',
           component: TransitSupply,
-          props: {
-            fileApi: fileApi,
+          props: route => {
+            return {
+              vizId: route.params.vizId,
+              projectId: route.params.projectId,
+              fileApi: fileApi,
+            }
           },
         },
         {
