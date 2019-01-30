@@ -410,11 +410,8 @@ async function getDataFromBlob(blob: Blob) {
   // data may be gzipped or double-gzipped!
   try {
     const data: any = await BlobUtil.blobToArrayBuffer(blob)
-    const gunzip1 = pako.inflate(data)
-    // server seems to double-gzip .gz files.
-    // see https://github.com/matsim-org/viz-server/issues/75
-    const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
-    return gunzip2
+    const gunzip1 = pako.inflate(data, { to: 'string' })
+    return gunzip1
   } catch (e) {
     console.log('data not compressed, trying as regular text')
   }
@@ -433,9 +430,9 @@ async function processInputs(networks: NetworkInputs) {
   const transitXML = await parseXML(networks.transit)
   store.loadingText = 'Crunching transit network...'
   await processTransit(transitXML)
-  _map.fitBounds(_mapExtentXYXY, { padding: 200 })
   await processDepartures()
   await addTransitToMap()
+  _map.fitBounds(_mapExtentXYXY, { padding: 200 })
 
   // _map.jumpTo({ center: [_mapExtentXYXY[0], _mapExtentXYXY[1]], zoom: 13 })
   // _map.fitBounds(_mapExtentXYXY, { padding: 100 })
@@ -721,6 +718,8 @@ function clickedRouteDetails(routeID: string) {
 }
 
 function showTransitRoute(routeID: string) {
+  if (!routeID) return
+
   const route = _routeData[routeID]
   console.log({ SELECTED_ROUTE: route })
 
