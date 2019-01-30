@@ -36,7 +36,7 @@ import SharedStore from '@/SharedStore'
 import Vue from 'vue'
 import { start } from 'repl'
 
-const MY_PROJECTION = 'EPSG:4326' // 31468' // 2048'
+const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
 const COLOR_CATEGORIES = 16
 const SHOW_STOPS_AT_ZOOM_LEVEL = 11
@@ -111,8 +111,6 @@ proj4.defs([
   ],
 ])
 
-console.log(proj4.defs)
-
 // store is the component data store -- the state of the component.
 const store: any = {
   loadingText: 'MATSim Transit Inspector',
@@ -123,17 +121,20 @@ const store: any = {
   project: {},
   vizId: null,
   visualization: null,
+  projection: DEFAULT_PROJECTION,
   api: FileAPI,
 }
 
 let _map: mapboxgl.Map
 
 const _departures: { [linkID: string]: Departure } = {}
+const _mapExtentXYXY: any = [180, 90, -180, -90]
 const _network: Network = { nodes: {}, links: {} }
 const _stopFacilities: { [index: string]: NetworkNode } = {}
 const _transitLines: { [index: string]: TransitLine } = {}
 const _routeData: { [index: string]: RouteDetails } = store.routeData
 const _stopMarkers: any[] = []
+
 let _attachedRouteLayers: string[] = []
 
 let _linkData
@@ -156,7 +157,9 @@ export default Vue.extend({
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
     store.vizId = (this as any).$route.params.vizId
+
     getVizDetails()
+    setBreadcrumb()
     setupMap()
   },
   components: {},
@@ -170,8 +173,10 @@ export default Vue.extend({
 async function getVizDetails() {
   store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
   store.project = await store.api.fetchProject(store.projectId)
-  console.log(Object.assign({}, store.visualization.inputFiles))
-  setBreadcrumb()
+
+  if (store.visualization.parameters.Projection) {
+    store.projection = store.visualization.parameters.Projection.value
+  }
 }
 
 function setBreadcrumb() {
@@ -182,15 +187,22 @@ function setBreadcrumb() {
   ])
 }
 
+function updateMapExtent(coordinates: any) {
+  _mapExtentXYXY[0] = Math.min(_mapExtentXYXY[0], coordinates[0])
+  _mapExtentXYXY[1] = Math.min(_mapExtentXYXY[1], coordinates[1])
+  _mapExtentXYXY[2] = Math.max(_mapExtentXYXY[2], coordinates[0])
+  _mapExtentXYXY[3] = Math.max(_mapExtentXYXY[3], coordinates[1])
+}
+
 function setupMap() {
   _map = new mapboxgl.Map({
     bearing: 0,
-    center: [18.5, -33.8], // lnglat, not latlng
+    // center: [18.5, -33.8], // lnglat, not latlng
     container: 'mymap',
     logoPosition: 'bottom-right',
     style: 'mapbox://styles/mapbox/light-v9',
     pitch: 0,
-    zoom: 9,
+    // zoom: 9,
   })
 
   // Start doing stuff AFTER the MapBox library has fully initialized
@@ -214,6 +226,7 @@ async function mapIsReady() {
   }
 
   if (networks) processInputs(networks)
+
   setupKeyListeners()
 }
 
@@ -242,13 +255,13 @@ function updateZoomLevel() {
 }
 
 // MapBox requires long/lat
-function convertCoords(projection: string) {
-  store.loadingText = 'CONVERT COORDINATES ' + projection
+function convertCoords() {
+  store.loadingText = 'CONVERT COORDINATES ' + store.projection
 
   for (const id in _network.nodes) {
     if (_network.nodes.hasOwnProperty(id)) {
       const node: NetworkNode = _network.nodes[id]
-      const z = proj4(projection, 'EPSG:4326', node) as any
+      const z = proj4(store.projection, 'EPSG:4326', node) as any
       node.x = z.x
       node.y = z.y
     }
@@ -262,7 +275,7 @@ function generateStopFacilitiesFromXML(xml: any) {
     attr.x = parseFloat(attr.x)
     attr.y = parseFloat(attr.y)
     // convert coords
-    const z = proj4(MY_PROJECTION, 'EPSG:4326', attr) as any
+    const z = proj4(store.projection, 'EPSG:4326', attr) as any
     attr.x = z.x
     attr.y = z.y
 
@@ -338,11 +351,14 @@ const nodeReadAsync = function(filename: string) {
 }
 
 const parseXML = function(xml: string) {
-  const parser = new xml2js.Parser({ preserveChildrenOrder: true })
+  const parser = new xml2js.Parser({ preserveChildrenOrder: true, strict: true })
   return new Promise((resolve, reject) => {
     parser.parseString(xml, function(err: Error, result: string) {
-      if (err) reject(err)
-      else resolve(result)
+      if (err) {
+        reject(err)
+      } else {
+        resolve(result)
+      }
     })
   })
 }
@@ -380,8 +396,8 @@ async function loadNetworks() {
     transitBlob = await store.api.downloadFile(TRANSIT_NET, store.projectId)
 
     // get the blob data
-    const road = await getDataFromBlobOrGZBlob(roadBlob)
-    const transit = await getDataFromBlobOrGZBlob(transitBlob)
+    const road = await getDataFromBlob(roadBlob)
+    const transit = await getDataFromBlob(transitBlob)
 
     return { road, transit }
   } catch (e) {
@@ -390,7 +406,7 @@ async function loadNetworks() {
   }
 }
 
-async function getDataFromBlobOrGZBlob(blob: Blob) {
+async function getDataFromBlob(blob: Blob) {
   // data may be gzipped or double-gzipped!
   try {
     const data: any = await BlobUtil.blobToArrayBuffer(blob)
@@ -409,27 +425,32 @@ async function getDataFromBlobOrGZBlob(blob: Blob) {
 
 async function processInputs(networks: NetworkInputs) {
   const roadXML = await parseXML(networks.road)
+  store.loadingText = 'Crunching road network...'
   await processRoadXML(roadXML)
-  await convertCoords(MY_PROJECTION)
+  await convertCoords()
   await addLinksToMap()
 
   const transitXML = await parseXML(networks.transit)
+  store.loadingText = 'Crunching transit network...'
   await processTransit(transitXML)
+  _map.fitBounds(_mapExtentXYXY, { padding: 200 })
   await processDepartures()
   await addTransitToMap()
+
+  // _map.jumpTo({ center: [_mapExtentXYXY[0], _mapExtentXYXY[1]], zoom: 13 })
+  // _map.fitBounds(_mapExtentXYXY, { padding: 100 })
 
   store.loadingText = ''
 }
 
 async function addLinksToMap() {
   const linksAsGeojson = constructGeoJsonFromLinkData()
-  console.log({ linksAsGeojson })
 
   _map.addSource('link-data', {
     data: linksAsGeojson,
     type: 'geojson',
   } as any)
-
+  /*
   _map.addLayer({
     id: 'link-layer',
     source: 'link-data',
@@ -440,6 +461,7 @@ async function addLinksToMap() {
       'line-color': '#ccf', // ['get', 'color'],
     },
   })
+  */
 }
 
 async function processDepartures() {
@@ -460,7 +482,6 @@ async function processDepartures() {
       }
     }
   }
-  console.log({ _departures })
 }
 
 async function addTransitToMap() {
@@ -625,6 +646,12 @@ function buildCoordinatesForRoute(transitRoute: RouteDetails) {
     const y = _network.nodes[_network.links[linkID].to].y
     coords.push([x, y])
     previousLink = true
+  }
+
+  // save the extent of this line so map can zoom in on startup
+  if (coords.length > 0) {
+    updateMapExtent(coords[0])
+    updateMapExtent(coords[coords.length - 1])
   }
 
   const geojson = {
