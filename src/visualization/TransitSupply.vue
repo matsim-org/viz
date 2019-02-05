@@ -37,7 +37,6 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
-import StopMarker from '@/visualization/StopMarker.vue'
 import SharedStore from '@/SharedStore'
 
 import { Visualization } from '@/entities/Entities'
@@ -117,7 +116,7 @@ proj4.defs([
   ],
 ])
 
-@Component({ components: { StopMarker } })
+@Component
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
