@@ -10,7 +10,7 @@
     .route(v-for="route in routesOnLink"
           :key="route.uniqueRouteID"
           :class="{highlightedRoute: selectedRoute && route.id === selectedRoute.id}"
-          @click="clickedRouteDetails(route.id)"
+          @click="showRouteDetails(route.id)"
     )
       h3.mytitle {{route.id}}
       p.details {{route.departures}} departures
@@ -203,7 +203,6 @@ export default class TransitSupply extends Vue {
 
     this.mymap.on('move', this.handleMapMotion)
     this.mymap.on('zoom', this.handleMapMotion)
-    this.mymap.on('click', this.clickedOnMap)
     this.mymap.keyboard.disable() // so arrow keys don't pan
 
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
@@ -213,7 +212,7 @@ export default class TransitSupply extends Vue {
     if (this.stopMarkers.length > 0) this.showTransitStops()
   }
 
-  private clickedRouteDetails(routeID: string) {
+  private showRouteDetails(routeID: string) {
     if (!routeID && !this.selectedRoute) return
 
     if (routeID) this.showTransitRoute(routeID)
@@ -667,10 +666,6 @@ export default class TransitSupply extends Vue {
     }
   }
 
-  private clickedOnMap(e: any) {
-    console.log({ CLICKKED: e })
-  }
-
   private showTransitRoute(routeID: string) {
     if (!routeID) return
 
@@ -716,7 +711,6 @@ export default class TransitSupply extends Vue {
 
     // the browser delivers some details that we need, in the fn argument 'e'
     const props = e.features[0].properties
-
     const routeIDs = this._departures[props.id].routes
 
     const routes = []
@@ -731,6 +725,9 @@ export default class TransitSupply extends Vue {
 
     this.routesOnLink = routes
     this.highlightAllAttachedRoutes()
+
+    // highlight the first route, if there is one
+    if (routes.length > 0) this.showRouteDetails(routes[0].id)
   }
 
   private removeAttachedRoutes() {
@@ -780,7 +777,7 @@ export default class TransitSupply extends Vue {
 
     if (i < 0 || i >= this.routesOnLink.length) return
 
-    this.clickedRouteDetails(this.routesOnLink[i].id)
+    this.showRouteDetails(this.routesOnLink[i].id)
   }
 }
 
