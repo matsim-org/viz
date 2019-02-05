@@ -366,15 +366,27 @@ export default class TransitSupply extends Vue {
   }
 
   private async getDataFromBlob(blob: Blob) {
-    // data may be gzipped or double-gzipped!
-    try {
-      const data: any = await BlobUtil.blobToArrayBuffer(blob)
-      const gunzip1 = pako.inflate(data, { to: 'string' })
-      return gunzip1
-    } catch (e) {
-      if (SharedStore.debug) console.log('data not compressed, trying as regular text')
+    // TEMP HACK. Need user agent to determine whether GZIP is regular (Chrome)
+    // or double (firefox).  Can add others later.
+    const isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
+    console.log('IS FIREFOX: ' + isFirefox)
+
+    const data: any = await BlobUtil.blobToArrayBuffer(blob)
+
+    if (isFirefox) {
+      try {
+        const gunzip1 = pako.inflate(data)
+        const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
+        return gunzip2
+      } catch (e) {} // not gzipped: must be text
+    } else {
+      try {
+        const gunzip1 = pako.inflate(data, { to: 'string' })
+        return gunzip1
+      } catch (e) {} // not gzipped: must be text
     }
 
+    // Text is not gzipped:
     const text: any = await BlobUtil.blobToBinaryString(blob)
     return text
   }
@@ -836,9 +848,10 @@ p {
 
 .status-blob {
   background-color: white;
+  box-shadow: 0 0 8px #00000040;
   opacity: 0.8;
   margin: auto 0px auto -10px;
-  padding: 10px 0px;
+  padding: 15px 0px;
   text-align: center;
   grid-column: 2 / 3;
   grid-row: 1 / 2;
