@@ -17,6 +17,10 @@
       p.details First: {{route.firstDeparture}}
       p.details Last: {{route.lastDeparture}}
   #mymap
+    .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
+      v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
+    )
+
 </template>
 
 <script lang="ts">
@@ -33,7 +37,9 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
+import StopMarker from '@/visualization/StopMarker.vue'
 import SharedStore from '@/SharedStore'
+
 import { Visualization } from '@/entities/Entities'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
@@ -111,7 +117,7 @@ proj4.defs([
   ],
 ])
 
-@Component
+@Component({ components: { StopMarker } })
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -131,6 +137,7 @@ export default class TransitSupply extends Vue {
   private routesOnLink: any = []
   private selectedRoute: any = {}
   private visualization!: Visualization
+  private stopMarkers: any[] = []
 
   private _attachedRouteLayers!: string[]
   private _departures!: { [linkID: string]: Departure }
@@ -140,7 +147,6 @@ export default class TransitSupply extends Vue {
   private _network!: Network
   private _routeData!: { [index: string]: RouteDetails }
   private _stopFacilities!: { [index: string]: NetworkNode }
-  private _stopMarkers!: any[]
   private _transitLines!: { [index: string]: TransitLine }
 
   public created() {
@@ -151,7 +157,6 @@ export default class TransitSupply extends Vue {
     this._network = { nodes: {}, links: {} }
     this._routeData = {}
     this._stopFacilities = {}
-    this._stopMarkers = []
     this._transitLines = {}
     this.selectedRoute = null
   }
@@ -168,7 +173,7 @@ export default class TransitSupply extends Vue {
   private async getVizDetails() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
-    console.log(this.visualization)
+    if (SharedStore.debug) console.log(this.visualization)
 
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
@@ -176,7 +181,6 @@ export default class TransitSupply extends Vue {
   }
 
   private setBreadcrumb() {
-    console.log({ PROJECT: this.visualization })
     EventBus.$emit('set-breadcrumbs', [
       { title: 'My Projects', link: '/projects' },
       { title: this.project.name, link: '/project/' + this.projectId },
@@ -198,19 +202,20 @@ export default class TransitSupply extends Vue {
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
 
-    this.mymap.on('zoomstart', this.removeStopMarkers)
-    this.mymap.on('zoomend', this.updateZoomLevel)
-    this.mymap.on('moveend', this.updateZoomLevel)
+    this.mymap.on('move', this.handleMapMotion)
+    this.mymap.on('zoom', this.handleMapMotion)
     this.mymap.on('click', this.clickedOnMap)
     this.mymap.keyboard.disable() // so arrow keys don't pan
 
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
   }
 
+  private handleMapMotion() {
+    if (this.stopMarkers.length > 0) this.showTransitStops()
+  }
+
   private clickedRouteDetails(routeID: string) {
     if (!routeID && !this.selectedRoute) return
-
-    if (this._stopMarkers) this.removeStopMarkers()
 
     if (routeID) this.showTransitRoute(routeID)
     else this.showTransitRoute(this.selectedRoute.id)
@@ -243,11 +248,6 @@ export default class TransitSupply extends Vue {
         parent.pressedArrowKey(+1)
       }
     })
-  }
-
-  private updateZoomLevel() {
-    // repost stops after a brief hiatus; mapbox weirdness
-    if (this._stopMarkers) setTimeout(this.clickedRouteDetails, 200)
   }
 
   // MapBox requires long/lat
@@ -362,6 +362,7 @@ export default class TransitSupply extends Vue {
       return { road, transit }
     } catch (e) {
       console.error(e)
+      this.loadingText = '' + e
       return null
     }
   }
@@ -373,7 +374,7 @@ export default class TransitSupply extends Vue {
       const gunzip1 = pako.inflate(data, { to: 'string' })
       return gunzip1
     } catch (e) {
-      console.log('data not compressed, trying as regular text')
+      if (SharedStore.debug) console.log('data not compressed, trying as regular text')
     }
 
     const text: any = await BlobUtil.blobToBinaryString(blob)
@@ -386,7 +387,7 @@ export default class TransitSupply extends Vue {
     const roadXML = await parseXML(networks.road)
     await this.processRoadXML(roadXML)
     await this.convertCoords()
-    // await this.addLinksToMap()  --no links for now
+    // await this.addLinksToMap() // --no links for now
 
     this.loadingText = 'Crunching transit network...'
 
@@ -394,8 +395,11 @@ export default class TransitSupply extends Vue {
     await this.processTransit(transitXML)
     await this.processDepartures()
     await this.addTransitToMap()
-    this.mymap.fitBounds(this._mapExtentXYXY, { padding: 150 })
 
+    this.mymap.fitBounds(this._mapExtentXYXY, {
+      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      animate: false,
+    })
     this.loadingText = ''
   }
 
@@ -574,7 +578,6 @@ export default class TransitSupply extends Vue {
       return 0
     })
 
-    console.log('MAX DEPARTURES: ', this._maximum)
     return { type: 'FeatureCollection', features: geojson }
   }
 
@@ -633,18 +636,18 @@ export default class TransitSupply extends Vue {
   }
 
   private removeStopMarkers() {
-    for (const marker of this._stopMarkers) {
-      marker.remove()
-    }
+    this.stopMarkers = []
   }
 
-  private showTransitStops() {
+  private async showTransitStops() {
     this.removeStopMarkers()
 
     const route = this.selectedRoute
-    const stopSizeClass = this.mymap.getZoom() > SHOW_STOPS_AT_ZOOM_LEVEL ? 'stop-marker-big' : 'stop-marker'
+    const stopSizeClass = 'stopmarker' // this.mymap.getZoom() > SHOW_STOPS_AT_ZOOM_LEVEL ? 'stop-marker-big' : 'stop-marker'
+    const mapBearing = this.mymap.getBearing()
 
     let bearing
+
     for (const [i, stop] of route.routeProfile.entries()) {
       const coord = [this._stopFacilities[stop.refId].x, this._stopFacilities[stop.refId].y]
       // recalc bearing for every node except the last
@@ -654,17 +657,14 @@ export default class TransitSupply extends Vue {
           this._stopFacilities[route.routeProfile[i + 1].refId].x,
           this._stopFacilities[route.routeProfile[i + 1].refId].y,
         ])
-        bearing = turf.bearing(point1, point2)
+        bearing = turf.bearing(point1, point2) - mapBearing // so icons rotate along with map
       }
-      const el = document.createElement('div')
-      el.className = stopSizeClass
 
-      const marker = new mapboxgl.Marker(el).setLngLat(coord)
-      this._stopMarkers.push(marker)
-      marker.addTo(this.mymap)
+      const xy = this.mymap.project(coord)
 
-      // rotation only works after element is added to document
-      el.style.transform += ` rotate(${bearing}deg)`
+      // every marker has a latlng coord and a bearing
+      const marker = { i, bearing, xy: { x: Math.floor(xy.x), y: Math.floor(xy.y) } }
+      this.stopMarkers.push(marker)
     }
   }
 
@@ -812,12 +812,6 @@ const parseXML = function(xml: string) {
 </script>
 
 <style scoped>
-html,
-body {
-  margin: 0px 0px 0px 0px;
-  font-family: 'Lato', Helvetica, Arial, sans-serif;
-}
-
 .mapboxgl-popup-content {
   padding: 0px 20px 0px 0px;
   opacity: 0.95;
@@ -862,7 +856,6 @@ p {
   overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 2;
-  z-index: 1;
 }
 
 .route {
@@ -890,11 +883,10 @@ h3 {
   font-size: 12px;
 }
 
-.stop-marker {
-  background: url('../assets/icon-stop-triangle.png') no-repeat;
-  background-size: 100%;
-  width: 8px;
-  height: 8px;
+.stopmarker {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
 }
 
 .stop-marker-big {
@@ -935,5 +927,14 @@ h3 {
   opacity: 0.95;
   z-index: 2;
   overflow-y: auto;
+}
+.stop-marker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: url('../assets/icon-stop-triangle.png') no-repeat;
+  transform: translate(-50%, -50%);
+  background-size: 100%;
+  cursor: pointer;
 }
 </style>
