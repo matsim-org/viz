@@ -13,7 +13,7 @@
           @click="showRouteDetails(route.id)"
     )
       h3.mytitle {{route.id}}
-      p.details {{route.departures}} departures
+      p.details: b {{route.departures}} departures
       p.details First: {{route.firstDeparture}}
       p.details Last: {{route.lastDeparture}}
   #mymap
@@ -29,17 +29,20 @@
 import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
+import gthread from 'greenlet'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
 import proj4 from 'proj4'
 import pako from 'pako'
 import xml2js from 'xml2js'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
+import AuthenticationStore from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import SharedStore from '@/SharedStore'
-
 import { Visualization } from '@/entities/Entities'
+
+import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -69,8 +72,8 @@ interface NetworkNode {
 }
 
 interface NetworkInputs {
-  road: any
-  transit: any
+  roadXML: any
+  transitXML: any
 }
 
 interface NetworkLink {
@@ -127,6 +130,9 @@ export default class TransitSupply extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
 
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
+
   // -------------------------- //
 
   private loadingText: string = 'MATSim Transit Inspector'
@@ -147,6 +153,8 @@ export default class TransitSupply extends Vue {
   private _routeData!: { [index: string]: RouteDetails }
   private _stopFacilities!: { [index: string]: NetworkNode }
   private _transitLines!: { [index: string]: TransitLine }
+  private _roadFetcher!: XmlFetcher
+  private _transitFetcher!: XmlFetcher
 
   public created() {
     this._attachedRouteLayers = []
@@ -336,9 +344,6 @@ export default class TransitSupply extends Vue {
   }
 
   private async loadNetworks() {
-    let roadBlob: any
-    let transitBlob: any
-
     try {
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
 
@@ -347,17 +352,52 @@ export default class TransitSupply extends Vue {
 
       if (SharedStore.debug) console.log({ ROAD_NET, TRANSIT_NET, PROJECT: this.projectId })
 
-      this.loadingText = 'Loading road network...'
-      roadBlob = await this.fileApi.downloadFile(ROAD_NET, this.projectId)
+      this.loadingText = 'Loading networks...'
 
+      console.log({ AUTH_STORE: this.authStore })
+
+      const roadFetcherTask = XmlFetcher.create({
+        accessToken: this.authStore.state.accessToken,
+        fileId: ROAD_NET,
+        projectId: this.projectId,
+      })
+      const transitFetcherTask = XmlFetcher.create({
+        accessToken: this.authStore.state.accessToken,
+        fileId: TRANSIT_NET,
+        projectId: this.projectId,
+      })
+
+      this._roadFetcher = await roadFetcherTask
+      this._transitFetcher = await transitFetcherTask
+
+      // launch the long-running processes; these return promises
+      const roadXMLPromise = this._roadFetcher.fetchXML()
+      const roadXML = await roadXMLPromise
+
+      const transitXMLPromise = this._transitFetcher.fetchXML()
+      const transitXML = await transitXMLPromise
+
+      // and wait for them to both complete
+
+      console.log({ roadXML, transitXML })
+
+      /*
+      let now = performance.now()
+      roadBlob = await this.fileApi.downloadFile(ROAD_NET, this.projectId)
+      console.log('>> Download road network: ', 0.001 * (performance.now() - now))
       this.loadingText = 'Loading transit network...'
+      now = performance.now()
       transitBlob = await this.fileApi.downloadFile(TRANSIT_NET, this.projectId)
+      console.log('>> Download transit network: ', 0.001 * (performance.now() - now))
 
       // get the blob data
+      now = performance.now()
       const road = await this.getDataFromBlob(roadBlob)
       const transit = await this.getDataFromBlob(transitBlob)
+      console.log('>> Get blob data: ', 0.001 * (performance.now() - now))
+      */
 
-      return { road, transit }
+      return { roadXML, transitXML }
     } catch (e) {
       console.error(e)
       this.loadingText = '' + e
@@ -365,52 +405,46 @@ export default class TransitSupply extends Vue {
     }
   }
 
-  private async getDataFromBlob(blob: Blob) {
-    // TEMP HACK. Need user agent to determine whether GZIP is regular (Chrome)
-    // or double (firefox).  Can add others later.
-    const isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
-    console.log('IS FIREFOX: ' + isFirefox)
-
-    const data: any = await BlobUtil.blobToArrayBuffer(blob)
-
-    if (isFirefox) {
-      try {
-        const gunzip1 = pako.inflate(data)
-        const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
-        return gunzip2
-      } catch (e) {} // not gzipped: must be text
-    } else {
-      try {
-        const gunzip1 = pako.inflate(data, { to: 'string' })
-        return gunzip1
-      } catch (e) {} // not gzipped: must be text
-    }
-
-    // Text is not gzipped:
-    const text: any = await BlobUtil.blobToBinaryString(blob)
-    return text
-  }
-
   private async processInputs(networks: NetworkInputs) {
     this.loadingText = 'Crunching road network...'
+    console.log(this.loadingText)
 
-    const roadXML = await parseXML(networks.road)
-    await this.processRoadXML(roadXML)
+    let now = performance.now()
+    await this.processRoadXML(networks.roadXML)
+    console.log('>> Process road xml: ', 0.001 * (performance.now() - now))
+
+    now = performance.now()
     await this.convertCoords()
+    console.log('>> convert coordinates: ', 0.001 * (performance.now() - now))
     // await this.addLinksToMap() // --no links for now
 
     this.loadingText = 'Crunching transit network...'
+    console.log(this.loadingText)
 
-    const transitXML = await parseXML(networks.transit)
-    await this.processTransit(transitXML)
+    now = performance.now()
+    await this.processTransit(networks.transitXML)
+    console.log('>> process transit xml: ', 0.001 * (performance.now() - now))
+
+    now = performance.now()
     await this.processDepartures()
+    console.log('>> process transit departures: ', 0.001 * (performance.now() - now))
+
+    now = performance.now()
     await this.addTransitToMap()
+    console.log('>> add transit to map: ', 0.001 * (performance.now() - now))
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
       animate: false,
     })
     this.loadingText = ''
+  }
+
+  /** Async worker caller
+   *  See https://medium.com/@roman01la/run-web-worker-with-a-function-rather-than-external-file-303add905a0
+   */
+  private run(fn: any) {
+    return new Worker(URL.createObjectURL(new Blob(['(' + fn + ')()'])))
   }
 
   private async addLinksToMap() {
@@ -804,19 +838,6 @@ const nodeReadAsync = function(filename: string) {
     })
   })
 }
-
-const parseXML = function(xml: string) {
-  const parser = new xml2js.Parser({ preserveChildrenOrder: true, strict: true })
-  return new Promise((resolve, reject) => {
-    parser.parseString(xml, function(err: Error, result: string) {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(result)
-      }
-    })
-  })
-}
 </script>
 
 <style scoped>
@@ -899,7 +920,7 @@ h3 {
 }
 
 .stop-marker-big {
-  background: url('../assets/icon-stop-triangle.png') no-repeat;
+  background: url('../../assets/icon-stop-triangle.png') no-repeat;
   background-size: 100%;
   width: 16px;
   height: 16px;
@@ -941,7 +962,7 @@ h3 {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: url('../assets/icon-stop-triangle.png') no-repeat;
+  background: url('../../assets/icon-stop-triangle.png') no-repeat;
   transform: translate(-50%, -50%);
   background-size: 100%;
   cursor: pointer;

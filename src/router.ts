@@ -4,11 +4,10 @@ import Project from '@/project/Project.vue'
 import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
-import MyViz from '@/visualization/MyViz.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import NOXPlot from '@/visualization/NOXPlot.vue'
-import TransitSupply from '@/visualization/TransitSupply.vue'
+import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
@@ -100,6 +99,7 @@ export default class AppRouter {
               vizId: route.params.vizId,
               projectId: route.params.projectId,
               fileApi: fileApi,
+              authStore: authStore,
             }
           },
         },
