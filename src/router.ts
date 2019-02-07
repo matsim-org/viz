@@ -8,7 +8,7 @@ import MyViz from '@/visualization/MyViz.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import NOXPlot from '@/visualization/NOXPlot.vue'
-import TransitSupply from '@/visualization/TransitSupply.vue'
+import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
@@ -95,8 +95,13 @@ export default class AppRouter {
           path: '/transit-supply/:projectId/:vizId',
           name: 'Transit Supply',
           component: TransitSupply,
-          props: {
-            fileApi: fileApi,
+          props: route => {
+            return {
+              vizId: route.params.vizId,
+              projectId: route.params.projectId,
+              fileApi: fileApi,
+              authStore: authStore,
+            }
           },
         },
         {

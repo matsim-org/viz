@@ -4,9 +4,8 @@
     router-link.nav-link(to="/"): img.nav-logo(src="@/assets/matsim-logo-white.png")
 
     .breadcrumb-row
-      span(v-for="crumb in breadcrumbs" :key="crumb.title")
-        p.nav-breadcrumb &bull;
-          router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
+      p.nav-breadcrumb(v-for="crumb in breadcrumbs" :key="crumb.title") &bull;
+        router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
 
     .nav-rightside
       a.topnavrow-item(@click="onLogin()") {{ loginText }}
@@ -117,7 +116,7 @@ h6 {
 .topnavrow {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 0.75rem 1.5rem 0.75rem 1.5rem;
+  padding: 0.5rem 1rem 0.5rem 1.5rem;
   background-color: hsl(0, 0%, 29%);
   z-index: 5;
   display: grid;
@@ -150,14 +149,13 @@ a:focus {
   grid-column: 2 / 3;
   display: flex;
   flex-direction: row;
+  vertical-align: center;
 }
 
 .nav-breadcrumb {
-  vertical-align: top;
   color: #ccc;
-  margin-right: 0.25rem;
-  margin-bottom: 0px;
-  font-size: 1rem;
+  margin: auto 0.25rem auto 0rem;
+  font-size: 0.8rem;
 }
 
 .nav-bread-link {
@@ -169,7 +167,9 @@ a:hover {
 
 .nav-rightside {
   display: flex;
-  flex-direction: row;
   align-items: flex-end;
+  flex-direction: row;
+  font-size: 0.8rem;
+  margin: auto 0rem;
 }
 </style>
