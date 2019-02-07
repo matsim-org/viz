@@ -356,50 +356,32 @@ export default class TransitSupply extends Vue {
 
       console.log({ AUTH_STORE: this.authStore })
 
-      const roadFetcherTask = XmlFetcher.create({
+      this._roadFetcher = await XmlFetcher.create({
         accessToken: this.authStore.state.accessToken,
         fileId: ROAD_NET,
         projectId: this.projectId,
       })
-      const transitFetcherTask = XmlFetcher.create({
+      this._transitFetcher = await XmlFetcher.create({
         accessToken: this.authStore.state.accessToken,
         fileId: TRANSIT_NET,
         projectId: this.projectId,
       })
 
-      this._roadFetcher = await roadFetcherTask
-      this._transitFetcher = await transitFetcherTask
-
       // launch the long-running processes; these return promises
       const roadXMLPromise = this._roadFetcher.fetchXML()
-      const roadXML = await roadXMLPromise
-
       const transitXMLPromise = this._transitFetcher.fetchXML()
-      const transitXML = await transitXMLPromise
 
       // and wait for them to both complete
+      const results = await Promise.all([roadXMLPromise, transitXMLPromise])
 
-      console.log({ roadXML, transitXML })
+      console.log({ roadXML: results[0], transitXML: results[1] })
 
-      /*
-      let now = performance.now()
-      roadBlob = await this.fileApi.downloadFile(ROAD_NET, this.projectId)
-      console.log('>> Download road network: ', 0.001 * (performance.now() - now))
-      this.loadingText = 'Loading transit network...'
-      now = performance.now()
-      transitBlob = await this.fileApi.downloadFile(TRANSIT_NET, this.projectId)
-      console.log('>> Download transit network: ', 0.001 * (performance.now() - now))
+      this._roadFetcher.destroy()
+      this._transitFetcher.destroy()
 
-      // get the blob data
-      now = performance.now()
-      const road = await this.getDataFromBlob(roadBlob)
-      const transit = await this.getDataFromBlob(transitBlob)
-      console.log('>> Get blob data: ', 0.001 * (performance.now() - now))
-      */
-
-      return { roadXML, transitXML }
+      return { roadXML: results[0], transitXML: results[1] }
     } catch (e) {
-      console.error(e)
+      console.error({ e })
       this.loadingText = '' + e
       return null
     }

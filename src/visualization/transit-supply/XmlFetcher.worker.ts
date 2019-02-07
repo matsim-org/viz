@@ -27,19 +27,22 @@ class XmlFetcher extends AsyncBackgroundWorker {
 
   private async fetchWithAuth() {
     const url = `${globalConfig.fileServer}/projects/${this.params.projectId}/files/${this.params.fileId}`
-
     const headers = new Headers()
     headers.append('Authorization', 'Bearer ' + this.params.accessToken)
 
     const response = await fetch(url, { mode: 'cors', credentials: 'include', headers: headers })
+
     return await response.blob()
   }
 
   private async fetchXml() {
+    console.log({ WORKER_STARTING_UP: this.params })
+
     const blob = await this.fetchWithAuth()
     const data = await this.getDataFromBlob(blob)
     const xml = await this.parseXML(data)
 
+    console.log({ WORKER_DONE: xml })
     return { data: xml }
   }
 
@@ -65,7 +68,7 @@ class XmlFetcher extends AsyncBackgroundWorker {
     }
 
     // Text is not gzipped:
-    const text: any = await BlobUtil.blobToBinaryString(blob)
+    const text: string = await BlobUtil.blobToBinaryString(blob)
     return text
   }
 
