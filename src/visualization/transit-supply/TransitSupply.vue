@@ -289,8 +289,19 @@ export default class TransitSupply extends Vue {
   }
 
   private async processInputs(networks: NetworkInputs) {
+<<<<<<< HEAD
     this.loadingText = 'Building data structures...'
     console.log(this.loadingText)
+
+    // spawn transit helper web worker
+    this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
+
+    this.loadingText = 'Crunching road network...'
+    this.loadingText = 'Preparing...'
+    console.log(this.loadingText)
+    await this._transitHelper.createNodesAndLinks()
+
+    await this.addLinksToMap() // --no links for now
 
     // spawn transit helper web worker
     this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
@@ -303,20 +314,18 @@ export default class TransitSupply extends Vue {
     console.log(this.loadingText)
     await this._transitHelper.convertCoordinates()
 
-    // await this.addLinksToMap() // --no links for now
-
     this.loadingText = 'Crunching transit network...'
     console.log(this.loadingText)
 
     const result: any = await this._transitHelper.processTransit()
-    console.log(result)
-
     this._network = result.network
     this._mapExtentXYXY = result.mapExtent
     this._routeData = result.routeData
     this._stopFacilities = result.stopFacilities
     this._transitLines = result.transitLines
     this._mapExtentXYXY = result.mapExtent
+
+    await this.addLinksToMap() // --no links for now
 
     this.loadingText = 'Summarizing departures...'
     await this.processDepartures()
@@ -330,13 +339,6 @@ export default class TransitSupply extends Vue {
       animate: false,
     })
     this.loadingText = ''
-  }
-
-  /** Async worker caller
-   *  See https://medium.com/@roman01la/run-web-worker-with-a-function-rather-than-external-file-303add905a0
-   */
-  private run(fn: any) {
-    return new Worker(URL.createObjectURL(new Blob(['(' + fn + ')()'])))
   }
 
   private async addLinksToMap() {
