@@ -43,6 +43,8 @@ import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 
 import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
+import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
+import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -100,25 +102,6 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Description', 'Projection'],
 })
 
-// Add various projections that we use here
-proj4.defs([
-  [
-    // south africa
-    'EPSG:2048',
-    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
-  ],
-  [
-    // berlin
-    'EPSG:31468',
-    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
-  ],
-  [
-    // cottbus
-    'EPSG:25833',
-    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
-  ],
-])
-
 @Component
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
@@ -155,6 +138,7 @@ export default class TransitSupply extends Vue {
   private _transitLines!: { [index: string]: TransitLine }
   private _roadFetcher!: XmlFetcher
   private _transitFetcher!: XmlFetcher
+  private _transitHelper!: TransitSupplyHelper
 
   public created() {
     this._attachedRouteLayers = []
@@ -166,6 +150,12 @@ export default class TransitSupply extends Vue {
     this._stopFacilities = {}
     this._transitLines = {}
     this.selectedRoute = null
+  }
+
+  public beforeDestroy() {
+    if (this._roadFetcher) this._roadFetcher.destroy()
+    if (this._transitFetcher) this._transitFetcher.destroy()
+    if (this._transitHelper) this._transitHelper.destroy()
   }
 
   public async mounted() {
@@ -256,93 +246,6 @@ export default class TransitSupply extends Vue {
     })
   }
 
-  // MapBox requires long/lat
-  private convertCoords() {
-    this.loadingText = 'CONVERT COORDINATES ' + this.projection
-
-    for (const id in this._network.nodes) {
-      if (this._network.nodes.hasOwnProperty(id)) {
-        const node: NetworkNode = this._network.nodes[id]
-        const z = proj4(this.projection, 'EPSG:4326', node) as any
-        node.x = z.x
-        node.y = z.y
-      }
-    }
-  }
-
-  private generateStopFacilitiesFromXML(xml: any) {
-    const stopFacilities = xml.transitSchedule.transitStops[0].stopFacility
-
-    for (const stop of stopFacilities) {
-      const attr = stop.$
-      attr.x = parseFloat(attr.x)
-      attr.y = parseFloat(attr.y)
-      // convert coords
-      const z = proj4(this.projection, 'EPSG:4326', attr) as any
-      attr.x = z.x
-      attr.y = z.y
-
-      this._stopFacilities[attr.id] = attr
-    }
-  }
-
-  private buildTransitRouteDetails(route: any) {
-    const allDepartures = route.departures[0].departure
-    allDepartures.sort(function(a: any, b: any) {
-      const timeA = a.$.departureTime
-      const timeB = b.$.departureTime
-      if (timeA < timeB) return -1
-      if (timeA > timeB) return 1
-      return 0
-    })
-
-    const routeDetails: RouteDetails = {
-      id: route.$.id,
-      transportMode: route.transportMode[0],
-      routeProfile: [],
-      route: [],
-      departures: route.departures[0].departure.length,
-      firstDeparture: allDepartures[0].$.departureTime,
-      lastDeparture: allDepartures[allDepartures.length - 1].$.departureTime,
-      geojson: '',
-    }
-
-    for (const stop of route.routeProfile[0].stop) {
-      routeDetails.routeProfile.push(stop.$)
-    }
-
-    for (const link of route.route[0].link) {
-      routeDetails.route.push(link.$.refId)
-    }
-
-    routeDetails.geojson = this.buildCoordinatesForRoute(routeDetails)
-    this._routeData[routeDetails.id] = routeDetails
-
-    return routeDetails
-  }
-
-  private async processTransit(xml: any) {
-    this.loadingText = 'Parsing Transit Network'
-
-    this.generateStopFacilitiesFromXML(xml)
-    let uniqueRouteID = 0
-
-    const transitLines = xml.transitSchedule.transitLine
-    for (const line of transitLines) {
-      const attr: TransitLine = {
-        id: line.$.id,
-        transitRoutes: [],
-      }
-
-      for (const route of line.transitRoute) {
-        const details: RouteDetails = this.buildTransitRouteDetails(route)
-        details.uniqueRouteID = uniqueRouteID++
-        attr.transitRoutes.push(details)
-      }
-      this._transitLines[attr.id] = attr
-    }
-  }
-
   private async loadNetworks() {
     try {
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
@@ -374,8 +277,6 @@ export default class TransitSupply extends Vue {
       // and wait for them to both complete
       const results = await Promise.all([roadXMLPromise, transitXMLPromise])
 
-      console.log({ roadXML: results[0], transitXML: results[1] })
-
       this._roadFetcher.destroy()
       this._transitFetcher.destroy()
 
@@ -388,32 +289,41 @@ export default class TransitSupply extends Vue {
   }
 
   private async processInputs(networks: NetworkInputs) {
-    this.loadingText = 'Crunching road network...'
+    this.loadingText = 'Building data structures...'
     console.log(this.loadingText)
 
-    let now = performance.now()
-    await this.processRoadXML(networks.roadXML)
-    console.log('>> Process road xml: ', 0.001 * (performance.now() - now))
+    // spawn transit helper web worker
+    this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
 
-    now = performance.now()
-    await this.convertCoords()
-    console.log('>> convert coordinates: ', 0.001 * (performance.now() - now))
+    this.loadingText = 'Crunching road network...'
+    console.log(this.loadingText)
+    await this._transitHelper.createNodesAndLinks()
+
+    this.loadingText = 'Converting coordinates...'
+    console.log(this.loadingText)
+    await this._transitHelper.convertCoordinates()
+
     // await this.addLinksToMap() // --no links for now
 
     this.loadingText = 'Crunching transit network...'
     console.log(this.loadingText)
 
-    now = performance.now()
-    await this.processTransit(networks.transitXML)
-    console.log('>> process transit xml: ', 0.001 * (performance.now() - now))
+    const result: any = await this._transitHelper.processTransit()
+    console.log(result)
 
-    now = performance.now()
+    this._network = result.network
+    this._mapExtentXYXY = result.mapExtent
+    this._routeData = result.routeData
+    this._stopFacilities = result.stopFacilities
+    this._transitLines = result.transitLines
+    this._mapExtentXYXY = result.mapExtent
+
+    this.loadingText = 'Summarizing departures...'
     await this.processDepartures()
-    console.log('>> process transit departures: ', 0.001 * (performance.now() - now))
 
-    now = performance.now()
-    await this.addTransitToMap()
-    console.log('>> add transit to map: ', 0.001 * (performance.now() - now))
+    const geodata = await this.constructDepartureFrequencyGeoJson()
+
+    await this.addTransitToMap(geodata)
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
@@ -469,9 +379,7 @@ export default class TransitSupply extends Vue {
     }
   }
 
-  private async addTransitToMap() {
-    const geodata = await this.constructDepartureFrequencyGeoJson()
-
+  private async addTransitToMap(geodata: any) {
     this.mymap.addSource('transit-source', {
       data: geodata,
       type: 'geojson',
@@ -502,23 +410,6 @@ export default class TransitSupply extends Vue {
     this.mymap.on('mouseleave', 'transit-link', function() {
       parent.mymap.getCanvas().style.cursor = '-webkit-grab'
     })
-  }
-
-  private processRoadXML(xml: any) {
-    const netNodes = xml.network.nodes[0].node
-    const netLinks = xml.network.links[0].link
-
-    for (const node of netNodes) {
-      const attr = node.$
-      attr.x = parseFloat(attr.x)
-      attr.y = parseFloat(attr.y)
-      this._network.nodes[attr.id] = attr
-    }
-
-    for (const link of netLinks) {
-      const attr = link.$
-      this._network.links[attr.id] = attr
-    }
   }
 
   private constructGeoJsonFromLinkData() {
@@ -615,50 +506,6 @@ export default class TransitSupply extends Vue {
       // offset can fail if points are exactly on top of each other; ignore.
     }
     return line
-  }
-
-  private updateMapExtent(coordinates: any) {
-    this._mapExtentXYXY[0] = Math.min(this._mapExtentXYXY[0], coordinates[0])
-    this._mapExtentXYXY[1] = Math.min(this._mapExtentXYXY[1], coordinates[1])
-    this._mapExtentXYXY[2] = Math.max(this._mapExtentXYXY[2], coordinates[0])
-    this._mapExtentXYXY[3] = Math.max(this._mapExtentXYXY[3], coordinates[1])
-  }
-
-  private buildCoordinatesForRoute(transitRoute: RouteDetails) {
-    const coords = []
-    let previousLink: boolean = false
-
-    for (const linkID of transitRoute.route) {
-      if (!previousLink) {
-        const x0 = this._network.nodes[this._network.links[linkID].from].x
-        const y0 = this._network.nodes[this._network.links[linkID].from].y
-        coords.push([x0, y0])
-      }
-      const x = this._network.nodes[this._network.links[linkID].to].x
-      const y = this._network.nodes[this._network.links[linkID].to].y
-      coords.push([x, y])
-      previousLink = true
-    }
-
-    // save the extent of this line so map can zoom in on startup
-    if (coords.length > 0) {
-      this.updateMapExtent(coords[0])
-      this.updateMapExtent(coords[coords.length - 1])
-    }
-
-    const geojson = {
-      type: 'Feature',
-      geometry: {
-        type: 'LineString',
-        coordinates: coords,
-      },
-      properties: {
-        id: transitRoute.id,
-        from: coords[0],
-        to: coords[coords.length - 1],
-      },
-    }
-    return geojson
   }
 
   private removeStopMarkers() {
