@@ -51,6 +51,7 @@
     "@turf/turf": "^5.1.6",
     "@types/jest": "^23.3.1",
     "@types/jquery": "^3.3.6",
+    "@types/js-cookie": "^2.2.0",
     "@types/js-yaml": "^3.11.2",
     "@types/jwt-decode": "^2.2.1",
     "@types/mapbox-gl": "^0.44.2",
