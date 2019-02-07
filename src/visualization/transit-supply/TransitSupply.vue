@@ -20,7 +20,6 @@
     .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
       v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
     )
-
 </template>
 
 <script lang="ts">
@@ -31,7 +30,6 @@ import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
-import proj4 from 'proj4'
 import pako from 'pako'
 import xml2js from 'xml2js'
 import { Vue, Component, Prop } from 'vue-property-decorator'

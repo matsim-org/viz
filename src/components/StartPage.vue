@@ -23,11 +23,11 @@
 <script lang="ts">
 import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
-import { Vue, Component, Prop } from 'vue-property-decorator'
-import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
+import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import { Visualization } from '@/entities/Entities'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 
 @Component({
   components: { 'project-list-item': ProjectListItem },
@@ -37,14 +37,17 @@ export default class StartPage extends Vue {
   private projectStore!: ProjectStore
 
   // this assignment is necessary to make vue watch the state
-  private projectState = this.projectStore.State
+  private projectState!: ProjectState // this.projectStore.State
 
   private get projects() {
+    if (!this.projectState) return []
     return this.projectState.projects
   }
 
   public async created() {
     // start fetching data as soon as possible. Hence do this in 'created' callback
+    if (!this.projectStore) return
+
     try {
       await this.projectStore.fetchProjects()
       this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))

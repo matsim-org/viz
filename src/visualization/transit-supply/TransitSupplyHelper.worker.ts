@@ -6,25 +6,6 @@ import { InitParams, MethodNames } from '@/visualization/transit-supply/TransitS
 
 import proj4 from 'proj4'
 
-// Add various projections that we use here
-proj4.defs([
-  [
-    // south africa
-    'EPSG:2048',
-    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
-  ],
-  [
-    // berlin
-    'EPSG:31468',
-    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
-  ],
-  [
-    // cottbus
-    'EPSG:25833',
-    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
-  ],
-])
-
 interface RouteDetails {
   id: string
   departures: number
@@ -81,6 +62,8 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
     this.params = call.parameters as InitParams
     this._xml = this.params.xml
     this.projection = this.params.projection
+
+    this.addProj4Definitions()
   }
 
   public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
@@ -94,6 +77,27 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
       default:
         throw new Error('No method with name ' + call.method)
     }
+  }
+
+  /** Add various projections that we use here */
+  private addProj4Definitions() {
+    proj4.defs([
+      [
+        // south africa
+        'EPSG:2048',
+        '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+      ],
+      [
+        // berlin
+        'EPSG:31468',
+        '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
+      ],
+      [
+        // cottbus
+        'EPSG:25833',
+        '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
+      ],
+    ])
   }
 
   // XML is sent in during worker initialization
