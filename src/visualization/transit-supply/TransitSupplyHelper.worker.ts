@@ -81,8 +81,6 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
     this.params = call.parameters as InitParams
     this._xml = this.params.xml
     this.projection = this.params.projection
-
-    console.log({ WORKER_XML: this._xml })
   }
 
   public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
@@ -100,7 +98,6 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
 
   // XML is sent in during worker initialization
   private createNodesAndLinksFromXML() {
-    console.log('>> HELPER: createNodesAndLinks')
     const roadXML = this._xml.roadXML
     const netNodes = roadXML.network.nodes[0].node
     const netLinks = roadXML.network.links[0].link
@@ -116,7 +113,6 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
       const attr = link.$
       this._network.links[attr.id] = attr
     }
-    console.log('>> HELPER: done')
     return { data: {} }
   }
 

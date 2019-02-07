@@ -29,7 +29,7 @@
 import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
-import gthread from 'greenlet'
+import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
 import proj4 from 'proj4'
 import pako from 'pako'
@@ -196,6 +196,15 @@ export default class TransitSupply extends Vue {
       // zoom: 9,
     })
 
+    const extent = cookie.getJSON(this.vizId + '-bounds')
+
+    if (extent) {
+      this.mymap.fitBounds(extent, {
+        padding: { top: 50, bottom: 100, right: 100, left: 300 },
+        animate: false,
+      })
+    }
+
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
 
@@ -257,8 +266,6 @@ export default class TransitSupply extends Vue {
 
       this.loadingText = 'Loading networks...'
 
-      console.log({ AUTH_STORE: this.authStore })
-
       this._roadFetcher = await XmlFetcher.create({
         accessToken: this.authStore.state.accessToken,
         fileId: ROAD_NET,
@@ -289,43 +296,27 @@ export default class TransitSupply extends Vue {
   }
 
   private async processInputs(networks: NetworkInputs) {
-<<<<<<< HEAD
-    this.loadingText = 'Building data structures...'
-    console.log(this.loadingText)
-
-    // spawn transit helper web worker
-    this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
-
-    this.loadingText = 'Crunching road network...'
     this.loadingText = 'Preparing...'
-    console.log(this.loadingText)
-    await this._transitHelper.createNodesAndLinks()
-
-    await this.addLinksToMap() // --no links for now
 
     // spawn transit helper web worker
     this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
 
     this.loadingText = 'Crunching road network...'
-    console.log(this.loadingText)
     await this._transitHelper.createNodesAndLinks()
 
     this.loadingText = 'Converting coordinates...'
-    console.log(this.loadingText)
     await this._transitHelper.convertCoordinates()
 
     this.loadingText = 'Crunching transit network...'
-    console.log(this.loadingText)
 
     const result: any = await this._transitHelper.processTransit()
     this._network = result.network
-    this._mapExtentXYXY = result.mapExtent
     this._routeData = result.routeData
     this._stopFacilities = result.stopFacilities
     this._transitLines = result.transitLines
     this._mapExtentXYXY = result.mapExtent
 
-    await this.addLinksToMap() // --no links for now
+    // await this.addLinksToMap() // --no links for now
 
     this.loadingText = 'Summarizing departures...'
     await this.processDepartures()
@@ -333,6 +324,8 @@ export default class TransitSupply extends Vue {
     const geodata = await this.constructDepartureFrequencyGeoJson()
 
     await this.addTransitToMap(geodata)
+
+    cookie.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 365 })
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
@@ -405,12 +398,12 @@ export default class TransitSupply extends Vue {
 
     // turn "hover cursor" into a pointer, so user knows they can click.
     this.mymap.on('mousemove', 'transit-link', function(e: mapboxgl.MapMouseEvent) {
-      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
     })
 
     // and back to normal when they mouse away
     this.mymap.on('mouseleave', 'transit-link', function() {
-      parent.mymap.getCanvas().style.cursor = '-webkit-grab'
+      parent.mymap.getCanvas().style.cursor = 'grab'
     })
   }
 
@@ -475,7 +468,7 @@ export default class TransitSupply extends Vue {
             coordinates: coordinates,
           },
           properties: {
-            width: Math.max(2.5, 0.01 * this._departures[linkID].total),
+            width: Math.max(4, 0.01 * this._departures[linkID].total),
             color: isRail ? '#da4' : _colorScale[colorBin],
             colorBin: colorBin,
             departures: departures,
