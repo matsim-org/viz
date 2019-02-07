@@ -40,6 +40,13 @@ import FileAPI from '@/communication/FileAPI'
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 
+import {
+  Network,
+  NetworkInputs,
+  NetworkNode,
+  TransitLine,
+  RouteDetails,
+} from '@/visualization/transit-supply/Interfaces'
 import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
 import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
@@ -48,43 +55,6 @@ const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
 const COLOR_CATEGORIES = 16
 const SHOW_STOPS_AT_ZOOM_LEVEL = 11
-
-interface RouteDetails {
-  id: string
-  departures: number
-  firstDeparture: string
-  lastDeparture: string
-  geojson: any
-  routeProfile: string[]
-  route: string[]
-  transportMode: string
-  uniqueRouteID?: number
-}
-
-interface Network {
-  nodes: { [id: string]: NetworkNode }
-  links: { [id: string]: NetworkLink }
-}
-
-interface NetworkNode {
-  x: number
-  y: number
-}
-
-interface NetworkInputs {
-  roadXML: any
-  transitXML: any
-}
-
-interface NetworkLink {
-  readonly from: string
-  readonly to: string
-}
-
-interface TransitLine {
-  id: string
-  transitRoutes: any[]
-}
 
 class Departure {
   public total: number = 0
