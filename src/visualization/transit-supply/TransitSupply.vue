@@ -436,7 +436,7 @@ export default class TransitSupply extends Vue {
             coordinates: coordinates,
           },
           properties: {
-            width: Math.max(4, 0.01 * this._departures[linkID].total),
+            width: Math.max(3, 0.01 * this._departures[linkID].total),
             color: isRail ? '#da4' : _colorScale[colorBin],
             colorBin: colorBin,
             departures: departures,

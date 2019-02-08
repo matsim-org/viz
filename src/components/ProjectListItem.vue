@@ -22,11 +22,7 @@ import { Project } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ProjectStore from '@/project/ProjectStore'
 
-@Component({
-  components: {
-    spinner: Spinner,
-  },
-})
+@Component({ components: { spinner: Spinner} })
 export default class ProjectListItem extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
@@ -35,9 +31,9 @@ export default class ProjectListItem extends Vue {
   private isLoading = false
 
   public async created() {
-    if (this.project.visualizations && this.project.visualizations.length > 0) {
-      return
-    }
+    if (!this.project) return
+    if (this.project.visualizations && this.project.visualizations.length > 0) return
+
     this.isLoading = true
 
     try {
