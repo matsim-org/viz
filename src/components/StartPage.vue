@@ -9,10 +9,10 @@
     h3.title.is-3 Visualization Gallery
     ul.projects
       project-list-item(v-for="project in projects"
-                        v-bind:key="project.id"
-                        v-bind:project="project"
-                        v-bind:project-store="projectStore"
-                        v-on:viz-selected="onVizSelected") {{ project.name }}
+                        :key="project.id"
+                        :project="project"
+                        :project-store="projectStore"
+                        @viz-selected="onVizSelected") {{ project.name }}
 
     .about
       h3.title.is-3 About MATSim
@@ -29,15 +29,13 @@ import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import { Visualization } from '@/entities/Entities'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
-@Component({
-  components: { 'project-list-item': ProjectListItem },
-})
+@Component({ components: { 'project-list-item': ProjectListItem } })
 export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
 
   // this assignment is necessary to make vue watch the state
-  private projectState!: ProjectState // this.projectStore.State
+  private projectState: any = {}
 
   private get projects() {
     if (!this.projectState) return []
@@ -45,12 +43,14 @@ export default class StartPage extends Vue {
   }
 
   public async created() {
-    // start fetching data as soon as possible. Hence do this in 'created' callback
     if (!this.projectStore) return
 
     try {
+      this.projectState = this.projectStore.State
+
+      // start fetching data as soon as possible. Hence do this in 'created' callback
       await this.projectStore.fetchProjects()
-      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
+      this.projects.forEach((project: any) => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }

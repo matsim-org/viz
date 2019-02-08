@@ -3,50 +3,9 @@ import AsyncBackgroundWorker, {
   MethodResult,
 } from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 import { InitParams, MethodNames } from '@/visualization/transit-supply/TransitSupplyHelperContract'
+import { NetworkNode, TransitLine, RouteDetails } from '@/visualization/transit-supply/Interfaces'
 
 import proj4 from 'proj4'
-
-interface RouteDetails {
-  id: string
-  departures: number
-  firstDeparture: string
-  lastDeparture: string
-  geojson: any
-  routeProfile: string[]
-  route: string[]
-  transportMode: string
-  uniqueRouteID?: number
-}
-
-interface Network {
-  nodes: { [id: string]: NetworkNode }
-  links: { [id: string]: NetworkLink }
-}
-
-interface NetworkNode {
-  x: number
-  y: number
-}
-
-interface NetworkInputs {
-  roadXML: any
-  transitXML: any
-}
-
-interface NetworkLink {
-  readonly from: string
-  readonly to: string
-}
-
-interface TransitLine {
-  id: string
-  transitRoutes: any[]
-}
-
-class Departure {
-  public total: number = 0
-  public routes: Set<string> = new Set()
-}
 
 class TransitSupplyHelper extends AsyncBackgroundWorker {
   private params!: InitParams
