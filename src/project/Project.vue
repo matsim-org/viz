@@ -157,10 +157,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   public mounted() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: 'My Projects', link: '/projects' },
-      { title: this.project.name, link: '/project/' + this.project.id },
-    ])
+    EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
   }
 
   private onAddVisualization() {

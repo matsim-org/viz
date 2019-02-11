@@ -36,7 +36,10 @@ export default class AppRouter {
           path: '/',
           name: 'StartPage',
           component: StartPage,
-          props: { projectStore: projectStore },
+          props: {
+            authStore: authStore,
+            projectStore: projectStore,
+          },
         },
         {
           path: '/Network Links/:projectId/:vizId',

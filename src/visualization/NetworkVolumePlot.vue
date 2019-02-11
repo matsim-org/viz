@@ -61,7 +61,6 @@ async function mounted() {
 
 function setBreadcrumb() {
   EventBus.$emit('set-breadcrumbs', [
-    { title: 'My Projects', link: '/projects' },
     { title: store.project.name, link: '/project/' + store.projectId },
     { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
   ])

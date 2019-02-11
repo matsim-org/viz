@@ -9,7 +9,6 @@
 
     .nav-rightside
       a.topnavrow-item(@click="onLogin()") {{ loginText }}
-      router-link.topnavrow-item(to="/projects" v-if="isLoggedIn") Projects
 
   router-view.main-content
 </template>

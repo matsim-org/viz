@@ -147,7 +147,6 @@ export default class TransitSupply extends Vue {
 
   private setBreadcrumb() {
     EventBus.$emit('set-breadcrumbs', [
-      { title: 'My Projects', link: '/projects' },
       { title: this.project.name, link: '/project/' + this.projectId },
       { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
     ])
