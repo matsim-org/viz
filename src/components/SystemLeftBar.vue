@@ -91,7 +91,7 @@ export default class SystemLeftBar extends Vue {
   font-size: 1rem;
 }
 .loginout {
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
 }
 </style>
 

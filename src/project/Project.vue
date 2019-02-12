@@ -4,12 +4,35 @@
     .title-band
       .title-details
         h1.title.project-name {{project.name}}
-        h3.subtitle.project-id project: {{project.id.substring(0,6)}}
+        h4.subtitle.project-id project: {{project.id.substring(0,6)}}
       .editButton(@click="showSettings = true")
         i.fa.fa-lg.fa-pen
 
-    project-settings(v-if="showSettings" v-on:close="showSettings=false"
-                    v-bind:projectStore="projectStore")
+    .add-viz
+      button.button.is-info.is-medium.is-rounded.accent(@click="onAddVisualization") Create Visualization
+
+    .summary-category
+      h3.section-head Visualizations
+      .strip-empty-message(v-if="project.visualizations && project.visualizations.length === 0")
+        p No Visualizations yet. Add some!
+      .viz-summary(v-else)
+        .viz-summary-item(v-for="viz in project.visualizations" v-on:click="onSelectVisualization(viz)" v-bind:key="viz.id")
+          p {{ viz.type }}: {{ viz.id.substring(0,6) }}
+
+    .summary-category
+      h3.section-head Model Runs
+
+    .summary-category
+      h3.section-head Comparisons
+      .strip-empty-message Coming soon.
+
+    .summary-category
+      h3.section-head Project Files
+      .strip-empty-message(v-if="project.files && project.files.length === 0")
+        span No files yet. Add some!
+
+  project-settings(v-if="showSettings" v-on:close="showSettings=false"
+                  v-bind:projectStore="projectStore")
 
   .center-area
     .main-area
@@ -275,6 +298,9 @@ section {
   width: 25rem;
   height: 100%;
   background-color: #242831;
+  color: #eee;
+  display: flex;
+  flex-direction: column;
 }
 
 .center-area {
@@ -348,6 +374,12 @@ section {
   margin-top: 3rem;
 }
 
+.strip-empty-message {
+  display: flex;
+  flex-direction: row;
+  margin-top: 0.2rem;
+}
+
 .viz-table {
   display: grid;
   grid-gap: 1rem;
@@ -355,6 +387,7 @@ section {
   list-style: none;
   padding-left: 0px;
   margin-bottom: 0px;
+  overflow-y: auto;
 }
 
 .viz-item {
@@ -416,6 +449,10 @@ h3 {
   color: #eee;
 }
 
+.title-band h4 {
+  color: #aaa;
+}
+
 .title-details {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
@@ -436,6 +473,43 @@ h3 {
 active {
   color: #ffa;
   border: solid 1px #ffa;
+  cursor: pointer;
+}
+
+.add-viz {
+  padding: 3rem;
+  text-align: center;
+}
+
+.accent {
+  background-color: #097c43;
+}
+
+.accent:hover {
+  background-color: #096c63;
+}
+
+.summary-category {
+  margin: 0rem 1.5rem 4rem 1.5rem;
+}
+
+.section-head {
+  text-transform: uppercase;
+  color: #479ccc;
+  font-size: 1.2rem;
+}
+
+.viz-summary {
+  display: flex;
+  flex-direction: column;
+}
+
+.viz-summary-item {
+  padding: 0.5rem 0.5rem;
+}
+
+.viz-summary-item:hover {
+  background-color: #097c43;
   cursor: pointer;
 }
 </style>
