@@ -49,8 +49,13 @@ class XmlFetcher extends AsyncBackgroundWorker {
   private async getDataFromBlob(blob: Blob) {
     // TEMP HACK. Need user agent to determine whether GZIP is regular (Chrome)
     // or double (firefox).  Can add others later.
-    const isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
-    console.log('IS FIREFOX: ' + isFirefox)
+    let isFirefox = false
+    // are we on windows
+    if (navigator.appVersion.indexOf('Win') > -1) {
+      isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
+    }
+
+    console.log('IS FIREFOX on WINDOWS: ' + isFirefox)
 
     const data: any = await BlobUtil.blobToArrayBuffer(blob)
 
