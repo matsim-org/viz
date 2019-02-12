@@ -1,10 +1,13 @@
 <template lang="pug">
 .page-content
   .start-page-content
-    h2.title.is-2 Welcome to MATSim-Viz!
-    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below.
+    h1.title.is-1 Welcome to MATSim-Viz!
+    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs.
+    p.info This tool is being developed at the Technische Universität in Berlin, Germany.
 
-    my-projects(v-if="isAuthenticated" :projectStore="projectStore")
+    .about(v-if="isAuthenticated")
+      h3.title.is-3 My Projects
+      my-projects( :projectStore="projectStore")
 
     .about
       h3.title.is-3 Public Gallery
@@ -82,23 +85,27 @@ export default class StartPage extends Vue {
 </script>
 
 <style scoped>
+.page-content {
+  background-color: #eee;
+}
+
 .hero {
   max-width: 90rem;
   margin: auto;
 }
 
 .start-page-content {
-  padding: 3rem 1.5rem;
+  padding: 3rem 3rem;
   overflow-y: auto;
   max-width: 90rem;
   margin: auto;
-  border-top: 2rem solid #479ccc;
+  border-top: 2rem solid #cc5427;
 }
 
 .about {
-  margin-top: 2rem;
+  margin-top: 4rem;
   padding-top: 0.25rem;
-  border-top: 2px solid #479ccc;
+  border-top: 0.2rem solid #479ccc;
 }
 
 .about h3 {
@@ -106,9 +113,7 @@ export default class StartPage extends Vue {
 }
 
 .public-gallery {
-  margin-top: 0rem;
-  margin-bottom: 0.5rem;
-  border-top: 2px solid #479ccc;
+  border-top: 0.2rem solid #479ccc;
 }
 
 .info {

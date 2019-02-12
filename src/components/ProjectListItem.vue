@@ -22,7 +22,7 @@ import { Project } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ProjectStore from '@/project/ProjectStore'
 
-@Component({ components: { spinner: Spinner} })
+@Component({ components: { spinner: Spinner } })
 export default class ProjectListItem extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
@@ -71,7 +71,8 @@ export default class ProjectListItem extends Vue {
 
 .hoverable:hover {
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  box-shadow: 1px 3px 5px rgba(0, 0, 80, 0.3);
 }
 
 .spinnerContainer {
@@ -80,7 +81,7 @@ export default class ProjectListItem extends Vue {
 }
 
 .card-image {
-  background-color: #aaaa99;
+  background-color: #cc9547;
   height: 2rem;
 }
 </style>

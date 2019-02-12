@@ -1,10 +1,9 @@
 <template lang="pug">
 .xpage-contents
-  list-header(v-on:btnClicked="handleCreateClicked" title="My Projects" btnTitle="New Project")
+  list-header(v-on:btnClicked="handleCreateClicked" title="" btnTitle="New Project")
 
-  div.emptyMessage(v-if="projects === 0")
-    span No projects yet. Create one!
-
+  div.emptyMessage(v-if="projects.length === 0")
+    span You don't have any projects yet. Create one!
   .projectList(v-else)
     list-element(v-for="project in projects"
                   v-bind:key="project.id"
@@ -88,8 +87,8 @@ export default class ProjectsViewModel extends vueInstance {
 </script>
 
 <style scoped>
-.page-contents {
-  padding: 1.5rem 1.5rem;
+.xpage-contents {
+  padding: 0rem 0rem 3rem 0rem;
 }
 
 .projectList {
@@ -103,6 +102,8 @@ export default class ProjectsViewModel extends vueInstance {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  font-size: 1.5rem;
+  font-style: italic;
 }
 
 .itemContainer {

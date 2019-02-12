@@ -103,7 +103,7 @@ export default Vue.extend({})
 }
 
 .card .card-actions {
-  background-color: #ffffff88;
+  background-color: #cc9547;
   margin: 6px 3px auto auto;
   padding: 2px;
   border-radius: 4px;
