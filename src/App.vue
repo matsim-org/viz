@@ -88,7 +88,7 @@ h6 {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 0.5rem 0rem 0.5rem 0rem;
-  background-image: linear-gradient(-150deg, #479ccc, #50a2d5);
+  background-image: linear-gradient(-150deg, #479ccc, #114d72); /*50a2d5*/
   z-index: 5;
 }
 

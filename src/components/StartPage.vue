@@ -89,11 +89,6 @@ export default class StartPage extends Vue {
   background-color: #eee;
 }
 
-.hero {
-  max-width: 90rem;
-  margin: auto;
-}
-
 .start-page-content {
   padding: 3rem 3rem;
   overflow-y: auto;

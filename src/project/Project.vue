@@ -1,84 +1,85 @@
 <template lang="pug">
 .project
-  .hero.is-link
-    .heroContainer
-      .projectTitle
-        h1.title(slot="content") {{project.name}}
-        h3.subtitle project: {{project.id.substring(0,6)}}
-      .editButton
-        button.button.is-small(@click="showSettings = true")
-                span.icon.is-small
-                    i.fas.fa-pen
+  .summary-strip
+    .title-band
+      .title-details
+        h1.title.project-name {{project.name}}
+        h3.subtitle.project-id project: {{project.id.substring(0,6)}}
+      .editButton(@click="showSettings = true")
+        i.fa.fa-lg.fa-pen
 
-  section
-    list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
-    span(v-if="isFetching") Fetching project data...
-    .visualizations
-      .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
-        span No Visualizations yet. Add some!
-      .viz-table(v-else)
-        .viz-item(v-for="viz in project.visualizations"
-                  v-on:click="onSelectVisualization(viz)"
-                  v-bind:key="viz.id")
-            viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
-              .itemTitle(slot="title"): p {{ viz.type }}
-              p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
+    project-settings(v-if="showSettings" v-on:close="showSettings=false"
+                    v-bind:projectStore="projectStore")
 
-  section
-    list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
-    input.fileInput(type="file"
-        id="fileInput"
-        ref="fileInput"
-        multiple
-        v-on:change="onFileInput"
-        )
-    .file-area
-      drop.drop(
-        :class="{over:isDragOver}"
-        @dragover="isDragOver = true"
-        @dragleave="isDragOver = false"
-        @drop="onDrop"
-        effect-allowed='all'
-      ): b Drag/drop files here!
+  .center-area
+    .main-area
+      section
+        list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
+        span(v-if="isFetching") Fetching project data...
+        .visualizations
+          .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
+            span No Visualizations yet. Add some!
+          .viz-table(v-else)
+            .viz-item(v-for="viz in project.visualizations"
+                      v-on:click="onSelectVisualization(viz)"
+                      v-bind:key="viz.id")
+                viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
+                  .itemTitle(slot="title"): p {{ viz.type }}
+                  p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
 
-      .files
-        .emptyMessage(v-if="project.files && project.files.length === 0")
-          span No files yet. Add some!
-        .fileList(v-else)
-          .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id")
-              .itemTitle(slot="title")
-                span {{file.userFileName}}
-                span {{readableFileSize(file.sizeInBytes)}}
+      section
+        list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
+        input.fileInput(type="file"
+            id="fileInput"
+            ref="fileInput"
+            multiple
+            v-on:change="onFileInput"
+            )
+        .file-area
+          drop.drop(
+            :class="{over:isDragOver}"
+            @dragover="isDragOver = true"
+            @dragleave="isDragOver = false"
+            @drop="onDrop"
+            effect-allowed='all'
+          ): b Drag/drop files here!
 
-              .tag-container(slot="content")
-                .tag.is-info(v-for="tag in file.tags")
-                  span {{ tag.name }}
-              button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+          .files
+            .emptyMessage(v-if="project.files && project.files.length === 0")
+              span No files yet. Add some!
+            .fileList(v-else)
+              .fileItem(v-for="file in project.files")
+                list-element( v-bind:key="file.id")
+                  .itemTitle(slot="title")
+                    span {{file.userFileName}}
+                    span {{readableFileSize(file.sizeInBytes)}}
 
-  section.uploads(v-if="uploads.length > 0")
-    .upload-header
-      h3.title.is-3 Pending Uploads
-    .fileItem(v-for="upload in uploads")
-      list-element
-        .itemTitle(slot="title")
-          span {{ upload.file.name }}
-          span {{ toPercentage(upload.progress) }}%
-        span(slot="content") {{ toStatus(upload.status) }}
+                  .tag-container(slot="content")
+                    .tag.is-info(v-for="tag in file.tags")
+                      span {{ tag.name }}
+                  button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
-  create-visualization(v-if="showCreateVisualization"
-                        v-on:close="onAddVisualizationClosed"
-                        v-bind:projectStore="projectStore"
-                        v-bind:fileApi="fileApi")
+      section.uploads(v-if="uploads.length > 0")
+        .upload-header
+          h3.title.is-3 Pending Uploads
+        .fileItem(v-for="upload in uploads")
+          list-element
+            .itemTitle(slot="title")
+              span {{ upload.file.name }}
+              span {{ toPercentage(upload.progress) }}%
+            span(slot="content") {{ toStatus(upload.status) }}
 
-  file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-              v-bind:uploadStore="uploadStore"
-              v-bind:projectStore="projectStore"
-              v-bind:selectedProject="project"
-              v-bind:selectedFiles="selectedFiles")
+      create-visualization(v-if="showCreateVisualization"
+                            v-on:close="onAddVisualizationClosed"
+                            v-bind:projectStore="projectStore"
+                            v-bind:fileApi="fileApi")
 
-  project-settings(v-if="showSettings" v-on:close="showSettings=false"
-                  v-bind:projectStore="projectStore")
+      file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
+                  v-bind:uploadStore="uploadStore"
+                  v-bind:projectStore="projectStore"
+                  v-bind:selectedProject="project"
+                  v-bind:selectedFiles="selectedFiles")
+
 
 </template>
 <script lang="ts">
@@ -248,6 +249,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 }
 </script>
+
 <style scoped>
 .heroContainer {
   padding: 3rem 1.5rem;
@@ -261,8 +263,29 @@ section {
 }
 
 .project {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  background-color: #eee;
+}
+
+.summary-strip {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  width: 25rem;
+  height: 100%;
+  background-color: #242831;
+}
+
+.center-area {
+  max-width: 90rem;
+  margin: 0px auto;
+  width: 100%;
+}
+
+.main-area {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
 }
 
 .header {
@@ -376,5 +399,43 @@ section {
   border-bottom: 1px solid lightgray;
   width: 100%;
   padding-bottom: 1.5rem;
+}
+
+.title-band {
+  background-color: #363a45;
+  padding: 2.5rem 1rem 3rem 1rem;
+  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto;
+}
+
+.title-band h1,
+h2,
+h3 {
+  color: #eee;
+}
+
+.title-details {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  margin: auto 0rem;
+}
+
+.editButton {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  color: #888;
+  margin: auto 0.5rem auto 0rem;
+  border: solid 1px #888;
+  padding: 0.5rem;
+  border-radius: 0.3rem;
+}
+
+.editButton:hover,
+active {
+  color: #ffa;
+  border: solid 1px #ffa;
+  cursor: pointer;
 }
 </style>

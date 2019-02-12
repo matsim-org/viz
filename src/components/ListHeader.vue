@@ -18,7 +18,7 @@ button.ui.green.button {
 
 .accent {
   color: white;
-  background-color: #479ccc;
+  background-color: #2d76a1;
 }
 </style>
 

@@ -1,17 +1,17 @@
 <template lang="pug">
 #systembar
-  .nav-item(v-for="item in topItems" :key="item.id")
+  .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
     i.fa.fa-2x(:class="item.icon" aria-hidden="true")
     .icon-label {{ item.id }}
 
   .gap: span &nbsp;
 
-  .nav-item(v-for="item in bottomItems" :key="item.id")
+  .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
     i.fa.fa-2x(:class="item.icon" aria-hidden="true")
     .icon-label {{ item.id }}
 
-  .nav-item(@click="onLogin()")
-    i.fa.fa-2x(:class="isloggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
+  .nav-item.loginout(@click="onLogin()")
+    i.fa.fa-2x(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
     .icon-label {{ loginText }}
 </template>
 
@@ -26,10 +26,10 @@ export default class SystemLeftBar extends Vue {
   private authStore!: AuthenticationStore
 
   private topItems = [
-    { id: 'Home', icon: 'fa-home' },
-    { id: 'Map', icon: 'fa-map' },
-    { id: 'Run Log', icon: 'fa-database' },
-    { id: 'Settings', icon: 'fa-cog' },
+    { id: 'Home', icon: 'fa-home', url: '/' },
+    { id: 'Map', icon: 'fa-map', url: '/' },
+    { id: 'Run Log', icon: 'fa-database', url: '/' },
+    { id: 'Settings', icon: 'fa-cog', url: '/' },
   ]
   private bottomItems = []
 
@@ -53,6 +53,11 @@ export default class SystemLeftBar extends Vue {
       this.$router.push({ path: '/authentication' })
     }
   }
+
+  private onClick(url: string) {
+    console.log('clicked!: ' + url)
+    this.$router.push({ path: url })
+  }
 }
 </script>
 
@@ -66,13 +71,14 @@ export default class SystemLeftBar extends Vue {
   padding: 1.5rem 0rem;
   text-align: center;
   color: #e8e8e8;
-  border-left: 0.3rem solid #479ccc;
-  border-right: 0.3rem solid #479ccc;
+  border-left: 0.3rem solid #00000000;
+  border-right: 0.3rem solid #00000000;
 }
 
 .nav-item:hover {
   color: #ffa;
   border-left: 0.3rem solid #ffa;
+  cursor: pointer;
 }
 
 .gap {
@@ -83,6 +89,9 @@ export default class SystemLeftBar extends Vue {
   text-transform: uppercase;
   margin-top: 0.25rem;
   font-size: 1rem;
+}
+.loginout {
+  padding-bottom: 0.5rem;
 }
 </style>
 
