@@ -1,7 +1,6 @@
 <template lang="pug">
 #app
-  system-left-bar.left-nav-strip
-
+  system-left-bar.left-nav-strip(:authStore="authStore")
   router-view.main-content
 </template>
 
@@ -35,32 +34,7 @@ export default class App extends Vue {
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
 
-  private get sharedState() {
-    return sharedStore.state
-  }
-
-  private get loginText() {
-    return this.isLoggedIn ? 'Log Out' : 'Log In'
-  }
-
-  private get isLoggedIn() {
-    return this.authState.status === AuthenticationStatus.Authenticated
-  }
-
-  public mounted() {
-    EventBus.$on('set-breadcrumbs', (crumbs: BreadCrumb[]) => {
-      this.breadcrumbs = crumbs
-    })
-  }
-
-  private onLogin() {
-    if (this.authState.status === AuthenticationStatus.Authenticated) {
-      this.authStore.logOut()
-      this.$router.push({ path: '/' })
-    } else {
-      this.$router.push({ path: '/authentication' })
-    }
-  }
+  public mounted() {}
 }
 </script>
 
@@ -113,7 +87,7 @@ h6 {
   width: 7.5rem;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 0.5rem 1rem 0.5rem 1rem;
+  padding: 0.5rem 0rem 0.5rem 0rem;
   background-image: linear-gradient(-150deg, #479ccc, #50a2d5);
   z-index: 5;
 }

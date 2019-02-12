@@ -1,14 +1,15 @@
 <template lang="pug">
 .page-content
-  .hero.is-link
-    .hero-body
-      p.title Welcome to MATSim-Viz
-      p.subtitle You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
-
   .start-page-content
+    h2.title.is-2 Welcome to MATSim-Viz!
+    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below.
+
     my-projects(v-if="isAuthenticated" :projectStore="projectStore")
-    
-    h3.public-gallery.title.is-3 Public Gallery
+
+    .about
+      h3.title.is-3 Public Gallery
+      p.info Researchers have made these results available on the open web. Have a look around!
+
     ul.projects
       project-list-item(v-for="project in projects"
                         :key="project.id"
@@ -18,7 +19,7 @@
 
     .about
       h3.title.is-3 About MATSim
-      p You can find out more about MATSim at&nbsp;
+      p.info You can find out more about MATSim at&nbsp;
         a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
 
@@ -81,18 +82,40 @@ export default class StartPage extends Vue {
 </script>
 
 <style scoped>
+.hero {
+  max-width: 90rem;
+  margin: auto;
+}
+
 .start-page-content {
-  padding: 2rem 1.5rem;
+  padding: 3rem 1.5rem;
   overflow-y: auto;
+  max-width: 90rem;
+  margin: auto;
+  border-top: 2rem solid #479ccc;
 }
 
 .about {
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid lightgray;
+  padding-top: 0.25rem;
+  border-top: 2px solid #479ccc;
+}
+
+.about h3 {
+  color: #479ccc;
 }
 
 .public-gallery {
-  margin-top: 5rem;
+  margin-top: 0rem;
+  margin-bottom: 0.5rem;
+  border-top: 2px solid #479ccc;
+}
+
+.info {
+  font-size: 1.25rem;
+}
+
+.projects {
+  margin-top: 2rem;
 }
 </style>
