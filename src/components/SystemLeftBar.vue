@@ -16,17 +16,6 @@
 </template>
 
 <script lang="ts">
-/*
-    router-link.nav-link(to="/"): img.nav-logo(src="@/assets/matsim-logo-white.png")
-
-    .breadcrumb-row
-      p.nav-breadcrumb(v-for="crumb in breadcrumbs" :key="crumb.title") &bull;
-        router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
-
-    .nav-rightside
-      a.topnavrow-item(@click="onLogin()") {{ loginText }}
-*/
-
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
@@ -35,7 +24,6 @@ import AuthenticationStore, { AuthenticationStatus } from '@/auth/Authentication
 export default class SystemLeftBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-  private authState = this.authStore.state
 
   private topItems = [
     { id: 'Home', icon: 'fa-home' },
@@ -52,13 +40,13 @@ export default class SystemLeftBar extends Vue {
   }
 
   private get isLoggedIn() {
-    return this.authState.status === AuthenticationStatus.Authenticated
+    return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
   public mounted() {}
 
   private onLogin() {
-    if (this.authState.status === AuthenticationStatus.Authenticated) {
+    if (this.authStore.state.status === AuthenticationStatus.Authenticated) {
       this.authStore.logOut()
       this.$router.push({ path: '/' })
     } else {
