@@ -100,10 +100,10 @@ export default class FileUploadViewModel extends Vue {
   }
 
   private async onAddTag() {
-    const exsistingTag = this.selectedProject.tags.find(
+    const existingTag = this.selectedProject.tags.find(
       (tag: Tag) => tag.name.toLowerCase() === this.newTagText.toLowerCase()
     )
-    if (!exsistingTag && this.newTagText !== '') {
+    if (!existingTag && this.newTagText !== '') {
       this.isInvalidNewTag = false
       await this.projectStore.addTagToSelectedProject(this.newTagText, 'run')
       this.newTagText = ''
