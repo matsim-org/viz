@@ -17,8 +17,8 @@
       h3.section-head Model Runs
       .modelRun(v-for="modelRun in modelRuns"
                 @click="onSelectModelRun(modelRun)"
-                :key="modelRun.id"
-                :class="{selected: modelRun.id === selectedRun}") {{ modelRun.id }}
+                :key="modelRun.name"
+                :class="{selected: modelRun.name === selectedRun}") {{ modelRun.name }}
 
     .summary-category.dropzone
       h3.section-head Project Files
@@ -144,8 +144,6 @@ const vueInstance = Vue.extend({
   },
 })
 
-const fakeRuns = [{ id: 'run-001' }, { id: 'run-002' }, { id: 'run-base' }]
-
 @Component
 export default class ProjectViewModel extends vueInstance {
   private showCreateVisualization = false
@@ -164,7 +162,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private get modelRuns() {
-    return fakeRuns
+    return this.project.tags.filter(a => a.type === 'run')
   }
 
   private get uploads() {
@@ -190,10 +188,8 @@ export default class ProjectViewModel extends vueInstance {
 
   private onSelectModelRun(modelRun: any) {
     // toggle, if it's already selected
-    if (this.selectedRun === modelRun.id) this.selectedRun = ''
-    else this.selectedRun = modelRun.id
-
-    console.log('selected: ' + modelRun.id)
+    if (this.selectedRun === modelRun.name) this.selectedRun = ''
+    else this.selectedRun = modelRun.name
   }
 
   private onAddVisualizationClosed() {
@@ -244,7 +240,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private readableFileSize(bytes: number): string {
-    return '' + bytes // filesize(bytes)
+    return filesize(bytes)
   }
 
   private toPercentage(fraction: number): string | undefined {
