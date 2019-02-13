@@ -4,32 +4,34 @@
     .title-band
       .title-details
         h1.title.project-name {{project.name}}
-        h4.subtitle.project-id project: {{project.id.substring(0,6)}}
+        h4.subtitle project: {{project.id.substring(0,6)}}
       .editButton(@click="showSettings = true")
         i.fa.fa-lg.fa-pen
+      //.project-description
+      //  p No description.
 
     .add-viz
       button.button.is-info.is-medium.is-rounded.accent(@click="onAddVisualization") Create Visualization
 
-    .summary-category
-      h3.section-head Visualizations
-      .strip-empty-message(v-if="project.visualizations && project.visualizations.length === 0")
-        p No Visualizations yet. Add some!
-      .viz-summary(v-else)
-        .viz-summary-item(v-for="viz in project.visualizations" v-on:click="onSelectVisualization(viz)" v-bind:key="viz.id")
-          p {{ viz.type }}: {{ viz.id.substring(0,6) }}
-
-    .summary-category
+    .summary-category.modelTab
       h3.section-head Model Runs
+      .modelRun(v-for="modelRun in modelRuns"
+                @click="onSelectModelRun(modelRun)"
+                :key="modelRun.id"
+                :class="{selected: modelRun.id === selectedRun}") {{ modelRun.id }}
 
-    .summary-category
-      h3.section-head Comparisons
-      .strip-empty-message Coming soon.
-
-    .summary-category
+    .summary-category.dropzone
       h3.section-head Project Files
-      .strip-empty-message(v-if="project.files && project.files.length === 0")
-        span No files yet. Add some!
+      drop.drop(
+        :class="{over:isDragOver}"
+        @dragover="isDragOver = true"
+        @dragleave="isDragOver = false"
+        @drop="onDrop"
+        effect-allowed='all'
+      ) Drag/drop files here to upload!
+      .add-files
+        button.button.is-info.is-medium.is-rounded.accent(@click="onAddFiles") Upload Files
+
 
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
@@ -38,7 +40,6 @@
     .main-area
       section
         list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
-        span(v-if="isFetching") Fetching project data...
         .visualizations
           .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
             span No Visualizations yet. Add some!
@@ -59,14 +60,6 @@
             v-on:change="onFileInput"
             )
         .file-area
-          drop.drop(
-            :class="{over:isDragOver}"
-            @dragover="isDragOver = true"
-            @dragleave="isDragOver = false"
-            @drop="onDrop"
-            effect-allowed='all'
-          ): b Drag/drop files here!
-
           .files
             .emptyMessage(v-if="project.files && project.files.length === 0")
               span No files yet. Add some!
@@ -151,6 +144,8 @@ const vueInstance = Vue.extend({
   },
 })
 
+const fakeRuns = [{ id: 'run-001' }, { id: 'run-002' }, { id: 'run-base' }]
+
 @Component
 export default class ProjectViewModel extends vueInstance {
   private showCreateVisualization = false
@@ -158,6 +153,7 @@ export default class ProjectViewModel extends vueInstance {
   private showSettings = false
   private isDragOver = false
   private selectedFiles: File[] = []
+  private selectedRun: string = ''
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -165,6 +161,10 @@ export default class ProjectViewModel extends vueInstance {
 
   private get project() {
     return this.projectState.selectedProject
+  }
+
+  private get modelRuns() {
+    return fakeRuns
   }
 
   private get uploads() {
@@ -186,6 +186,14 @@ export default class ProjectViewModel extends vueInstance {
 
   private onAddVisualization() {
     this.showCreateVisualization = true
+  }
+
+  private onSelectModelRun(modelRun: any) {
+    // toggle, if it's already selected
+    if (this.selectedRun === modelRun.id) this.selectedRun = ''
+    else this.selectedRun = modelRun.id
+
+    console.log('selected: ' + modelRun.id)
   }
 
   private onAddVisualizationClosed() {
@@ -310,6 +318,7 @@ section {
 }
 
 .main-area {
+  padding-top: 2rem;
   grid-column: 2 / 3;
   grid-row: 1 / 2;
 }
@@ -400,27 +409,30 @@ section {
 .viz-item:hover {
   cursor: pointer;
 }
+
 .drop {
-  padding: 25px;
-  margin: 20px 10px auto 0px;
+  padding: 2.5rem 4rem;
+  margin: 1.5rem 0rem 1.5rem 0rem;
   text-align: center;
-  border: 5px dashed #ddd;
-  border-radius: 10px;
+  border: 0.3rem dashed #aaa;
+  border-radius: 0.25rem;
+  color: #aaa;
 }
 
 .drop:hover {
-  border: 5px dashed pink;
+  border: 0.3rem dashed #ffa;
+  color: white;
 }
 
 .drop.over {
-  border: 5px dashed #37f;
-  background-color: #ffa;
-  transform: translateY(3px);
+  border: 0.3rem dashed #097c43;
+  background-color: black;
+  margin: 1.5rem -0.2rem 1.5rem -0.2rem;
 }
 
 .file-area {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: 1fr;
 }
 
@@ -440,7 +452,7 @@ section {
   text-align: center;
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
+  grid-template-rows: auto auto;
 }
 
 .title-band h1,
@@ -476,24 +488,44 @@ active {
   cursor: pointer;
 }
 
+.project-description {
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  justify-content: center;
+  padding: 1rem 0rem 0rem 0rem;
+  color: #aaa;
+}
+
 .add-viz {
-  padding: 3rem;
+  padding: 3rem 1.5rem;
   text-align: center;
+}
+
+.add-files {
+  padding-bottom: 1.2rem;
+  text-align: center;
+  width: 100%;
 }
 
 .accent {
   background-color: #097c43;
+  width: 100%;
 }
 
 .accent:hover {
-  background-color: #096c63;
+  background-color: #097733; /* #096c63; */
 }
 
 .summary-category {
   margin: 0rem 1.5rem 4rem 1.5rem;
 }
 
+.modelTab {
+  margin-right: 0px;
+}
+
 .section-head {
+  margin-bottom: 1rem;
   text-transform: uppercase;
   color: #479ccc;
   font-size: 1.2rem;
@@ -504,12 +536,26 @@ active {
   flex-direction: column;
 }
 
-.viz-summary-item {
-  padding: 0.5rem 0.5rem;
+.modelRun {
+  padding: 0.7rem 0rem 0.7rem 1.2rem;
+  font-size: 1.2rem;
+  border-radius: 1.5rem 0rem 0rem 1.5rem;
+  color: #eee;
 }
 
-.viz-summary-item:hover {
-  background-color: #097c43;
+.modelRun:hover {
+  background-color: #363a45;
   cursor: pointer;
+}
+
+.modelRun.selected {
+  background-color: #eee;
+  color: #223;
+  font-weight: bold;
+}
+
+.dropzone {
+  margin-top: auto;
+  margin-bottom: 0rem;
 }
 </style>
