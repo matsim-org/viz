@@ -184,5 +184,10 @@ export default class CreateVisualizationViewModel extends Vue {
 .viz-file {
   padding: 5px 0px;
 }
+
+h4 {
+  color: #479ccc;
+  text-transform: uppercase;
+}
 </style>
 

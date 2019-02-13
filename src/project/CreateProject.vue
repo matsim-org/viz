@@ -1,12 +1,14 @@
 <template lang="pug">
   modal(v-on:close-requested="cancel()")
-    h3.title.is-3(slot="header") Create Project
+    h4.title.is-4(slot="header") Create Project
     div(slot="content")
-      input.input(v-model="projectName" placeholder="Project Name")
+      .cuteBlueHeading: h1 Enter project name
+      p (e.g., city, sponsor, etc.)
+      input.input.is-medium(v-model="projectName" placeholder="Project Name")
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
-      button.button.is-white.is-rounded(v-on:click="cancel()") Cancel
-      button.button.is-success.is-rounded(v-on:click="handleCreateClicked()") Create
+      button.button.is-white.is-rounded.is-medium(v-on:click="cancel()") Cancel
+      button.button.is-success.is-rounded.is-medium.accent(v-on:click="handleCreateClicked()") Create
 </template>
 
 <script lang="ts">
@@ -60,4 +62,28 @@ export default class CreateProjectViewModel extends vueInstance {
 </script>
 
 <style scoped>
+h4.title {
+  color: #479ccc;
+  text-transform: uppercase;
+}
+
+.accent {
+  margin-left: 1rem;
+  background-color: #2d76a1;
+}
+
+.accent:hover {
+  background-color: #256083;
+}
+
+.cuteBlueHeading h1 {
+  font-size: 1.4rem;
+  color: #479ccc;
+  min-width: max-content;
+  margin-top: 0.5rem;
+}
+
+.input {
+  margin-top: 1rem;
+}
 </style>

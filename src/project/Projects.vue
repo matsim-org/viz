@@ -102,8 +102,7 @@ export default class ProjectsViewModel extends vueInstance {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  font-size: 1.5rem;
-  font-style: italic;
+  font-size: 1.3rem;
 }
 
 .itemContainer {
