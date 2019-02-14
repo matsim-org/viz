@@ -66,7 +66,7 @@
             .emptyMessage(v-if="project.files && project.files.length === 0")
               span No files yet. Add some!
             .fileList(v-else)
-              .fileItem(v-for="file in project.files")
+              .fileItem(v-for="file in filesToShow")
                 list-element( v-bind:key="file.id")
                   .itemTitle(slot="title")
                     span {{file.userFileName}}
@@ -75,7 +75,7 @@
                   .tag-container(slot="content")
                     .tag.is-info(v-for="tag in file.tags")
                       span {{ tag.name }}
-                  button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+                  button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
       section.uploads(v-if="uploads.length > 0")
         .upload-header
@@ -188,6 +188,17 @@ export default class ProjectViewModel extends vueInstance {
 
   public mounted() {
     EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
+  }
+
+  private get filesToShow() {
+    if (!this.selectedRun) return this.project.files
+
+    return this.project.files.filter(f => {
+      for (const tag of f.tags) {
+        if (tag.name === this.selectedRun) return true
+      }
+      return false
+    })
   }
 
   private onAddVisualization() {
