@@ -1,15 +1,13 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
-    .header(slot="header")
-        p.title.less-margin-top Project Settings
-
+    div(slot="header") Project Settings
     .contentWrapper(slot="content")
         .projectName
-            p.title.is-5 Project Name
+            .cuteBlueHeading Project Name
             .projectNameInput
               input.input(type="text" v-model="newProjectName" :class="{'is-danger': isProjectNameError}")
         .projectVisibility
-            p.title.is-5 Project Visibility
+            .cuteBlueHeading Project Visibility
             .visHolder
               p Public visualizations can be viewed by anybody on the web.
               .dropdown.is-right.right-align(:class="{'is-active': showVisibility}")
@@ -154,5 +152,15 @@ p.title.less-margin-top {
 
 .right-align {
   margin: 0rem 0.5rem 0rem auto;
+}
+
+.cuteBlueHeading {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #479ccc;
+  min-width: max-content;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
 }
 </style>

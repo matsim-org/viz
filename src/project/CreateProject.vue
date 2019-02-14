@@ -1,6 +1,6 @@
 <template lang="pug">
   modal(v-on:close-requested="cancel()")
-    h4.title.is-4(slot="header") Create Project
+    div(slot="header") Create Project
     div(slot="content")
       .cuteBlueHeading: h1 Enter project name
       p (e.g., city, sponsor, etc.)

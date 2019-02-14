@@ -69,13 +69,13 @@ export default class SystemLeftBar extends Vue {
   padding: 1.2rem 0rem;
   text-align: center;
   color: #e8e8e8;
-  border-left: 0.3rem solid #00000000;
-  border-right: 0.3rem solid #00000000;
+  border-left: 0.2rem solid #00000000;
+  border-right: 0.2rem solid #00000000;
 }
 
 .nav-item:hover {
   color: #ffa;
-  border-left: 0.3rem solid #ffa;
+  border-left: 0.2rem solid #ffa;
   cursor: pointer;
 }
 

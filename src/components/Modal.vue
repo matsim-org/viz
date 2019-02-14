@@ -27,10 +27,12 @@
 }
 
 .modal-card-head {
-  background-color: #242831; /* 363a45; /* #097c43; */
+  background-color: #242831;
   border-radius: 0px;
-  padding: 1.5rem 3rem;
+  padding: 1rem 3rem;
   border: solid 1px #777;
+  color: #479ccc;
+  font-size: 1.6rem;
 }
 
 .modal-card-foot {

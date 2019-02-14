@@ -1,7 +1,6 @@
 <template lang="pug">
 modal(v-on:close-requested="close()")
-  .header(slot="header")
-    h4.title.is-4 Upload files
+  div(slot="header") Upload files
 
   .tagsAndselectedFiles(slot="content")
     .cuteBlueHeading
