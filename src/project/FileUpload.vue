@@ -5,8 +5,8 @@ modal(v-on:close-requested="close()")
 
   .tagsAndselectedFiles(slot="content")
     .cuteBlueHeading
-      h1 Attach a model run ID:
-      input.input.is-medium(type="text" v-model="modelRun" :class="{'is-danger': isProjectNameError}")
+      h1 Assign a model run ID:
+      input.input.is-medium(type="text" v-model="modelRun", placeHolder="run-001")
 
     .cuteBlueHeading: h1 Choose additional tags:
 
@@ -145,7 +145,14 @@ export default class FileUploadViewModel extends Vue {
   private async createModelRunTag() {
     if (this.modelRun.length === 0) return
 
-    await this.projectStore.addTagToSelectedProject(this.modelRun, 'run')
+    const existingTag = this.selectedProject.tags.find(
+      (tag: Tag) => tag.name.toLowerCase() === this.modelRun.toLowerCase()
+    )
+
+    if (!existingTag) {
+      await this.projectStore.addTagToSelectedProject(this.modelRun, 'run')
+    }
+
     const newTag = this.selectedProject.tags.find((tag: Tag) => tag.name.toLowerCase() === this.modelRun.toLowerCase())
     if (newTag) this.onTagSelected(newTag)
   }

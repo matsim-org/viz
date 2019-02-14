@@ -19,6 +19,8 @@
                 @click="onSelectModelRun(modelRun)"
                 :key="modelRun.name"
                 :class="{selected: modelRun.name === selectedRun}") {{ modelRun.name }}
+      p.gettingStarted(v-if="modelRuns.length===0") To get started, upload some files from a model run, such as a network.xml file or other standard MATSim outputs.
+      p.gettingStarted(v-if="modelRuns.length===0") If you upload the contents of a MATSim output iteration, many standard visualizations will be available.
 
     .summary-category.dropzone
       h3.section-head Project Files
@@ -308,15 +310,17 @@ section {
 }
 
 .center-area {
-  max-width: 90rem;
-  margin: 0px auto;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
   width: 100%;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .main-area {
+  max-width: 90rem;
+  margin: 0px auto;
   padding-top: 2rem;
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
 }
 
 .header {
@@ -553,5 +557,10 @@ active {
 .dropzone {
   margin-top: auto;
   margin-bottom: 0rem;
+}
+
+.gettingStarted {
+  padding: 1rem 1rem 1rem 0rem;
+  color: #ccc;
 }
 </style>
