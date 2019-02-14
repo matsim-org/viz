@@ -40,6 +40,13 @@
 
   .center-area
     .main-area
+      section.images(v-if="imageFiles.length>0")
+        .title Dashboard for: {{selectedRun}}
+        .viz-table
+          .viz-item(v-for="image in imageFiles" :key="image.userFileName")
+            image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="projectId")
+            p.center {{image.userFileName}}
+
       section
         list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
         .visualizations
@@ -110,6 +117,7 @@ import Modal from '@/components/Modal.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
+import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
@@ -117,7 +125,7 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
-import { Visualization } from '@/entities/Entities'
+import { Visualization, FileEntry } from '@/entities/Entities'
 import ProjectSettings from '@/project/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
@@ -132,6 +140,7 @@ const vueInstance = Vue.extend({
     'file-upload': FileUpload,
     'list-header': ListHeader,
     'list-element': ListElement,
+    'image-file-thumbnail': ImageFileThumbnail,
     'viz-thumbnail': VizThumbnail,
     'project-settings': ProjectSettings,
     Drag,
@@ -188,6 +197,13 @@ export default class ProjectViewModel extends vueInstance {
 
   public mounted() {
     EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
+  }
+
+  private get imageFiles() {
+    if (!this.selectedRun) return []
+
+    const imageTypePrefix = 'image/'
+    return this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
   }
 
   private get filesToShow() {
@@ -337,7 +353,7 @@ section {
 .main-area {
   max-width: 90rem;
   margin: 0px auto;
-  padding-top: 2rem;
+  padding-top: 1rem;
 }
 
 .header {
@@ -431,19 +447,19 @@ section {
   padding: 1rem 3rem;
   margin: 1rem 0rem 1.5rem 0rem;
   text-align: center;
-  border: 0.3rem dashed #aaa;
+  border: 0.2rem dashed #aaa;
   border-radius: 0.25rem;
   color: #aaa;
   font-size: 0.8rem;
 }
 
 .drop:hover {
-  border: 0.3rem dashed #ffa;
+  border: 0.2rem dashed #ffa;
   color: white;
 }
 
 .drop.over {
-  border: 0.3rem dashed #097c43;
+  border: 0.2rem dashed #097c43;
   background-color: black;
   margin: 1.5rem -0.2rem 1.5rem -0.2rem;
 }
@@ -473,9 +489,7 @@ section {
   grid-template-rows: auto auto;
 }
 
-.title-band h1,
-h2,
-h3 {
+.title-band h3 {
   color: #eee;
 }
 
@@ -589,5 +603,17 @@ active {
 .subtitle {
   color: #999;
   font-size: 0.85rem;
+}
+
+.images {
+  margin-bottom: 3rem;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 3px;
+  border: solid 1px #ccc;
+}
+.center {
+  text-align: center;
+  font-weight: bold;
 }
 </style>
