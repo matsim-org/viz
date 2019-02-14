@@ -5,17 +5,17 @@ modal(v-on:close-requested="close()")
 
     .contentWrapper(slot="content")
         .projectName
-            p.title.is-4 Project Name
+            p.title.is-5 Project Name
             .projectNameInput
               input.input(type="text" v-model="newProjectName" :class="{'is-danger': isProjectNameError}")
         .projectVisibility
-            p.title.is-4 Project Visibility
+            p.title.is-5 Project Visibility
             .visHolder
-              p.subtitle.is-5 Public visualizations can be viewed by anybody on the web.
-              .dropdown.is-right(:class="{'is-active': showVisibility}")
+              p Public visualizations can be viewed by anybody on the web.
+              .dropdown.is-right.right-align(:class="{'is-active': showVisibility}")
                 .dropdown-trigger
-                    button.button.is-medium.is-rounded.left-space(@click="showVisibility = !showVisibility")
-                        p.title-is-5 {{ visibility }}
+                    button.button.is-rounded.left-space(@click="showVisibility = !showVisibility")
+                        p.title-is-5 {{ chosenVisibility ? 'Private' : 'Public' }}
                         span.icon.is-small
                             i.fas.fa-angle-down
                 .dropdown-menu(role="menu")
@@ -27,7 +27,8 @@ modal(v-on:close-requested="close()")
         error(v-if="errorMessage.length > 0" v-bind:message="errorMessage")
 
     .actions(slot="actions")
-        button.button.is-link.is-rounded.is-medium.accent(@click="close()") Close
+        button.button.negative.is-rounded(@click="cancel()") Cancel
+        button.button.is-link.is-rounded.accent(@click="close()") Save
 </template>
 
 <script lang="ts">
@@ -35,6 +36,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import ProjectStore, { ProjectVisibility } from '@/project/ProjectStore'
+import ProjectViewModel from '@/project/Project.vue'
 
 @Component({
   components: {
@@ -50,9 +52,20 @@ export default class ProjectSettings extends Vue {
   private isProjectNameError = false
   private errorMessage = ''
   private showVisibility = false
+  private chosenVisibility!: ProjectVisibility
+
+  public created() {
+    const publicPermission = this.project.permissions.find(permission => permission.agent.authId === 'allUsers')
+    this.chosenVisibility = publicPermission ? ProjectVisibility.Public : ProjectVisibility.Private
+  }
 
   private close() {
     this.onProjectNameChanged()
+    this.saveProjectVisibility()
+    this.$emit('close')
+  }
+
+  private cancel() {
     this.$emit('close')
   }
 
@@ -76,20 +89,24 @@ export default class ProjectSettings extends Vue {
     }
   }
 
-  private async onProjectVisibilityChanged(visibility: ProjectVisibility) {
+  private async saveProjectVisibility() {
     this.showVisibility = false
     try {
-      await this.projectStore.changeVisibilityOfSelectedProject(visibility)
+      await this.projectStore.changeVisibilityOfSelectedProject(this.chosenVisibility)
     } catch (error) {
       this.errorMessage = 'could not create public permission'
     }
+  }
+
+  private async onProjectVisibilityChanged(visibility: ProjectVisibility) {
+    this.chosenVisibility = visibility
+    this.showVisibility = false
   }
 }
 </script>
 
 <style scoped>
 .input {
-  font-size: 1.25rem;
   margin-left: -0.5rem;
 }
 
@@ -110,7 +127,6 @@ export default class ProjectSettings extends Vue {
 }
 
 .accent {
-  margin-left: 1rem;
   background-color: #2d76a1;
 }
 
@@ -134,5 +150,9 @@ p.title {
 
 p.title.less-margin-top {
   margin-bottom: 0rem;
+}
+
+.right-align {
+  margin: 0rem 0.5rem 0rem auto;
 }
 </style>
