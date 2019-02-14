@@ -1,17 +1,17 @@
 <template lang="pug">
 #systembar
   .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
-    i.fa.fa-2x(:class="item.icon" aria-hidden="true")
+    i.fa.fa-lg(:class="item.icon" aria-hidden="true")
     .icon-label {{ item.id }}
 
   .gap: span &nbsp;
 
   .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
-    i.fa.fa-2x(:class="item.icon" aria-hidden="true")
+    i.fa.fa-lg(:class="item.icon" aria-hidden="true")
     .icon-label {{ item.id }}
 
   .nav-item.loginout(@click="onLogin()")
-    i.fa.fa-2x(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
+    i.fa.fa-lg(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
     .icon-label {{ loginText }}
 </template>
 
@@ -29,9 +29,8 @@ export default class SystemLeftBar extends Vue {
     { id: 'Home', icon: 'fa-home', url: '/' },
     { id: 'Map', icon: 'fa-map', url: '/' },
     { id: 'Run Log', icon: 'fa-database', url: '/' },
-    { id: 'Settings', icon: 'fa-cog', url: '/' },
   ]
-  private bottomItems = []
+  private bottomItems = [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
 
   public async created() {}
 
@@ -55,7 +54,6 @@ export default class SystemLeftBar extends Vue {
   }
 
   private onClick(url: string) {
-    console.log('clicked!: ' + url)
     this.$router.push({ path: url })
   }
 }
@@ -68,16 +66,16 @@ export default class SystemLeftBar extends Vue {
 }
 
 .nav-item {
-  padding: 1.5rem 0rem;
+  padding: 1.2rem 0rem;
   text-align: center;
   color: #e8e8e8;
-  border-left: 0.3rem solid #00000000;
-  border-right: 0.3rem solid #00000000;
+  border-left: 0.2rem solid #00000000;
+  border-right: 0.2rem solid #00000000;
 }
 
 .nav-item:hover {
   color: #ffa;
-  border-left: 0.3rem solid #ffa;
+  border-left: 0.2rem solid #ffa;
   cursor: pointer;
 }
 
@@ -88,10 +86,11 @@ export default class SystemLeftBar extends Vue {
 .icon-label {
   text-transform: uppercase;
   margin-top: 0.25rem;
-  font-size: 1rem;
+  font-size: 0.7rem;
 }
+
 .loginout {
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
 }
 </style>
 
