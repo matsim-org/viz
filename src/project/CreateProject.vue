@@ -7,8 +7,8 @@
       input.input.is-medium(v-model="projectName" placeholder="Project Name")
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
-      button.button.is-white.is-rounded.is-medium(v-on:click="cancel()") Cancel
-      button.button.is-success.is-rounded.is-medium.accent(v-on:click="handleCreateClicked()") Create
+      button.button.negative.is-rounded(v-on:click="cancel()") Cancel
+      button.button.is-success.is-rounded.accent(v-on:click="handleCreateClicked()") Create
 </template>
 
 <script lang="ts">
@@ -68,7 +68,6 @@ h4.title {
 }
 
 .accent {
-  margin-left: 1rem;
   background-color: #2d76a1;
 }
 

@@ -6,9 +6,9 @@ modal(v-on:close-requested="close()")
   .tagsAndselectedFiles(slot="content")
     .cuteBlueHeading
       h1 Assign a model run ID:
-      input.input.is-medium(type="text" v-model="modelRun", placeHolder="run-001")
+      input.input(type="text" v-model="modelRun", placeHolder="run-001")
 
-    .cuteBlueHeading: h1 Choose additional tags:
+    .cuteBlueHeading.top-space: h1 Choose additional tags:
 
     .selectedTags
       .tag.is-info(v-for="tag in selectedTags")
@@ -19,7 +19,7 @@ modal(v-on:close-requested="close()")
       .tagsAndDropdown
         .dropdown(:class="{'is-active': showTags && filteredTags.length > 0}")
           .dropdown-trigger
-            button.button.is-medium.is-rounded(@click="showTags = !showTags")
+            button.button.is-rounded(@click="showTags = !showTags")
               span Add existing tags
               span.icon.is-small
                 i.fas.fa-angle-down
@@ -27,8 +27,8 @@ modal(v-on:close-requested="close()")
             .dropdown-content
               a.dropdown-item(v-for="tag in filteredTags" @click="onTagSelected(tag)") {{ tag.name }}
       .addNewTag
-        input.input.is-medium(type="text" v-model="newTagText" :class="{'is-danger': isInvalidNewTag }")
-        button.button.is-medium.is-rounded.left-space(@click="onAddTag") New Tag
+        input.input(type="text" v-model="newTagText" :class="{'is-danger': isInvalidNewTag }")
+        button.button.is-rounded.left-space(@click="onAddTag") New Tag
 
     .fileList
       h1 The following {{files.length}} file{{ files.length > 1 ? 's' : ''}} will be uploaded:
@@ -42,11 +42,8 @@ modal(v-on:close-requested="close()")
             button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(file)")
 
   div(slot="actions")
-    button.negative.button.is-medium.is-rounded(v-on:click="cancel()") Cancel
-    button.button.is-link.is-medium.is-rounded.accent(v-on:click="uploadselectedFiles()") Upload
-
-
-
+    button.negative.button.is-rounded(v-on:click="cancel()") Cancel
+    button.button.is-link.is-rounded.accent(v-on:click="uploadselectedFiles()") Upload
 </template>
 
 <script lang="ts">
@@ -93,9 +90,17 @@ export default class FileUploadViewModel extends Vue {
   }
 
   public created() {
+    window.addEventListener('keyup', e => this.onKeyPressed(e))
     // tslint:disable-next-line
     for (let i = 0; i < this.selectedFiles.length; i++) {
       this.files.push(this.selectedFiles[i])
+    }
+  }
+
+  private onKeyPressed(e: any) {
+    if (e.keyCode === 27) {
+      // ESC
+      this.close()
     }
   }
 
@@ -112,6 +117,7 @@ export default class FileUploadViewModel extends Vue {
   }
   private onTagSelected(tag: Tag) {
     this.selectedTags.push(tag)
+    this.showTags = false
   }
 
   private onRemoveTag(tag: Tag) {
@@ -124,7 +130,7 @@ export default class FileUploadViewModel extends Vue {
     )
     if (!existingTag && this.newTagText !== '') {
       this.isInvalidNewTag = false
-      await this.projectStore.addTagToSelectedProject(this.newTagText, 'run')
+      await this.projectStore.addTagToSelectedProject(this.newTagText, 'tag')
 
       // the normal case: user wants to use the tag they just added.
       const newTag = this.selectedProject.tags.find(
@@ -181,6 +187,7 @@ export default class FileUploadViewModel extends Vue {
   flex-direction: row;
   align-content: center;
   margin-bottom: 2rem;
+  margin-left: 1rem;
 }
 
 .tagsAndselectedFiles {
@@ -192,25 +199,26 @@ export default class FileUploadViewModel extends Vue {
 }
 
 .cuteBlueHeading {
-  margin-top: 1.5rem;
   display: flex;
   flex-direction: row;
 }
 
 .cuteBlueHeading h1 {
-  font-size: 1.4rem;
+  font-size: 1rem;
   color: #479ccc;
   min-width: max-content;
   margin-right: 3rem;
   margin-top: 0.5rem;
+  text-transform: uppercase;
 }
 
 .fileList h1 {
-  font-size: 1.4rem;
+  font-size: 1rem;
   color: #479ccc;
   min-width: max-content;
   margin-right: 3rem;
   margin-top: 0.5rem;
+  text-transform: uppercase;
 }
 
 .itemTitle {
@@ -248,11 +256,9 @@ export default class FileUploadViewModel extends Vue {
 
 h4 {
   color: #479ccc;
-  text-transform: uppercase;
 }
 
 .accent {
-  margin-left: 1rem;
   background-color: #2d76a1;
 }
 
@@ -274,6 +280,13 @@ h4 {
 
 .scrollableFileList {
   max-height: 20rem;
+  margin-left: 1rem;
   overflow-y: auto;
+}
+.top-space {
+  margin-top: 2rem;
+}
+.push-right {
+  margin-left: auto;
 }
 </style>

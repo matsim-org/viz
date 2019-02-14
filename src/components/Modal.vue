@@ -29,7 +29,7 @@
 .modal-card-head {
   background-color: #242831; /* 363a45; /* #097c43; */
   border-radius: 0px;
-  padding: 2rem 3rem;
+  padding: 1.5rem 3rem;
   border: solid 1px #777;
 }
 
@@ -48,7 +48,7 @@
 /* WARNING! editing in global scope here, so that bulma picks up change. Be careful! */
 .modal-card-head p {
   color: #479ccc;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
 }
 

@@ -3,15 +3,15 @@
   .summary-strip
     .title-band
       .title-details
-        h1.title.project-name {{project.name}}
-        h4.subtitle project: {{project.id.substring(0,6)}}
+        h3.project-name {{project.name}}
+        .subtitle: p project: {{project.id.substring(0,6)}}
       .editButton(@click="showSettings = true")
-        i.fa.fa-lg.fa-pen
+        i.fa.fa-pen
       //.project-description
       //  p No description.
 
     .add-viz
-      button.button.is-info.is-medium.is-rounded.accent(@click="onAddVisualization") Create Visualization
+      button.button.is-info.is-rounded.accent(@click="onAddVisualization") Create Visualization
 
     .summary-category.modelTab
       h3.section-head Model Runs
@@ -32,7 +32,7 @@
         effect-allowed='all'
       ) Drag/drop files here to upload!
       .add-files
-        button.button.is-info.is-medium.is-rounded.accent(@click="onAddFiles") Upload Files
+        button.button.is-info.is-rounded.accent(@click="onAddFiles") Upload Files
 
 
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
@@ -164,7 +164,13 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private get modelRuns() {
-    return this.project.tags.filter(a => a.type === 'run')
+    if (!this.project.tags) return []
+    return this.project.tags
+      .filter(a => a.type === 'run')
+      .sort((a, b) => {
+        // reverse sort! newest at top
+        return a.name < b.name ? 1 : -1
+      })
   }
 
   private get uploads() {
@@ -301,7 +307,7 @@ section {
 .summary-strip {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  width: 25rem;
+  width: 16rem;
   height: 100%;
   background-color: #242831;
   color: #eee;
@@ -411,12 +417,13 @@ section {
 }
 
 .drop {
-  padding: 2.5rem 4rem;
-  margin: 1.5rem 0rem 1.5rem 0rem;
+  padding: 1rem 3rem;
+  margin: 1rem 0rem 1.5rem 0rem;
   text-align: center;
   border: 0.3rem dashed #aaa;
   border-radius: 0.25rem;
   color: #aaa;
+  font-size: 0.8rem;
 }
 
 .drop:hover {
@@ -448,7 +455,7 @@ section {
 
 .title-band {
   background-color: #363a45;
-  padding: 2.5rem 1rem 3rem 1rem;
+  padding: 1.5rem 1rem 2rem 1rem;
   text-align: center;
   display: grid;
   grid-template-columns: 1fr auto;
@@ -475,9 +482,9 @@ h3 {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   color: #888;
-  margin: auto 0.5rem auto 0rem;
+  margin: auto 0rem;
   border: solid 1px #888;
-  padding: 0.5rem;
+  padding: 0.1rem 0.3rem;
   border-radius: 0.3rem;
 }
 
@@ -497,7 +504,7 @@ active {
 }
 
 .add-viz {
-  padding: 3rem 1.5rem;
+  padding: 2rem 1rem;
   text-align: center;
 }
 
@@ -517,7 +524,7 @@ active {
 }
 
 .summary-category {
-  margin: 0rem 1.5rem 4rem 1.5rem;
+  margin: 0rem 1rem 4rem 1rem;
 }
 
 .modelTab {
@@ -528,7 +535,7 @@ active {
   margin-bottom: 1rem;
   text-transform: uppercase;
   color: #479ccc;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
 }
 
 .viz-summary {
@@ -537,9 +544,9 @@ active {
 }
 
 .modelRun {
-  padding: 0.7rem 0rem 0.7rem 1.2rem;
-  font-size: 1.2rem;
-  border-radius: 1.5rem 0rem 0rem 1.5rem;
+  padding: 0.4rem 0rem 0.4rem 1.2rem;
+  font-size: 0.8rem;
+  border-radius: 1.4rem 0rem 0rem 1.5rem;
   color: #eee;
 }
 
@@ -562,5 +569,14 @@ active {
 .gettingStarted {
   padding: 1rem 1rem 1rem 0rem;
   color: #ccc;
+}
+
+.project-name {
+  font-size: 1.2rem;
+}
+
+.subtitle {
+  color: #999;
+  font-size: 0.85rem;
 }
 </style>
