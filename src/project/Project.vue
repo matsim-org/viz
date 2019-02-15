@@ -206,7 +206,11 @@ export default class ProjectViewModel extends vueInstance {
     if (!this.selectedRun) return []
 
     const imageTypePrefix = 'image/'
-    return this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    const files = this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    files.sort((a, b) => {
+      return a.userFileName > b.userFileName ? 1 : -1
+    })
+    return files
   }
 
   private get filesToShow() {
@@ -358,7 +362,7 @@ section {
 }
 
 .main-area {
-  max-width: 90rem;
+  max-width: 60rem;
   margin: 0px auto;
   padding-top: 1rem;
 }
@@ -510,7 +514,7 @@ section {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   color: #888;
-  margin: auto 0rem;
+  margin: auto 0rem auto 0.1rem;
   border: solid 1px #888;
   padding: 0.1rem 0.3rem;
   border-radius: 0.3rem;

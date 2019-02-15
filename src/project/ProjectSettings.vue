@@ -7,7 +7,7 @@ modal(v-on:close-requested="close()")
             .projectNameInput
               input.input(type="text" v-model="newProjectName" :class="{'is-danger': isProjectNameError}")
         .projectVisibility
-            .cuteBlueHeading Project Visibility
+            .cuteBlueHeading Visibility
             .visHolder
               p Public visualizations can be viewed by anybody on the web.
               .dropdown.is-right.right-align(:class="{'is-active': showVisibility}")
