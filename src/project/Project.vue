@@ -34,14 +34,13 @@
       .add-files
         button.button.is-info.is-rounded.accent(@click="onAddFiles") Upload Files
 
-
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
 
   .center-area
     .main-area
       section.images(v-if="imageFiles.length>0")
-        .title Dashboard for: {{selectedRun}}
+        .title {{selectedRun}} / Dashboard
         .viz-table
           .viz-item(v-for="image in imageFiles" :key="image.userFileName")
             image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="projectId")
@@ -99,16 +98,20 @@
                             v-bind:projectStore="projectStore"
                             v-bind:fileApi="fileApi")
 
-      file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-                  v-bind:uploadStore="uploadStore"
-                  v-bind:projectStore="projectStore"
-                  v-bind:selectedProject="project"
-                  v-bind:selectedFiles="selectedFiles")
+      file-upload(v-if="showFileUpload"
+                  @close="onAddFilesClosed"
+                  :suggestedRun="selectedRun"
+                  :uploadStore="uploadStore"
+                  :projectStore="projectStore"
+                  :selectedProject="project"
+                  :selectedFiles="selectedFiles")
 
 
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import mediumZoom from 'medium-zoom'
+
 import CreateVisualization from '@/project/CreateVisualization.vue'
 import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -203,7 +206,11 @@ export default class ProjectViewModel extends vueInstance {
     if (!this.selectedRun) return []
 
     const imageTypePrefix = 'image/'
-    return this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    const files = this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    files.sort((a, b) => {
+      return a.userFileName > b.userFileName ? 1 : -1
+    })
+    return files
   }
 
   private get filesToShow() {
@@ -221,10 +228,14 @@ export default class ProjectViewModel extends vueInstance {
     this.showCreateVisualization = true
   }
 
-  private onSelectModelRun(modelRun: any) {
+  private async onSelectModelRun(modelRun: any) {
     // toggle, if it's already selected
     if (this.selectedRun === modelRun.name) this.selectedRun = ''
     else this.selectedRun = modelRun.name
+
+    // the medium zoom library does things to the DOM, so this Vue hack is required
+    await Vue.nextTick()
+    mediumZoom('.medium-zoom', { background: '#444450' })
   }
 
   private onAddVisualizationClosed() {
@@ -351,7 +362,7 @@ section {
 }
 
 .main-area {
-  max-width: 90rem;
+  max-width: 60rem;
   margin: 0px auto;
   padding-top: 1rem;
 }
@@ -439,10 +450,6 @@ section {
   width: 240px;
 }
 
-.viz-item:hover {
-  cursor: pointer;
-}
-
 .drop {
   padding: 1rem 3rem;
   margin: 1rem 0rem 1.5rem 0rem;
@@ -461,7 +468,7 @@ section {
 .drop.over {
   border: 0.2rem dashed #097c43;
   background-color: black;
-  margin: 1.5rem -0.2rem 1.5rem -0.2rem;
+  margin: 1rem -0.2rem 1.5rem -0.2rem;
 }
 
 .file-area {
@@ -507,7 +514,7 @@ section {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   color: #888;
-  margin: auto 0rem;
+  margin: auto 0rem auto 0.1rem;
   border: solid 1px #888;
   padding: 0.1rem 0.3rem;
   border-radius: 0.3rem;
@@ -569,9 +576,9 @@ active {
 }
 
 .modelRun {
-  padding: 0.4rem 0rem 0.4rem 1.2rem;
-  font-size: 0.8rem;
-  border-radius: 1.4rem 0rem 0rem 1.5rem;
+  padding: 0.3rem 0rem 0.3rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 1.3rem 0rem 0rem 1.3rem;
   color: #eee;
 }
 
@@ -583,7 +590,6 @@ active {
 .modelRun.selected {
   background-color: #eee;
   color: #223;
-  font-weight: bold;
 }
 
 .dropzone {
@@ -593,6 +599,7 @@ active {
 
 .gettingStarted {
   padding: 1rem 1rem 1rem 0rem;
+  font-size: 0.8rem;
   color: #ccc;
 }
 

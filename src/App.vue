@@ -140,4 +140,12 @@ a:hover {
   font-size: 0.8rem;
   margin: auto 0rem;
 }
+
+.medium-zoom-overlay {
+  z-index: 100;
+}
+
+.medium-zoom-overlay ~ img {
+  z-index: 101;
+}
 </style>
