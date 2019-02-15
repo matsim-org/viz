@@ -110,6 +110,8 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import mediumZoom from 'medium-zoom'
+
 import CreateVisualization from '@/project/CreateVisualization.vue'
 import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -222,10 +224,14 @@ export default class ProjectViewModel extends vueInstance {
     this.showCreateVisualization = true
   }
 
-  private onSelectModelRun(modelRun: any) {
+  private async onSelectModelRun(modelRun: any) {
     // toggle, if it's already selected
     if (this.selectedRun === modelRun.name) this.selectedRun = ''
     else this.selectedRun = modelRun.name
+
+    // the medium zoom library does things to the DOM, so this Vue hack is required
+    await Vue.nextTick()
+    mediumZoom('.medium-zoom', { background: '#444450' })
   }
 
   private onAddVisualizationClosed() {
@@ -440,10 +446,6 @@ section {
   width: 240px;
 }
 
-.viz-item:hover {
-  cursor: pointer;
-}
-
 .drop {
   padding: 1rem 3rem;
   margin: 1rem 0rem 1.5rem 0rem;
@@ -462,7 +464,7 @@ section {
 .drop.over {
   border: 0.2rem dashed #097c43;
   background-color: black;
-  margin: 1.5rem -0.2rem 1.5rem -0.2rem;
+  margin: 1rem -0.2rem 1.5rem -0.2rem;
 }
 
 .file-area {
@@ -570,9 +572,9 @@ active {
 }
 
 .modelRun {
-  padding: 0.5rem 0rem 0.5rem 1.2rem;
+  padding: 0.3rem 0rem 0.3rem 1.2rem;
   font-size: 0.9rem;
-  border-radius: 1.5rem 0rem 0rem 1.5rem;
+  border-radius: 1.3rem 0rem 0rem 1.3rem;
   color: #eee;
 }
 

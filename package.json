@@ -25,6 +25,7 @@
     "jwt-decode": "^2.2.0",
     "keyword-extractor": "0.0.15",
     "mapbox-gl": "^0.52.0",
+    "medium-zoom": "^1.0.3",
     "nano-sql": "^1.7.6",
     "node-yaml": "^3.1.1",
     "pako": "^1.0.8",

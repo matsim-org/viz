@@ -1,6 +1,6 @@
 <template lang="pug">
-#image-file-thumbnail
-  img(:src="imageData")
+.image-thumbnail
+  img.medium-zoom(:src="imageData")
 </template>
 
 <script lang="ts">
@@ -45,5 +45,3 @@ export default class ImageFileThumbnail extends Vue {
 
 <style scoped>
 </style>
-
-
