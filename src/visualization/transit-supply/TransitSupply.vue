@@ -1,11 +1,11 @@
 <template lang="pug">
 #container
-  .status-blob(v-if="loadingText"): h2 {{ loadingText }}
-  .info-blob
+  .status-blob(v-if="loadingText"): p {{ loadingText }}
+  .info-blob(v-if="routesOnLink.length > 0")
     .info-header
       h3(style="color: #ff8") ROUTES ON LINK
 
-    p.details(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
+    p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
     .route(v-for="route in routesOnLink"
           :key="route.uniqueRouteID"
@@ -158,7 +158,7 @@ export default class TransitSupply extends Vue {
       // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/light-v9',
+      style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -177,6 +177,8 @@ export default class TransitSupply extends Vue {
 
     this.mymap.on('move', this.handleMapMotion)
     this.mymap.on('zoom', this.handleMapMotion)
+    this.mymap.on('click', this.handleEmptyClick)
+
     this.mymap.keyboard.disable() // so arrow keys don't pan
 
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
@@ -184,6 +186,13 @@ export default class TransitSupply extends Vue {
 
   private handleMapMotion() {
     if (this.stopMarkers.length > 0) this.showTransitStops()
+  }
+
+  private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
+    this.routesOnLink = []
+    this.removeStopMarkers()
+    this.removeSelectedRoute()
+    this.removeAttachedRoutes()
   }
 
   private showRouteDetails(routeID: string) {
@@ -529,7 +538,7 @@ export default class TransitSupply extends Vue {
         paint: {
           'line-opacity': 1.0,
           'line-width': 5, // ['get', 'width'],
-          'line-color': '#f00', // ['get', 'color'],
+          'line-color': '#0ff', // ['get', 'color'],
         },
       })
     }
@@ -618,7 +627,7 @@ export default class TransitSupply extends Vue {
   }
 }
 
-const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
+const _colorScale = colormap({ colormap: 'plasma', nshades: COLOR_CATEGORIES })
 
 const nodeReadAsync = function(filename: string) {
   const fs = require('fs')
@@ -651,7 +660,7 @@ p {
 }
 
 #container {
-  height: 100%;
+  height: 100vh;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -659,35 +668,38 @@ p {
 }
 
 .status-blob {
-  background-color: white;
+  background-color: #222;
   box-shadow: 0 0 8px #00000040;
-  opacity: 0.8;
+  opacity: 0.9;
   margin: auto 0px auto -10px;
-  padding: 15px 0px;
+  padding: 3rem 0px;
   text-align: center;
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   z-index: 2;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
 }
 
 #mymap {
   width: 100%;
   height: 100%;
-  background-color: white;
+  background-color: black;
   overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 2;
 }
 
 .route {
-  background-color: white;
+  background-color: #363a45;
   margin: 0px 0px;
   padding: 5px 5px;
   text-align: left;
+  color: #bbb;
 }
 
 .route:hover {
-  background-color: #f4f4f4;
+  background-color: #464953;
   cursor: pointer;
 }
 
@@ -698,6 +710,7 @@ h3 {
 
 .mytitle {
   margin-left: 10px;
+  color: white;
 }
 
 .details {
@@ -718,7 +731,8 @@ h3 {
 }
 
 .highlightedRoute {
-  background-color: #eee;
+  background-color: #445;
+  border-right: solid 5px #ff8;
 }
 
 .bigtitle {
@@ -730,7 +744,6 @@ h3 {
 
 .info-header {
   background-color: #557;
-  border-radius: 8px 8px 0px 0px;
   padding: 0.5rem 0rem;
 }
 
@@ -738,9 +751,8 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 250px;
-  background-color: white;
-  border-radius: 8px;
-  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+  background-color: #363a45;
+  margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
   grid-column: 1 / 2;
@@ -748,7 +760,18 @@ h3 {
   opacity: 0.95;
   z-index: 2;
   overflow-y: auto;
+  animation: 0.3s ease 0s 1 slideInFromLeft;
 }
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 .stop-marker {
   position: absolute;
   width: 12px;
@@ -757,5 +780,12 @@ h3 {
   transform: translate(-50%, -50%);
   background-size: 100%;
   cursor: pointer;
+}
+.help-text {
+  color: #ccc;
+}
+
+.status-blob p {
+  color: #ffa;
 }
 </style>
