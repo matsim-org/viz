@@ -34,14 +34,13 @@
       .add-files
         button.button.is-info.is-rounded.accent(@click="onAddFiles") Upload Files
 
-
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
 
   .center-area
     .main-area
       section.images(v-if="imageFiles.length>0")
-        .title Dashboard for: {{selectedRun}}
+        .title {{selectedRun}} / Dashboard
         .viz-table
           .viz-item(v-for="image in imageFiles" :key="image.userFileName")
             image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="projectId")
@@ -99,11 +98,13 @@
                             v-bind:projectStore="projectStore"
                             v-bind:fileApi="fileApi")
 
-      file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-                  v-bind:uploadStore="uploadStore"
-                  v-bind:projectStore="projectStore"
-                  v-bind:selectedProject="project"
-                  v-bind:selectedFiles="selectedFiles")
+      file-upload(v-if="showFileUpload"
+                  @close="onAddFilesClosed"
+                  :suggestedRun="selectedRun"
+                  :uploadStore="uploadStore"
+                  :projectStore="projectStore"
+                  :selectedProject="project"
+                  :selectedFiles="selectedFiles")
 
 
 </template>
@@ -569,9 +570,9 @@ active {
 }
 
 .modelRun {
-  padding: 0.4rem 0rem 0.4rem 1.2rem;
-  font-size: 0.8rem;
-  border-radius: 1.4rem 0rem 0rem 1.5rem;
+  padding: 0.5rem 0rem 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 1.5rem 0rem 0rem 1.5rem;
   color: #eee;
 }
 
@@ -583,7 +584,6 @@ active {
 .modelRun.selected {
   background-color: #eee;
   color: #223;
-  font-weight: bold;
 }
 
 .dropzone {
@@ -593,6 +593,7 @@ active {
 
 .gettingStarted {
   padding: 1rem 1rem 1rem 0rem;
+  font-size: 0.8rem;
   color: #ccc;
 }
 

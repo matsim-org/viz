@@ -79,6 +79,8 @@ export default class FileUploadViewModel extends Vue {
   private selectedProject!: Project
   @Prop({ type: FileList, required: true })
   private selectedFiles!: FileList
+  @Prop({ type: String, required: false })
+  private suggestedRun!: string
 
   private get filteredTags() {
     return this.selectedProject.tags
@@ -94,6 +96,8 @@ export default class FileUploadViewModel extends Vue {
     for (let i = 0; i < this.selectedFiles.length; i++) {
       this.files.push(this.selectedFiles[i])
     }
+
+    if (this.suggestedRun) this.modelRun = this.suggestedRun
   }
 
   private onKeyPressed(e: any) {
