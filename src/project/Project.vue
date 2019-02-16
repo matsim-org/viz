@@ -340,13 +340,14 @@ section {
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
   background-color: #eee;
+  height: 100vh;
 }
 
 .summary-strip {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   width: 16rem;
-  height: 100%;
+  height: 100vh;
   background-color: #242831;
   color: #eee;
   display: flex;
@@ -357,7 +358,7 @@ section {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow-y: auto;
 }
 

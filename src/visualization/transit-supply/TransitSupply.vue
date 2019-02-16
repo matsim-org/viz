@@ -7,15 +7,15 @@
 
     p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
-    .route(v-for="route in routesOnLink"
+    .routeList
+      .route(v-for="route in routesOnLink"
           :key="route.uniqueRouteID"
           :class="{highlightedRoute: selectedRoute && route.id === selectedRoute.id}"
-          @click="showRouteDetails(route.id)"
-    )
-      h3.mytitle {{route.id}}
-      p.details: b {{route.departures}} departures
-      p.details First: {{route.firstDeparture}}
-      p.details Last: {{route.lastDeparture}}
+          @click="showRouteDetails(route.id)")
+        h3.mytitle {{route.id}}
+        p.details: b {{route.departures}} departures
+        p.details First: {{route.firstDeparture}}
+        p.details Last: {{route.lastDeparture}}
   #mymap
     .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
       v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
@@ -189,10 +189,10 @@ export default class TransitSupply extends Vue {
   }
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
-    this.routesOnLink = []
     this.removeStopMarkers()
     this.removeSelectedRoute()
     this.removeAttachedRoutes()
+    this.routesOnLink = []
   }
 
   private showRouteDetails(routeID: string) {
@@ -699,7 +699,7 @@ p {
 }
 
 .route:hover {
-  background-color: #464953;
+  background-color: #445;
   cursor: pointer;
 }
 
@@ -731,7 +731,7 @@ h3 {
 }
 
 .highlightedRoute {
-  background-color: #445;
+  background-color: #556;
   border-right: solid 5px #ff8;
 }
 
@@ -743,13 +743,14 @@ h3 {
 }
 
 .info-header {
-  background-color: #557;
+  background-color: #558;
   padding: 0.5rem 0rem;
 }
 
 .info-blob {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   width: 250px;
   background-color: #363a45;
   margin: 0px 0px;
@@ -759,7 +760,6 @@ h3 {
   grid-row: 1 / 2;
   opacity: 0.95;
   z-index: 2;
-  overflow-y: auto;
   animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 
@@ -770,6 +770,12 @@ h3 {
   to {
     transform: translateX(0);
   }
+}
+
+.routeList {
+  width: 250px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .stop-marker {
