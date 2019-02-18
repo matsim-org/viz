@@ -427,7 +427,10 @@ export default class TransitSupply extends Vue {
         ]
 
         const departures = this._departures[linkID].total
-        const colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / this._maximum)
+
+        // shift scale from 0->1 to 0.25->1.0, because dark blue is hard to see on a black map
+        const ratio = 0.25 + (0.75 * (departures - 1)) / this._maximum
+        const colorBin = Math.floor(COLOR_CATEGORIES * ratio)
 
         let isRail = false
         for (const route of this._departures[linkID].routes) {
@@ -436,7 +439,6 @@ export default class TransitSupply extends Vue {
             break
           }
         }
-
         let line = {
           type: 'Feature',
           geometry: {
@@ -445,7 +447,7 @@ export default class TransitSupply extends Vue {
           },
           properties: {
             width: Math.max(3, 0.01 * this._departures[linkID].total),
-            color: isRail ? '#da4' : _colorScale[colorBin],
+            color: isRail ? '#751ec5' : _colorScale[colorBin], //#da4
             colorBin: colorBin,
             departures: departures,
             id: linkID,
@@ -538,7 +540,7 @@ export default class TransitSupply extends Vue {
         paint: {
           'line-opacity': 1.0,
           'line-width': 5, // ['get', 'width'],
-          'line-color': '#0ff', // ['get', 'color'],
+          'line-color': '#f00', // ['get', 'color'],
         },
       })
     }
@@ -627,7 +629,7 @@ export default class TransitSupply extends Vue {
   }
 }
 
-const _colorScale = colormap({ colormap: 'plasma', nshades: COLOR_CATEGORIES })
+const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 
 const nodeReadAsync = function(filename: string) {
   const fs = require('fs')
