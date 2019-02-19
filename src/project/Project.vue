@@ -1,38 +1,15 @@
 <template lang="pug">
 .project
-  .summary-strip
-    .title-band
-      .title-details
-        h3.project-name {{project.name}}
-        .subtitle: p project: {{project.id.substring(0,6)}}
-      .editButton(@click="showSettings = true")
-        i.fa.fa-pen
-      //.project-description
-      //  p No description.
-
-    .add-viz
-      button.button.is-info.is-rounded.accent(@click="onAddVisualization") Create Visualization
-
-    .summary-category.modelTab
-      h3.section-head Model Runs
-      .modelRun(v-for="modelRun in modelRuns"
-                @click="onSelectModelRun(modelRun)"
-                :key="modelRun.name"
-                :class="{selected: modelRun.name === selectedRun}") {{ modelRun.name }}
-      p.gettingStarted(v-if="modelRuns.length===0") To get started, upload some files from a model run, such as a network.xml file or other standard MATSim outputs.
-      p.gettingStarted(v-if="modelRuns.length===0") If you upload the contents of a MATSim output iteration, many standard visualizations will be available.
-
-    .summary-category.dropzone
-      h3.section-head Project Files
-      drop.drop(
-        :class="{over:isDragOver}"
-        @dragover="isDragOver = true"
-        @dragleave="isDragOver = false"
-        @drop="onDrop"
-        effect-allowed='all'
-      ) Drag/drop files here to upload!
-      .add-files
-        button.button.is-info.is-rounded.accent(@click="onAddFiles") Upload Files
+  summary-strip.summary-strip(
+    :projectId="projectId"
+    :projectStore="projectStore"
+    :selectedRun="selectedRun"
+    @onEdit="showSettings = true"
+    @onAddVisualization="onAddVisualization"
+    @onSelectModelRun="onSelectModelRun"
+    @onDrop="onDrop"
+    @onAddFiles="onAddFiles"
+  )
 
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
@@ -130,6 +107,7 @@ import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
 import { Visualization, FileEntry } from '@/entities/Entities'
 import ProjectSettings from '@/project/ProjectSettings.vue'
+import SummaryStrip from '@/project/SummaryStrip.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -144,6 +122,7 @@ const vueInstance = Vue.extend({
     'list-header': ListHeader,
     'list-element': ListElement,
     'image-file-thumbnail': ImageFileThumbnail,
+    'summary-strip': SummaryStrip,
     'viz-thumbnail': VizThumbnail,
     'project-settings': ProjectSettings,
     Drag,
@@ -229,6 +208,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onSelectModelRun(modelRun: any) {
+    console.log('boop', modelRun)
     // toggle, if it's already selected
     if (this.selectedRun === modelRun.name) this.selectedRun = ''
     else this.selectedRun = modelRun.name
@@ -257,10 +237,7 @@ export default class ProjectViewModel extends vueInstance {
     this.showFileUpload = true
   }
 
-  private async onDrop(data: any, event: any) {
-    event.preventDefault()
-    this.isDragOver = false
-    const files = event.dataTransfer.files
+  private async onDrop(files: any) {
     this.selectedFiles = files
     this.showFileUpload = true
   }
@@ -623,5 +600,14 @@ active {
 .center {
   text-align: center;
   font-weight: bold;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 </style>
