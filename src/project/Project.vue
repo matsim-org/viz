@@ -352,6 +352,7 @@ section {
   color: #eee;
   display: flex;
   flex-direction: column;
+  animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 
 .center-area {
@@ -623,5 +624,14 @@ active {
 .center {
   text-align: center;
   font-weight: bold;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 </style>
