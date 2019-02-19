@@ -79,7 +79,7 @@ h6 {
   grid-row: 1 / 2;
   z-index: 1;
   height: 100%;
-  max-height: 100%;
+  max-height: 100vh;
   overflow-y: auto;
 }
 

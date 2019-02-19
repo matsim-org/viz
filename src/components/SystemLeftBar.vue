@@ -63,6 +63,7 @@ export default class SystemLeftBar extends Vue {
 #systembar {
   display: flex;
   flex-direction: column;
+  height: 100vh;
 }
 
 .nav-item {
