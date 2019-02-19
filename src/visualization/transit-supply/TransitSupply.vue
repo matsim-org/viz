@@ -4,7 +4,6 @@
   .info-blob(v-if="routesOnLink.length > 0")
     .info-header
       h3(style="color: #ff8") ROUTES ON LINK
-
     p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
     .routeList
@@ -20,6 +19,7 @@
     .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
       v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
     )
+  legend-box.legend(:rows="legendRows")
 </template>
 
 <script lang="ts">
@@ -50,6 +50,7 @@ import {
 import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
 import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
+import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -70,7 +71,7 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Description', 'Projection'],
 })
 
-@Component
+@Component({ components: { 'legend-box': LegendBox } })
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -145,6 +146,9 @@ export default class TransitSupply extends Vue {
     }
   }
 
+  private get legendRows() {
+    return [['#a03919', 'Rail'], ['#448', 'Bus']]
+  }
   private setBreadcrumb() {
     EventBus.$emit('set-breadcrumbs', [
       { title: this.project.name, link: '/project/' + this.projectId },
@@ -157,7 +161,7 @@ export default class TransitSupply extends Vue {
       bearing: 0,
       // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'bottom-left',
       style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
       // zoom: 9,
@@ -447,7 +451,7 @@ export default class TransitSupply extends Vue {
           },
           properties: {
             width: Math.max(3, 0.01 * this._departures[linkID].total),
-            color: isRail ? '#751ec5' : _colorScale[colorBin], //#da4
+            color: isRail ? '#a03919' : _colorScale[colorBin],
             colorBin: colorBin,
             departures: departures,
             id: linkID,
@@ -600,7 +604,7 @@ export default class TransitSupply extends Vue {
         type: 'line',
         paint: {
           'line-opacity': 0.7,
-          'line-width': 10, // ['get', 'width'],
+          'line-width': 8, // ['get', 'width'],
           'line-color': '#ccff33', // ['get', 'color'],
         },
       })
@@ -761,7 +765,7 @@ h3 {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   opacity: 0.95;
-  z-index: 2;
+  z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 
@@ -795,5 +799,12 @@ h3 {
 
 .status-blob p {
   color: #ffa;
+}
+
+.legend {
+  grid-column: 1 / 3;
+  grid-row: 1 / 2;
+  margin: auto 0.5rem 2rem auto;
+  z-index: 10;
 }
 </style>
