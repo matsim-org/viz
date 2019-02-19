@@ -137,7 +137,6 @@ export default class SummaryStrip extends Vue {
   color: #eee;
   display: flex;
   flex-direction: column;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 
 .header {
