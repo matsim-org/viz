@@ -91,6 +91,10 @@ export default Vue.extend({})
   padding: 10px;
 }
 
+.card .card-content:hover {
+  cursor: pointer;
+}
+
 .card .card-content .card-title {
   display: block;
   font-size: 18px;
