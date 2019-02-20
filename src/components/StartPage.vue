@@ -14,8 +14,8 @@
       p.info Researchers have made these results available on the open web. Have a look around!
 
     ul.projects
-      project-list-item(v-for="project in projects"
-                        :key="project.id"
+      .project-row(v-for="project in projects" :key="project.id")
+        project-list-item(v-if="project.visualizations.length > 0"
                         :project="project"
                         :project-store="projectStore"
                         @viz-selected="onVizSelected") {{ project.name }}
