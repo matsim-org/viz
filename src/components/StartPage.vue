@@ -15,7 +15,7 @@
 
     ul.projects
       .project-row(v-for="project in projects" :key="project.id")
-        project-list-item(v-if="project.visualizations.length > 0"
+        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
                         :project="project"
                         :project-store="projectStore"
                         @viz-selected="onVizSelected") {{ project.name }}
