@@ -61,14 +61,18 @@ class XmlFetcher extends AsyncBackgroundWorker {
 
     const data: any = await BlobUtil.blobToArrayBuffer(blob)
 
-    // try single-gzipped
-    const gunzip1 = pako.inflate(data, { to: 'string' })
-    if (gunzip1.startsWith('<?xml')) return gunzip1
+    try {
+      // try single-gzipped
+      const gunzip1 = pako.inflate(data, { to: 'string' })
+      if (gunzip1.startsWith('<?xml')) return gunzip1
 
-    // try double-gzipped
-    const dgunzip1 = pako.inflate(data)
-    const gunzip2 = pako.inflate(dgunzip1, { to: 'string' })
-    if (gunzip2.startsWith('<?xml')) return gunzip2
+      // try double-gzipped
+      const dgunzip1 = pako.inflate(data)
+      const gunzip2 = pako.inflate(dgunzip1, { to: 'string' })
+      if (gunzip2.startsWith('<?xml')) return gunzip2
+    } catch (e) {
+      // it's ok if it failed because it might be text vvvv
+    }
 
     // try text
     const text: string = await BlobUtil.blobToBinaryString(blob)
