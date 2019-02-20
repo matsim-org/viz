@@ -34,6 +34,7 @@
     "request": "^2.88.0",
     "sax": "^1.2.4",
     "scale-color-perceptual": "^1.1.2",
+    "shapefile": "^0.6.6",
     "three": "^0.85.2",
     "vue": "^2.6.3",
     "vue-class-component": "^6.3.2",
