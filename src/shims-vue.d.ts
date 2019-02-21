@@ -14,6 +14,7 @@ declare module 'vue-slider-component'
 declare module '@turf/nearest-point-to-line'
 declare module '@turf/point-to-line-distance'
 declare module 'filesize'
+declare module 'd3-sankey-diagram'
 
 declare module '*.worker' {
   class WebpackWorker extends Worker {
