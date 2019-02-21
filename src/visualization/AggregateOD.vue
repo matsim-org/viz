@@ -3,7 +3,7 @@
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
   #mymap
-  legend-box.legend(:rows="legendRows")
+  // legend-box.legend(:rows="legendRows")
 </template>
 
 <script lang="ts">
@@ -12,7 +12,9 @@
 import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
+import proj4 from 'proj4'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
+import * as shapefile from 'shapefile'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -24,9 +26,31 @@ import { Visualization } from '@/entities/Entities'
 
 const COLOR_CATEGORIES = 16
 
+proj4.defs([
+  [
+    // south africa
+    'EPSG:2048',
+    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  ],
+  [
+    // berlin
+    'EPSG:31468',
+    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
+  ],
+  [
+    // cottbus
+    'EPSG:25833',
+    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
+  ],
+])
+
+// aliases
+proj4.defs('DK4', proj4.defs('EPSG:31468'))
+
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
-  SHPFILE: 'Shapefile (.shp or .zip)',
+  SHP_FILE: 'Shapefile .SHP',
+  DBF_FILE: 'Shapefile .DBF',
 }
 
 // register component with the SharedStore
@@ -34,8 +58,8 @@ SharedStore.addVisualizationType({
   typeName: 'aggregate-od',
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
-  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHPFILE],
-  requiredParamKeys: [],
+  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
+  requiredParamKeys: ['Projection'],
 })
 
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
@@ -59,6 +83,8 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
+  private projection!: string
+
   private _mapExtentXYXY!: any
   private _maximum!: number
 
@@ -78,6 +104,11 @@ export default class AggregateOD extends Vue {
   private async getVizDetails() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
+
+    if (this.visualization.parameters.Projection) {
+      this.projection = this.visualization.parameters.Projection.value
+    }
+
     if (SharedStore.debug) console.log(this.visualization)
   }
 
@@ -113,10 +144,13 @@ export default class AggregateOD extends Vue {
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {}
 
   private async mapIsReady() {
-    const networks = await this.loadNetworks()
-    if (networks) await this.processInputs(networks)
+    const files = await this.loadFiles()
+    if (files) {
+      const geojson = await this.processInputs(files)
+      this.addGeojsonToMap(geojson)
+      this.setupKeyListeners()
+    }
 
-    this.setupKeyListeners()
     this.loadingText = ''
   }
 
@@ -140,22 +174,26 @@ export default class AggregateOD extends Vue {
     })
   }
 
-  private async loadNetworks() {
+  private async loadFiles() {
     try {
       this.loadingText = 'Loading files...'
 
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
 
-      const shpfileID = this.visualization.inputFiles[INPUTS.SHPFILE].fileEntry.id
       const odFlowsID = this.visualization.inputFiles[INPUTS.OD_FLOWS].fileEntry.id
+      const shpfileID = this.visualization.inputFiles[INPUTS.SHP_FILE].fileEntry.id
+      const dbfID = this.visualization.inputFiles[INPUTS.DBF_FILE].fileEntry.id
 
       const shpBlob = await this.fileApi.downloadFile(shpfileID, this.projectId)
       const shpFile: ArrayBuffer = await BlobUtil.blobToArrayBuffer(shpBlob)
 
+      const dbfBlob = await this.fileApi.downloadFile(dbfID, this.projectId)
+      const dbfFile: ArrayBuffer = await BlobUtil.blobToArrayBuffer(dbfBlob)
+
       const odBlob = await this.fileApi.downloadFile(odFlowsID, this.projectId)
       const odFlows: string = await BlobUtil.blobToBinaryString(odBlob)
 
-      return { shpFile, odFlows }
+      return { shpFile, dbfFile, odFlows }
     } catch (e) {
       console.error({ e })
       this.loadingText = '' + e
@@ -163,8 +201,43 @@ export default class AggregateOD extends Vue {
     }
   }
 
-  private async processInputs(networks: any) {
+  private async processInputs(files: any) {
     this.loadingText = 'Converting to GeoJSON...'
+
+    const geojson = await shapefile.read(files.shpFile, files.dbfFile)
+
+    this.loadingText = 'Converting coordinates...'
+
+    for (const feature of geojson.features) {
+      let coordinates
+      try {
+        for (let i = 0; i < feature.geometry.coordinates.length; i++) {
+          coordinates = feature.geometry.coordinates[i]
+
+          if (feature.geometry.type === 'MultiPolygon') coordinates = coordinates[0]
+
+          const newCoords: any = []
+          for (let p of coordinates) {
+            const lnglat = proj4(this.projection, 'WGS84', p) as any
+            newCoords.push(lnglat)
+          }
+
+          if (feature.geometry.type === 'MultiPolygon') {
+            feature.geometry.coordinates[i][0] = newCoords
+          } else {
+            feature.geometry.coordinates[i] = newCoords
+          }
+        }
+      } catch (e) {
+        console.log('ERR with feature NO: ' + feature.properties.NO)
+        console.log(coordinates)
+        console.error(e)
+      }
+    }
+
+    console.log(geojson)
+    return geojson
+
     /*
     localStorage.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 3650 })
 
@@ -174,6 +247,35 @@ export default class AggregateOD extends Vue {
     })
     this.loadingText = ''
     */
+  }
+
+  private addGeojsonToMap(geojson: any) {
+    this.mymap.addSource('shpdata', {
+      data: geojson,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer(
+      {
+        id: 'shplayer-fill',
+        source: 'shpdata',
+        type: 'fill',
+        paint: {
+          'fill-color': '#46c',
+          'fill-opacity': 0.3,
+        },
+      },
+      'water'
+    )
+    this.mymap.addLayer({
+      id: 'shplayer-borders',
+      source: 'shpdata',
+      type: 'line',
+      paint: {
+        'line-color': '#395',
+        'line-width': 3,
+      },
+    })
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
@@ -220,7 +322,7 @@ p {
 }
 
 .status-blob {
-  background-color: #222;
+  background-color: white;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
@@ -236,7 +338,7 @@ p {
 #mymap {
   width: 100%;
   height: 100%;
-  background-color: black;
+  background-color: #eee;
   overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
@@ -305,7 +407,7 @@ p {
 }
 
 .status-blob p {
-  color: #ffa;
+  color: #555;
 }
 
 .legend {
