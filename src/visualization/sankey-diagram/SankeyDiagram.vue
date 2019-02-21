@@ -2,7 +2,9 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  svg#chart.chart
+  .main-area
+    h1 Flow Diagram
+    svg#chart.chart
 </template>
 
 <script lang="ts">
@@ -13,7 +15,8 @@ import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import { sankey, sankeyDiagram } from 'd3-sankey-diagram'
 import { select } from 'd3-selection'
-import 'd3-sankey-diagram'
+import { scaleOrdinal } from 'd3-scale'
+import { schemeCategory10 } from 'd3-scale-chromatic'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -122,10 +125,6 @@ export default class SankeyDiagram extends Vue {
       if (value) links.push([cols[0], cols[1], value])
     }
 
-    console.log(fromNodes)
-    console.log(toNodes)
-    console.log(links)
-
     // build js object
     const answer: any = { nodes: [], links: [] }
     const fromLookup: any = {}
@@ -145,18 +144,25 @@ export default class SankeyDiagram extends Vue {
       answer.links.push({ source: fromLookup[link[0]], target: toLookup[link[1]], value: link[2] })
     }
 
-    console.log(JSON.stringify(answer.nodes))
-    console.log(JSON.stringify(answer.links))
+    answer.links.sort((a: any, b: any) => {
+      return a.value < b.value
+    })
+
     return answer
   }
 
   private doD3() {
     const data = this.jsonChart
+    data.alignLinkTypes = true
 
-    const layout = sankey().extent([[100, 100], [700, 400]])
+    const layout = sankey()
+      .extent([[100, 100], [700, 700]])
+      .nodeWidth(3)
 
-    const diagram = sankeyDiagram().linkColor(function(d: any) {
-      return '#40c' // d.color
+    const tryColor = scaleOrdinal(schemeCategory10)
+    const diagram = sankeyDiagram().linkColor((link: any) => {
+      const c = tryColor(link.source.id)
+      return c + 'bb' // + opacity
     })
 
     // layout.ordering(data.order)
@@ -165,17 +171,15 @@ export default class SankeyDiagram extends Vue {
       .datum(layout(data))
       .call(diagram)
       .attr('preserveAspectRatio', 'xMinYMin meet')
-      .attr('viewBox', '0 0 700 400')
-      // class to make it responsive
-      .classed('svg-content-responsive', true)
+      .attr('viewBox', '0 0 800 800')
   }
 }
 </script>
 
 <style scoped>
-h3 {
-  margin: 0px 0px;
-  font-size: 16px;
+h1 {
+  margin: 0px auto;
+  font-size: 1.5rem;
 }
 
 h4,
@@ -297,18 +301,22 @@ p {
   stroke-opacity: 0.4;
 }
 
-#chart {
-  margin-top: 5rem;
+.main-area {
+  padding-top: 6rem;
   grid-row: 1/3;
   grid-column: 1/3;
   width: 100%;
-  height: 100%;
-  max-height: 500px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: auto;
 }
 
-.svg-content-responsive {
-  display: inline-block;
-  position: relative;
+#chart {
+  width: 100%;
+  max-width: 55rem;
+  height: auto;
+  z-index: 50;
   margin: auto auto;
 }
 </style>
