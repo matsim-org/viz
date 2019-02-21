@@ -3,7 +3,10 @@
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
   .main-area
-    h1 Flow Diagram
+    h1.center {{ project.name }}
+    h3.center Flow Diagram
+    p.center {{ totalTrips.toLocaleString() }} total trips
+
     svg#chart.chart
 </template>
 
@@ -59,6 +62,8 @@ export default class SankeyDiagram extends Vue {
   private project: any = {}
   private visualization!: Visualization
   private jsonChart: any = {}
+
+  private totalTrips = 0
 
   public created() {}
 
@@ -118,11 +123,18 @@ export default class SankeyDiagram extends Vue {
     for (const line of csv.slice(1)) {
       const cols = line.trim().split(';')
 
+      if (!cols) continue
+      if (cols.length < 2) continue
+
       if (!fromNodes.includes(cols[0])) fromNodes.push(cols[0])
       if (!toNodes.includes(cols[1])) toNodes.push(cols[1])
 
       const value = parseFloat(cols[2])
-      if (value) links.push([cols[0], cols[1], value])
+
+      if (value > 0) {
+        links.push([cols[0], cols[1], value])
+        this.totalTrips += value
+      }
     }
 
     // build js object
@@ -144,28 +156,26 @@ export default class SankeyDiagram extends Vue {
       answer.links.push({ source: fromLookup[link[0]], target: toLookup[link[1]], value: link[2] })
     }
 
-    answer.links.sort((a: any, b: any) => {
-      return a.value < b.value
-    })
-
     return answer
   }
 
   private doD3() {
     const data = this.jsonChart
+    data.order = [[[4, 1, 2, 3, 0, 5]], [[6, 7, 8, 9, 10, 11]]]
+    data.alignTypes = true
     data.alignLinkTypes = true
 
     const layout = sankey()
       .extent([[100, 100], [700, 700]])
       .nodeWidth(3)
 
+    // layout.ordering(data.order)
+
     const tryColor = scaleOrdinal(schemeCategory10)
     const diagram = sankeyDiagram().linkColor((link: any) => {
       const c = tryColor(link.source.id)
       return c + 'bb' // + opacity
     })
-
-    // layout.ordering(data.order)
 
     select('#chart')
       .datum(layout(data))
@@ -182,17 +192,21 @@ h1 {
   font-size: 1.5rem;
 }
 
+h3 {
+  margin: 0px auto;
+}
+
 h4,
 p {
-  margin: 0px 10px;
+  margin: 1rem 1rem;
 }
 
 #container {
-  height: 100vh;
+  height: auto;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto;
 }
 
 .status-blob {
@@ -316,7 +330,10 @@ p {
   width: 100%;
   max-width: 55rem;
   height: auto;
-  z-index: 50;
-  margin: auto auto;
+  margin: 0px auto;
+}
+
+.center {
+  text-align: center;
 }
 </style>
