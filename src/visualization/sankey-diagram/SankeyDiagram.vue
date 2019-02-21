@@ -2,6 +2,7 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+  p#chart
 </template>
 
 <script lang="ts">
@@ -10,6 +11,7 @@
 import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
+// import * as d3 from 'd3'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -53,6 +55,7 @@ export default class SankeyDiagram extends Vue {
   private loadingText: string = 'Flow Diagram'
   private project: any = {}
   private visualization!: Visualization
+  private jsonChart: any = {}
 
   public created() {}
 
@@ -76,8 +79,10 @@ export default class SankeyDiagram extends Vue {
 
   private async setupDiagram() {
     const networks = await this.loadFiles()
-    if (networks) await this.processInputs(networks)
+    if (networks) this.jsonChart = this.processInputs(networks)
+
     this.loadingText = ''
+    //this.doD3()
   }
 
   private async loadFiles() {
@@ -98,7 +103,7 @@ export default class SankeyDiagram extends Vue {
     }
   }
 
-  private async processInputs(networks: any) {
+  private processInputs(networks: any) {
     this.loadingText = 'Building node graph...'
 
     const fromNodes: any = []
@@ -109,13 +114,17 @@ export default class SankeyDiagram extends Vue {
     const csv = networks.flows.split('\n')
     for (const line of csv.slice(1)) {
       const cols = line.trim().split(';')
-      console.log(cols)
 
-      if (!toNodes.includes(cols[0])) toNodes.push(cols[0])
-      if (!fromNodes.includes(cols[1])) fromNodes.push(cols[1])
+      if (!fromNodes.includes(cols[0])) fromNodes.push(cols[0])
+      if (!toNodes.includes(cols[1])) toNodes.push(cols[1])
 
-      links.push([cols[0], cols[1], parseFloat(cols[2])])
+      const value = parseFloat(cols[2])
+      if (value) links.push([cols[0], cols[1], value])
     }
+
+    console.log(fromNodes)
+    console.log(toNodes)
+    console.log(links)
 
     // build js object
     const answer: any = { nodes: [], links: [] }
@@ -136,19 +145,144 @@ export default class SankeyDiagram extends Vue {
       answer.links.push({ source: fromLookup[link[0]], target: toLookup[link[1]], value: link[2] })
     }
 
-    console.log(answer)
+    console.log(JSON.stringify(answer.nodes))
+    console.log(JSON.stringify(answer.links))
     return answer
+  }
+
+  private doD3() {
+    var units = 'Trips'
+
+    console.log(d3)
+
+    var margin = { top: 10, right: 10, bottom: 10, left: 10 }
+
+    var width = 800 - margin.left - margin.right
+    var height = 600 - margin.top - margin.bottom
+
+    var formatNumber = d3.format(',.0f'), // zero decimal places
+      format = function(d) {
+        return formatNumber(d) + ' ' + units
+      },
+      color = d3.scale.category10()
+
+    // append the svg canvas to the page
+    var svg = d3
+      .select('#chart')
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+
+    // Set the sankey diagram properties
+    var sankey = d3
+      .sankey()
+      .nodeWidth(18)
+      .nodePadding(40)
+      .size([width, height])
+
+    var path = sankey.link()
+
+    const graph = this.jsonChart
+
+    sankey
+      .nodes(graph.nodes)
+      .links(graph.links)
+      .layout(32)
+
+    // add in the links
+    var link = svg
+      .append('g')
+      .selectAll('.link')
+      .data(graph.links)
+      .enter()
+      .append('path')
+      .attr('class', 'link')
+      .attr('d', path)
+      .style('stroke-width', function(d) {
+        return Math.max(1, d.dy)
+      })
+      .sort(function(a, b) {
+        return b.dy - a.dy
+      })
+
+    // add the link titles
+    link.append('title').text(function(d) {
+      return d.source.name + ' → ' + d.target.name + '\n' + format(d.value)
+    })
+
+    // add in the nodes
+    var node = svg
+      .append('g')
+      .selectAll('.node')
+      .data(graph.nodes)
+      .enter()
+      .append('g')
+      .attr('class', 'node')
+      .attr('transform', function(d) {
+        return 'translate(' + d.x + ',' + d.y + ')'
+      })
+      .call(
+        d3.behavior
+          .drag()
+          .origin(function(d) {
+            return d
+          })
+          .on('dragstart', function() {
+            this.parentNode.appendChild(this)
+          })
+          .on('drag', dragmove)
+      )
+
+    // add the rectangles for the nodes
+    node
+      .append('rect')
+      .attr('height', function(d) {
+        return d.dy
+      })
+      .attr('width', sankey.nodeWidth())
+      .style('fill', function(d) {
+        return (d.color = color(d.name.replace(/ .*/, '')))
+      })
+      .append('title')
+      .text(function(d) {
+        return d.name + '\n' + format(d.value)
+      })
+
+    // add in the title for the nodes
+    node
+      .append('text')
+      .attr('x', -6)
+      .attr('y', function(d) {
+        return d.dy / 2
+      })
+      .attr('dy', '.35em')
+      .attr('text-anchor', 'end')
+      .attr('transform', null)
+      .text(function(d) {
+        return d.name
+      })
+      .filter(function(d) {
+        return d.x < width / 2
+      })
+      .attr('x', 6 + sankey.nodeWidth())
+      .attr('text-anchor', 'start')
+
+    // the function for moving the nodes
+    function dragmove(d) {
+      d3.select(this).attr(
+        'transform',
+        'translate(' + d.x + ',' + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ')'
+      )
+      sankey.relayout()
+      link.attr('d', path)
+    }
   }
 }
 </script>
 
 <style scoped>
-.mapboxgl-popup-content {
-  padding: 0px 20px 0px 0px;
-  opacity: 0.95;
-  box-shadow: 0 0 3px #00000080;
-}
-
 h3 {
   margin: 0px 0px;
   font-size: 16px;
@@ -160,7 +294,6 @@ p {
 }
 
 #container {
-  background-color: #eee;
   height: 100vh;
   width: 100%;
   display: grid;
@@ -180,20 +313,6 @@ p {
   z-index: 2;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
-}
-
-#mymap {
-  width: 100%;
-  height: 100%;
-  background-color: black;
-  overflow: hidden;
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-}
-
-.mytitle {
-  margin-left: 10px;
-  color: white;
 }
 
 .details {
@@ -286,5 +405,12 @@ p {
 
 .link:hover {
   stroke-opacity: 0.4;
+}
+
+#chart {
+  grid-row: 1/3;
+  grid-column: 1/3;
+  width: 100%;
+  height: 100%;
 }
 </style>

@@ -1,6 +1,5 @@
-import d3 from 'd3'
-
 d3.sankey = function() {
+  const width = 780
   var sankey = {},
     nodeWidth = 24,
     nodePadding = 8,
