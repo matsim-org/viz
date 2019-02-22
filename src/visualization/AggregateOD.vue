@@ -13,7 +13,7 @@ import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import proj4 from 'proj4'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
 import * as shapefile from 'shapefile'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
@@ -24,6 +24,7 @@ import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBl
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
+import { FeatureCollection, Feature } from 'geojson'
 
 const COLOR_CATEGORIES = 16
 
@@ -85,6 +86,7 @@ export default class AggregateOD extends Vue {
   private visualization!: Visualization
 
   private projection!: string
+  private hoveredStateId: any
 
   private _mapExtentXYXY!: any
   private _maximum!: number
@@ -122,7 +124,7 @@ export default class AggregateOD extends Vue {
       bearing: 0,
       container: 'mymap',
       logoPosition: 'bottom-left',
-      style: 'mapbox://styles/mapbox/outdoors-v9',
+      style: 'mapbox://styles/mapbox/streets-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -150,10 +152,38 @@ export default class AggregateOD extends Vue {
       const geojson = await this.processInputs(files)
       this.setMapExtent()
       this.addGeojsonToMap(geojson)
+      this.addCentroids(geojson)
+      this.processHourlyData(files.odFlows)
       this.setupKeyListeners()
     }
 
     this.loadingText = ''
+  }
+
+  private addCentroids(geojson: FeatureCollection) {
+    const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+    for (const feature of geojson.features) {
+      const centroid: any = turf.centerOfMass(feature as any)
+      // console.log(centroid)
+      centroids.features.push(centroid)
+    }
+
+    this.mymap.addSource('centroids', {
+      data: centroids,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer({
+      id: 'centroid-layer',
+      source: 'centroids',
+      type: 'circle',
+      paint: {
+        'circle-color': '#ff5533',
+        'circle-radius': 6,
+        'circle-opacity': 0.75,
+      },
+    })
   }
 
   private setMapExtent() {
@@ -190,16 +220,15 @@ export default class AggregateOD extends Vue {
 
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
 
-      const odFlowsID = this.visualization.inputFiles[INPUTS.OD_FLOWS].fileEntry.id
       const shpfileID = this.visualization.inputFiles[INPUTS.SHP_FILE].fileEntry.id
-      const dbfID = this.visualization.inputFiles[INPUTS.DBF_FILE].fileEntry.id
-
       const shpBlob = await this.fileApi.downloadFile(shpfileID, this.projectId)
       const shpFile: ArrayBuffer = await BlobUtil.blobToArrayBuffer(shpBlob)
 
+      const dbfID = this.visualization.inputFiles[INPUTS.DBF_FILE].fileEntry.id
       const dbfBlob = await this.fileApi.downloadFile(dbfID, this.projectId)
       const dbfFile: ArrayBuffer = await BlobUtil.blobToArrayBuffer(dbfBlob)
 
+      const odFlowsID = this.visualization.inputFiles[INPUTS.OD_FLOWS].fileEntry.id
       const odBlob = await this.fileApi.downloadFile(odFlowsID, this.projectId)
       const odFlows: string = await BlobUtil.blobToBinaryString(odBlob)
 
@@ -215,8 +244,13 @@ export default class AggregateOD extends Vue {
     this.loadingText = 'Converting to GeoJSON...'
     const geojson = await shapefile.read(files.shpFile, files.dbfFile)
 
+    this.processHourlyData(files.odFlows)
+
     this.loadingText = 'Converting coordinates...'
     for (const feature of geojson.features) {
+      // save id
+      if (feature.properties) feature.id = feature.properties.NO
+
       try {
         if (feature.geometry.type === 'MultiPolygon') {
           this.convertMultiPolygonCoordinatesToWGS84(feature)
@@ -265,6 +299,22 @@ export default class AggregateOD extends Vue {
     }
   }
 
+  private processHourlyData(csvData: string) {
+    const lines = csvData.split('\n')
+    if (lines[0].trim().split(';').length !== 26) {
+      this.loadingText = 'CSV data does not have O,D, and then 24 hourly columns.'
+      return
+    }
+
+    this.loadingText = 'Analyzing hourly data...'
+    for (const row of lines.slice(1)) {
+      const columns = row.split(';')
+      if (columns.length !== 26) continue
+
+      // TODO build in-memory lookup table here
+    }
+  }
+
   private updateMapExtent(coordinates: any) {
     this._mapExtentXYXY[0] = Math.min(this._mapExtentXYXY[0], coordinates[0])
     this._mapExtentXYXY[1] = Math.min(this._mapExtentXYXY[1], coordinates[1])
@@ -273,7 +323,7 @@ export default class AggregateOD extends Vue {
   }
 
   private addGeojsonToMap(geojson: any) {
-    this.mymap.addSource('shpdata', {
+    this.mymap.addSource('shpsource', {
       data: geojson,
       type: 'geojson',
     } as any)
@@ -281,19 +331,20 @@ export default class AggregateOD extends Vue {
     this.mymap.addLayer(
       {
         id: 'shplayer-fill',
-        source: 'shpdata',
+        source: 'shpsource',
         type: 'fill',
         paint: {
-          'fill-color': 'white',
+          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#faa', 'white'],
           'fill-opacity': 0.7,
         },
       },
       'water'
     )
+
     this.mymap.addLayer(
       {
         id: 'shplayer-borders',
-        source: 'shpdata',
+        source: 'shpsource',
         type: 'line',
         paint: {
           'line-color': '#498cee',
@@ -302,6 +353,31 @@ export default class AggregateOD extends Vue {
       },
       'waterway-label'
     )
+
+    // HOVER effects
+    const parent = this
+    this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
+      // typescript definitions and mapbox-gl are out of sync at the moment :-(
+      // so setFeatureState is missing
+      const tsMap = parent.mymap as any
+      if (e.features.length > 0) {
+        if (parent.hoveredStateId) {
+          tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+        }
+        parent.hoveredStateId = e.features[0].properties.NO
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: true })
+      }
+    })
+
+    // When the mouse leaves the state-fill layer, update the feature state of the
+    // previously hovered feature.
+    this.mymap.on('mouseleave', 'shplayer-fill', function() {
+      const tsMap = parent.mymap as any
+      if (parent.hoveredStateId) {
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+      }
+      parent.hoveredStateId = null
+    })
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
