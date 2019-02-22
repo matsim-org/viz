@@ -121,7 +121,7 @@ export default class AggregateOD extends Vue {
       bearing: 0,
       container: 'mymap',
       logoPosition: 'bottom-left',
-      style: 'mapbox://styles/mapbox/light-v9',
+      style: 'mapbox://styles/mapbox/outdoors-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -261,21 +261,24 @@ export default class AggregateOD extends Vue {
         source: 'shpdata',
         type: 'fill',
         paint: {
-          'fill-color': '#46c',
-          'fill-opacity': 0.3,
+          'fill-color': 'white',
+          'fill-opacity': 0.7,
         },
       },
       'water'
     )
-    this.mymap.addLayer({
-      id: 'shplayer-borders',
-      source: 'shpdata',
-      type: 'line',
-      paint: {
-        'line-color': '#395',
-        'line-width': 3,
+    this.mymap.addLayer(
+      {
+        id: 'shplayer-borders',
+        source: 'shpdata',
+        type: 'line',
+        paint: {
+          'line-color': '#498cee',
+          'line-width': 3,
+        },
       },
-    })
+      'waterway-label'
+    )
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
