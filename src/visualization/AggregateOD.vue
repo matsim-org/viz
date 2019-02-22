@@ -13,7 +13,7 @@ import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import proj4 from 'proj4'
-import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import * as shapefile from 'shapefile'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
@@ -127,10 +127,10 @@ export default class AggregateOD extends Vue {
       // zoom: 9,
     })
 
-    let extent: any = localStorage.getItem(this.vizId + '-bounds')
+    const extent = localStorage.getItem(this.vizId + '-bounds')
     if (extent) {
-      extent = JSON.parse(extent)
-      this.mymap.fitBounds(extent, {
+      const lnglat = JSON.parse(extent)
+      this.mymap.fitBounds(lnglat, {
         padding: { top: 50, bottom: 100, right: 100, left: 300 },
         animate: false,
       })
@@ -148,11 +148,20 @@ export default class AggregateOD extends Vue {
     const files = await this.loadFiles()
     if (files) {
       const geojson = await this.processInputs(files)
+      this.setMapExtent()
       this.addGeojsonToMap(geojson)
       this.setupKeyListeners()
     }
 
     this.loadingText = ''
+  }
+
+  private setMapExtent() {
+    localStorage.setItem(this.vizId + '-bounds', JSON.stringify(this._mapExtentXYXY))
+    this.mymap.fitBounds(this._mapExtentXYXY, {
+      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      animate: false,
+    })
   }
 
   private setupKeyListeners() {
@@ -222,16 +231,6 @@ export default class AggregateOD extends Vue {
 
     console.log(geojson)
     return geojson
-
-    /*
-    localStorage.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 3650 })
-
-    this.mymap.fitBounds(this._mapExtentXYXY, {
-      padding: { top: 50, bottom: 100, right: 100, left: 300 },
-      animate: false,
-    })
-    this.loadingText = ''
-    */
   }
 
   private convertPolygonCoordinatesToWGS84(polygon: any) {
@@ -245,6 +244,8 @@ export default class AggregateOD extends Vue {
       // replace existing coords
       origCoords.length = 0
       origCoords.push(...newCoords)
+
+      if (origCoords.length > 0) this.updateMapExtent(origCoords[0])
     }
   }
 
@@ -259,7 +260,16 @@ export default class AggregateOD extends Vue {
       }
 
       origCoords[0] = newCoords
+
+      if (origCoords[0].length > 0) this.updateMapExtent(origCoords[0][0])
     }
+  }
+
+  private updateMapExtent(coordinates: any) {
+    this._mapExtentXYXY[0] = Math.min(this._mapExtentXYXY[0], coordinates[0])
+    this._mapExtentXYXY[1] = Math.min(this._mapExtentXYXY[1], coordinates[1])
+    this._mapExtentXYXY[2] = Math.max(this._mapExtentXYXY[2], coordinates[0])
+    this._mapExtentXYXY[3] = Math.max(this._mapExtentXYXY[3], coordinates[1])
   }
 
   private addGeojsonToMap(geojson: any) {
