@@ -29,7 +29,6 @@
 'use strict'
 
 import * as turf from '@turf/turf'
-import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'

@@ -7,7 +7,7 @@ modal(v-on:close-requested="cancel()")
         aside.menu
           p.menu-label Select:
           ul.menu-list
-            li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
+            li(v-for="viz in availableVisualizations")
               a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
@@ -102,6 +102,14 @@ export default class CreateVisualizationViewModel extends Vue {
 
   private close() {
     this.$emit('close')
+  }
+
+  private get availableVisualizations() {
+    const vizes = Array.from(this.sharedState.visualizationTypes.values())
+    vizes.sort((a, b) => {
+      return a.prettyName > b.prettyName ? 1 : -1
+    })
+    return vizes
   }
 
   private async createVisualization() {

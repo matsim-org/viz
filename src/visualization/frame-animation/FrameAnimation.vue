@@ -9,19 +9,19 @@
         .loaderContainer(v-if="!connected")
           spinner
           span Connecting to server...
-        .canvasContainer  
+        .canvasContainer
           canvas.canvas(ref="canvas" id="canvas")
       .controls
-        input.range(type="range" 
-                    v-bind:min="firstTimestep" 
-                    v-bind:max="lastTimestep" 
-                    v-bind:step="timestepSize" 
-                    v-bind:value="currentTimestep" 
-                    v-on:input="onRangeChanged($event)" 
+        input.range(type="range"
+                    v-bind:min="firstTimestep"
+                    v-bind:max="lastTimestep"
+                    v-bind:step="timestepSize"
+                    v-bind:value="currentTimestep"
+                    v-on:input="onRangeChanged($event)"
                     v-on:mousedown="onRangeMouseDown($event)"
                     v-on:mouseup="onRangeMouseUp($event)")
         .actions
-          
+
           button.button.playPause(v-on:click="togglePlayPause()")
             template(v-if="isPlaying")
               span.icon.is-small
@@ -60,7 +60,7 @@ import AuthenticationStore from '@/auth/AuthenticationStore'
 // register frame animation with shared store
 SharedStore.addVisualizationType({
   typeName: 'frame-animation',
-  prettyName: 'Frame Animation',
+  prettyName: 'Traffic Animation',
   requiredFileKeys: ['events', 'network', 'plans'],
   requiredParamKeys: ['snapshotInterval'],
 })
@@ -198,7 +198,7 @@ export default class FrameAnimation extends Vue {
 }
 
 /* Having a container which fills the grid and a canvas filling the container, in addition
-    to the container being relative and canvas being absolutely positioned is important to 
+    to the container being relative and canvas being absolutely positioned is important to
     support resizing in different browsers
 */
 .canvasContainer {
