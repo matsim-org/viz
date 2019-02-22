@@ -80,6 +80,9 @@ export default class AggregateOD extends Vue {
 
   // -------------------------- //
 
+  private centroids: any = {}
+  private odLookup: any = {}
+
   private loadingText: string = 'Aggregate Origin/Destination Flows'
   private mymap!: mapboxgl.Map
   private project: any = {}
@@ -154,10 +157,55 @@ export default class AggregateOD extends Vue {
       this.addGeojsonToMap(geojson)
       this.addCentroids(geojson)
       this.processHourlyData(files.odFlows)
+      this.buildSpiderLinks()
       this.setupKeyListeners()
     }
 
     this.loadingText = ''
+  }
+
+  private buildSpiderLinks() {
+    const featureCollection: FeatureCollection = { type: 'FeatureCollection', features: [] }
+    for (const id in this.odLookup) {
+      if (!this.odLookup.hasOwnProperty(id)) continue
+
+      const link: any = this.odLookup[id]
+      console.log(link)
+      try {
+        const origCoord = this.centroids[link.orig].geometry.coordinates
+        const destCoord = this.centroids[link.dest].geometry.coordinates
+        const feature: any = {
+          type: 'Feature',
+          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily },
+          geometry: {
+            type: 'LineString',
+            coordinates: [origCoord, destCoord],
+          },
+        }
+
+        featureCollection.features.push(feature)
+      } catch (e) {
+        // some dests aren't on map: z.b. 'other'
+      }
+    }
+
+    this.mymap.addSource('spider-source', {
+      data: featureCollection,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer(
+      {
+        id: 'spider-layer',
+        source: 'spider-source',
+        type: 'line',
+        paint: {
+          'line-color': '#097c43',
+          'line-width': ['get', 'daily'],
+        },
+      },
+      'centroid-layer'
+    )
   }
 
   private addCentroids(geojson: FeatureCollection) {
@@ -165,9 +213,12 @@ export default class AggregateOD extends Vue {
 
     for (const feature of geojson.features) {
       const centroid: any = turf.centerOfMass(feature as any)
-      // console.log(centroid)
+      centroid.properties.id = feature.id
       centroids.features.push(centroid)
+
+      if (feature.properties) this.centroids[feature.properties.NO] = centroid
     }
+    console.log({ CENTROIDS: this.centroids })
 
     this.mymap.addSource('centroids', {
       data: centroids,
@@ -179,9 +230,18 @@ export default class AggregateOD extends Vue {
       source: 'centroids',
       type: 'circle',
       paint: {
-        'circle-color': '#ff5533',
-        'circle-radius': 6,
-        'circle-opacity': 0.75,
+        'circle-color': '#ec0',
+        'circle-radius': 12,
+      },
+    })
+
+    this.mymap.addLayer({
+      id: 'centroid-label-layer',
+      source: 'centroids',
+      type: 'symbol',
+      layout: {
+        'text-field': '{id}',
+        'text-size': 12,
       },
     })
   }
@@ -243,8 +303,6 @@ export default class AggregateOD extends Vue {
   private async processInputs(files: any) {
     this.loadingText = 'Converting to GeoJSON...'
     const geojson = await shapefile.read(files.shpFile, files.dbfFile)
-
-    this.processHourlyData(files.odFlows)
 
     this.loadingText = 'Converting coordinates...'
     for (const feature of geojson.features) {
@@ -310,9 +368,21 @@ export default class AggregateOD extends Vue {
     for (const row of lines.slice(1)) {
       const columns = row.split(';')
       if (columns.length !== 26) continue
+      const values = columns.slice(2).map(a => {
+        return parseFloat(a)
+      })
 
       // TODO build in-memory lookup table here
+      const daily = values.slice(2).reduce((total, num) => {
+        return total + num
+      })
+
+      if (daily === 0) continue
+
+      const rowName = String(columns[0]) + ':' + String(columns[1])
+      this.odLookup[rowName] = { orig: columns[0], dest: columns[1], daily, values }
     }
+    console.log(this.odLookup)
   }
 
   private updateMapExtent(coordinates: any) {
