@@ -170,7 +170,6 @@ export default class AggregateOD extends Vue {
       if (!this.odLookup.hasOwnProperty(id)) continue
 
       const link: any = this.odLookup[id]
-      console.log(link)
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
@@ -206,6 +205,45 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
+
+    const parent = this
+    this.mymap.on('click', 'spider-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.clickedOnSpiderLink(e)
+    })
+
+    // turn "hover cursor" into a pointer, so user knows they can click.
+    this.mymap.on('mousemove', 'spider-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
+    })
+
+    // and back to normal when they mouse away
+    this.mymap.on('mouseleave', 'spider-layer', function() {
+      parent.mymap.getCanvas().style.cursor = 'grab'
+    })
+  }
+
+  private clickedOnSpiderLink(e: any) {
+    console.log({ CLICK: e })
+
+    const props = e.features[0].properties
+    console.log(props)
+
+    const trips = props.daily
+    let revTrips = 0
+    const reverseDir = '' + props.dest + ':' + props.orig
+
+    if (this.odLookup[reverseDir]) revTrips = this.odLookup[reverseDir].daily
+
+    const totalTrips = trips + revTrips
+
+    let html = `<h1>${totalTrips} Total Trips</h1><br/>`
+    html += `<p><b>${trips} trips</b> (${props.orig} -> ${props.dest})</p>`
+    html += `<p><b>${revTrips} trips</b> (${props.dest} -> ${props.orig})</p>`
+
+    new mapboxgl.Popup({ closeOnClick: true })
+      .setLngLat(e.lngLat)
+      .setHTML(html)
+      .addTo(this.mymap)
   }
 
   private addCentroids(geojson: FeatureCollection) {
@@ -231,7 +269,7 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': 12,
+        'circle-radius': 8,
       },
     })
 
@@ -241,7 +279,7 @@ export default class AggregateOD extends Vue {
       type: 'symbol',
       layout: {
         'text-field': '{id}',
-        'text-size': 12,
+        'text-size': 11,
       },
     })
   }
@@ -404,8 +442,8 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'fill',
         paint: {
-          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#faa', 'white'],
-          'fill-opacity': 0.7,
+          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', 'white'],
+          'fill-opacity': 0.8,
         },
       },
       'water'
@@ -417,7 +455,7 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'line',
         paint: {
-          'line-color': '#498cee',
+          'line-color': '#aaccee',
           'line-width': 3,
         },
       },
@@ -426,6 +464,7 @@ export default class AggregateOD extends Vue {
 
     // HOVER effects
     const parent = this
+
     this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
       // typescript definitions and mapbox-gl are out of sync at the moment :-(
       // so setFeatureState is missing
