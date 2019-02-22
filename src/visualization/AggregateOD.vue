@@ -23,6 +23,7 @@ import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
+import { multiPolygon } from '@turf/turf'
 
 const COLOR_CATEGORIES = 16
 
@@ -203,34 +204,18 @@ export default class AggregateOD extends Vue {
 
   private async processInputs(files: any) {
     this.loadingText = 'Converting to GeoJSON...'
-
     const geojson = await shapefile.read(files.shpFile, files.dbfFile)
 
     this.loadingText = 'Converting coordinates...'
-
     for (const feature of geojson.features) {
-      let coordinates
       try {
-        for (let i = 0; i < feature.geometry.coordinates.length; i++) {
-          coordinates = feature.geometry.coordinates[i]
-
-          if (feature.geometry.type === 'MultiPolygon') coordinates = coordinates[0]
-
-          const newCoords: any = []
-          for (let p of coordinates) {
-            const lnglat = proj4(this.projection, 'WGS84', p) as any
-            newCoords.push(lnglat)
-          }
-
-          if (feature.geometry.type === 'MultiPolygon') {
-            feature.geometry.coordinates[i][0] = newCoords
-          } else {
-            feature.geometry.coordinates[i] = newCoords
-          }
+        if (feature.geometry.type === 'MultiPolygon') {
+          this.convertMultiPolygonCoordinatesToWGS84(feature)
+        } else {
+          this.convertPolygonCoordinatesToWGS84(feature)
         }
       } catch (e) {
-        console.log('ERR with feature NO: ' + feature.properties.NO)
-        console.log(coordinates)
+        console.error('ERR with feature: ' + feature)
         console.error(e)
       }
     }
@@ -247,6 +232,34 @@ export default class AggregateOD extends Vue {
     })
     this.loadingText = ''
     */
+  }
+
+  private convertPolygonCoordinatesToWGS84(polygon: any) {
+    for (const origCoords of polygon.geometry.coordinates) {
+      const newCoords: any = []
+      for (const p of origCoords) {
+        const lnglat = proj4(this.projection, 'WGS84', p) as any
+        newCoords.push(lnglat)
+      }
+
+      // replace existing coords
+      origCoords.length = 0
+      origCoords.push(...newCoords)
+    }
+  }
+
+  private convertMultiPolygonCoordinatesToWGS84(multipolygon: any) {
+    for (const origCoords of multipolygon.geometry.coordinates) {
+      const coordinates = origCoords[0] // multipolygons have an extra array[0] added
+
+      const newCoords: any = []
+      for (const p of coordinates) {
+        const lnglat = proj4(this.projection, 'WGS84', p) as any
+        newCoords.push(lnglat)
+      }
+
+      origCoords[0] = newCoords
+    }
   }
 
   private addGeojsonToMap(geojson: any) {
