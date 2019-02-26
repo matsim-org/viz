@@ -2,6 +2,13 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+  .info-blob
+    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+    .info-header
+      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas:
+    p.details.help-text(style="margin-top:20px") Select a link for more details.
+    b Time of day:
+    time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
   // legend-box.legend(:rows="legendRows")
 </template>
@@ -9,12 +16,13 @@
 <script lang="ts">
 'use strict'
 
-import * as turf from '@turf/turf'
 import * as BlobUtil from 'blob-util'
-import colormap from 'colormap'
-import proj4 from 'proj4'
-import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
 import * as shapefile from 'shapefile'
+import * as turf from '@turf/turf'
+import colormap from 'colormap'
+import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
+import proj4 from 'proj4'
+import VueSlider from 'vue-slider-component'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -22,11 +30,37 @@ import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
+import TimeSlider from '@/components/TimeSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
 const COLOR_CATEGORIES = 16
+
+const sliderSettings = {
+  value: '2016-10-01',
+  width: '80%',
+  tooltip: 'always',
+  disabled: false,
+  piecewise: true,
+  piecewiseLabel: true,
+  style: {
+    marginLeft: '10%',
+  },
+  data: ['2016-10-01', '2016-10-02', '2016-10-03', '2016-10-04', '2016-10-05', '2016-10-06', '2016-10-07'],
+  piecewiseStyle: {
+    backgroundColor: '#ccc',
+    visibility: 'visible',
+    width: '12px',
+    height: '12px',
+  },
+  piecewiseActiveStyle: {
+    backgroundColor: '#3498db',
+  },
+  labelActiveStyle: {
+    color: '#3498db',
+  },
+}
 
 proj4.defs([
   [
@@ -64,7 +98,13 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Projection'],
 })
 
-@Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
+@Component({
+  components: {
+    'legend-box': LegendBox,
+    'project-summary-block': ProjectSummaryBlock,
+    'time-slider': TimeSlider,
+  },
+})
 export default class AggregateOD extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -124,12 +164,9 @@ export default class AggregateOD extends Vue {
 
   private setupMap() {
     this.mymap = new mapboxgl.Map({
-      bearing: 0,
       container: 'mymap',
       logoPosition: 'bottom-left',
       style: 'mapbox://styles/mapbox/outdoors-v9',
-      pitch: 0,
-      // zoom: 9,
     })
 
     const extent = localStorage.getItem(this.vizId + '-bounds')
@@ -564,6 +601,7 @@ p {
 
 .details {
   font-size: 12px;
+  margin-bottom: auto;
 }
 
 .bigtitle {
@@ -576,15 +614,15 @@ p {
 .info-header {
   background-color: #097c43;
   padding: 0.5rem 0rem;
-  border-top: solid 1px #888;
-  border-bottom: solid 1px #888;
+  border-top: solid 1px #666;
+  border-bottom: solid 1px #666;
 }
 
 .project-summary-block {
   width: 16rem;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  margin: 0px auto auto 0px;
+  margin: 0px auto 0px 0px;
   z-index: 10;
 }
 
@@ -593,13 +631,13 @@ p {
   flex-direction: column;
   width: 16rem;
   height: 100vh;
-  background-color: #363a45;
+  background-color: #eeeeffbb;
   margin: 0px 0px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
   text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 3;
-  opacity: 0.95;
+  opacity: 1;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
 }

@@ -1,6 +1,8 @@
 <template lang="pug">
 #project-summary-block
-  .project-name(@click="goBack") &laquo; {{ project.name}}
+  .project-name(@click="goBack")
+    i.fa.fa-arrow-left
+    span &nbsp;&nbsp;{{ project.name}}
 </template>
 
 <script lang="ts">
