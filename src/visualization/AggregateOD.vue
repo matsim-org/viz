@@ -127,7 +127,7 @@ export default class AggregateOD extends Vue {
       bearing: 0,
       container: 'mymap',
       logoPosition: 'bottom-left',
-      style: 'mapbox://styles/mapbox/streets-v9',
+      style: 'mapbox://styles/mapbox/outdoors-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -269,7 +269,9 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': 8,
+        'circle-radius': 12,
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white',
       },
     })
 
@@ -442,13 +444,13 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'fill',
         paint: {
-          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', 'white'],
-          'fill-opacity': 0.8,
+          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', '#dde'],
+          'fill-opacity': 0.6,
         },
       },
-      'water'
+      'road-primary'
     )
-
+    /*
     this.mymap.addLayer(
       {
         id: 'shplayer-borders',
@@ -461,7 +463,7 @@ export default class AggregateOD extends Vue {
       },
       'waterway-label'
     )
-
+*/
     // HOVER effects
     const parent = this
 
