@@ -73,5 +73,6 @@ export interface FileEntry extends Entity {
   contentType: string
   project: Project
   sizeInBytes: number
+  tags: Tag[]
   userFileName: string
 }

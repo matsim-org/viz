@@ -1,27 +1,19 @@
 <template lang="pug">
 #app
-  .topnavrow
-    router-link.nav-link(to="/"): img.nav-logo(src="@/assets/matsim-logo-white.png")
-
-    .breadcrumb-row
-      p.nav-breadcrumb(v-for="crumb in breadcrumbs" :key="crumb.title") &bull;
-        router-link.nav-breadcrumb.nav-bread-link(:to="crumb.link") {{ crumb.title }}
-
-    .nav-rightside
-      a.topnavrow-item(@click="onLogin()") {{ loginText }}
-      router-link.topnavrow-item(to="/projects" v-if="isLoggedIn") Projects
-
+  system-left-bar.left-nav-strip(:authStore="authStore")
   router-view.main-content
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
-import sharedStore from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
-import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import 'bulma/css/bulma.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
+import { Vue, Component, Prop } from 'vue-property-decorator'
+
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
+import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import SystemLeftBar from '@/components/SystemLeftBar.vue'
 
 // MAPBOX TOKEN
 // this is a required workaround to get the mapbox token assigned in TypeScript
@@ -35,39 +27,14 @@ interface BreadCrumb {
   link: string
 }
 
-@Component
+@Component({ components: { 'system-left-bar': SystemLeftBar } })
 export default class App extends Vue {
   private breadcrumbs: BreadCrumb[] = []
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
 
-  private get sharedState() {
-    return sharedStore.state
-  }
-
-  private get loginText() {
-    return this.isLoggedIn ? 'Log Out' : 'Log In'
-  }
-
-  private get isLoggedIn() {
-    return this.authState.status === AuthenticationStatus.Authenticated
-  }
-
-  public mounted() {
-    EventBus.$on('set-breadcrumbs', (crumbs: BreadCrumb[]) => {
-      this.breadcrumbs = crumbs
-    })
-  }
-
-  private onLogin() {
-    if (this.authState.status === AuthenticationStatus.Authenticated) {
-      this.authStore.logOut()
-      this.$router.push({ path: '/' })
-    } else {
-      this.$router.push({ path: '/authentication' })
-    }
-  }
+  public mounted() {}
 }
 </script>
 
@@ -99,8 +66,8 @@ h6 {
   display: grid;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
   height: 100%;
   max-height: 100%;
   margin: 0px 0px 0px 0px;
@@ -108,20 +75,21 @@ h6 {
 }
 
 .main-content {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
   z-index: 1;
+  height: 100%;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
-.topnavrow {
+.left-nav-strip {
+  width: 4.5rem;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 0.5rem 1rem 0.5rem 1.5rem;
-  background-color: hsl(0, 0%, 29%);
+  padding: 0.5rem 0rem 0.5rem 0rem;
+  background-image: linear-gradient(-150deg, #479ccc, #114d72); /*50a2d5*/
   z-index: 5;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
@@ -171,5 +139,13 @@ a:hover {
   flex-direction: row;
   font-size: 0.8rem;
   margin: auto 0rem;
+}
+
+.medium-zoom-overlay {
+  z-index: 100;
+}
+
+.medium-zoom-overlay ~ img {
+  z-index: 101;
 }
 </style>

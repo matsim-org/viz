@@ -49,25 +49,32 @@ class XmlFetcher extends AsyncBackgroundWorker {
   private async getDataFromBlob(blob: Blob) {
     // TEMP HACK. Need user agent to determine whether GZIP is regular (Chrome)
     // or double (firefox).  Can add others later.
-    const isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
-    console.log('IS FIREFOX: ' + isFirefox)
+    console.log(navigator.userAgent)
+
+    let isFirefox = true
+    // are we on windows
+    if (navigator.appVersion.indexOf('Win') > -1) {
+      isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
+    }
+
+    console.log('IS FIREFOX on WINDOWS: ' + isFirefox)
 
     const data: any = await BlobUtil.blobToArrayBuffer(blob)
 
-    if (isFirefox) {
-      try {
-        const gunzip1 = pako.inflate(data)
-        const gunzip2 = pako.inflate(gunzip1, { to: 'string' })
-        return gunzip2
-      } catch (e) {} // not gzipped: must be text
-    } else {
-      try {
-        const gunzip1 = pako.inflate(data, { to: 'string' })
-        return gunzip1
-      } catch (e) {} // not gzipped: must be text
+    try {
+      // try single-gzipped
+      const gunzip1 = pako.inflate(data, { to: 'string' })
+      if (gunzip1.startsWith('<?xml')) return gunzip1
+
+      // try double-gzipped
+      const dgunzip1 = pako.inflate(data)
+      const gunzip2 = pako.inflate(dgunzip1, { to: 'string' })
+      if (gunzip2.startsWith('<?xml')) return gunzip2
+    } catch (e) {
+      // it's ok if it failed because it might be text vvvv
     }
 
-    // Text is not gzipped:
+    // try text
     const text: string = await BlobUtil.blobToBinaryString(blob)
     return text
   }

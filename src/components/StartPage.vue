@@ -1,43 +1,57 @@
 <template lang="pug">
 .page-content
-  .hero.is-success
-    .hero-body
-      p.title Welcome to MATSim-Viz
-      p.subtitle You've found the "MATSim Visualizer" which is an experimental web-based visualization platform for exploring MATSim outputs. Pick a dataset to explore from those below. More to come!
-
   .start-page-content
-    h3.title.is-3 Visualization Gallery
-    ul.projects
-      project-list-item(v-for="project in projects"
-                        v-bind:key="project.id"
-                        v-bind:project="project"
-                        v-bind:project-store="projectStore"
-                        v-on:viz-selected="onVizSelected") {{ project.name }}
+    h2.title.is-2 Welcome to MATSim-Viz!
+    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs.
+    p.info This tool is being developed at the Technische Universität in Berlin, Germany.
+
+    .about(v-if="isAuthenticated")
+      h4.title.is-4 My Projects
+      my-projects( :projectStore="projectStore")
 
     .about
-      h3.title.is-3 About MATSim
-      p You can find out more about MATSim at&nbsp;
+      h4.title.is-4 Public Gallery
+      p.info Researchers have made these results available on the open web. Have a look around!
+
+    ul.projects
+      .project-row(v-for="project in projects" :key="project.id")
+        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
+                        :project="project"
+                        :project-store="projectStore"
+                        @viz-selected="onVizSelected") {{ project.name }}
+
+    .about
+      h4.title.is-4 About MATSim
+      p.info You can find out more about MATSim at&nbsp;
         a(href="https://matsim.org" target="_blank") https://matsim.org
 </template>
 
 <script lang="ts">
 import sharedStore from '@/SharedStore'
+import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
+import Projects from '@/project/Projects.vue'
 import ProjectStore, { ProjectState } from '@/project/ProjectStore'
 import { Visualization } from '@/entities/Entities'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
-@Component({
-  components: { 'project-list-item': ProjectListItem },
-})
+@Component({ components: { 'project-list-item': ProjectListItem, 'my-projects': Projects } })
 export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
 
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
+
   // this assignment is necessary to make vue watch the state
-  private projectState!: ProjectState // this.projectStore.State
+  private projectState: any = {}
+
+  private get isAuthenticated() {
+    if (!this.authStore) return false
+    return this.authStore.state.status === AuthenticationStatus.Authenticated
+  }
 
   private get projects() {
     if (!this.projectState) return []
@@ -45,12 +59,14 @@ export default class StartPage extends Vue {
   }
 
   public async created() {
-    // start fetching data as soon as possible. Hence do this in 'created' callback
     if (!this.projectStore) return
 
     try {
+      this.projectState = this.projectStore.State
+
+      // start fetching data as soon as possible. Hence do this in 'created' callback
       await this.projectStore.fetchProjects()
-      this.projects.forEach(project => this.projectStore.fetchVisualizationsForProject(project))
+      this.projects.forEach((project: any) => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }
@@ -69,14 +85,33 @@ export default class StartPage extends Vue {
 </script>
 
 <style scoped>
+.page-content {
+  background-color: #eee;
+}
+
 .start-page-content {
-  padding: 2rem 1.5rem;
+  padding: 3rem 3rem;
   overflow-y: auto;
+  max-width: 60rem;
+  margin: auto;
+  border-top: 2rem solid #cc5427;
 }
 
 .about {
+  margin-top: 4rem;
+  padding-top: 0.25rem;
+  border-top: 0.2rem solid #479ccc;
+}
+
+.about h4 {
+  color: #479ccc;
+}
+
+.public-gallery {
+  border-top: 0.2rem solid #479ccc;
+}
+
+.projects {
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid lightgray;
 }
 </style>

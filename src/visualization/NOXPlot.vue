@@ -125,7 +125,6 @@ export default class NOXPlot extends Vue {
 
   private setBreadcrumb() {
     EventBus.$emit('set-breadcrumbs', [
-      { title: 'My Projects', link: '/projects' },
       { title: this.store.project.name, link: '/project/' + this.store.projectId },
       { title: 'nox-' + this.store.vizId.substring(0, 4), link: '#' },
     ])

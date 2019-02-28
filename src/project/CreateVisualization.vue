@@ -1,14 +1,13 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    span(slot="header")
-      h4.title.is-4 Create Visualization
+    div(slot="header") Create Visualization
 
     div(slot="content")
       .viz-selector
         aside.menu
           p.menu-label Select:
           ul.menu-list
-            li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
+            li(v-for="viz in availableVisualizations")
               a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
@@ -37,8 +36,8 @@ modal(v-on:close-requested="cancel()")
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.ui.negative.button(v-on:click="cancel()") Cancel
-          button.button.is-link(v-on:click="createVisualization()") Create
+          button.button.negative.is-rounded(v-on:click="cancel()") Cancel
+          button.button.is-link.is-rounded.accent(v-on:click="createVisualization()") Create
 </template>
 
 <script lang="ts">
@@ -103,6 +102,14 @@ export default class CreateVisualizationViewModel extends Vue {
 
   private close() {
     this.$emit('close')
+  }
+
+  private get availableVisualizations() {
+    const vizes = Array.from(this.sharedState.visualizationTypes.values())
+    vizes.sort((a, b) => {
+      return a.prettyName > b.prettyName ? 1 : -1
+    })
+    return vizes
   }
 
   private async createVisualization() {
@@ -183,6 +190,26 @@ export default class CreateVisualizationViewModel extends Vue {
 }
 .viz-file {
   padding: 5px 0px;
+}
+
+h4 {
+  color: #479ccc;
+  text-transform: uppercase;
+}
+
+.menu-label {
+  color: #479ccc;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0px;
+}
+
+.accent {
+  background-color: #2d76a1;
+}
+
+.accent:hover {
+  background-color: #256083;
 }
 </style>
 

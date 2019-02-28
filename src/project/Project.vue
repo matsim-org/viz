@@ -1,88 +1,94 @@
 <template lang="pug">
 .project
-  .hero.is-link
-    .heroContainer
-      .projectTitle
-        h1.title(slot="content") {{project.name}}
-        h3.subtitle project: {{project.id.substring(0,6)}}
-      .editButton
-        button.button.is-small(@click="showSettings = true")
-                span.icon.is-small
-                    i.fas.fa-pen
-
-  section
-    list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
-    span(v-if="isFetching") Fetching project data...
-    .visualizations
-      .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
-        span No Visualizations yet. Add some!
-      .viz-table(v-else)
-        .viz-item(v-for="viz in project.visualizations"
-                  v-on:click="onSelectVisualization(viz)"
-                  v-bind:key="viz.id")
-            viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
-              .itemTitle(slot="title"): p {{ viz.type }}
-              p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
-
-  section
-    list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
-    input.fileInput(type="file"
-        id="fileInput"
-        ref="fileInput"
-        multiple
-        v-on:change="onFileInput"
-        )
-    .file-area
-      drop.drop(
-        :class="{over:isDragOver}"
-        @dragover="isDragOver = true"
-        @dragleave="isDragOver = false"
-        @drop="onDrop"
-        effect-allowed='all'
-      ): b Drag/drop files here!
-
-      .files
-        .emptyMessage(v-if="project.files && project.files.length === 0")
-          span No files yet. Add some!
-        .fileList(v-else)
-          .fileItem(v-for="file in project.files")
-            list-element( v-bind:key="file.id")
-              .itemTitle(slot="title")
-                span {{file.userFileName}}
-                span {{readableFileSize(file.sizeInBytes)}}
-
-              .tag-container(slot="content")
-                .tag.is-info(v-for="tag in file.tags")
-                  span {{ tag.name }}
-              button.delete.is-medium(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
-
-  section.uploads(v-if="uploads.length > 0")
-    .upload-header
-      h3.title.is-3 Pending Uploads
-    .fileItem(v-for="upload in uploads")
-      list-element
-        .itemTitle(slot="title")
-          span {{ upload.file.name }}
-          span {{ toPercentage(upload.progress) }}%
-        span(slot="content") {{ toStatus(upload.status) }}
-
-  create-visualization(v-if="showCreateVisualization"
-                        v-on:close="onAddVisualizationClosed"
-                        v-bind:projectStore="projectStore"
-                        v-bind:fileApi="fileApi")
-
-  file-upload(v-if="showFileUpload" v-on:close="onAddFilesClosed"
-              v-bind:uploadStore="uploadStore"
-              v-bind:projectStore="projectStore"
-              v-bind:selectedProject="project"
-              v-bind:selectedFiles="selectedFiles")
+  summary-strip.summary-strip(
+    :projectId="projectId"
+    :projectStore="projectStore"
+    :selectedRun="selectedRun"
+    @onEdit="showSettings = true"
+    @onAddVisualization="onAddVisualization"
+    @onSelectModelRun="onSelectModelRun"
+    @onDrop="onDrop"
+    @onAddFiles="onAddFiles"
+  )
 
   project-settings(v-if="showSettings" v-on:close="showSettings=false"
                   v-bind:projectStore="projectStore")
 
+  .center-area
+    .main-area
+      section.images(v-if="imageFiles.length>0")
+        .title {{selectedRun}} / Dashboard
+        .viz-table
+          .viz-item(v-for="image in imageFiles" :key="image.userFileName")
+            image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="projectId")
+            p.center {{image.userFileName}}
+
+      section
+        list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
+        .visualizations
+          .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
+            span No Visualizations yet. Add some!
+          .viz-table(v-else)
+            .viz-item(v-for="viz in project.visualizations"
+                      v-on:click="onSelectVisualization(viz)"
+                      v-bind:key="viz.id")
+                viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
+                  .itemTitle(slot="title"): p {{ viz.type }}
+                  p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
+
+      section
+        list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
+        input.fileInput(type="file"
+            id="fileInput"
+            ref="fileInput"
+            multiple
+            v-on:change="onFileInput"
+            )
+        .file-area
+          .files
+            .emptyMessage(v-if="project.files && project.files.length === 0")
+              span No files yet. Add some!
+            .fileList(v-else)
+              .fileItem(v-for="file in filesToShow")
+                list-element( v-bind:key="file.id")
+                  .itemTitle(slot="title")
+                    span {{file.userFileName}}
+                    span {{readableFileSize(file.sizeInBytes)}}
+
+                  .tag-container(slot="content")
+                    .tag.is-info(v-for="tag in file.tags")
+                      span {{ tag.name }}
+                  button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+
+      section.uploads(v-if="uploads.length > 0")
+        .upload-header
+          h3.title.is-3 Pending Uploads
+        .fileItem(v-for="upload in uploads")
+          list-element
+            .itemTitle(slot="title")
+              span {{ upload.file.name }}
+              span {{ toPercentage(upload.progress) }}%
+            span(slot="content") {{ toStatus(upload.status) }}
+
+      create-visualization(v-if="showCreateVisualization"
+                            v-on:close="onAddVisualizationClosed"
+                            v-bind:projectStore="projectStore"
+                            v-bind:fileApi="fileApi")
+
+      file-upload(v-if="showFileUpload"
+                  @close="onAddFilesClosed"
+                  :suggestedRun="selectedRun"
+                  :uploadStore="uploadStore"
+                  :projectStore="projectStore"
+                  :selectedProject="project"
+                  :selectedFiles="selectedFiles")
+
+
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import mediumZoom from 'medium-zoom'
+
 import CreateVisualization from '@/project/CreateVisualization.vue'
 import FileUpload from '@/project/FileUpload.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -91,6 +97,7 @@ import Modal from '@/components/Modal.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
+import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
@@ -98,8 +105,9 @@ import { Drag, Drop } from 'vue-drag-drop'
 import ProjectStore from '@/project/ProjectStore'
 import Component from 'vue-class-component'
 import UploadStore from '@/project/UploadStore'
-import { Visualization } from '@/entities/Entities'
+import { Visualization, FileEntry } from '@/entities/Entities'
 import ProjectSettings from '@/project/ProjectSettings.vue'
+import SummaryStrip from '@/project/SummaryStrip.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -113,6 +121,8 @@ const vueInstance = Vue.extend({
     'file-upload': FileUpload,
     'list-header': ListHeader,
     'list-element': ListElement,
+    'image-file-thumbnail': ImageFileThumbnail,
+    'summary-strip': SummaryStrip,
     'viz-thumbnail': VizThumbnail,
     'project-settings': ProjectSettings,
     Drag,
@@ -134,6 +144,7 @@ export default class ProjectViewModel extends vueInstance {
   private showSettings = false
   private isDragOver = false
   private selectedFiles: File[] = []
+  private selectedRun: string = ''
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -141,6 +152,16 @@ export default class ProjectViewModel extends vueInstance {
 
   private get project() {
     return this.projectState.selectedProject
+  }
+
+  private get modelRuns() {
+    if (!this.project.tags) return []
+    return this.project.tags
+      .filter(a => a.type === 'run')
+      .sort((a, b) => {
+        // reverse sort! newest at top
+        return a.name < b.name ? 1 : -1
+      })
   }
 
   private get uploads() {
@@ -157,14 +178,44 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   public mounted() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: 'My Projects', link: '/projects' },
-      { title: this.project.name, link: '/project/' + this.project.id },
-    ])
+    EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
+  }
+
+  private get imageFiles() {
+    if (!this.selectedRun) return []
+
+    const imageTypePrefix = 'image/'
+    const files = this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    files.sort((a, b) => {
+      return a.userFileName > b.userFileName ? 1 : -1
+    })
+    return files
+  }
+
+  private get filesToShow() {
+    if (!this.selectedRun) return this.project.files
+
+    return this.project.files.filter(f => {
+      for (const tag of f.tags) {
+        if (tag.name === this.selectedRun) return true
+      }
+      return false
+    })
   }
 
   private onAddVisualization() {
     this.showCreateVisualization = true
+  }
+
+  private async onSelectModelRun(modelRun: any) {
+    console.log('boop', modelRun)
+    // toggle, if it's already selected
+    if (this.selectedRun === modelRun.name) this.selectedRun = ''
+    else this.selectedRun = modelRun.name
+
+    // the medium zoom library does things to the DOM, so this Vue hack is required
+    await Vue.nextTick()
+    mediumZoom('.medium-zoom', { background: '#444450' })
   }
 
   private onAddVisualizationClosed() {
@@ -186,10 +237,7 @@ export default class ProjectViewModel extends vueInstance {
     this.showFileUpload = true
   }
 
-  private async onDrop(data: any, event: any) {
-    event.preventDefault()
-    this.isDragOver = false
-    const files = event.dataTransfer.files
+  private async onDrop(files: any) {
     this.selectedFiles = files
     this.showFileUpload = true
   }
@@ -215,7 +263,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private readableFileSize(bytes: number): string {
-    return '' + bytes // filesize(bytes)
+    return filesize(bytes)
   }
 
   private toPercentage(fraction: number): string | undefined {
@@ -251,6 +299,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 }
 </script>
+
 <style scoped>
 .heroContainer {
   padding: 3rem 1.5rem;
@@ -264,8 +313,36 @@ section {
 }
 
 .project {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  background-color: #eee;
+  height: 100vh;
+}
+
+.summary-strip {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  width: 16rem;
+  height: 100vh;
+  background-color: #242831;
+  color: #eee;
   display: flex;
   flex-direction: column;
+}
+
+.center-area {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.main-area {
+  max-width: 60rem;
+  margin: 0px auto;
+  padding-top: 1rem;
 }
 
 .header {
@@ -328,6 +405,12 @@ section {
   margin-top: 3rem;
 }
 
+.strip-empty-message {
+  display: flex;
+  flex-direction: row;
+  margin-top: 0.2rem;
+}
+
 .viz-table {
   display: grid;
   grid-gap: 1rem;
@@ -335,6 +418,7 @@ section {
   list-style: none;
   padding-left: 0px;
   margin-bottom: 0px;
+  overflow-y: auto;
 }
 
 .viz-item {
@@ -344,30 +428,30 @@ section {
   width: 240px;
 }
 
-.viz-item:hover {
-  cursor: pointer;
-}
 .drop {
-  padding: 25px;
-  margin: 20px 10px auto 0px;
+  padding: 1rem 3rem;
+  margin: 1rem 0rem 1.5rem 0rem;
   text-align: center;
-  border: 5px dashed #ddd;
-  border-radius: 10px;
+  border: 0.2rem dashed #aaa;
+  border-radius: 0.25rem;
+  color: #aaa;
+  font-size: 0.8rem;
 }
 
 .drop:hover {
-  border: 5px dashed pink;
+  border: 0.2rem dashed #ffa;
+  color: white;
 }
 
 .drop.over {
-  border: 5px dashed #37f;
-  background-color: #ffa;
-  transform: translateY(3px);
+  border: 0.2rem dashed #097c43;
+  background-color: black;
+  margin: 1rem -0.2rem 1.5rem -0.2rem;
 }
 
 .file-area {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: 1fr;
 }
 
@@ -379,5 +463,151 @@ section {
   border-bottom: 1px solid lightgray;
   width: 100%;
   padding-bottom: 1.5rem;
+}
+
+.title-band {
+  background-color: #363a45;
+  padding: 1.5rem 1rem 2rem 1rem;
+  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+}
+
+.title-band h3 {
+  color: #eee;
+}
+
+.title-band h4 {
+  color: #aaa;
+}
+
+.title-details {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  margin: auto 0rem;
+}
+
+.editButton {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  color: #888;
+  margin: auto 0rem auto 0.1rem;
+  border: solid 1px #888;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.3rem;
+}
+
+.editButton:hover,
+active {
+  color: #ffa;
+  border: solid 1px #ffa;
+  cursor: pointer;
+}
+
+.project-description {
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  justify-content: center;
+  padding: 1rem 0rem 0rem 0rem;
+  color: #aaa;
+}
+
+.add-viz {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.add-files {
+  padding-bottom: 1.2rem;
+  text-align: center;
+  width: 100%;
+}
+
+.accent {
+  background-color: #097c43;
+  width: 100%;
+}
+
+.accent:hover {
+  background-color: #097733; /* #096c63; */
+}
+
+.summary-category {
+  margin: 0rem 1rem 4rem 1rem;
+}
+
+.modelTab {
+  margin-right: 0px;
+}
+
+.section-head {
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  color: #479ccc;
+  font-size: 0.9rem;
+}
+
+.viz-summary {
+  display: flex;
+  flex-direction: column;
+}
+
+.modelRun {
+  padding: 0.3rem 0rem 0.3rem 1.2rem;
+  font-size: 0.9rem;
+  border-radius: 1.3rem 0rem 0rem 1.3rem;
+  color: #eee;
+}
+
+.modelRun:hover {
+  background-color: #363a45;
+  cursor: pointer;
+}
+
+.modelRun.selected {
+  background-color: #eee;
+  color: #223;
+}
+
+.dropzone {
+  margin-top: auto;
+  margin-bottom: 0rem;
+}
+
+.gettingStarted {
+  padding: 1rem 1rem 1rem 0rem;
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.project-name {
+  font-size: 1.2rem;
+}
+
+.subtitle {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.images {
+  margin-bottom: 3rem;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 3px;
+  border: solid 1px #ccc;
+}
+.center {
+  text-align: center;
+  font-weight: bold;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 </style>

@@ -1,32 +1,34 @@
 <template lang="pug">
 #container
-  .status-blob(v-if="loadingText"): h2 {{ loadingText }}
-  .info-blob
+  .status-blob(v-if="loadingText"): p {{ loadingText }}
+  project-summary-block.project-summary-block(
+    :project="project" :projectId="projectId")
+  .info-blob(v-if="routesOnLink.length > 0" )
+    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="color: #ff8") ROUTES ON LINK
+      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Transit routes on selected link:
+    p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
-    p.details(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
-
-    .route(v-for="route in routesOnLink"
+    .routeList
+      .route(v-for="route in routesOnLink"
           :key="route.uniqueRouteID"
           :class="{highlightedRoute: selectedRoute && route.id === selectedRoute.id}"
-          @click="showRouteDetails(route.id)"
-    )
-      h3.mytitle {{route.id}}
-      p.details: b {{route.departures}} departures
-      p.details First: {{route.firstDeparture}}
-      p.details Last: {{route.lastDeparture}}
+          @click="showRouteDetails(route.id)")
+        h3.mytitle {{route.id}}
+        p.details: b {{route.departures}} departures
+        p.details First: {{route.firstDeparture}}
+        p.details Last: {{route.lastDeparture}}
   #mymap
     .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
       v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
     )
+  legend-box.legend(:rows="legendRows")
 </template>
 
 <script lang="ts">
 'use strict'
 
 import * as turf from '@turf/turf'
-import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
@@ -40,51 +42,23 @@ import FileAPI from '@/communication/FileAPI'
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 
+import {
+  Network,
+  NetworkInputs,
+  NetworkNode,
+  TransitLine,
+  RouteDetails,
+} from '@/visualization/transit-supply/Interfaces'
 import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
 import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
+import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
+import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
 const COLOR_CATEGORIES = 16
 const SHOW_STOPS_AT_ZOOM_LEVEL = 11
-
-interface RouteDetails {
-  id: string
-  departures: number
-  firstDeparture: string
-  lastDeparture: string
-  geojson: any
-  routeProfile: string[]
-  route: string[]
-  transportMode: string
-  uniqueRouteID?: number
-}
-
-interface Network {
-  nodes: { [id: string]: NetworkNode }
-  links: { [id: string]: NetworkLink }
-}
-
-interface NetworkNode {
-  x: number
-  y: number
-}
-
-interface NetworkInputs {
-  roadXML: any
-  transitXML: any
-}
-
-interface NetworkLink {
-  readonly from: string
-  readonly to: string
-}
-
-interface TransitLine {
-  id: string
-  transitRoutes: any[]
-}
 
 class Departure {
   public total: number = 0
@@ -100,7 +74,7 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Description', 'Projection'],
 })
 
-@Component
+@Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -175,9 +149,11 @@ export default class TransitSupply extends Vue {
     }
   }
 
+  private get legendRows() {
+    return [['#a03919', 'Rail'], ['#448', 'Bus']]
+  }
   private setBreadcrumb() {
     EventBus.$emit('set-breadcrumbs', [
-      { title: 'My Projects', link: '/projects' },
       { title: this.project.name, link: '/project/' + this.projectId },
       { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
     ])
@@ -188,8 +164,8 @@ export default class TransitSupply extends Vue {
       bearing: 0,
       // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/light-v9',
+      logoPosition: 'bottom-left',
+      style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -208,6 +184,8 @@ export default class TransitSupply extends Vue {
 
     this.mymap.on('move', this.handleMapMotion)
     this.mymap.on('zoom', this.handleMapMotion)
+    this.mymap.on('click', this.handleEmptyClick)
+
     this.mymap.keyboard.disable() // so arrow keys don't pan
 
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
@@ -215,6 +193,13 @@ export default class TransitSupply extends Vue {
 
   private handleMapMotion() {
     if (this.stopMarkers.length > 0) this.showTransitStops()
+  }
+
+  private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
+    this.removeStopMarkers()
+    this.removeSelectedRoute()
+    this.removeAttachedRoutes()
+    this.routesOnLink = []
   }
 
   private showRouteDetails(routeID: string) {
@@ -449,7 +434,10 @@ export default class TransitSupply extends Vue {
         ]
 
         const departures = this._departures[linkID].total
-        const colorBin = Math.floor((COLOR_CATEGORIES * (departures - 1)) / this._maximum)
+
+        // shift scale from 0->1 to 0.25->1.0, because dark blue is hard to see on a black map
+        const ratio = 0.25 + (0.75 * (departures - 1)) / this._maximum
+        const colorBin = Math.floor(COLOR_CATEGORIES * ratio)
 
         let isRail = false
         for (const route of this._departures[linkID].routes) {
@@ -458,7 +446,6 @@ export default class TransitSupply extends Vue {
             break
           }
         }
-
         let line = {
           type: 'Feature',
           geometry: {
@@ -466,8 +453,8 @@ export default class TransitSupply extends Vue {
             coordinates: coordinates,
           },
           properties: {
-            width: Math.max(4, 0.01 * this._departures[linkID].total),
-            color: isRail ? '#da4' : _colorScale[colorBin],
+            width: Math.max(3, 0.01 * this._departures[linkID].total),
+            color: isRail ? '#a03919' : _colorScale[colorBin],
             colorBin: colorBin,
             departures: departures,
             id: linkID,
@@ -560,7 +547,7 @@ export default class TransitSupply extends Vue {
         paint: {
           'line-opacity': 1.0,
           'line-width': 5, // ['get', 'width'],
-          'line-color': '#f00', // ['get', 'color'],
+          'line-color': '#097c43', // ['get', 'color'],
         },
       })
     }
@@ -620,7 +607,7 @@ export default class TransitSupply extends Vue {
         type: 'line',
         paint: {
           'line-opacity': 0.7,
-          'line-width': 10, // ['get', 'width'],
+          'line-width': 8, // ['get', 'width'],
           'line-color': '#ccff33', // ['get', 'color'],
         },
       })
@@ -682,43 +669,46 @@ p {
 }
 
 #container {
-  height: 100%;
+  height: 100vh;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr;
+  grid-template-rows: auto 1fr;
 }
 
 .status-blob {
-  background-color: white;
+  background-color: #222;
   box-shadow: 0 0 8px #00000040;
-  opacity: 0.8;
+  opacity: 0.9;
   margin: auto 0px auto -10px;
-  padding: 15px 0px;
+  padding: 3rem 0px;
   text-align: center;
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
   z-index: 2;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
 }
 
 #mymap {
   width: 100%;
   height: 100%;
-  background-color: white;
+  background-color: black;
   overflow: hidden;
   grid-column: 1 / 3;
-  grid-row: 1 / 2;
+  grid-row: 1 / 3;
 }
 
 .route {
-  background-color: white;
+  background-color: #363a45;
   margin: 0px 0px;
   padding: 5px 5px;
   text-align: left;
+  color: #bbb;
 }
 
 .route:hover {
-  background-color: #f4f4f4;
+  background-color: #445;
   cursor: pointer;
 }
 
@@ -729,6 +719,7 @@ h3 {
 
 .mytitle {
   margin-left: 10px;
+  color: white;
 }
 
 .details {
@@ -749,7 +740,8 @@ h3 {
 }
 
 .highlightedRoute {
-  background-color: #eee;
+  background-color: #556;
+  border-right: solid 5px #ff8;
 }
 
 .bigtitle {
@@ -760,26 +752,51 @@ h3 {
 }
 
 .info-header {
-  background-color: #557;
-  border-radius: 8px 8px 0px 0px;
+  background-color: #097c43;
   padding: 0.5rem 0rem;
+  border-top: solid 1px #888;
+  border-bottom: solid 1px #888;
+}
+
+.project-summary-block {
+  width: 16rem;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  margin: 0px auto auto 0px;
+  z-index: 10;
 }
 
 .info-blob {
   display: flex;
   flex-direction: column;
-  width: 250px;
-  background-color: white;
-  border-radius: 8px;
-  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+  width: 16rem;
+  height: 100vh;
+  background-color: #363a45;
+  margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
   grid-column: 1 / 2;
-  grid-row: 1 / 2;
+  grid-row: 1 / 3;
   opacity: 0.95;
-  z-index: 2;
+  z-index: 5;
+  animation: 0.3s ease 0s 1 slideInFromLeft;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.routeList {
+  width: 16rem;
+  height: 100%;
   overflow-y: auto;
 }
+
 .stop-marker {
   position: absolute;
   width: 12px;
@@ -788,5 +805,19 @@ h3 {
   transform: translate(-50%, -50%);
   background-size: 100%;
   cursor: pointer;
+}
+.help-text {
+  color: #ccc;
+}
+
+.status-blob p {
+  color: #ffa;
+}
+
+.legend {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  margin: auto 0.5rem 2rem auto;
+  z-index: 10;
 }
 </style>

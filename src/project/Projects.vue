@@ -1,25 +1,18 @@
 <template lang="pug">
-.projects
-  .hero.is-success
-    .hero-body
-      p.title MATSim Viz: My Projects
-      p.subtitle &nbsp;
+.xpage-contents
+  list-header(v-on:btnClicked="handleCreateClicked" title="" btnTitle="New Project")
 
-  .page-contents
-    list-header(v-on:btnClicked="handleCreateClicked" title="My Projects" btnTitle="New Project")
+  div.emptyMessage(v-if="projects.length === 0")
+    span You don't have any projects yet. Create one!
+  .projectList(v-else)
+    list-element(v-for="project in projects"
+                  v-bind:key="project.id"
+                  v-on:itemClicked="onProjectSelected(project)")
+      span(slot="title") {{project.name}}
+      span(slot="content") {{project.id}}
+      button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
 
-    div.emptyMessage(v-if="projects === 0")
-      span No projects yet. Create one!
-
-    .projectList(v-else)
-      list-element(v-for="project in projects"
-                    v-bind:key="project.id"
-                    v-on:itemClicked="onProjectSelected(project)")
-        span(slot="title") {{project.name}}
-        span(slot="content") {{project.id}}
-        button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
-
-    create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:project-store="projectStore")
+  create-project(v-if="showCreateProject" v-on:close="handleCreateProjectClosed" v-bind:project-store="projectStore")
 </template>
 
 <script lang="ts">
@@ -94,8 +87,8 @@ export default class ProjectsViewModel extends vueInstance {
 </script>
 
 <style scoped>
-.page-contents {
-  padding: 1.5rem 1.5rem;
+.xpage-contents {
+  padding: 0rem 0rem 3rem 0rem;
 }
 
 .projectList {
@@ -109,6 +102,7 @@ export default class ProjectsViewModel extends vueInstance {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  font-size: 1.3rem;
 }
 
 .itemContainer {

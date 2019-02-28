@@ -91,6 +91,10 @@ export default Vue.extend({})
   padding: 10px;
 }
 
+.card .card-content:hover {
+  cursor: pointer;
+}
+
 .card .card-content .card-title {
   display: block;
   font-size: 18px;
@@ -103,7 +107,7 @@ export default Vue.extend({})
 }
 
 .card .card-actions {
-  background-color: #ffffff88;
+  background-color: #cc9547;
   margin: 6px 3px auto auto;
   padding: 2px;
   border-radius: 4px;

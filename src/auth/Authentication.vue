@@ -105,7 +105,10 @@ export default class Authentication extends Vue {
     if (route.hash) {
       this.authStore.handleAuthenticationResponse(route.hash)
     } else if (route.query.error) {
-      this.authStore.handleFailedAuthenticationResponse(route.query)
+      this.authStore.handleFailedAuthenticationResponse({
+        error: 'request_failed',
+        error_description: String(route.query.error),
+      })
     } else {
       this.authStore.handleFailedAuthenticationResponse({
         error: 'request_incomplete',
