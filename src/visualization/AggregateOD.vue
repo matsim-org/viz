@@ -99,6 +99,7 @@ export default class AggregateOD extends Vue {
   private linkData: any = {}
   private zoneData: any = {} // [i][j][timePeriod] where [-1] of each is totals
   private dailyData: any = {} // [i][j]
+  private marginals: any = {}
 
   private loadingText: string = 'Aggregate Origin/Destination Flows'
   private mymap!: mapboxgl.Map
@@ -106,7 +107,7 @@ export default class AggregateOD extends Vue {
   private visualization!: Visualization
 
   private projection!: string
-  private hoveredStateId: any
+  private hoverId: any
 
   private _mapExtentXYXY!: any
   private _maximum!: number
@@ -169,8 +170,9 @@ export default class AggregateOD extends Vue {
       const geojson = await this.processInputs(files)
       this.setMapExtent()
       this.addGeojsonToMap(geojson)
-      this.addCentroids(geojson)
       this.processHourlyData(files.odFlows)
+      this.marginals = this.getDailyDataSummary()
+      this.addCentroids(geojson)
       this.buildSpiderLinks()
       this.setupKeyListeners()
     }
@@ -236,7 +238,33 @@ export default class AggregateOD extends Vue {
     })
   }
 
+  private clickedOnCentroid(e: any) {
+    console.log({ CLICK: e })
+
+    e.originalEvent.stopPropagating = true
+
+    const centroid = e.features[0].properties
+    console.log(centroid)
+
+    const id = centroid.id
+
+    console.log(this.marginals)
+    console.log(this.marginals.rowTotal[id])
+    console.log(this.marginals.colTotal[id])
+
+    // let html = `<h1>${totalTrips} Total Trips</h1><br/>`
+    // html += `<p><b>${trips} trips</b> (${props.orig} -> ${props.dest})</p>`
+    // html += `<p><b>${revTrips} trips</b> (${props.dest} -> ${props.orig})</p>`
+
+    /* new mapboxgl.Popup({ closeOnClick: true })
+      .setLngLat(e.lngLat)
+      .setHTML(html)
+      .addTo(this.mymap) */
+  }
+
   private clickedOnSpiderLink(e: any) {
+    if (e.originalEvent.stopPropagating) return
+
     console.log({ CLICK: e })
 
     const props = e.features[0].properties
@@ -265,10 +293,15 @@ export default class AggregateOD extends Vue {
 
     for (const feature of geojson.features) {
       const centroid: any = turf.centerOfMass(feature as any)
-      centroid.properties.id = feature.id
-      centroids.features.push(centroid)
 
-      if (feature.properties) this.centroids[feature.properties.NO] = centroid
+      centroid.properties.id = feature.id
+      centroid.properties.dailyFrom = this.marginals.rowTotal[feature.id as any]
+      centroid.properties.dailyTo = this.marginals.colTotal[feature.id as any]
+
+      if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
+        centroids.features.push(centroid)
+        if (feature.properties) this.centroids[feature.properties.NO] = centroid
+      }
     }
     console.log({ CENTROIDS: this.centroids })
 
@@ -294,9 +327,24 @@ export default class AggregateOD extends Vue {
       source: 'centroids',
       type: 'symbol',
       layout: {
-        'text-field': '{id}',
+        'text-field': '{dailyFrom}',
         'text-size': 11,
       },
+    })
+
+    const parent = this
+    this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.clickedOnCentroid(e)
+    })
+
+    // turn "hover cursor" into a pointer, so user knows they can click.
+    this.mymap.on('mousemove', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
+    })
+
+    // and back to normal when they mouse away
+    this.mymap.on('mouseleave', 'centroid-layer', function() {
+      parent.mymap.getCanvas().style.cursor = 'grab'
     })
   }
 
@@ -411,6 +459,24 @@ export default class AggregateOD extends Vue {
     }
   }
 
+  private getDailyDataSummary() {
+    const rowTotals: any = []
+    const colTotals: any = []
+    for (const row in this.zoneData) {
+      if (!this.zoneData.hasOwnProperty(row)) continue
+      for (const col in this.zoneData[row]) {
+        if (!this.zoneData[row].hasOwnProperty(col)) continue
+
+        if (!rowTotals[row]) rowTotals[row] = 0
+        rowTotals[row] += this.dailyData[row][col]
+
+        if (!colTotals[col]) colTotals[col] = 0
+        colTotals[col] += this.dailyData[row][col]
+      }
+    }
+    return { rowTotal: rowTotals, colTotal: colTotals }
+  }
+
   private processHourlyData(csvData: string) {
     const lines = csvData.split('\n')
     if (lines[0].trim().split(';').length !== 26) {
@@ -470,25 +536,11 @@ export default class AggregateOD extends Vue {
         type: 'fill',
         paint: {
           'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', '#dde'],
-          'fill-opacity': 0.6,
+          'fill-opacity': 0.65,
         },
       },
       'road-primary'
     )
-    /*
-    this.mymap.addLayer(
-      {
-        id: 'shplayer-borders',
-        source: 'shpsource',
-        type: 'line',
-        paint: {
-          'line-color': '#aaccee',
-          'line-width': 3,
-        },
-      },
-      'waterway-label'
-    )
-*/
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
@@ -577,8 +629,8 @@ p {
 .info-header {
   background-color: #097c43;
   padding: 0.5rem 0rem;
-  border-top: solid 1px #666;
-  border-bottom: solid 1px #666;
+  border-top: solid 1px #888;
+  border-bottom: solid 1px #888;
 }
 
 .project-summary-block {
