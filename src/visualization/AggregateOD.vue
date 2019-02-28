@@ -6,9 +6,9 @@
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
       h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas:
-    p.details.help-text(style="margin-top:20px") Select a link for more details.
-    b Time of day:
-    time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
+    p.details.help-text(style="margin-top:20px") Select a link or zone centroid for more details.
+    // b Time of day:
+    // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
   // legend-box.legend(:rows="legendRows")
 </template>
@@ -36,31 +36,6 @@ import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
 const COLOR_CATEGORIES = 16
-
-const sliderSettings = {
-  value: '2016-10-01',
-  width: '80%',
-  tooltip: 'always',
-  disabled: false,
-  piecewise: true,
-  piecewiseLabel: true,
-  style: {
-    marginLeft: '10%',
-  },
-  data: ['2016-10-01', '2016-10-02', '2016-10-03', '2016-10-04', '2016-10-05', '2016-10-06', '2016-10-07'],
-  piecewiseStyle: {
-    backgroundColor: '#ccc',
-    visibility: 'visible',
-    width: '12px',
-    height: '12px',
-  },
-  piecewiseActiveStyle: {
-    backgroundColor: '#3498db',
-  },
-  labelActiveStyle: {
-    color: '#3498db',
-  },
-}
 
 proj4.defs([
   [
@@ -121,7 +96,9 @@ export default class AggregateOD extends Vue {
   // -------------------------- //
 
   private centroids: any = {}
-  private odLookup: any = {}
+  private linkData: any = {}
+  private zoneData: any = {} // [i][j][timePeriod] where [-1] of each is totals
+  private dailyData: any = {} // [i][j]
 
   private loadingText: string = 'Aggregate Origin/Destination Flows'
   private mymap!: mapboxgl.Map
@@ -203,10 +180,10 @@ export default class AggregateOD extends Vue {
 
   private buildSpiderLinks() {
     const featureCollection: FeatureCollection = { type: 'FeatureCollection', features: [] }
-    for (const id in this.odLookup) {
-      if (!this.odLookup.hasOwnProperty(id)) continue
+    for (const id in this.linkData) {
+      if (!this.linkData.hasOwnProperty(id)) continue
 
-      const link: any = this.odLookup[id]
+      const link: any = this.linkData[id]
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
@@ -269,7 +246,7 @@ export default class AggregateOD extends Vue {
     let revTrips = 0
     const reverseDir = '' + props.dest + ':' + props.orig
 
-    if (this.odLookup[reverseDir]) revTrips = this.odLookup[reverseDir].daily
+    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily
 
     const totalTrips = trips + revTrips
 
@@ -442,6 +419,8 @@ export default class AggregateOD extends Vue {
     }
 
     this.loadingText = 'Analyzing hourly data...'
+
+    // data is in format: o,d, value[1], value[2], value[3]...
     for (const row of lines.slice(1)) {
       const columns = row.split(';')
       if (columns.length !== 26) continue
@@ -449,17 +428,26 @@ export default class AggregateOD extends Vue {
         return parseFloat(a)
       })
 
-      // TODO build in-memory lookup table here
+      // build zone matrix
+      const i = columns[0]
+      const j = columns[1]
+      if (!this.zoneData[i]) this.zoneData[i] = {}
+      this.zoneData[i][j] = values
+
+      // calculate daily values
       const daily = values.slice(2).reduce((total, num) => {
         return total + num
       })
+      if (!this.dailyData[i]) this.dailyData[i] = {}
+      this.dailyData[i][j] = daily
 
-      if (daily === 0) continue
-
-      const rowName = String(columns[0]) + ':' + String(columns[1])
-      this.odLookup[rowName] = { orig: columns[0], dest: columns[1], daily, values }
+      // save daily on the links too
+      if (daily !== 0) {
+        const rowName = String(columns[0]) + ':' + String(columns[1])
+        this.linkData[rowName] = { orig: columns[0], dest: columns[1], daily, values }
+      }
     }
-    console.log(this.odLookup)
+    console.log({ LINKS: this.linkData, ZONES: this.zoneData })
   }
 
   private updateMapExtent(coordinates: any) {
