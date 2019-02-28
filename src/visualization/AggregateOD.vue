@@ -6,7 +6,7 @@
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
       h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas:
-    p.details.help-text(style="margin-top:20px") Select a link or zone centroid for more details.
+    p#mychart.details(style="margin-top:20px") Select a link or zone centroid for more details.
     // b Time of day:
     // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
@@ -22,6 +22,7 @@ import * as turf from '@turf/turf'
 import colormap from 'colormap'
 import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
 import proj4 from 'proj4'
+import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
@@ -36,6 +37,19 @@ import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
 const COLOR_CATEGORIES = 16
+
+const vegaChart: any = {
+  $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+  description: 'A simple bar chart with embedded data.',
+  data: {
+    values: [{ Hour: 0, 'Trips From': 0, 'Trips To': 0 }],
+  },
+  mark: 'bar',
+  encoding: {
+    x: { field: 'Hour', type: 'ordinal' },
+    y: { field: 'Trips From', type: 'quantitative' },
+  },
+}
 
 proj4.defs([
   [
@@ -252,14 +266,14 @@ export default class AggregateOD extends Vue {
     console.log(this.marginals.rowTotal[id])
     console.log(this.marginals.colTotal[id])
 
-    // let html = `<h1>${totalTrips} Total Trips</h1><br/>`
-    // html += `<p><b>${trips} trips</b> (${props.orig} -> ${props.dest})</p>`
-    // html += `<p><b>${revTrips} trips</b> (${props.dest} -> ${props.orig})</p>`
+    const values = []
 
-    /* new mapboxgl.Popup({ closeOnClick: true })
-      .setLngLat(e.lngLat)
-      .setHTML(html)
-      .addTo(this.mymap) */
+    for (let i = 0; i < 24; i++) {
+      values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
+    }
+    vegaChart.data.values = values
+
+    // vegaEmbed('#mychart', vegaChart)
   }
 
   private clickedOnSpiderLink(e: any) {
@@ -462,19 +476,39 @@ export default class AggregateOD extends Vue {
   private getDailyDataSummary() {
     const rowTotals: any = []
     const colTotals: any = []
+    const fromCentroid: any = {}
+    const toCentroid: any = {}
+
     for (const row in this.zoneData) {
       if (!this.zoneData.hasOwnProperty(row)) continue
       for (const col in this.zoneData[row]) {
         if (!this.zoneData[row].hasOwnProperty(col)) continue
 
+        // daily totals
         if (!rowTotals[row]) rowTotals[row] = 0
         rowTotals[row] += this.dailyData[row][col]
 
         if (!colTotals[col]) colTotals[col] = 0
         colTotals[col] += this.dailyData[row][col]
+
+        // time-of-day details
+        if (!fromCentroid[row]) {
+          fromCentroid[row] = this.zoneData[row][col]
+        } else {
+          for (let i = 0; i++; i < 24) {
+            fromCentroid[row][i] += this.zoneData[row][col][i]
+          }
+        }
+        if (!toCentroid[col]) {
+          toCentroid[col] = this.zoneData[row][col]
+        } else {
+          for (let i = 0; i++; i < 24) {
+            toCentroid[col][i] += this.zoneData[row][col][i]
+          }
+        }
       }
     }
-    return { rowTotal: rowTotals, colTotal: colTotals }
+    return { rowTotal: rowTotals, colTotal: colTotals, from: fromCentroid, to: toCentroid }
   }
 
   private processHourlyData(csvData: string) {
@@ -595,7 +629,7 @@ p {
   text-align: center;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  z-index: 2;
+  z-index: 99;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
 }

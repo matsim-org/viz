@@ -13,6 +13,7 @@ declare module 'filesize'
 declare module 'read-blob'
 declare module 'scale-color-perceptual'
 declare module 'vue-slider-component'
+declare module 'fast-json-stable-stringify'
 declare module '@turf/nearest-point-to-line'
 declare module '@turf/point-to-line-distance'
 
