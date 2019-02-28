@@ -489,31 +489,6 @@ export default class AggregateOD extends Vue {
       'waterway-label'
     )
 */
-    // HOVER effects
-    const parent = this
-
-    this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
-      // typescript definitions and mapbox-gl are out of sync at the moment :-(
-      // so setFeatureState is missing
-      const tsMap = parent.mymap as any
-      if (e.features.length > 0) {
-        if (parent.hoveredStateId) {
-          tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
-        }
-        parent.hoveredStateId = e.features[0].properties.NO
-        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: true })
-      }
-    })
-
-    // When the mouse leaves the state-fill layer, update the feature state of the
-    // previously hovered feature.
-    this.mymap.on('mouseleave', 'shplayer-fill', function() {
-      const tsMap = parent.mymap as any
-      if (parent.hoveredStateId) {
-        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
-      }
-      parent.hoveredStateId = null
-    })
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
