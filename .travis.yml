@@ -13,7 +13,15 @@ addons:
   #  packages:
   #  - dos2unix
 
+branches:
+  only:
+    - master
+    - dev
+    - feature/vsp-deployment
+
 # build the webapp into ./dist
+# travis doesn't have the option to run different builds for different branches, so we have to
+# do it in bash
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-dev && npm run unit; fi
