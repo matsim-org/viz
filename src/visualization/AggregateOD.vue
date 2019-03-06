@@ -2,10 +2,13 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  .info-blob
+  .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
       h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas:
+    .buttons-bar
+      button.button Origins
+      button.button Destinations
     p#mychart.details(style="margin-top:20px") Select a link or zone centroid for more details.
     // b Time of day:
     // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
@@ -182,11 +185,11 @@ export default class AggregateOD extends Vue {
     const files = await this.loadFiles()
     if (files) {
       const geojson = await this.processInputs(files)
-      this.setMapExtent()
       this.addGeojsonToMap(geojson)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
       this.addCentroids(geojson)
+      this.setMapExtent()
       this.buildSpiderLinks()
       this.setupKeyListeners()
     }
@@ -203,14 +206,18 @@ export default class AggregateOD extends Vue {
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
+        const color = origCoord[1] - destCoord[1] > 0 ? '#006699' : '#993333'
+
         const feature: any = {
           type: 'Feature',
-          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily },
+          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color },
           geometry: {
             type: 'LineString',
             coordinates: [origCoord, destCoord],
           },
         }
+
+        const offsetLine = turf.lineOffset(feature, 100, { units: 'meters' })
 
         featureCollection.features.push(feature)
       } catch (e) {
@@ -229,8 +236,10 @@ export default class AggregateOD extends Vue {
         source: 'spider-source',
         type: 'line',
         paint: {
-          'line-color': '#097c43',
-          'line-width': ['get', 'daily'],
+          'line-color': ['get', 'color'], // '#097c43',
+          'line-width': ['max', 2, ['get', 'daily']],
+          'line-offset': ['*', 0.5, ['get', 'daily']],
+          'line-opacity': 0.8,
         },
       },
       'centroid-layer'
@@ -311,13 +320,17 @@ export default class AggregateOD extends Vue {
       centroid.properties.id = feature.id
       centroid.properties.dailyFrom = this.marginals.rowTotal[feature.id as any]
       centroid.properties.dailyTo = this.marginals.colTotal[feature.id as any]
-      centroid.properties.width = Math.min(30, Math.max(10, 1.8 * Math.sqrt(centroid.properties.dailyFrom)))
+      centroid.properties.width = Math.min(30, Math.max(10, 1.5 * Math.sqrt(centroid.properties.dailyFrom)))
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
         if (feature.properties) this.centroids[feature.properties.NO] = centroid
+
+        console.log(centroid)
+        this.updateMapExtent(centroid.geometry.coordinates)
       }
     }
+
     console.log({ CENTROIDS: this.centroids })
 
     this.mymap.addSource('centroids', {
@@ -453,8 +466,6 @@ export default class AggregateOD extends Vue {
       // replace existing coords
       origCoords.length = 0
       origCoords.push(...newCoords)
-
-      if (origCoords.length > 0) this.updateMapExtent(origCoords[0])
     }
   }
 
@@ -469,8 +480,6 @@ export default class AggregateOD extends Vue {
       }
 
       origCoords[0] = newCoords
-
-      if (origCoords[0].length > 0) this.updateMapExtent(origCoords[0][0])
     }
   }
 
@@ -716,5 +725,12 @@ p {
   grid-row: 1 / 3;
   margin: auto 0.5rem 2rem auto;
   z-index: 10;
+}
+.buttons-bar {
+  width: 100%;
+}
+
+.buttons-bar button {
+  width: 50%;
 }
 </style>
