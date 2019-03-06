@@ -2,44 +2,43 @@ language: node_js
 dist: trusty
 node_js:
   - '8'
-# trust these hosts
+
 addons:
   ssh_known_hosts:
     - viz.vsp.tu-berlin.de
-    - viz-dev.vsp.tu-berlin.de
-  # don't need this anymore but this is how it would work
-  # dos2unix pkg is approved, see https://github.com/travis-ci/apt-package-safelist
-  #apt:
-  #  packages:
-  #  - dos2unix
+
+branches:
+  only:
+    - master
+    - dev
+    - feature/vsp-deployment
 
 # build the webapp into ./dist
+# travis doesn't have the option to run different builds for different branches, so we have to
+# it with ugly bash if statements
 script:
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then
-    npm run build && npm run unit;
-    else
-    npm run build-dev && npm run unit;
-    fi
-
-# see https://github.com/travis-ci/travis-ci/issues/4006
-before_deploy:
-  # or simly delete .gitignore
-  - sed -i '/dist/d' $TRAVIS_BUILD_DIR/.gitignore
-  # install dos2unix work that way but --> now in addons section
-  #- 'which dos2unix || (sudo apt-get update -y && sudo apt-get install dos2unix -y )'
+  - if [ "$TRAVIS_BRANCH" == "stable" ]; then npm run build && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build-dev && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-play && npm run unit; fi
 
 deploy:
   - on:
-      branch: dev
+      branch: master
     provider: script
     script:
       bash deploy.sh viz-dev
       # switch to script file because deploy part supports one command only
     skip_cleanup: true
   - on:
-      branch: master
+      branch: stable
     provider: script
     script:
       bash deploy.sh viz
       # switch to script file because deploy part supports one command only
+    skip_cleanup: true
+  - on:
+      branch: dev
+    provider: script
+    script: bash deploy.sh viz-play
+    # switch to script file because deploy part supports one command only
     skip_cleanup: true
