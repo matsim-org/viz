@@ -34,4 +34,4 @@ npm install
 npm run serve
 ```
 
-open browser at `localhost:8080`
+open browser at `https://localhost:8080`
