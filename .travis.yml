@@ -9,9 +9,9 @@ addons:
 
 branches:
   only:
+    - stable
     - master
     - dev
-    - feature/vsp-deployment
 
 # build the webapp into ./dist
 # travis doesn't have the option to run different builds for different branches, so we have to
