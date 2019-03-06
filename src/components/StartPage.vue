@@ -9,7 +9,7 @@
       h4.title.is-4 My Projects
       my-projects( :projectStore="projectStore")
 
-    .about
+    //.about
     //  h4.title.is-4 Public Gallery
     //  p.info Researchers have made these results available on the open web. Have a look around!
 

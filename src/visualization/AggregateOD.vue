@@ -119,6 +119,7 @@ export default class AggregateOD extends Vue {
   private zoneData: any = {} // [i][j][timePeriod] where [-1] of each is totals
   private dailyData: any = {} // [i][j]
   private marginals: any = {}
+  private hoveredStateId: any = 0
 
   private isOrigin: boolean = true
   private selectedCentroid = 0
@@ -240,9 +241,9 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'], // '#097c43',
-          'line-width': ['max', 2, ['get', 'daily']],
+          'line-width': ['max', 1, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
-          'line-opacity': 0.8,
+          'line-opacity': 0.7,
         },
       },
       'centroid-layer'
@@ -391,6 +392,7 @@ export default class AggregateOD extends Vue {
     })
 
     const parent = this
+
     this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
       parent.clickedOnCentroid(e)
     })
@@ -615,6 +617,32 @@ export default class AggregateOD extends Vue {
       },
       'road-primary'
     )
+
+    // HOVER effects
+    const parent = this
+
+    this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
+      // typescript definitions and mapbox-gl are out of sync at the moment :-(
+      // so setFeatureState is missing
+      const tsMap = parent.mymap as any
+      if (e.features.length > 0) {
+        if (parent.hoveredStateId) {
+          tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+        }
+        parent.hoveredStateId = e.features[0].properties.NO
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: true })
+      }
+    })
+
+    // When the mouse leaves the state-fill layer, update the feature state of the
+    // previously hovered feature.
+    this.mymap.on('mouseleave', 'shplayer-fill', function() {
+      const tsMap = parent.mymap as any
+      if (parent.hoveredStateId) {
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+      }
+      parent.hoveredStateId = null
+    })
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
