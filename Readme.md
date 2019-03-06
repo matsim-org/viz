@@ -18,8 +18,6 @@ The recommended editor is [Visual Studio Code](https://code.visualstudio.com/Dow
 
 ### prerequisites
 
-Stuff that is required
-
 ##### macports
 
 ```
