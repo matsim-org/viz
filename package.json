@@ -3,13 +3,13 @@
   "version": "0.11.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --https",
-    "build": "vue-cli-service build",
+    "serve": "vue-cli-service serve --https --mode local-frontend",
+    "serve-local-backend": "vue-cli-service serve -https --mode local-frontend-and-backend",
     "lint": "vue-cli-service lint",
-    "build-dev": "vue-cli-service build --mode development-vsp-deploy",
-    "build-play": "vue-cli-service build --mode play-vsp-deploy",
+    "build": "vue-cli-service build --mode vsp-production-deploy",
+    "build-dev": "vue-cli-service build --mode vsp-dev-deploy",
+    "build-play": "vue-cli-service build --mode vsp-play-deploy",
     "build-surge": "vue-cli-service build --mode development-surge",
-    "serve-local": "vue-cli-service serve --mode local-backend --https",
     "test:unit": "vue-cli-service test:unit",
     "unit": "vue-cli-service test:unit"
   },
