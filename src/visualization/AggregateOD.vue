@@ -347,8 +347,8 @@ export default class AggregateOD extends Vue {
       const centroid: any = turf.centerOfMass(feature as any)
 
       centroid.properties.id = feature.id
-      centroid.properties.dailyFrom = this.marginals.rowTotal[feature.id as any]
-      centroid.properties.dailyTo = this.marginals.colTotal[feature.id as any]
+      centroid.properties.dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
+      centroid.properties.dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
       centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
       centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
 
