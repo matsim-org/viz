@@ -1,9 +1,12 @@
 <template lang="pug">
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-  .info-blob(v-if="routesOnLink.length > 0")
+  project-summary-block.project-summary-block(
+    :project="project" :projectId="projectId")
+  .info-blob(v-if="routesOnLink.length > 0" )
+    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="color: #ff8") ROUTES ON LINK
+      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Transit routes on selected link:
     p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
     .routeList
@@ -26,7 +29,6 @@
 'use strict'
 
 import * as turf from '@turf/turf'
-import * as BlobUtil from 'blob-util'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
@@ -51,6 +53,7 @@ import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
 import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
+import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -71,7 +74,7 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Description', 'Projection'],
 })
 
-@Component({ components: { 'legend-box': LegendBox } })
+@Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -544,7 +547,7 @@ export default class TransitSupply extends Vue {
         paint: {
           'line-opacity': 1.0,
           'line-width': 5, // ['get', 'width'],
-          'line-color': '#f00', // ['get', 'color'],
+          'line-color': '#097c43', // ['get', 'color'],
         },
       })
     }
@@ -670,7 +673,7 @@ p {
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr;
+  grid-template-rows: auto 1fr;
 }
 
 .status-blob {
@@ -680,8 +683,8 @@ p {
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
   z-index: 2;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
@@ -693,7 +696,7 @@ p {
   background-color: black;
   overflow: hidden;
   grid-column: 1 / 3;
-  grid-row: 1 / 2;
+  grid-row: 1 / 3;
 }
 
 .route {
@@ -749,21 +752,31 @@ h3 {
 }
 
 .info-header {
-  background-color: #558;
+  background-color: #097c43;
   padding: 0.5rem 0rem;
+  border-top: solid 1px #888;
+  border-bottom: solid 1px #888;
+}
+
+.project-summary-block {
+  width: 16rem;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  margin: 0px auto auto 0px;
+  z-index: 10;
 }
 
 .info-blob {
   display: flex;
   flex-direction: column;
+  width: 16rem;
   height: 100vh;
-  width: 250px;
   background-color: #363a45;
   margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
   grid-column: 1 / 2;
-  grid-row: 1 / 2;
+  grid-row: 1 / 3;
   opacity: 0.95;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
@@ -779,7 +792,7 @@ h3 {
 }
 
 .routeList {
-  width: 250px;
+  width: 16rem;
   height: 100%;
   overflow-y: auto;
 }
@@ -803,7 +816,7 @@ h3 {
 
 .legend {
   grid-column: 1 / 3;
-  grid-row: 1 / 2;
+  grid-row: 1 / 3;
   margin: auto 0.5rem 2rem auto;
   z-index: 10;
 }
