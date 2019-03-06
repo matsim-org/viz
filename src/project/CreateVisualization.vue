@@ -1,17 +1,15 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    span(slot="header")
-      h3.title.is-3 Create Visualization
+    div(slot="header") Create Visualization
 
     div(slot="content")
       .viz-selector
         aside.menu
           p.menu-label Select:
           ul.menu-list
-            li(v-for="viz in Array.from(sharedState.visualizationTypes.values())")
+            li(v-for="viz in availableVisualizations")
               a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
-          h3 {{selectedVizType.prettyName}}
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
           br
           .viz-files(v-for="key in selectedVizType.requiredFileKeys")
@@ -30,20 +28,20 @@ modal(v-on:close-requested="cancel()")
           .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
             .viz-file
               b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="Required" style="float:right;")
+              input.input(v-model="request.inputParameters[key]" placeholder="Required")
+
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       .bottom-panel
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.ui.negative.button(v-on:click="cancel()") Cancel
-          button.button.is-link(v-on:click="createVisualization()") Create
+          button.button.negative.is-rounded(v-on:click="cancel()") Cancel
+          button.button.is-link.is-rounded.accent(v-on:click="createVisualization()") Create
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
@@ -51,37 +49,20 @@ import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
 import { VisualizationType, Project } from '@/entities/Entities'
 
-interface CreateVisualizationState {
-  fileLookup: any
-  isRequesting: boolean
-  isServerError: boolean
-  isVizListOpen: boolean
-  openDropdown: string
-  serverError: string
-  request: CreateVisualizationRequest
-  project?: Project
-  sharedState: SharedState
-  selectedVizType?: VisualizationType
-}
-
-const vueInstance = Vue.extend({
-  props: {
-    projectStore: ProjectStore,
-  },
+@Component({
   components: {
     modal: Modal,
     error: Error,
   },
-  data() {
-    return {
-      projectState: this.projectStore.State,
-      sharedState: SharedStore.state,
-    }
-  },
 })
+export default class CreateVisualizationViewModel extends Vue {
+  @Prop({ type: FileAPI, required: true })
+  private fileApi!: FileAPI
+  @Prop({ type: ProjectStore, required: true })
+  private projectStore!: ProjectStore
 
-@Component
-export default class CreateVisualizationViewModel extends vueInstance {
+  private sharedState = SharedStore.state
+
   private isVizListOpen = false
   private isRequesting = false
   private errorMessage = ''
@@ -92,6 +73,10 @@ export default class CreateVisualizationViewModel extends vueInstance {
 
   private get showDetails(): boolean {
     return this.selectedVizType !== undefined
+  }
+
+  private get projectState() {
+    return this.projectStore.State
   }
 
   private get project() {
@@ -119,10 +104,18 @@ export default class CreateVisualizationViewModel extends vueInstance {
     this.$emit('close')
   }
 
+  private get availableVisualizations() {
+    const vizes = Array.from(this.sharedState.visualizationTypes.values())
+    vizes.sort((a, b) => {
+      return a.prettyName > b.prettyName ? 1 : -1
+    })
+    return vizes
+  }
+
   private async createVisualization() {
     this.isRequesting = true
     try {
-      const viz = await FileAPI.createVisualization(this.request)
+      const viz = await this.fileApi.createVisualization(this.request)
       this.projectStore.addVisualizationToSelectedProject(viz)
       this.close()
     } catch (error) {
@@ -197,6 +190,26 @@ export default class CreateVisualizationViewModel extends vueInstance {
 }
 .viz-file {
   padding: 5px 0px;
+}
+
+h4 {
+  color: #479ccc;
+  text-transform: uppercase;
+}
+
+.menu-label {
+  color: #479ccc;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0px;
+}
+
+.accent {
+  background-color: #2d76a1;
+}
+
+.accent:hover {
+  background-color: #256083;
 }
 </style>
 

@@ -7,13 +7,14 @@
 <script lang="ts">
 'use strict'
 
-import 'mapbox-gl/dist/mapbox-gl.css'
-import * as mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
+import Vue from 'vue'
 
 // register component with the shared store
 SharedStore.addVisualizationType({
@@ -29,14 +30,19 @@ const store: any = {
   loadingText: 'MATSim Volume Plot',
   visualization: null,
   project: {},
+  api: FileAPI,
 }
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'NetworkViz',
+  props: ['fileApi'],
   components: {},
   data() {
     return store
+  },
+  created() {
+    store.api = (this as any).fileApi
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -45,10 +51,9 @@ export default {
   },
   methods: {},
   watch: {},
-}
+})
 
 async function mounted() {
-  setupEventListeners()
   await getVizDetails()
   setBreadcrumb()
   setupMap()
@@ -56,7 +61,6 @@ async function mounted() {
 
 function setBreadcrumb() {
   EventBus.$emit('set-breadcrumbs', [
-    { title: 'My Projects', link: '/projects' },
     { title: store.project.name, link: '/project/' + store.projectId },
     { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
   ])
@@ -77,32 +81,11 @@ function setupMap() {
   map.addControl(new mapboxgl.NavigationControl(), 'top-right')
 }
 
-function setupEventListeners() {
-  EventBus.$on('sidebar-toggled', (isVisible: boolean) => {
-    if (sharedStore.debug) console.log(`Sidebar is now: ${isVisible} :)`)
-
-    // map needs to be force-recentered, and it is slow.
-    // TODO look into making the sidebar an overlay instead of side-by-side with the map;
-    // which will improve performance drastically but then the left edge of the map is hidden
-    for (const delay of [50, 100, 150, 200, 250, 300]) {
-      setTimeout(function() {
-        map.resize()
-      }, delay)
-    }
-  })
-}
-
 async function getVizDetails() {
-  store.visualization = await FileAPI.fetchVisualization(store.projectId, store.vizId)
-  store.project = await FileAPI.fetchProject(store.projectId)
+  store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
+  store.project = await store.api.fetchProject(store.projectId)
   console.log(Object.assign({}, store.visualization))
 }
-
-// this is a required workaround to get the mapbox token assigned in TypeScript
-// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-const writableMapBox: any = mapboxgl
-writableMapBox.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 let map: mapboxgl.Map
 
@@ -117,7 +100,7 @@ async function loadNetwork() {
     console.log({ ROAD_NET, PROJECT: store.projectId })
     store.loadingText = 'Loading network...'
     // get the blob data
-    const roadBlob = await FileAPI.downloadFile(ROAD_NET, store.projectId)
+    const roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
     let road = await readBlob.text(roadBlob)
     road = JSON.parse(road)
 

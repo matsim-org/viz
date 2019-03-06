@@ -67,7 +67,7 @@ export default class SnapshotCache {
   private _emptyBlocks: EmptyBlock[] = []
 
   private readonly _minCacheSize = 500
-  private readonly _fetchSize = 100
+  private readonly _fetchSize = 300
   private readonly _snapshotFetcher: SnapshotFetcher
   private _isFetching: boolean = false
   private _isFetchingChanged: () => void

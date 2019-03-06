@@ -29,7 +29,7 @@ class GeoJsonParser extends AsyncBackgroundWorker {
     }
 
     const reader = new GeoJsonReader(parameters.geoJson)
-    const result = reader.parse()
+    const result = reader.parse() as any
     result.z = parameters.z
     result.layerName = parameters.layerName
     result.color = parameters.color || undefined

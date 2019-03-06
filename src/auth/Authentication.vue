@@ -1,11 +1,11 @@
 <template lang="pug">
   div.authentication
     .requesting(v-if="isRequesting")
-      h4 {{message}}
-      div.loader
+      spinner
+      span {{message}}
     div.authError(v-if="isFailed")
       span.errorMessage {{message}}
-      button.button.is-link(v-on:click="handleTryAgainClicked") Try again
+      button.button.is-link(v-on:click="onTryAgainClicked") Try again
 </template>
 
 <style scoped>
@@ -27,88 +27,94 @@
 </style>
 
 <script lang="ts">
-import Vue from 'vue'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import sharedStore, { SharedState } from '../SharedStore'
-import authenticationStore, { AuthenticationStatus, AuthenticationState } from '@/auth/AuthenticationStore'
 import { Route } from 'vue-router'
+import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import SpinnerVue from '@/components/Spinner.vue'
 
-interface ComponentState {
-  sharedState: SharedState
-  authState: AuthenticationState
-}
+@Component({
+  components: {
+    spinner: SpinnerVue,
+  },
+})
+export default class Authentication extends Vue {
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
+  private authState = this.authStore.state
+  private sharedState = sharedStore.state
 
-export default Vue.extend({
-  name: 'Authentication',
-  data(): ComponentState {
-    return {
-      sharedState: sharedStore.state,
-      authState: authenticationStore.state,
-    }
-  },
-  computed: {
-    message: function(): string {
-      return getMessage(this.authState.status)
-    },
-    isFailed(): boolean {
-      return this.authState.status === AuthenticationStatus.Failed
-    },
-    isRequesting(): boolean {
-      return this.authState.status === AuthenticationStatus.Requesting
-    },
-    isAuthenticated(): boolean {
-      return this.authState.status === AuthenticationStatus.Authenticated
-    },
-    isNotAuthenticated(): boolean {
-      return this.authState.status === AuthenticationStatus.NotAuthenticated
-    },
-  },
-  methods: {
-    handleTryAgainClicked: () => {
-      authenticationStore.resetState()
-    },
-  },
-  created() {
+  private get message() {
+    return this.computeMessage(this.authState.status)
+  }
+
+  private get isFailed() {
+    return this.authState.status === AuthenticationStatus.Failed
+  }
+
+  private get isRequesting(): boolean {
+    return this.authState.status === AuthenticationStatus.Requesting
+  }
+
+  private get isAuthenticated(): boolean {
+    return this.authState.status === AuthenticationStatus.Authenticated
+  }
+
+  private get isNotAuthenticated(): boolean {
+    return this.authState.status === AuthenticationStatus.NotAuthenticated
+  }
+
+  public created() {
     if (this.isRequesting) {
-      handleAuthenticationResponse(this.$route)
+      this.handleAuthenticationResponse(this.$route, this.authStore)
     } else if (this.isNotAuthenticated) {
-      authenticationStore.requestAuthentication()
+      this.authStore.requestAuthentication()
     }
-  },
-  beforeMount() {
+  }
+
+  public beforeMount() {
     if (this.isAuthenticated) {
       this.$router.replace(this.sharedState.lastNavigation)
     }
-  },
-  updated() {
-    if (this.isNotAuthenticated) {
-      authenticationStore.requestAuthentication()
-    }
-  },
-})
-
-function getMessage(status: AuthenticationStatus) {
-  switch (status) {
-    case AuthenticationStatus.NotAuthenticated:
-      return 'Not authenticated'
-    case AuthenticationStatus.Requesting:
-      return 'Requesting authentication'
-    case AuthenticationStatus.Failed:
-      return 'Error! could not authenticate'
-    default:
-      return 'unknown state'
   }
-}
 
-function handleAuthenticationResponse(route: Route): void {
-  if (route.hash) {
-    authenticationStore.handleAuthenticationResponse(route.hash)
-  } else if (route.query.error) {
-    authenticationStore.handleFailedAuthenticationResponse(route.query)
-  } else {
-    authenticationStore.handleFailedAuthenticationResponse({
-      error: 'request_incomplete',
-      error_description: 'unknown reason',
-    })
+  public updated() {
+    if (this.isNotAuthenticated) {
+      this.authStore.requestAuthentication()
+    }
+  }
+
+  private onTryAgainClicked() {
+    this.authStore.resetState()
+  }
+
+  private computeMessage(status: AuthenticationStatus) {
+    switch (status) {
+      case AuthenticationStatus.NotAuthenticated:
+        return 'Not authenticated'
+      case AuthenticationStatus.Requesting:
+        return 'Requesting authentication'
+      case AuthenticationStatus.Failed:
+        return 'Error! could not authenticate'
+      default:
+        return 'unknown state'
+    }
+  }
+
+  private handleAuthenticationResponse(route: Route, authStore: AuthenticationStore): void {
+    if (route.hash) {
+      this.authStore.handleAuthenticationResponse(route.hash)
+    } else if (route.query.error) {
+      this.authStore.handleFailedAuthenticationResponse({
+        error: 'request_failed',
+        error_description: String(route.query.error),
+      })
+    } else {
+      this.authStore.handleFailedAuthenticationResponse({
+        error: 'request_incomplete',
+        error_description: 'unknown reason',
+      })
+    }
   }
 }
 </script>

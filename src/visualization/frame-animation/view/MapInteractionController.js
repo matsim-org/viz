@@ -1,5 +1,3 @@
-import Configuration from '../contracts/Configuration'
-
 class MapInteractionController {
   set clicked(callback) {
     this._clicked = callback
@@ -9,10 +7,10 @@ class MapInteractionController {
     this._redrawNeeded = callback
   }
 
-  constructor(mapState) {
+  constructor(mapState, config) {
     this._mapState = mapState
-
-    let canvas = document.getElementById(Configuration.getConfig().canvasId)
+    this._config = config
+    let canvas = document.getElementById(config.canvasId)
     this._boundPointerDown = e => this.onPointerDown(e)
     this._boundPointerUp = e => this.onPointerUp(e)
     this._boundPointerMove = e => this.onPointerMove(e)
@@ -29,7 +27,7 @@ class MapInteractionController {
   }
 
   destroy() {
-    let canvas = document.getElementById(Configuration.getConfig().canvasId)
+    let canvas = document.getElementById(this._config.canvasId)
     if (canvas) {
       canvas.removeEventListener('mousedown', this._boundPointerDown)
       canvas.removeEventListener('mouseup', this._boundPointerUp)
@@ -51,11 +49,13 @@ class MapInteractionController {
 
   onPointerUp(args) {
     this._isMouseDown = false
-    if (!this._mouseMoved) {
+    /*   if (!this._mouseMoved) {
       let point = this._mapState.transformCoordinate(args.offsetX, args.offsetY)
       this._clicked(point)
     }
     this._mouseMoved = false
+    */
+    console.log('selecting agents is disabled.')
   }
 
   onPointerMove(args) {

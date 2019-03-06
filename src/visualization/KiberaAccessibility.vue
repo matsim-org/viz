@@ -25,16 +25,13 @@
 
 import mapboxgl from 'mapbox-gl'
 import yaml from 'js-yaml'
-
-import { EventBus } from '../SharedStore'
+import Vue from 'vue'
+import EventBus from '@/EventBus.vue'
 
 const SERVER_ADDR = 'http://geo.vsp.tu-berlin.de'
 const SERVER_PARAMS =
   '/geoserver/accessibilities/ows?service=WFS' +
   '&version=1.0.0&request=GetFeature&outputFormat=application%2Fjson&typeName='
-
-mapboxgl.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 const STARTING_MODE = 'Walk'
 
@@ -58,7 +55,7 @@ const store = {
 }
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'KiberaAccessibility',
   components: {},
   data() {
@@ -72,7 +69,7 @@ export default {
     clickedAlternative: userChoseAlternative,
   },
   watch: {},
-}
+})
 
 // mounted is called by Vue after this component is installed on the page
 async function mounted() {

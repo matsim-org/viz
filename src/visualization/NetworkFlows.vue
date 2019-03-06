@@ -24,26 +24,22 @@
 <script lang="ts">
 'use strict'
 
-import sharedStore, { EventBus } from '../SharedStore'
+import sharedStore from '@/SharedStore'
+import EventBus from '@/EventBus.vue'
 import { nSQL } from 'nano-sql'
 import vueSlider from 'vue-slider-component'
-import * as mapboxgl from 'mapbox-gl'
+import mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import sax from 'sax'
 import readBlob from 'read-blob'
 import proj4 from 'proj4' // = require('proj4').default
+import Vue from 'vue'
 
 let _linkData: any
 
-// this is a required workaround to get the mapbox token assigned in TypeScript
-// see https://stackoverflow.com/questions/44332290/mapbox-gl-typing-wont-allow-accesstoken-assignment
-// TODO: move mapbox access token to sharedstore
 let mymap: mapboxgl.Map
-const writableMapBox: any = mapboxgl
-writableMapBox.accessToken =
-  'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 const mySlider = {
   disabled: false,
@@ -163,7 +159,7 @@ function updateTimeSliderSegmentColors(segments: number[]) {
   for (const segment of segments) {
     if (sharedStore.debug) console.log(segment)
 
-    const percent = 100.0 * segment / total
+    const percent = (100.0 * segment) / total
     let color = ',#eee'
     if (percent > 50) color = ',#04f'
     else if (percent > 20) color = ',#33c'
@@ -284,7 +280,9 @@ function addLinksToMap() {
 
 function calculateColorFromVolume(id: string) {
   const volume = store.flows[id]
-    ? store.flows[id][store.currentTimeSegment] ? store.flows[id][store.currentTimeSegment] : 0
+    ? store.flows[id][store.currentTimeSegment]
+      ? store.flows[id][store.currentTimeSegment]
+      : 0
     : 0
 
   if (volume === 0) return '#aaa'
@@ -467,7 +465,7 @@ function convertCoords(projection: any) {
 }
 
 // this export is the Vue Component itself
-export default {
+export default Vue.extend({
   name: 'NetworkFlows',
   components: {
     vueSlider,
@@ -489,7 +487,7 @@ export default {
   watch: {
     timeSliderValue: sliderChangedEvent,
   },
-}
+})
 </script>
 
 <style scoped>

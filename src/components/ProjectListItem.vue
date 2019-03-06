@@ -1,5 +1,5 @@
 <template lang="pug">
-    li.project    
+    li.project
         h5.title.is-5 {{ project.name }}
         .visualizations(v-if="!isLoading")
             .visualization-item(
@@ -8,11 +8,10 @@
                     v-on:click="$emit('viz-selected', viz)")
                 .card.hoverable
                     .card-image
-                        img.img-responsive(src="@/assets/transit-supply.jpg")
                     .card-content
                         h6.card-title {{viz.type}}
-                        .card-subtitle viz-{{viz.id.substring(0,4)}}
-        .spinnerContainer(v-else)               
+                        .card-subtitle {{viz.type}}: {{viz.id.substring(0,5)}}
+        .spinnerContainer(v-else)
           spinner
 </template>
 
@@ -23,11 +22,7 @@ import { Project } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ProjectStore from '@/project/ProjectStore'
 
-@Component({
-  components: {
-    spinner: Spinner,
-  },
-})
+@Component({ components: { spinner: Spinner } })
 export default class ProjectListItem extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
@@ -36,9 +31,9 @@ export default class ProjectListItem extends Vue {
   private isLoading = false
 
   public async created() {
-    if (this.project.visualizations && this.project.visualizations.length > 0) {
-      return
-    }
+    if (!this.project) return
+    if (this.project.visualizations && this.project.visualizations.length > 0) return
+
     this.isLoading = true
 
     try {
@@ -61,7 +56,7 @@ export default class ProjectListItem extends Vue {
 }
 
 .visualizations {
-  min-height: 256px;
+  margin-bottom: 2rem;
   display: grid;
   grid-gap: 1rem;
   grid-template-columns: repeat(auto-fill, 240px);
@@ -76,12 +71,18 @@ export default class ProjectListItem extends Vue {
 
 .hoverable:hover {
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  box-shadow: 1px 3px 5px rgba(0, 0, 80, 0.3);
 }
 
 .spinnerContainer {
   justify-self: center;
   align-self: center;
+}
+
+.card-image {
+  background-color: #cc9547;
+  height: 2rem;
 }
 </style>
 
