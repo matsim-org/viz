@@ -311,6 +311,7 @@ export default class AggregateOD extends Vue {
       centroid.properties.id = feature.id
       centroid.properties.dailyFrom = this.marginals.rowTotal[feature.id as any]
       centroid.properties.dailyTo = this.marginals.colTotal[feature.id as any]
+      centroid.properties.width = Math.min(30, Math.max(10, 1.8 * Math.sqrt(centroid.properties.dailyFrom)))
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
@@ -330,7 +331,7 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': 12,
+        'circle-radius': ['get', 'width'],
         'circle-stroke-width': 3,
         'circle-stroke-color': 'white',
       },
