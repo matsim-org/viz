@@ -345,11 +345,17 @@ export default class AggregateOD extends Vue {
 
   private convertRegionColors(geojson: FeatureCollection) {
     for (const feature of geojson.features) {
-      if (!feature.properties) continue
-      const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
-      const ratio = daily / this.maxZonalTotal
-      const blue = 128 + 127 * (1.0 - ratio)
-      feature.properties.blue = blue
+      if (!feature.properties) {
+        continue
+      } else {
+        const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
+        const ratio = daily / this.maxZonalTotal
+
+        let blue = 128 + 127 * (1.0 - ratio)
+        if (!blue) blue = 255
+
+        feature.properties.blue = blue
+      }
     }
   }
 
@@ -367,13 +373,12 @@ export default class AggregateOD extends Vue {
       centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
       centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
 
-      this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
-      this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
+      if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
+      if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
-      if (feature.properties) {
-        feature.properties.dailyFrom = dailyFrom
-        feature.properties.dailyTo = dailyTo
-      }
+      if (!feature.properties) feature.properties = {}
+      feature.properties.dailyFrom = dailyFrom
+      feature.properties.dailyTo = dailyTo
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
