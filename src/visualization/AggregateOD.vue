@@ -88,7 +88,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
+  requiredParamKeys: ['Description', 'Projection'],
 })
 
 @Component({
@@ -123,6 +123,7 @@ export default class AggregateOD extends Vue {
 
   private isOrigin: boolean = true
   private selectedCentroid = 0
+  private maxZonalTotal: number = 0
 
   private loadingText: string = 'Aggregate Origin/Destination Flows'
   private mymap!: mapboxgl.Map
@@ -190,12 +191,13 @@ export default class AggregateOD extends Vue {
   private async mapIsReady() {
     const files = await this.loadFiles()
     if (files) {
-      const geojson = await this.processInputs(files)
       this.setMapExtent()
-      this.addGeojsonToMap(geojson)
+      const geojson = await this.processInputs(files)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
       this.addCentroids(geojson)
+      this.convertRegionColors(geojson)
+      this.addGeojsonToMap(geojson)
       this.setMapExtent()
       this.buildSpiderLinks()
       this.setupKeyListeners()
@@ -213,7 +215,7 @@ export default class AggregateOD extends Vue {
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
-        const color = origCoord[1] - destCoord[1] > 0 ? '#0066aa' : '#880033'
+        const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
 
         const feature: any = {
           type: 'Feature',
@@ -341,6 +343,16 @@ export default class AggregateOD extends Vue {
       .addTo(this.mymap)
   }
 
+  private convertRegionColors(geojson: FeatureCollection) {
+    for (const feature of geojson.features) {
+      if (!feature.properties) continue
+      const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
+      const ratio = daily / this.maxZonalTotal
+      const blue = 128 + 127 * (1.0 - ratio)
+      feature.properties.blue = blue
+    }
+  }
+
   private addCentroids(geojson: FeatureCollection) {
     const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
@@ -348,10 +360,20 @@ export default class AggregateOD extends Vue {
       const centroid: any = turf.centerOfMass(feature as any)
 
       centroid.properties.id = feature.id
-      centroid.properties.dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
-      centroid.properties.dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
+      const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
+      const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
+      centroid.properties.dailyFrom = dailyFrom
+      centroid.properties.dailyTo = dailyTo
       centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
       centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+
+      this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
+      this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
+
+      if (feature.properties) {
+        feature.properties.dailyFrom = dailyFrom
+        feature.properties.dailyTo = dailyTo
+      }
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
@@ -611,11 +633,25 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'fill',
         paint: {
-          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', '#dde'],
-          'fill-opacity': 0.7,
+          'fill-color': ['rgb', ['get', 'blue'], ['get', 'blue'], 255],
+          'fill-opacity': 0.8,
         },
       },
       'road-primary'
+    )
+
+    this.mymap.addLayer(
+      {
+        id: 'shplayer-border',
+        source: 'shpsource',
+        type: 'line',
+        paint: {
+          'line-color': '#66c',
+          'line-opacity': 1.0,
+          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 4, 0],
+        },
+      },
+      'centroid-layer'
     )
 
     // HOVER effects
