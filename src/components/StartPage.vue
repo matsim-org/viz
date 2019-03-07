@@ -9,16 +9,16 @@
       h4.title.is-4 My Projects
       my-projects( :projectStore="projectStore")
 
-    .about
-      h4.title.is-4 Public Gallery
-      p.info Researchers have made these results available on the open web. Have a look around!
+    //.about
+    //  h4.title.is-4 Public Gallery
+    //  p.info Researchers have made these results available on the open web. Have a look around!
 
-    ul.projects
-      .project-row(v-for="project in projects" :key="project.id")
-        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
-                        :project="project"
-                        :project-store="projectStore"
-                        @viz-selected="onVizSelected") {{ project.name }}
+    //ul.projects
+    //  .project-row(v-for="project in projects" :key="project.id")
+    //    project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
+    //                    :project="project"
+    //                    :project-store="projectStore"
+    //                    @viz-selected="onVizSelected") {{ project.name }}
 
     .about
       h4.title.is-4 About MATSim

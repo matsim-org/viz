@@ -2,11 +2,15 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  .info-blob
+  .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas:
-    p#mychart.details(style="margin-top:20px") Select a link or zone centroid for more details.
+      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
+    .buttons-bar
+      button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
+      button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+
+    // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
     // b Time of day:
     // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
@@ -84,7 +88,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
+  requiredParamKeys: ['Description', 'Projection'],
 })
 
 @Component({
@@ -110,10 +114,16 @@ export default class AggregateOD extends Vue {
   // -------------------------- //
 
   private centroids: any = {}
+  private centroidSource: any = {}
   private linkData: any = {}
   private zoneData: any = {} // [i][j][timePeriod] where [-1] of each is totals
   private dailyData: any = {} // [i][j]
   private marginals: any = {}
+  private hoveredStateId: any = 0
+
+  private isOrigin: boolean = true
+  private selectedCentroid = 0
+  private maxZonalTotal: number = 0
 
   private loadingText: string = 'Aggregate Origin/Destination Flows'
   private mymap!: mapboxgl.Map
@@ -181,12 +191,14 @@ export default class AggregateOD extends Vue {
   private async mapIsReady() {
     const files = await this.loadFiles()
     if (files) {
-      const geojson = await this.processInputs(files)
       this.setMapExtent()
-      this.addGeojsonToMap(geojson)
+      const geojson = await this.processInputs(files)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
       this.addCentroids(geojson)
+      this.convertRegionColors(geojson)
+      this.addGeojsonToMap(geojson)
+      this.setMapExtent()
       this.buildSpiderLinks()
       this.setupKeyListeners()
     }
@@ -203,15 +215,16 @@ export default class AggregateOD extends Vue {
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
+        const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
+
         const feature: any = {
           type: 'Feature',
-          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily },
+          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color },
           geometry: {
             type: 'LineString',
             coordinates: [origCoord, destCoord],
           },
         }
-
         featureCollection.features.push(feature)
       } catch (e) {
         // some dests aren't on map: z.b. 'other'
@@ -229,8 +242,10 @@ export default class AggregateOD extends Vue {
         source: 'spider-source',
         type: 'line',
         paint: {
-          'line-color': '#097c43',
-          'line-width': ['get', 'daily'],
+          'line-color': ['get', 'color'], // '#097c43',
+          'line-width': ['max', 1, ['get', 'daily']],
+          'line-offset': ['*', 0.5, ['get', 'daily']],
+          'line-opacity': 0.7,
         },
       },
       'centroid-layer'
@@ -252,6 +267,31 @@ export default class AggregateOD extends Vue {
     })
   }
 
+  private clickedOrigins() {
+    this.isOrigin = true
+    this.updateCentroidLabels()
+  }
+
+  private clickedDestinations() {
+    this.isOrigin = false
+    this.updateCentroidLabels()
+  }
+
+  private updateCentroidLabels() {
+    const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
+
+    this.mymap.removeLayer('centroid-label-layer')
+    this.mymap.addLayer({
+      id: 'centroid-label-layer',
+      source: 'centroids',
+      type: 'symbol',
+      layout: {
+        'text-field': labels,
+        'text-size': 11,
+      },
+    })
+  }
+
   private clickedOnCentroid(e: any) {
     console.log({ CLICK: e })
 
@@ -261,6 +301,8 @@ export default class AggregateOD extends Vue {
     console.log(centroid)
 
     const id = centroid.id
+
+    this.selectedCentroid = id
 
     console.log(this.marginals)
     console.log(this.marginals.rowTotal[id])
@@ -292,14 +334,29 @@ export default class AggregateOD extends Vue {
 
     const totalTrips = trips + revTrips
 
-    let html = `<h1>${totalTrips} Total Trips</h1><br/>`
-    html += `<p><b>${trips} trips</b> (${props.orig} -> ${props.dest})</p>`
-    html += `<p><b>${revTrips} trips</b> (${props.dest} -> ${props.orig})</p>`
+    let html = `<h1>${totalTrips} Bidirectional Trips</h1><br/>`
+    html += `<p>${trips} trips // ${revTrips} trips</p>`
 
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
       .setHTML(html)
       .addTo(this.mymap)
+  }
+
+  private convertRegionColors(geojson: FeatureCollection) {
+    for (const feature of geojson.features) {
+      if (!feature.properties) {
+        continue
+      } else {
+        const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
+        const ratio = daily / this.maxZonalTotal
+
+        let blue = 128 + 127 * (1.0 - ratio)
+        if (!blue) blue = 255
+
+        feature.properties.blue = blue
+      }
+    }
   }
 
   private addCentroids(geojson: FeatureCollection) {
@@ -309,18 +366,33 @@ export default class AggregateOD extends Vue {
       const centroid: any = turf.centerOfMass(feature as any)
 
       centroid.properties.id = feature.id
-      centroid.properties.dailyFrom = this.marginals.rowTotal[feature.id as any]
-      centroid.properties.dailyTo = this.marginals.colTotal[feature.id as any]
+      const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
+      const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
+      centroid.properties.dailyFrom = dailyFrom
+      centroid.properties.dailyTo = dailyTo
+      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
+      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+
+      if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
+      if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
+
+      if (!feature.properties) feature.properties = {}
+      feature.properties.dailyFrom = dailyFrom
+      feature.properties.dailyTo = dailyTo
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
         if (feature.properties) this.centroids[feature.properties.NO] = centroid
+        this.updateMapExtent(centroid.geometry.coordinates)
       }
     }
+
+    this.centroidSource = centroids
+
     console.log({ CENTROIDS: this.centroids })
 
     this.mymap.addSource('centroids', {
-      data: centroids,
+      data: this.centroidSource,
       type: 'geojson',
     } as any)
 
@@ -330,7 +402,7 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': 12,
+        'circle-radius': ['get', 'width'],
         'circle-stroke-width': 3,
         'circle-stroke-color': 'white',
       },
@@ -347,6 +419,7 @@ export default class AggregateOD extends Vue {
     })
 
     const parent = this
+
     this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
       parent.clickedOnCentroid(e)
     })
@@ -452,8 +525,6 @@ export default class AggregateOD extends Vue {
       // replace existing coords
       origCoords.length = 0
       origCoords.push(...newCoords)
-
-      if (origCoords.length > 0) this.updateMapExtent(origCoords[0])
     }
   }
 
@@ -468,8 +539,6 @@ export default class AggregateOD extends Vue {
       }
 
       origCoords[0] = newCoords
-
-      if (origCoords[0].length > 0) this.updateMapExtent(origCoords[0][0])
     }
   }
 
@@ -569,12 +638,52 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'fill',
         paint: {
-          'fill-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#fba', '#dde'],
-          'fill-opacity': 0.65,
+          'fill-color': ['rgb', ['get', 'blue'], ['get', 'blue'], 255],
+          'fill-opacity': 0.8,
         },
       },
       'road-primary'
     )
+
+    this.mymap.addLayer(
+      {
+        id: 'shplayer-border',
+        source: 'shpsource',
+        type: 'line',
+        paint: {
+          'line-color': '#66c',
+          'line-opacity': 1.0,
+          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 4, 0],
+        },
+      },
+      'centroid-layer'
+    )
+
+    // HOVER effects
+    const parent = this
+
+    this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
+      // typescript definitions and mapbox-gl are out of sync at the moment :-(
+      // so setFeatureState is missing
+      const tsMap = parent.mymap as any
+      if (e.features.length > 0) {
+        if (parent.hoveredStateId) {
+          tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+        }
+        parent.hoveredStateId = e.features[0].properties.NO
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: true })
+      }
+    })
+
+    // When the mouse leaves the state-fill layer, update the feature state of the
+    // previously hovered feature.
+    this.mymap.on('mouseleave', 'shplayer-fill', function() {
+      const tsMap = parent.mymap as any
+      if (parent.hoveredStateId) {
+        tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
+      }
+      parent.hoveredStateId = null
+    })
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
@@ -651,6 +760,7 @@ p {
 .details {
   font-size: 12px;
   margin-bottom: auto;
+  margin-top: auto;
 }
 
 .bigtitle {
@@ -715,5 +825,14 @@ p {
   grid-row: 1 / 3;
   margin: auto 0.5rem 2rem auto;
   z-index: 10;
+}
+
+.buttons-bar {
+  margin: auto 0.5rem 0.5rem 0.5rem;
+}
+
+.buttons-bar button {
+  width: 48%;
+  margin-right: 2px;
 }
 </style>
