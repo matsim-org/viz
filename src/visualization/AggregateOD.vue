@@ -116,6 +116,8 @@ export default class AggregateOD extends Vue {
   private centroids: any = {}
   private centroidSource: any = {}
   private linkData: any = {}
+  private spiderLinkFeatureCollection: any = {}
+
   private zoneData: any = {} // [i][j][timePeriod] where [-1] of each is totals
   private dailyData: any = {} // [i][j]
   private marginals: any = {}
@@ -186,7 +188,9 @@ export default class AggregateOD extends Vue {
     this.mymap.on('load', this.mapIsReady)
   }
 
-  private handleEmptyClick(e: mapboxgl.MapMouseEvent) {}
+  private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
+    this.fadeUnselectedLinks(-1)
+  }
 
   private async mapIsReady() {
     const files = await this.loadFiles()
@@ -207,7 +211,8 @@ export default class AggregateOD extends Vue {
   }
 
   private buildSpiderLinks() {
-    const featureCollection: FeatureCollection = { type: 'FeatureCollection', features: [] }
+    this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
+
     for (const id in this.linkData) {
       if (!this.linkData.hasOwnProperty(id)) continue
 
@@ -216,23 +221,24 @@ export default class AggregateOD extends Vue {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
         const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
+        const fade = 0.7
 
         const feature: any = {
           type: 'Feature',
-          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color },
+          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color, fade },
           geometry: {
             type: 'LineString',
             coordinates: [origCoord, destCoord],
           },
         }
-        featureCollection.features.push(feature)
+        this.spiderLinkFeatureCollection.features.push(feature)
       } catch (e) {
         // some dests aren't on map: z.b. 'other'
       }
     }
 
     this.mymap.addSource('spider-source', {
-      data: featureCollection,
+      data: this.spiderLinkFeatureCollection,
       type: 'geojson',
     } as any)
 
@@ -242,10 +248,10 @@ export default class AggregateOD extends Vue {
         source: 'spider-source',
         type: 'line',
         paint: {
-          'line-color': ['get', 'color'], // '#097c43',
+          'line-color': ['get', 'color'],
           'line-width': ['max', 1, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
-          'line-opacity': 0.7,
+          'line-opacity': ['get', 'fade'],
         },
       },
       'centroid-layer'
@@ -314,8 +320,21 @@ export default class AggregateOD extends Vue {
       values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
     }
     vegaChart.data.values = values
-
     // vegaEmbed('#mychart', vegaChart)
+
+    this.fadeUnselectedLinks(id)
+  }
+
+  private fadeUnselectedLinks(id: any) {
+    const tsMap = this.mymap as any
+
+    for (const feature of this.spiderLinkFeatureCollection.features) {
+      const endpoints = feature.properties.id.split(':')
+      let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : 0.15
+      if (id=== -1) fade = 0.7
+      feature.properties.fade = fade
+    }
+    tsMap.getSource('spider-source').setData(this.spiderLinkFeatureCollection)
   }
 
   private clickedOnSpiderLink(e: any) {
@@ -658,7 +677,7 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
-
+    /*
     // HOVER effects
     const parent = this
 
@@ -684,6 +703,7 @@ export default class AggregateOD extends Vue {
       }
       parent.hoveredStateId = null
     })
+    */
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
