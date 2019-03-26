@@ -30,11 +30,11 @@
             span No Visualizations yet. Add some!
           .viz-table(v-else)
             .viz-item(v-for="viz in project.visualizations"
-                      v-on:click="onSelectVisualization(viz)"
-                      v-bind:key="viz.id")
+                      @click="onSelectVisualization(viz)"
+                      :key="viz.id")
                 viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
-                  .itemTitle(slot="title"): p {{ viz.type }}
-                  p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
+                  .itemTitle(slot="title"): p {{ title(viz) }}
+                  p(slot="content") {{ description(viz) }}
 
       section
         list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -177,9 +177,7 @@ export default class ProjectViewModel extends vueInstance {
     }
   }
 
-  public mounted() {
-    EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
-  }
+  public mounted() {}
 
   private get imageFiles() {
     if (!this.selectedRun) return []
@@ -201,6 +199,21 @@ export default class ProjectViewModel extends vueInstance {
       }
       return false
     })
+  }
+
+  private title(viz: Visualization) {
+    if (!viz.parameters) return viz.type
+    if (viz.parameters.Title) return viz.parameters.Title.value
+    if (viz.parameters.Description) return viz.parameters.Description.value
+    return viz.type // fallback
+  }
+
+  private description(viz: Visualization) {
+    const fallback = '' + viz.type + ': ' + viz.id.substring(0, 6)
+    if (!viz.parameters) return fallback
+    if (!viz.parameters.Title) return fallback
+    if (viz.parameters.Description) return viz.parameters.Description.value
+    return fallback
   }
 
   private onAddVisualization() {
