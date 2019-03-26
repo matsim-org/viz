@@ -1,6 +1,6 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    div(slot="header") Create Visualization
+    div(slot="header") {{editContents['hi'] ? 'Edit' : 'Create New'}} Visualization
 
     div(slot="content")
       .viz-selector
@@ -28,7 +28,8 @@ modal(v-on:close-requested="cancel()")
           .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
             .viz-file
               b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="Required")
+              input.input(v-model="request.inputParameters[key]" placeholder="")
+              // placeholder="Required"
 
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
@@ -58,8 +59,12 @@ import { VisualizationType, Project } from '@/entities/Entities'
 export default class CreateVisualizationViewModel extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
+
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
+
+  @Prop({ required: true })
+  private editContents: any
 
   private sharedState = SharedStore.state
 

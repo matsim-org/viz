@@ -71,9 +71,10 @@
             span(slot="content") {{ toStatus(upload.status) }}
 
       create-visualization(v-if="showCreateVisualization"
-                            v-on:close="onAddVisualizationClosed"
-                            v-bind:projectStore="projectStore"
-                            v-bind:fileApi="fileApi")
+                           @close="onAddVisualizationClosed"
+                           :projectStore="projectStore"
+                           :fileApi="fileApi"
+                           :editContents="editContents")
 
       file-upload(v-if="showFileUpload"
                   @close="onAddFilesClosed"
@@ -143,6 +144,7 @@ export default class ProjectViewModel extends vueInstance {
   private showFileUpload = false
   private showSettings = false
   private isDragOver = false
+  private editContents = {}
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
@@ -217,6 +219,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private onAddVisualization() {
+    this.editContents = {}
     this.showCreateVisualization = true
   }
 
@@ -304,7 +307,8 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    console.log('edit viz not yet implemented')
+    this.editContents = { hi: true }
+    this.showCreateVisualization = true
   }
 
   private async onShareViz(viz: Visualization) {
