@@ -62,7 +62,7 @@ SharedStore.addVisualizationType({
   typeName: 'frame-animation',
   prettyName: 'Traffic Animation',
   requiredFileKeys: ['events', 'network', 'plans'],
-  requiredParamKeys: ['snapshotInterval'],
+  requiredParamKeys: ['Title', 'snapshotInterval'],
 })
 
 @Component({
