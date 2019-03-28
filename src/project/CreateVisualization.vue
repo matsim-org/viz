@@ -1,6 +1,6 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    div(slot="header") {{editContents['hi'] ? 'Edit' : 'Create New'}} Visualization
+    div(slot="header") {{editContents.parameters ? 'Edit' : 'Create New'}} Visualization
 
     div(slot="content")
       .viz-selector
@@ -12,6 +12,13 @@ modal(v-on:close-requested="cancel()")
         .viz-details(v-if="showDetails" )
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
           br
+
+          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
+            .viz-file
+              b {{key}}
+              input.input(v-model="request.inputParameters[key]" placeholder="")
+              // placeholder="Required"
+
           .viz-files(v-for="key in selectedVizType.requiredFileKeys")
             .viz-file
               b {{key}}
@@ -25,12 +32,6 @@ modal(v-on:close-requested="cancel()")
                   .dropdown-content
                     a.dropdown-item(v-for="file in project.files" @click='onFileChanged(key, file)') {{file.userFileName}}
 
-          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
-            .viz-file
-              b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="")
-              // placeholder="Required"
-
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       .bottom-panel
@@ -42,18 +43,23 @@ modal(v-on:close-requested="cancel()")
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
-import { VisualizationType, Project } from '@/entities/Entities'
+import { VisualizationType, Project, Visualization } from '@/entities/Entities'
 
 @Component({
   components: {
     modal: Modal,
     error: Error,
+  },
+  watch: {
+    editContents: function(newZ, oldZ) {
+      console.log('A-HA1!')
+    },
   },
 })
 export default class CreateVisualizationViewModel extends Vue {
@@ -107,6 +113,16 @@ export default class CreateVisualizationViewModel extends Vue {
 
   private close() {
     this.$emit('close')
+  }
+
+  private updateContents(value: any, oldValue: any) {
+    console.log('WATCH')
+    if (value === {}) {
+      this.selectedVizType = this.createEmtpyVisualizationType()
+    } else {
+      console.log(value)
+      this.selectedVizType = value.vizType
+    }
   }
 
   private get availableVisualizations() {

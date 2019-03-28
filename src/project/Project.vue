@@ -84,8 +84,8 @@
                   :selectedProject="project"
                   :selectedFiles="selectedFiles")
 
-
 </template>
+
 <script lang="ts">
 import Vue from 'vue'
 import mediumZoom from 'medium-zoom'
@@ -144,7 +144,7 @@ export default class ProjectViewModel extends vueInstance {
   private showFileUpload = false
   private showSettings = false
   private isDragOver = false
-  private editContents = {}
+  private editContents: any = {}
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
@@ -307,7 +307,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    this.editContents = { hi: true }
+    this.editContents.asdf = viz
     this.showCreateVisualization = true
   }
 
