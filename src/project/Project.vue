@@ -74,7 +74,7 @@
                            @close="onAddVisualizationClosed"
                            :projectStore="projectStore"
                            :fileApi="fileApi"
-                           :editContents="editContents")
+                           :editVisualization="editVisualization")
 
       file-upload(v-if="showFileUpload"
                   @close="onAddFilesClosed"
@@ -96,7 +96,6 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
@@ -144,7 +143,7 @@ export default class ProjectViewModel extends vueInstance {
   private showFileUpload = false
   private showSettings = false
   private isDragOver = false
-  private editContents: any = {}
+  private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
@@ -219,7 +218,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private onAddVisualization() {
-    this.editContents = {}
+    this.editVisualization = undefined
     this.showCreateVisualization = true
   }
 
@@ -307,7 +306,8 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    this.editContents.asdf = viz
+    console.log('About to EDIT')
+    this.editVisualization = viz
     this.showCreateVisualization = true
   }
 
