@@ -4,8 +4,8 @@
   .card-actions
     a(title="Edit..." @click.stop="$emit('edit')")
       i.fas.fa-edit
-    a(title="Share..." @click.stop="$emit('share')")
-      i.fas.fa-share
+    // a(title="Share..." @click.stop="$emit('share')")
+    //   i.fas.fa-share
     a(title="Remove" @click.stop="$emit('remove')")
       i.fas.fa-times
   .card-content
@@ -107,7 +107,7 @@ export default Vue.extend({})
 }
 
 .card .card-actions {
-  background-color: #cc9547;
+  background-color: #aaaa99;
   margin: 6px 3px auto auto;
   padding: 2px;
   border-radius: 4px;

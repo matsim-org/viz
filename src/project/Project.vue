@@ -71,9 +71,10 @@
             span(slot="content") {{ toStatus(upload.status) }}
 
       create-visualization(v-if="showCreateVisualization"
-                            v-on:close="onAddVisualizationClosed"
-                            v-bind:projectStore="projectStore"
-                            v-bind:fileApi="fileApi")
+                           @close="onAddVisualizationClosed"
+                           :projectStore="projectStore"
+                           :fileApi="fileApi"
+                           :editVisualization="editVisualization")
 
       file-upload(v-if="showFileUpload"
                   @close="onAddFilesClosed"
@@ -83,8 +84,8 @@
                   :selectedProject="project"
                   :selectedFiles="selectedFiles")
 
-
 </template>
+
 <script lang="ts">
 import Vue from 'vue'
 import mediumZoom from 'medium-zoom'
@@ -95,7 +96,6 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
@@ -143,6 +143,7 @@ export default class ProjectViewModel extends vueInstance {
   private showFileUpload = false
   private showSettings = false
   private isDragOver = false
+  private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
@@ -217,6 +218,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private onAddVisualization() {
+    this.editVisualization = undefined
     this.showCreateVisualization = true
   }
 
@@ -304,7 +306,9 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    console.log('edit viz not yet implemented')
+    console.log('About to EDIT')
+    this.editVisualization = viz
+    this.showCreateVisualization = true
   }
 
   private async onShareViz(viz: Visualization) {
