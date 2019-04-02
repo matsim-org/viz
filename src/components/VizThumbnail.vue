@@ -12,6 +12,8 @@
     .card-title
       slot(name="title")
     .card-subtitle
+      slot(name="tags")
+    .card-subtitle
       slot(name="content")
 </template>
 

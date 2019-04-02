@@ -35,6 +35,9 @@
                 viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
                   .itemTitle(slot="title"): p {{ title(viz) }}
                   p(slot="content") {{ description(viz) }}
+                  .tag-container(slot="tags")
+                    .tag.is-info(v-for="tag in tags(viz)")
+                      span {{ tag }}
 
       section
         list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -204,7 +207,7 @@ export default class ProjectViewModel extends vueInstance {
 
   private title(viz: Visualization) {
     if (!viz.parameters) return viz.type
-    if (viz.parameters.Title) return viz.parameters.Title.value
+    if (viz.parameters.Title && viz.parameters.Title.value !== '') return viz.parameters.Title.value
     if (viz.parameters.Description) return viz.parameters.Description.value
     return viz.type // fallback
   }
@@ -215,6 +218,14 @@ export default class ProjectViewModel extends vueInstance {
     if (!viz.parameters.Title) return fallback
     if (viz.parameters.Description) return viz.parameters.Description.value
     return fallback
+  }
+
+  private tags(viz: Visualization) {
+    const fallback: any = []
+    if (!viz.parameters) return fallback
+    if (!viz.parameters.tags) return fallback
+    if (viz.parameters.tags.value === '') return []
+    return viz.parameters.tags.value.split(',')
   }
 
   private onAddVisualization() {
@@ -306,7 +317,6 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    console.log('About to EDIT')
     this.editVisualization = viz
     this.showCreateVisualization = true
   }
