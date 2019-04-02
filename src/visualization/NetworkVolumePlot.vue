@@ -22,7 +22,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Network Volume Plot',
   description: 'Depicting volumes, V/C ratios, etc on a network plot.',
   requiredFileKeys: ['geoJson'],
-  requiredParamKeys: ['Title'],
+  requiredParamKeys: [],
 })
 
 // store is the component data store -- the state of the component.

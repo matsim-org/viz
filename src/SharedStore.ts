@@ -22,6 +22,8 @@ class SharedStore {
   }
 
   public addVisualizationType(type: VisualizationType) {
+    // Visualizations must automatically get a title and tags
+    type.requiredParamKeys = ['Title', 'tags'].concat(type.requiredParamKeys)
     this._state.visualizationTypes.set(type.typeName, type)
   }
 

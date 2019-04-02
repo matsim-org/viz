@@ -30,7 +30,7 @@ sharedStore.addVisualizationType({
   prettyName: 'NOX Emissions',
   description: 'Show NOX emissions at gridpoints',
   requiredFileKeys: ['JSON x/y/t/nox'],
-  requiredParamKeys: ['Title', 'Map projection'],
+  requiredParamKeys: ['Map projection'],
 })
 
 // choose your colormap: for emissions we'll use inferno

@@ -88,7 +88,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Title', 'Projection'],
+  requiredParamKeys: ['Projection'],
 })
 
 @Component({
@@ -716,7 +716,6 @@ export default class AggregateOD extends Vue {
   }
 
   private pressedEscape() {}
-
   private pressedArrowKey(delta: number) {}
 }
 
