@@ -17,7 +17,7 @@ branches:
 # travis doesn't have the option to run different builds for different branches, so we have to
 # it with ugly bash if statements
 script:
-  - if [ "$TRAVIS_BRANCH" == "stable" || "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "stable" ] || [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-play && npm run unit; fi
 
 # the script statement for each deploy refer to the deploy.sh script because the script tag in the deploy section
