@@ -61,8 +61,9 @@ import AuthenticationStore from '@/auth/AuthenticationStore'
 SharedStore.addVisualizationType({
   typeName: 'frame-animation',
   prettyName: 'Traffic Animation',
+  description: 'Depict vehicles traveling in real time on the network.',
   requiredFileKeys: ['events', 'network', 'plans'],
-  requiredParamKeys: ['snapshotInterval'],
+  requiredParamKeys: ['Title', 'snapshotInterval'],
 })
 
 @Component({

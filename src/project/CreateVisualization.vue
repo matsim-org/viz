@@ -1,6 +1,6 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    div(slot="header") Create Visualization
+    div(slot="header") {{editVisualization ? 'Edit' : 'Create New'}} Visualization
 
     div(slot="content")
       .viz-selector
@@ -8,10 +8,17 @@ modal(v-on:close-requested="cancel()")
           p.menu-label Select:
           ul.menu-list
             li(v-for="viz in availableVisualizations")
-              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
+              a(:class="{'is-active': selectedVizType && viz.typeName===selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
           p(v-if="selectedVizType.description") {{selectedVizType.description}}
           br
+
+          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
+            .viz-file
+              b {{key}}
+              input.input(v-model="request.inputParameters[key]" placeholder="")
+              // placeholder="Required"
+
           .viz-files(v-for="key in selectedVizType.requiredFileKeys")
             .viz-file
               b {{key}}
@@ -25,11 +32,6 @@ modal(v-on:close-requested="cancel()")
                   .dropdown-content
                     a.dropdown-item(v-for="file in project.files" @click='onFileChanged(key, file)') {{file.userFileName}}
 
-          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
-            .viz-file
-              b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="Required")
-
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       .bottom-panel
@@ -41,13 +43,13 @@ modal(v-on:close-requested="cancel()")
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
-import { VisualizationType, Project } from '@/entities/Entities'
+import { VisualizationType, Project, Visualization } from '@/entities/Entities'
 
 @Component({
   components: {
@@ -58,8 +60,12 @@ import { VisualizationType, Project } from '@/entities/Entities'
 export default class CreateVisualizationViewModel extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
+
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
+
+  @Prop({ required: true })
+  private editVisualization?: Visualization
 
   private sharedState = SharedStore.state
 
@@ -94,6 +100,9 @@ export default class CreateVisualizationViewModel extends Vue {
       inputFiles: {},
       inputParameters: {},
     }
+
+    // If dialog is being created with editVisualization filled in, then fill in the details!
+    if (this.editVisualization) this.updateContents(this.editVisualization)
   }
 
   private cancel() {
@@ -102,6 +111,30 @@ export default class CreateVisualizationViewModel extends Vue {
 
   private close() {
     this.$emit('close')
+  }
+
+  private updateContents(viz: Visualization) {
+    if (SharedStore.debug) console.log({ UPDATE: viz })
+
+    this.clearRequest()
+
+    const chosenViz = this.availableVisualizations.filter(v => v.typeName === viz.type)[0]
+
+    this.selectedVizType = chosenViz
+    this.onVizTypeChanged(this.selectedVizType)
+
+    // fill in parameters
+    for (const p in viz.parameters) {
+      if (!viz.parameters.hasOwnProperty(p)) continue
+      this.request.inputParameters[p] = viz.parameters[p].value
+    }
+
+    // fill in files
+    for (const p in viz.inputFiles) {
+      if (!viz.inputFiles.hasOwnProperty(p)) continue
+      this.request.inputFiles[p] = viz.inputFiles[p].fileEntry.id
+      this.onFileChanged(p, viz.inputFiles[p].fileEntry)
+    }
   }
 
   private get availableVisualizations() {
@@ -117,6 +150,10 @@ export default class CreateVisualizationViewModel extends Vue {
     try {
       const viz = await this.fileApi.createVisualization(this.request)
       this.projectStore.addVisualizationToSelectedProject(viz)
+
+      // delete old viz, if we edited it
+      if (this.editVisualization) this.projectStore.deleteVisualization(this.editVisualization)
+
       this.close()
     } catch (error) {
       console.log(error)

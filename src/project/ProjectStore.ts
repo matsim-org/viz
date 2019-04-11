@@ -153,6 +153,8 @@ export default class ProjectStore {
       } else {
         this.state.projects.push(fetchedProject)
       }
+
+      this.fetchVisualizationsForProject(fetchedProject)
     } finally {
       this.state.isFetching = false
     }
@@ -164,6 +166,11 @@ export default class ProjectStore {
       const fetchedVisualizations = await this.api.fetchVizualizationsForProject(project.id)
       const stateProject = this.state.projects.find(p => p.id === project.id)
       if (stateProject) {
+        for (const viz of fetchedVisualizations) {
+          const visualizationDetails = await this.api.fetchVisualization(project.id, viz.id)
+          viz.parameters = visualizationDetails.parameters
+          viz.inputFiles = visualizationDetails.inputFiles
+        }
         stateProject.visualizations = fetchedVisualizations
       } else {
         throw new Error('couldn"t find project')

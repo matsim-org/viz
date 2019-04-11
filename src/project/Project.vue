@@ -30,11 +30,11 @@
             span No Visualizations yet. Add some!
           .viz-table(v-else)
             .viz-item(v-for="viz in project.visualizations"
-                      v-on:click="onSelectVisualization(viz)"
-                      v-bind:key="viz.id")
+                      @click="onSelectVisualization(viz)"
+                      :key="viz.id")
                 viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
-                  .itemTitle(slot="title"): p {{ viz.type }}
-                  p(slot="content") {{ viz.type }}: {{ viz.id.substring(0,6) }}
+                  .itemTitle(slot="title"): p {{ title(viz) }}
+                  p(slot="content") {{ description(viz) }}
 
       section
         list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -71,9 +71,10 @@
             span(slot="content") {{ toStatus(upload.status) }}
 
       create-visualization(v-if="showCreateVisualization"
-                            v-on:close="onAddVisualizationClosed"
-                            v-bind:projectStore="projectStore"
-                            v-bind:fileApi="fileApi")
+                           @close="onAddVisualizationClosed"
+                           :projectStore="projectStore"
+                           :fileApi="fileApi"
+                           :editVisualization="editVisualization")
 
       file-upload(v-if="showFileUpload"
                   @close="onAddFilesClosed"
@@ -83,8 +84,8 @@
                   :selectedProject="project"
                   :selectedFiles="selectedFiles")
 
-
 </template>
+
 <script lang="ts">
 import Vue from 'vue'
 import mediumZoom from 'medium-zoom'
@@ -95,7 +96,6 @@ import ListHeader from '@/components/ListHeader.vue'
 import ListElement from '@/components/ListElement.vue'
 import Modal from '@/components/Modal.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
@@ -143,6 +143,7 @@ export default class ProjectViewModel extends vueInstance {
   private showFileUpload = false
   private showSettings = false
   private isDragOver = false
+  private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
@@ -177,9 +178,7 @@ export default class ProjectViewModel extends vueInstance {
     }
   }
 
-  public mounted() {
-    EventBus.$emit('set-breadcrumbs', [{ title: this.project.name, link: '/project/' + this.project.id }])
-  }
+  public mounted() {}
 
   private get imageFiles() {
     if (!this.selectedRun) return []
@@ -203,7 +202,23 @@ export default class ProjectViewModel extends vueInstance {
     })
   }
 
+  private title(viz: Visualization) {
+    if (!viz.parameters) return viz.type
+    if (viz.parameters.Title) return viz.parameters.Title.value
+    if (viz.parameters.Description) return viz.parameters.Description.value
+    return viz.type // fallback
+  }
+
+  private description(viz: Visualization) {
+    const fallback = '' + viz.type + ': ' + viz.id.substring(0, 6)
+    if (!viz.parameters) return fallback
+    if (!viz.parameters.Title) return fallback
+    if (viz.parameters.Description) return viz.parameters.Description.value
+    return fallback
+  }
+
   private onAddVisualization() {
+    this.editVisualization = undefined
     this.showCreateVisualization = true
   }
 
@@ -291,7 +306,9 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private async onEditViz(viz: Visualization) {
-    console.log('edit viz not yet implemented')
+    console.log('About to EDIT')
+    this.editVisualization = viz
+    this.showCreateVisualization = true
   }
 
   private async onShareViz(viz: Visualization) {

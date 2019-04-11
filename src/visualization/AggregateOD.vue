@@ -88,7 +88,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Description', 'Projection'],
+  requiredParamKeys: ['Title', 'Projection'],
 })
 
 @Component({
@@ -331,7 +331,7 @@ export default class AggregateOD extends Vue {
     for (const feature of this.spiderLinkFeatureCollection.features) {
       const endpoints = feature.properties.id.split(':')
       let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : 0.15
-      if (id=== -1) fade = 0.7
+      if (id === -1) fade = 0.7
       feature.properties.fade = fade
     }
     tsMap.getSource('spider-source').setData(this.spiderLinkFeatureCollection)
@@ -677,7 +677,7 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
-    /*
+
     // HOVER effects
     const parent = this
 
@@ -703,7 +703,6 @@ export default class AggregateOD extends Vue {
       }
       parent.hoveredStateId = null
     })
-    */
   }
 
   private offsetLineByMeters(line: any, metersToTheRight: number) {
