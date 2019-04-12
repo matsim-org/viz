@@ -9,17 +9,17 @@ addons:
 
 branches:
   only:
-    - stable
     - master
+    - staging
     - dev
 
 # build the webapp into ./dist
 # travis doesn't have the option to run different builds for different branches, so we have to
 # it with ugly bash if statements
 script:
-  - if [ "$TRAVIS_BRANCH" == "stable"]; then npm run build && npm run unit; fi
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build-dev && npm run unit; fi
-  - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-play && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "staging"]; then npm run build-staging && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-dev && npm run unit; fi
 
 # the script statement for each deploy refer to the deploy.sh script because the script tag in the deploy section
 # only supports one command...
@@ -27,15 +27,15 @@ deploy:
   - on:
       branch: master
     provider: script
-    script: bash deploy.sh viz-dev
+    script: bash deploy.sh viz
     skip_cleanup: true
   - on:
-      branch: stable
+      branch: staging
     provider: script
-    script: bash deploy.sh viz
+    script: bash deploy.sh viz-staging
     skip_cleanup: true
   - on:
       branch: dev
     provider: script
-    script: bash deploy.sh viz-play
+    script: bash deploy.sh viz-dev
     skip_cleanup: true
