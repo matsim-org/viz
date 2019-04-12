@@ -60,6 +60,9 @@ export interface InputFile extends Entity {
 
 export interface Visualization extends Entity {
   type: string
+  title: string
+  thumbnail: string // supposed to be a base64 encoded image
+  properties: { [id: string]: any }
   inputFiles: { [id: string]: InputFile }
   parameters: { [id: string]: Parameter }
   project: Project

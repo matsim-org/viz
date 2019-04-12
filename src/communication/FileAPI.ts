@@ -6,8 +6,12 @@ import { Project, Visualization, Tag, Permission } from '@/entities/Entities'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 
 export interface CreateVisualizationRequest {
-  projectId?: string
-  typeKey?: string
+  projectId: string
+  typeKey: string
+  title: string
+  tagIds: string[]
+  thumbnail: string
+  properties: { [key: string]: any }
   inputFiles: { [key: string]: string } // use this notation since Map-type is not yet supported by (de)serialization
   inputParameters: { [key: string]: string } // as with inputFiles
 }
