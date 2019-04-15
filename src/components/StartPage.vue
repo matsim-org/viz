@@ -3,7 +3,7 @@
   .start-page-content
     h2.title.is-2 Welcome to MATSim-Viz!
     p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs.
-    p.info This tool is being developed at the Technische Universität in Berlin, Germany.
+    p.info This tool is being developed by the VSP Department at the Technische Universität in Berlin, Germany.
 
     .about(v-if="isAuthenticated")
       h4.title.is-4 My Projects
