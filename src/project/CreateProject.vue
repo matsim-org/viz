@@ -7,8 +7,8 @@
       input.input.is-medium(v-model="projectName" placeholder="Project Name")
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
-      button.button.negative.is-rounded(v-on:click="cancel()") Cancel
-      button.button.is-success.is-rounded.accent(v-on:click="handleCreateClicked()") Create
+      button.button.negative(v-on:click="cancel()") Cancel
+      button.button.is-success.accent(v-on:click="handleCreateClicked()") Create
 </template>
 
 <script lang="ts">
