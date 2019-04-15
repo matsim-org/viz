@@ -192,6 +192,7 @@ export default class ProjectStore {
         visualizations: [],
         tags: [],
         createdAt: 0,
+        updatedAt: 0,
         permissions: [],
       },
     }
