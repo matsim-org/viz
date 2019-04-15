@@ -39,7 +39,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Sankey Flow Diagram',
   description: 'Depicts flows between choices',
   requiredFileKeys: [INPUTS.FLOWS],
-  requiredParamKeys: ['Title'],
+  requiredParamKeys: [],
 })
 
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })

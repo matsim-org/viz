@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --https --mode local-frontend",
-    "serve-local-backend": "vue-cli-service serve -https --mode local-frontend-and-backend",
+    "serve-local-backend": "vue-cli-service serve --https --mode local-frontend-and-backend",
     "lint": "vue-cli-service lint",
     "build": "vue-cli-service build --mode vsp-production-deploy",
     "build-dev": "vue-cli-service build --mode vsp-dev-deploy",

@@ -13,6 +13,7 @@ export interface User extends Agent {
 
 export interface Resource extends Entity {
   createdAt: number
+  updatedAt: number
   permissions: Permission[]
 }
 
@@ -60,6 +61,9 @@ export interface InputFile extends Entity {
 
 export interface Visualization extends Entity {
   type: string
+  title: string
+  thumbnail: string // supposed to be a base64 encoded image
+  properties: { [id: string]: string }
   inputFiles: { [id: string]: InputFile }
   parameters: { [id: string]: Parameter }
   project: Project
