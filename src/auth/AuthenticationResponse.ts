@@ -1,5 +1,6 @@
 import * as JWT from 'jwt-decode'
 import { AuthenticationRequestVars } from '@/auth/AuthenticationRequest'
+import { IdToken } from './AuthenticationStore'
 
 export default class AuthenticationResponse {
   private static get ID_TOKEN(): string {
@@ -22,10 +23,10 @@ export default class AuthenticationResponse {
     return 'nonce'
   }
 
-  private _idToken: any = {}
+  private _idToken!: IdToken
   private _accessToken: string = ''
 
-  get idToken(): any {
+  get idToken(): IdToken {
     return this._idToken
   }
 
@@ -43,7 +44,7 @@ export default class AuthenticationResponse {
     }
 
     const idToken = params.get(AuthenticationResponse.ID_TOKEN) as string
-    const decodedToken = JWT(idToken) as any
+    const decodedToken = JWT(idToken) as IdToken
 
     if (!this.isValidToken(decodedToken, requestVars.nonce)) {
       throw new Error('received invalid token!')

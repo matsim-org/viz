@@ -3,6 +3,7 @@ import AuthenticationResponse from '@/auth/AuthenticationResponse'
 import ErrorResponse from '@/auth/ErrorResponse'
 import Config from '@/config/Config'
 import { Method } from '@/communication/Constants'
+import { Url } from 'url'
 
 export enum AuthenticationStatus {
   NotAuthenticated,
@@ -12,10 +13,19 @@ export enum AuthenticationStatus {
 }
 
 export interface AuthenticationState {
-  idToken: any
+  idToken: IdToken
   accessToken: string
   status: AuthenticationStatus
   errorMessage: string
+}
+
+export interface IdToken {
+  sub: string
+  exp: number
+  iat: number
+  iss: Url
+  jti: string
+  nonce: string
 }
 
 export default class AuthenticationStore {
@@ -82,7 +92,7 @@ export default class AuthenticationStore {
 
   public resetState(): void {
     this.authState.status = AuthenticationStatus.NotAuthenticated
-    this.authState.idToken = {}
+    this.authState.idToken = this.getEmtpyIdToken()
     this.authState.accessToken = ''
     this.authState.errorMessage = ''
   }
@@ -96,7 +106,7 @@ export default class AuthenticationStore {
 
   private createDefaultState(): AuthenticationState {
     return {
-      idToken: {},
+      idToken: this.getEmtpyIdToken(),
       accessToken: '',
       status: AuthenticationStatus.NotAuthenticated,
       errorMessage: '',
@@ -117,5 +127,16 @@ export default class AuthenticationStore {
     const state = sessionStorage.getItem(AuthenticationStore.STATE_STORAGE_KEY)
     if (state) return JSON.parse(state) as AuthenticationState
     return null
+  }
+
+  private getEmtpyIdToken(): IdToken {
+    return {
+      exp: 0,
+      iat: 0,
+      iss: new URL('https://issuer.url'),
+      jti: '',
+      nonce: '',
+      sub: '',
+    }
   }
 }
