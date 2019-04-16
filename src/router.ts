@@ -2,7 +2,6 @@ import AggregateOD from '@/visualization/AggregateOD.vue'
 import Authentication from '@/auth/Authentication.vue'
 import StartPage from '@/components/StartPage.vue'
 import Project from '@/project/Project.vue'
-import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
@@ -40,6 +39,7 @@ export default class AppRouter {
           props: {
             authStore: authStore,
             projectStore: projectStore,
+            fileApi: fileApi,
           },
         },
         {
@@ -107,13 +107,6 @@ export default class AppRouter {
               vizId: route.params.vizId,
             }
           },
-        },
-        {
-          path: '/projects',
-          name: 'Your Projects',
-          component: Projects,
-          meta: { authRequired: true },
-          props: { projectStore: projectStore },
         },
         {
           path: '/project/:projectId',

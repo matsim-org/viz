@@ -35,6 +35,10 @@ export default class FileAPI {
     return await this.request<Project[]>(`${this.fileServerUrl}/projects`, this.corsRequestOptions())
   }
 
+  public async fetchAllPublicProjects(): Promise<Project[]> {
+    return await this.requestUnauthenticated<Project[]>(`${this.fileServerUrl}/projects`, this.corsRequestOptions())
+  }
+
   public async fetchProject(projectId: string): Promise<Project> {
     return await this.request<Project>(`${this.fileServerUrl}/projects/${projectId}`, this.corsRequestOptions())
   }
@@ -160,20 +164,29 @@ export default class FileAPI {
     }
   }
 
+  private async requestUnauthenticated<T>(endpoint: string, options: RequestInit): Promise<T> {
+    const response = await fetch(endpoint, options)
+    return this.processResponse(response)
+  }
+
   private async request<T>(endpoint: string, options: RequestInit): Promise<T> {
-    const result = await this.authenticatedRequester.fetch(endpoint, options)
-    if (result.ok) {
-      if (result.status === 204) {
+    const response = await this.authenticatedRequester.fetch(endpoint, options)
+    return this.processResponse(response)
+  }
+
+  private async processResponse<T>(response: Response) {
+    if (response.ok) {
+      if (response.status === 204) {
         // if result is no-content, there is nothing to parse
         // make the compiler happy about return types.
         const promise = Promise.resolve() as unknown
         return promise as Promise<T>
       } else {
-        const message = await result.json()
+        const message = await response.json()
         return this.jsogService.deserialize(message) as any
       }
     } else {
-      throw await this.generateError(result)
+      throw await this.generateError(response)
     }
   }
 
