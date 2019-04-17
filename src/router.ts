@@ -4,6 +4,7 @@ import StartPage from '@/components/StartPage.vue'
 import Project from '@/project/Project.vue'
 import Projects from '@/project/Projects.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
+import EventsAnimation from '@/visualization/events-animation/EventsAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
@@ -144,6 +145,17 @@ export default class AppRouter {
             return {
               vizId: route.params.vizId,
               projectStore: projectStore,
+              authStore: authStore,
+            }
+          },
+        },
+        {
+          path: '/traffic-animation/:projectId/:vizId',
+          component: EventsAnimation,
+          name: 'EventsAnimation',
+          props: route => {
+            return {
+              vizId: route.params.vizId,
               authStore: authStore,
             }
           },
