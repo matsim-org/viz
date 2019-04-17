@@ -26,7 +26,7 @@ describe('AuthenticationStore', () => {
     expect(authStore.state.idToken).toEqual({
       exp: 0,
       iat: 0,
-      iss: 'https://issuer.url/',
+      iss: new URL('https://issuer.url'),
       jti: '',
       nonce: '',
       sub: '',

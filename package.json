@@ -9,7 +9,6 @@
     "build": "vue-cli-service build --mode vsp-production-deploy",
     "build-dev": "vue-cli-service build --mode vsp-dev-deploy",
     "build-staging": "vue-cli-service build --mode vsp-staging-deploy",
-    "test:unit": "vue-cli-service test:unit",
     "unit": "vue-cli-service test:unit"
   },
   "dependencies": {
