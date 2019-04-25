@@ -1,5 +1,6 @@
 interface Config {
   readonly authServer: string
+  readonly emissionsServer: string
   readonly fileServer: string
   readonly frameAnimationServer: string
   readonly clientId: string
@@ -18,6 +19,9 @@ function createConfig(): Config {
     authCallback: process.env.VUE_APP_AUTH_CALLBACK
       ? (process.env.VUE_APP_AUTH_CALLBACK as string)
       : 'https://localhost:8080/authentication',
+    emissionsServer: process.env.VUE_APP_EMISSIONS_SERVER
+      ? (process.env.VUE_APP_EMISSIONS_SERVER as string)
+      : 'https://some-emissions.uri',
   }
 }
 

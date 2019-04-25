@@ -31,6 +31,7 @@ import VueSlider from 'vue-slider-component'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
+import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
@@ -537,7 +538,7 @@ export default class AggregateOD extends Vue {
     for (const origCoords of polygon.geometry.coordinates) {
       const newCoords: any = []
       for (const p of origCoords) {
-        const lnglat = proj4(this.projection, 'WGS84', p) as any
+        const lnglat = Coords.toLngLat(this.projection, p) as any
         newCoords.push(lnglat)
       }
 

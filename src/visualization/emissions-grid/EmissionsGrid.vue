@@ -12,25 +12,30 @@
 
 <script lang="ts">
 'use strict'
+import * as timeConvert from 'convert-seconds'
 import mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
-import * as timeConvert from 'convert-seconds'
 import pako from 'pako'
 import proj4 from 'proj4'
 import readBlob from 'read-blob'
-import sharedStore from '../SharedStore'
+
+import AuthenticationStore from '@/auth/AuthenticationStore'
+import Coords from '@/components/Coords'
+import Config from '@/config/Config'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
-import TimeSlider from '../components/TimeSlider.vue'
-import { Vue, Component, Watch } from 'vue-property-decorator'
+import ProjectStore from '@/project/ProjectStore'
+import sharedStore from '@/SharedStore'
+import TimeSlider from '@/components/TimeSlider.vue'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 
 sharedStore.addVisualizationType({
-  typeName: 'nox',
-  prettyName: 'NOX Emissions',
-  description: 'Show NOX emissions at gridpoints',
-  requiredFileKeys: ['JSON x/y/t/nox'],
-  requiredParamKeys: ['Map projection'],
+  typeName: 'emissions',
+  prettyName: 'Emissions Grid',
+  description: 'Show emissions at gridpoints',
+  requiredFileKeys: ['Events', 'Network'],
+  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
 })
 
 // choose your colormap: for emissions we'll use inferno
@@ -56,10 +61,26 @@ interface Point {
 }
 
 @Component({
-  components: { 'time-slider': TimeSlider },
-  props: { projectId: String, fileApi: Object },
+  components: {
+    'time-slider': TimeSlider,
+  },
 })
-export default class NOXPlot extends Vue {
+export default class EmissionsGrid extends Vue {
+  @Prop({ type: String, required: true })
+  private projectId!: string
+
+  @Prop({ type: String, required: true })
+  private vizId!: string
+
+  @Prop({ type: ProjectStore, required: true })
+  private projectStore!: ProjectStore
+
+  @Prop({ type: AuthenticationStore, required: true })
+  private authStore!: AuthenticationStore
+
+  @Prop({ type: FileAPI, required: true })
+  private fileApi!: FileAPI
+
   private currentTime: number = 0
   private firstEventTime: number = 0
   private loadingMsg: string = ''
@@ -69,45 +90,58 @@ export default class NOXPlot extends Vue {
   private noxLocations: any
   private sharedState: any = sharedStore.state
 
-  // store is the component data store -- the state of the component.
-  private store: any = {
-    loadingText: 'NOX Emissions Plot',
-    visualization: null,
-    project: {},
-    api: FileAPI,
-  }
+  private loadingText: string = 'Emissions Grid'
+  private visualization: any = null
+  private project: any = {}
+  private projection!: string
+
+  private maxEmissionValue: number = 0
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
   }
 
-  // VUE LIFECYCLE: created
-  public created() {
-    this.store.api = (this as any).fileApi
+  public created() {}
+
+  public async fetchEmissionsData(): Promise<any> {
+    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/data`, {
+      mode: 'cors',
+      headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
+    })
+
+    if (result.ok) {
+      try {
+        const thing = await result.json()
+        console.log(thing)
+        return thing
+      } catch (e) {
+        throw new Error('WHAT: emission fetch failed')
+      }
+    } else if (result.status === 401) {
+      throw new Error('Unauthorized: ' + (await result.text()))
+    } else {
+      throw new Error(await result.text())
+    }
   }
 
   // VUE LIFECYCLE: mounted
   public async mounted() {
-    this.store.projectId = (this as any).$route.params.projectId
-    this.store.vizId = (this as any).$route.params.vizId
-    this.store.visualization = await this.store.api.fetchVisualization(this.store.projectId, this.store.vizId)
-    this.store.project = await this.store.api.fetchProject(this.store.projectId)
-
-    this.setBreadcrumb()
-
-    const jsondata = await this.loadData()
-    this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
-    await this.buildEventDatabase(jsondata)
+    this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
+    this.project = await this.fileApi.fetchProject(this.projectId)
+    if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
 
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      // center: [13.325, 52.52], // lnglat, not latlng (think of it as: x,y)
+      // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/light-v9',
+      style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
       zoom: 14,
     })
+
+    // this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
+    // await this.buildEventDatabase(jsondata)
 
     // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
@@ -121,13 +155,6 @@ export default class NOXPlot extends Vue {
       const answer = this.getUpperBoundEventForTimepoint(ar, z, (a: number, b: number) => a - b)
       console.log({ z, answer })
     }
-  }
-
-  private setBreadcrumb() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: this.store.project.name, link: '/project/' + this.store.projectId },
-      { title: 'nox-' + this.store.vizId.substring(0, 4), link: '#' },
-    ])
   }
 
   /**
@@ -168,13 +195,13 @@ export default class NOXPlot extends Vue {
       {
         id: 'my-layer',
         source: 'my-data',
-        type: 'circle',
+        type: 'fill',
         paint: {
-          'circle-color': ['get', 'color'],
-          'circle-radius': ['get', 'radius'],
+          'fill-color': ['get', 'color'],
+          'fill-opacity': ['get', 'op'],
         },
       },
-      'water'
+      'road-street'
     ) // layer gets added just *above* this MapBox-defined layer.
   }
 
@@ -186,33 +213,74 @@ export default class NOXPlot extends Vue {
   }
 
   private convertJsonToGeoJson(data: any) {
-    const geojsonLinks: any = []
+    const geojsonPoints: any = []
 
     this.firstEventTime = 1e20
 
-    for (const point of data) {
-      const coordinates = [point.lon, point.lat]
-      const id = point.lon.toString() + '/' + point.lat.toString()
+    const fullradius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
 
-      this.firstEventTime = Math.min(this.firstEventTime, point.time)
-      this.updateMapExtent(coordinates)
+    for (const point of data.timeBins[0].value.cells) {
+      if (!point.value || !point.value.NO2) continue
+      this.maxEmissionValue = Math.max(this.maxEmissionValue, point.value.NO2)
+    }
+
+    console.log({ MAX: this.maxEmissionValue })
+
+    for (const point of data.timeBins[0].value.cells) {
+      if (point.value === {}) continue
+
+      const value = point.value.NO2 / this.maxEmissionValue
+      if (!value) continue
+      if (value < 0.01) continue
+
+      const hexwidth = fullradius * Math.min(1.0, value * 10)
+      const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
+      const halfhexheight = 0.5 * hexheight
+
+      const color = colormap(value)
+      const op = Math.min(1.0, value * 5)
+
+      // this.firstEventTime = Math.min(this.firstEventTime, point.time)
+
+      // HEXagons
+      const coord = point.coordinate
+
+      const hexPoints = []
+      hexPoints.push({ x: coord.x, y: coord.y + hexheight })
+      hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
+      hexPoints.push({ x: coord.x + hexwidth, y: coord.y - halfhexheight })
+      hexPoints.push({ x: coord.x, y: coord.y - hexheight })
+      hexPoints.push({ x: coord.x - hexwidth, y: coord.y - halfhexheight })
+      hexPoints.push({ x: coord.x - hexwidth, y: coord.y + halfhexheight })
+      hexPoints.push({ x: coord.x, y: coord.y + hexheight })
+
+      const z = hexPoints.map(mm => {
+        const longlat = Coords.toLngLat(this.projection, mm)
+        return [longlat.x, longlat.y]
+      })
+
+      const coordinates = Coords.toLngLat(this.projection, point.coordinate)
+      const id = coordinates.x.toString() + '/' + coordinates.y.toString()
+      const arrayz = [coordinates.x, coordinates.y]
+      this.updateMapExtent(arrayz)
 
       const featureJson: any = {
         type: 'Feature',
-        geometry: { type: 'Point', coordinates: coordinates },
-        properties: { id: id, radius: 0, color: '#000000' },
+        geometry: { type: 'Polygon', coordinates: [z] },
+        properties: { id: id, color: color, op: op }, // '#003388' },
       }
 
-      geojsonLinks.push(featureJson)
+      geojsonPoints.push(featureJson)
     }
-    this.currentTime = this.firstEventTime
+    console.log(geojsonPoints)
+    // this.currentTime = this.firstEventTime
 
-    return { type: 'FeatureCollection', features: geojsonLinks }
+    return { type: 'FeatureCollection', features: geojsonPoints }
   }
 
   private changedSlider(seconds: number) {
-    this.currentTime = seconds
-    this.updateFlowsForTimeValue(seconds)
+    //    this.currentTime = seconds
+    //    this.updateFlowsForTimeValue(seconds)
   }
 
   private convertSecondsToClockTimeMinutes(index: number) {
@@ -266,51 +334,20 @@ export default class NOXPlot extends Vue {
     z.setData(this.myGeoJson)
   }
 
-  private mapIsReady() {
+  private async mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
+    const jsonData = await this.fetchEmissionsData()
+    this.myGeoJson = await this.convertJsonToGeoJson(jsonData)
+
+    console.log(this.mapExtentXYXY)
     this.addJsonToMap()
-    this.updateFlowsForTimeValue(this.firstEventTime)
+    // this.updateFlowsForTimeValue(this.firstEventTime)
 
     this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
     this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
 
-    this.currentTime = this.firstEventTime
-  }
-
-  private async loadData() {
-    return await this.loadXYJsonData()
-  }
-
-  private async loadXYJsonData() {
-    try {
-      const XYDATA = this.store.visualization.inputFiles['JSON x/y/t/nox'].fileEntry.id
-      console.log({ XYDATA, PROJECT: this.store.projectId })
-      this.store.loadingText = 'Loading X/Y data...'
-      // get the blob data
-      const dataBlob = await this.store.api.downloadFile(XYDATA, this.store.projectId)
-      let data = await readBlob.text(dataBlob)
-      data = JSON.parse(data)
-
-      return data
-    } catch (e) {
-      console.error(e)
-      return null
-    }
-  }
-
-  // MapBox requires long/lat
-  private convertCoords(projection: any) {
-    console.log('starting conversion', projection)
-    /* TODO: convert from any EPSG:xxxx that Proj4 supports
-
-    for (const key of Object.keys(this.store.nodes)) {
-      const node = this.store.nodes[key]
-      const z = proj4(projection, 'WGS84', node) as any
-      node.x = z.x
-      node.y = z.y
-    }
-    */
+    // this.currentTime = this.firstEventTime
   }
 
   /*
