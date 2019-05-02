@@ -1,5 +1,6 @@
 <template lang="pug">
 .main-content
+  .status-blob(v-if="loadingText"): p {{ loadingText }}
   #mymap
   .slider-box
     time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
@@ -349,6 +350,7 @@ export default class EmissionsGrid extends Vue {
     this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
     this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
 
+    this.loadingText=''
     // this.currentTime = this.firstEventTime
   }
 
@@ -471,5 +473,23 @@ h3 {
 a:hover,
 a:focus {
   text-decoration: none;
+}
+
+.status-blob {
+  background-color: #222;
+  box-shadow: 0 0 8px #00000040;
+  opacity: 0.9;
+  margin: auto 0px auto -10px;
+  padding: 3rem 0px;
+  text-align: center;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  z-index: 2;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
+}
+
+.status-blob p {
+  color: #ffa;
 }
 </style>
