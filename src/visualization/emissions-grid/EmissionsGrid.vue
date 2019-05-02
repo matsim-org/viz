@@ -201,8 +201,8 @@ export default class EmissionsGrid extends Vue {
           'fill-opacity': ['get', 'op'],
         },
       },
-      'road-street'
-    ) // layer gets added just *above* this MapBox-defined layer.
+      'water' // tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
+    ) // layer gets added just *under* this MapBox-defined layer.
   }
 
   private updateMapExtent(coordinates: any) {
@@ -220,8 +220,8 @@ export default class EmissionsGrid extends Vue {
     const fullradius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
 
     for (const point of data.timeBins[0].value.cells) {
-      if (!point.value || !point.value.NO2) continue
-      this.maxEmissionValue = Math.max(this.maxEmissionValue, point.value.NO2)
+      if (!point.value || !point.value.HC) continue
+      this.maxEmissionValue = Math.max(this.maxEmissionValue, point.value.HC)
     }
 
     console.log({ MAX: this.maxEmissionValue })
@@ -229,16 +229,18 @@ export default class EmissionsGrid extends Vue {
     for (const point of data.timeBins[0].value.cells) {
       if (point.value === {}) continue
 
-      const value = point.value.NO2 / this.maxEmissionValue
+      let value = point.value.HC / this.maxEmissionValue
       if (!value) continue
       if (value < 0.01) continue
+
+      if (value > 1) value = 1
 
       const hexwidth = fullradius * Math.min(1.0, value * 10)
       const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
       const halfhexheight = 0.5 * hexheight
 
       const color = colormap(value)
-      const op = Math.min(1.0, value * 5)
+      const op = Math.min(0.95, value * 5)
 
       // this.firstEventTime = Math.min(this.firstEventTime, point.time)
 
