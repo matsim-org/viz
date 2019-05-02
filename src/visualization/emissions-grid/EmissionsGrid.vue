@@ -1,14 +1,21 @@
 <template lang="pug">
 .main-content
   .status-blob(v-if="loadingText"): p {{ loadingText }}
+
+  project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+  .info-blob(v-if="!loadingText")
+    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+    .info-header
+      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
+    .buttons-bar
+      button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
+      button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+    .slider-box
+      time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
+
   #mymap
-  .slider-box
-    time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
-  .left-overlay
-    h1.clock {{clockTime}}
-  .loading-message.ui.segment(v-show='loadingMsg')
-    .ui.inverted.active.dimmer
-      .ui.text.loader {{ loadingMsg }}
+  //.left-overlay
+  // h1.clock {{clockTime}}
 </template>
 
 <script lang="ts">
@@ -26,6 +33,7 @@ import Config from '@/config/Config'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore from '@/project/ProjectStore'
+import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import sharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
@@ -64,6 +72,7 @@ interface Point {
 @Component({
   components: {
     'time-slider': TimeSlider,
+    'project-summary-block': ProjectSummaryBlock,
   },
 })
 export default class EmissionsGrid extends Vue {
@@ -84,7 +93,6 @@ export default class EmissionsGrid extends Vue {
 
   private currentTime: number = 0
   private firstEventTime: number = 0
-  private loadingMsg: string = ''
   private mymap!: mapboxgl.Map
   private myGeoJson!: any
   private mapExtentXYXY: any = [180, 90, -180, -90]
@@ -350,7 +358,7 @@ export default class EmissionsGrid extends Vue {
     this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
     this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
 
-    this.loadingText=''
+    this.loadingText = ''
     // this.currentTime = this.firstEventTime
   }
 
@@ -491,5 +499,29 @@ a:focus {
 
 .status-blob p {
   color: #ffa;
+}
+
+.project-summary-block {
+  width: 16rem;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  margin: 0px auto auto 0px;
+  z-index: 10;
+}
+
+.info-blob {
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+  height: 100vh;
+  background-color: #363a45;
+  margin: 0px 0px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  text-align: center;
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  opacity: 0.95;
+  z-index: 5;
+  animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 </style>
