@@ -1,15 +1,19 @@
 <template lang="pug">
 .main-content
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
+      h3(style="padding: 0rem 3rem 0.5rem 3rem; font-weight: normal;color: white;") Emissions Grid
     .buttons-bar
-      button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
-      button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+      h4.heading Pollutant
+      .pollutants
+        button.button(v-for="pollutant in pollutants"
+                      @click='clickedOrigins'
+                      :class='{"is-link": isOrigin ,"is-active": isOrigin}') {{pollutant}}
+
+    h4.heading(style="padding-left:0.5rem") Time of Day
     .slider-box
       time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
 
@@ -104,6 +108,7 @@ export default class EmissionsGrid extends Vue {
   private project: any = {}
   private projection!: string
 
+  private pollutants = ['HC', 'NOX', 'NO2']
   private maxEmissionValue: number = 0
 
   private get clockTime() {
@@ -144,7 +149,7 @@ export default class EmissionsGrid extends Vue {
       // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/dark-v9',
+      style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
       zoom: 14,
     })
@@ -210,7 +215,8 @@ export default class EmissionsGrid extends Vue {
           'fill-opacity': ['get', 'op'],
         },
       },
-      'water' // tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
+      'road-street'
+      // 'water', 'tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
     ) // layer gets added just *under* this MapBox-defined layer.
   }
 
@@ -523,5 +529,32 @@ a:focus {
   opacity: 0.95;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
+}
+
+.info-header {
+  background-color: #097c43;
+  padding: 0.5rem 0rem;
+  border-top: solid 1px #888;
+  border-bottom: solid 1px #888;
+}
+
+.buttons-bar {
+  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+  height: 100%;
+}
+
+.heading {
+  text-align: left;
+  color: #fff;
+  margin-top: 1rem;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 </style>
