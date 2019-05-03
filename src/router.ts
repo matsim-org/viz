@@ -7,7 +7,7 @@ import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
-import NOXPlot from '@/visualization/NOXPlot.vue'
+import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import SankeyDiagram from '@/visualization/sankey-diagram/SankeyDiagram.vue'
 import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 import Vue from 'vue'
@@ -95,11 +95,17 @@ export default class AppRouter {
           component: NetworkFlows,
         },
         {
-          path: '/nox/:projectId/:vizId',
-          name: 'NOXPlot',
-          component: NOXPlot,
-          props: {
-            fileApi: fileApi,
+          path: '/emissions/:projectId/:vizId',
+          name: 'EmissionsGrid',
+          component: EmissionsGrid,
+          props: route => {
+            return {
+              authStore: authStore,
+              fileApi: fileApi,
+              projectId: route.params.projectId,
+              projectStore: projectStore,
+              vizId: route.params.vizId,
+            }
           },
         },
         {
