@@ -234,7 +234,8 @@ export default class EmissionsGrid extends Vue {
   private clickedPollutant(p: string) {
     console.log(this.pollutantsHexagons[p])
     this.pollutant = p
-    this.mymap.getSource('hexagons').setData(this.pollutantsHexagons[p])
+
+    ;(this.mymap.getSource('hexagons') as any).setData(this.pollutantsHexagons[p])
   }
 
   private async calculateMaxValues(data: any) {
