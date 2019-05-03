@@ -18,7 +18,7 @@ modal(v-on:close-requested="close()")
       .tagsAndDropdown
         .dropdown(:class="{'is-active': showTags && filteredTags.length > 0}")
           .dropdown-trigger
-            button.button.is-rounded(@click="showTags = !showTags")
+            button.button(@click="showTags = !showTags")
               span Add existing tags
               span.icon.is-small
                 i.fas.fa-angle-down
@@ -27,7 +27,7 @@ modal(v-on:close-requested="close()")
               a.dropdown-item(v-for="tag in filteredTags" @click="onTagSelected(tag)") {{ tag.name }}
       .addNewTag
         input.input(type="text" v-model="newTagText" :class="{'is-danger': isInvalidNewTag }")
-        button.button.is-rounded.left-space(@click="onAddTag") New Tag
+        button.button.left-space(@click="onAddTag") New Tag
 
     .fileList
       h1 The following {{files.length}} file{{ files.length > 1 ? 's' : ''}} will be uploaded:
@@ -41,8 +41,8 @@ modal(v-on:close-requested="close()")
             button.delete.is-medium(slot="accessory" v-on:click="onRemoveFile(file)")
 
   div(slot="actions")
-    button.negative.button.is-rounded(v-on:click="cancel()") Cancel
-    button.button.is-link.is-rounded.accent(v-on:click="uploadselectedFiles()") Upload
+    button.negative.button(v-on:click="cancel()") Cancel
+    button.button.is-link.accent(v-on:click="uploadselectedFiles()") Upload
 </template>
 
 <script lang="ts">
@@ -190,7 +190,6 @@ export default class FileUploadViewModel extends Vue {
   flex-direction: row;
   align-content: center;
   margin-bottom: 2rem;
-  margin-left: 1rem;
 }
 
 .tagsAndselectedFiles {
@@ -204,6 +203,7 @@ export default class FileUploadViewModel extends Vue {
 .cuteBlueHeading {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
 }
 
 .cuteBlueHeading h1 {
@@ -212,7 +212,6 @@ export default class FileUploadViewModel extends Vue {
   min-width: max-content;
   margin-right: 3rem;
   margin-top: 0.5rem;
-  text-transform: uppercase;
 }
 
 .fileList h1 {
@@ -221,7 +220,6 @@ export default class FileUploadViewModel extends Vue {
   min-width: max-content;
   margin-right: 3rem;
   margin-top: 0.5rem;
-  text-transform: uppercase;
 }
 
 .itemTitle {
@@ -283,7 +281,6 @@ h4 {
 
 .scrollableFileList {
   max-height: 20rem;
-  margin-left: 1rem;
   overflow-y: auto;
 }
 .top-space {

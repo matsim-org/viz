@@ -40,7 +40,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHPFILE],
-  requiredParamKeys: ['Title'],
+  requiredParamKeys: [],
 })
 
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })

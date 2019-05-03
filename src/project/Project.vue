@@ -472,10 +472,6 @@ section {
   grid-template-rows: 1fr;
 }
 
-.files {
-  margin-left: 10px;
-}
-
 .upload-header {
   border-bottom: 1px solid lightgray;
   width: 100%;
