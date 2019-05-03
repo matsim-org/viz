@@ -1,6 +1,6 @@
 <template lang="pug">
 modal(v-on:close-requested="cancel()")
-    div(slot="header") Create Visualization
+    div(slot="header") {{editVisualization ? 'Edit' : 'Create New'}} Visualization
 
     div(slot="content")
       .viz-selector
@@ -8,27 +8,38 @@ modal(v-on:close-requested="cancel()")
           p.menu-label Select:
           ul.menu-list
             li(v-for="viz in availableVisualizations")
-              a(:class="{'is-active': selectedVizType && viz.typeName==selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
+              a(:class="{'is-active': selectedVizType && viz.typeName===selectedVizType.typeName}" @click="onVizTypeChanged(viz)") {{viz.prettyName}}
         .viz-details(v-if="showDetails" )
-          p(v-if="selectedVizType.description") {{selectedVizType.description}}
-          br
-          .viz-files(v-for="key in selectedVizType.requiredFileKeys")
-            .viz-file
-              b {{key}}
-              .dropdown.is-right(style="float:right;" :class="{'is-active': openDropdown==key}")
-                .dropdown-trigger
-                  button.button.is-small(@click="toggleDropdown(key)" aria-haspopup="true" aria-controls="dropdown-menu")
-                    span {{ request.inputFiles[key] ? fileLookup.get(key) : 'Choose&hellip;' }}
-                    span.icon.is-small
-                      i.fas.fa-angle-down(aria-hidden="true")
-                .dropdown-menu(:id="'dropdown-menu'+key" role="menu")
-                  .dropdown-content
-                    a.dropdown-item(v-for="file in project.files" @click='onFileChanged(key, file)') {{file.userFileName}}
+            p.description(v-if="selectedVizType.description") {{selectedVizType.description}}
 
-          .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
-            .viz-file
-              b {{key}}
-              input.input(v-model="request.inputParameters[key]" placeholder="Required")
+            .field
+              label.label Title
+              .control
+                input.input(type="text" v-model="title")
+            .field
+              label.label Description
+              .control
+                textarea.textarea(v-model="description")
+
+            .viz-parameters(v-for="key in selectedVizType.requiredParamKeys")
+              .field
+                label.label {{key}}
+                .control
+                  input.input(v-model="parameters[key]" placeholder="")
+                // placeholder="Required"
+
+            .viz-files(v-for="key in selectedVizType.requiredFileKeys")
+              .field
+                label.label {{key}}
+                .control.dropdown.is-left(:class="{'is-active': openDropdown==key}")
+                  .dropdown-trigger
+                    button.button.is-small(@click="toggleDropdown(key)" aria-haspopup="true" aria-controls="dropdown-menu")
+                      span {{ inputFiles[key] ? fileLookup.get(key) : 'Choose&hellip;' }}
+                      span.icon.is-small
+                        i.fas.fa-angle-down(aria-hidden="true")
+                  .dropdown-menu(:id="'dropdown-menu'+key" role="menu")
+                    .dropdown-content
+                      a.dropdown-item(v-for="file in project.files" @click='onFileChanged(key, file)') {{file.userFileName}}
 
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
@@ -36,18 +47,19 @@ modal(v-on:close-requested="cancel()")
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.button.negative.is-rounded(v-on:click="cancel()") Cancel
-          button.button.is-link.is-rounded.accent(v-on:click="createVisualization()") Create
+          button.button.negative(v-on:click="cancel()") Cancel
+          button.button.is-link.accent(v-on:click="createVisualization()") Create
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import Modal from '@/components/Modal.vue'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
 import SharedStore, { SharedState } from '../SharedStore'
 import ProjectStore from '@/project/ProjectStore'
-import { VisualizationType, Project } from '@/entities/Entities'
+import { VisualizationType, Project, Visualization } from '@/entities/Entities'
+import DummyThumbnail from '@/project/DummyThumbnail'
 
 @Component({
   components: {
@@ -58,8 +70,12 @@ import { VisualizationType, Project } from '@/entities/Entities'
 export default class CreateVisualizationViewModel extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
+
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
+
+  @Prop({ required: true })
+  private editVisualization?: Visualization
 
   private sharedState = SharedStore.state
 
@@ -69,10 +85,14 @@ export default class CreateVisualizationViewModel extends Vue {
   private selectedVizType: VisualizationType = this.createEmtpyVisualizationType()
   private openDropdown = ''
   private fileLookup: Map<string, string> = new Map()
-  private request = this.createEmptyRequest()
+
+  private title = ''
+  private description = ''
+  private parameters: { [key: string]: string } = {}
+  private inputFiles: { [key: string]: string } = {}
 
   private get showDetails(): boolean {
-    return this.selectedVizType !== undefined
+    return this.selectedVizType.typeName !== ''
   }
 
   private get projectState() {
@@ -87,13 +107,16 @@ export default class CreateVisualizationViewModel extends Vue {
     return this.errorMessage && this.errorMessage.length !== 0
   }
 
+  private get availableVisualizations() {
+    const vizes = Array.from(this.sharedState.visualizationTypes.values())
+    return vizes.sort((a, b) => {
+      return a.prettyName > b.prettyName ? 1 : -1
+    })
+  }
+
   private created() {
-    this.request = {
-      projectId: this.projectState.selectedProject.id,
-      typeKey: 'raw-files',
-      inputFiles: {},
-      inputParameters: {},
-    }
+    // If dialog is being created with editVisualization filled in, then fill in the details!
+    if (this.editVisualization) this.updateContents(this.editVisualization)
   }
 
   private cancel() {
@@ -104,19 +127,51 @@ export default class CreateVisualizationViewModel extends Vue {
     this.$emit('close')
   }
 
-  private get availableVisualizations() {
-    const vizes = Array.from(this.sharedState.visualizationTypes.values())
-    vizes.sort((a, b) => {
-      return a.prettyName > b.prettyName ? 1 : -1
-    })
-    return vizes
+  private updateContents(viz: Visualization) {
+    if (SharedStore.debug) console.log({ UPDATE: viz })
+
+    this.setUpInputProperties()
+
+    const chosenViz = this.availableVisualizations.filter(v => v.typeName === viz.type)[0]
+
+    this.selectedVizType = chosenViz
+    this.onVizTypeChanged(this.selectedVizType)
+
+    // fill in parameters
+    for (const p in viz.parameters) {
+      if (!viz.parameters.hasOwnProperty(p)) continue
+      this.parameters[p] = viz.parameters[p].value
+    }
+
+    // fill in files
+    for (const p in viz.inputFiles) {
+      if (!viz.inputFiles.hasOwnProperty(p)) continue
+      this.inputFiles[p] = viz.inputFiles[p].fileEntry.id
+      this.onFileChanged(p, viz.inputFiles[p].fileEntry)
+    }
   }
 
   private async createVisualization() {
     this.isRequesting = true
     try {
-      const viz = await this.fileApi.createVisualization(this.request)
+      const request: CreateVisualizationRequest = {
+        projectId: this.project.id,
+        typeKey: this.selectedVizType.typeName,
+        title: this.title,
+        tagIds: [], // not yet implemented
+        thumbnail: DummyThumbnail, // not yet implemented
+        properties: {
+          description: this.description,
+        },
+        inputFiles: this.inputFiles,
+        inputParameters: this.parameters,
+      }
+      const viz = await this.fileApi.createVisualization(request)
       this.projectStore.addVisualizationToSelectedProject(viz)
+
+      // delete old viz, if we edited it
+      if (this.editVisualization) this.projectStore.deleteVisualization(this.editVisualization)
+
       this.close()
     } catch (error) {
       console.log(error)
@@ -127,13 +182,12 @@ export default class CreateVisualizationViewModel extends Vue {
   }
 
   private onVizTypeChanged(value: VisualizationType) {
-    this.clearRequest()
-    this.request.typeKey = value.typeName
+    this.setUpInputProperties()
     this.selectedVizType = value
   }
 
   private onFileChanged(key: string, event: any) {
-    this.request.inputFiles[key] = event.id
+    this.inputFiles[key] = event.id
     this.fileLookup.set(key, event.userFileName)
     this.toggleDropdown('')
   }
@@ -143,22 +197,11 @@ export default class CreateVisualizationViewModel extends Vue {
     else this.openDropdown = key
   }
 
-  private createEmptyRequest(): CreateVisualizationRequest {
-    return {
-      projectId: '',
-      typeKey: 'raw-files',
-      inputFiles: {},
-      inputParameters: {},
-    }
-  }
-
-  private clearRequest() {
-    this.request = {
-      projectId: this.projectState.selectedProject.id,
-      typeKey: 'raw-files',
-      inputFiles: {},
-      inputParameters: {},
-    }
+  private setUpInputProperties() {
+    this.title = ''
+    this.description = ''
+    this.parameters = {}
+    this.inputFiles = {}
   }
 
   private createEmtpyVisualizationType(): VisualizationType {
@@ -177,19 +220,27 @@ export default class CreateVisualizationViewModel extends Vue {
   float: right;
 }
 .viz-selector {
-  display: flex;
-  flex-direction: row;
-  min-height: 20rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
 }
 .viz-details {
   padding-left: 30px;
+  align-self: stretch;
 }
 .viz-files {
   display: flex;
   flex-direction: column;
+  margin-bottom: 12px;
+}
+.viz-parameters {
+  margin-bottom: 12px;
 }
 .viz-file {
   padding: 5px 0px;
+}
+
+.description {
+  margin-bottom: 1rem;
 }
 
 h4 {

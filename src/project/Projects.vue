@@ -49,7 +49,9 @@ export default class ProjectsViewModel extends vueInstance {
   private showCreateProject = false
 
   private get projects() {
-    return this.projectsState.projects
+    return this.projectsState.projects.sort((a: Project, b: Project) => {
+      return a.name < b.name ? -1 : 1
+    })
   }
 
   public mounted() {
