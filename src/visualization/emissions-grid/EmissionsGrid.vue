@@ -53,7 +53,7 @@ sharedStore.addVisualizationType({
 
 // choose your colormap: for emissions we'll use inferno
 // https://www.npmjs.com/package/scale-color-perceptual
-const colormap = viridis // inferno
+const colormap = inferno
 
 interface MapElement {
   lngLat: LngLat
@@ -98,7 +98,6 @@ export default class EmissionsGrid extends Vue {
   private currentTime: number = 0
   private firstEventTime: number = 0
   private mymap!: mapboxgl.Map
-  private myGeoJson!: any
   private mapExtentXYXY: any = [180, 90, -180, -90]
   private noxLocations: any
   private sharedState: any = sharedStore.state
@@ -110,6 +109,7 @@ export default class EmissionsGrid extends Vue {
 
   private pollutant: string = ''
   private pollutantsMaxValue: { [id: string]: number } = {}
+  private pollutantsHexagons: { [id: string]: any } = {}
 
   private maxEmissionValue: number = 0
 
@@ -204,17 +204,15 @@ export default class EmissionsGrid extends Vue {
   }
 
   private addJsonToMap() {
-    this.mymap.addSource('my-data', {
-      data: this.myGeoJson,
+    this.mymap.addSource('hexagons', {
+      data: this.pollutantsHexagons[this.pollutants[0]],
       type: 'geojson',
     })
-
-    console.log(this.myGeoJson)
 
     this.mymap.addLayer(
       {
         id: 'my-layer',
-        source: 'my-data',
+        source: 'hexagons',
         type: 'fill',
         paint: {
           'fill-color': ['get', 'color'],
@@ -234,43 +232,43 @@ export default class EmissionsGrid extends Vue {
   }
 
   private clickedPollutant(p: string) {
+    console.log(this.pollutantsHexagons[p])
     this.pollutant = p
+    this.mymap.getSource('hexagons').setData(this.pollutantsHexagons[p])
   }
 
-  private calculateMaxValues(data: any) {
+  private async calculateMaxValues(data: any) {
     for (const point of data.timeBins[0].value.cells) {
       if (!point.value) continue
 
+      // set pollutant max-extent
       for (const pollutant of Object.keys(point.value)) {
         if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
           this.pollutantsMaxValue[pollutant] = point.value[pollutant]
         }
         this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
       }
+
+      // set map extent
+      const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
+      this.updateMapExtent([coordinates.x, coordinates.y])
     }
     console.log({ MAX_VALUE: this.pollutantsMaxValue })
   }
 
-  private convertJsonToGeoJson(data: any) {
-    this.calculateMaxValues(data)
-
+  private convertJsonToGeoJson(data: any, pollutantID: string) {
     const geojsonPoints: any = []
 
     this.firstEventTime = 1e20
 
     const fullradius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
 
-    for (const point of data.timeBins[0].value.cells) {
-      if (!point.value || !point.value.HC) continue
-      this.maxEmissionValue = Math.max(this.maxEmissionValue, point.value.HC)
-    }
-
-    console.log({ MAX: this.maxEmissionValue })
+    this.maxEmissionValue = this.pollutantsMaxValue[pollutantID]
 
     for (const point of data.timeBins[0].value.cells) {
       if (point.value === {}) continue
 
-      let value = point.value.HC / this.maxEmissionValue
+      let value = point.value[pollutantID] / this.maxEmissionValue
       if (!value) continue
       if (value < 0.01) continue
 
@@ -287,7 +285,6 @@ export default class EmissionsGrid extends Vue {
 
       // HEXagons
       const coord = point.coordinate
-
       const hexPoints = []
       hexPoints.push({ x: coord.x, y: coord.y + hexheight })
       hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
@@ -302,10 +299,7 @@ export default class EmissionsGrid extends Vue {
         return [longlat.x, longlat.y]
       })
 
-      const coordinates = Coords.toLngLat(this.projection, point.coordinate)
-      const id = coordinates.x.toString() + '/' + coordinates.y.toString()
-      const arrayz = [coordinates.x, coordinates.y]
-      this.updateMapExtent(arrayz)
+      const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
 
       const featureJson: any = {
         type: 'Feature',
@@ -343,47 +337,25 @@ export default class EmissionsGrid extends Vue {
     return `${hms.hours}:${minutes}:${seconds}`
   }
 
-  private updateFlowsForTimeValue(seconds: number) {
-    if (!this.noxLocations || !this.myGeoJson) return
-
-    const lookup: any = {}
-
-    // loop on all point-ids and get NOX value for each at this timepoint
-    for (const point in this.noxLocations) {
-      if (!this.noxLocations.hasOwnProperty(point)) continue
-      const location = this.noxLocations[point]
-      // for each point, find the new time
-      const timeIndex = this.getUpperBoundEventForTimepoint(location, seconds, (a: any, b: number) => a - b)
-      if (timeIndex === -1) continue
-
-      const noxEvent = location[timeIndex]
-
-      if (noxEvent.NOX) {
-        lookup[noxEvent.id] = colormap(noxEvent.NOX)
-      }
-    }
-
-    // loop on all features and get NOX if it exists
-    for (const feature of this.myGeoJson.features) {
-      if (lookup[feature.properties.id]) {
-        feature.properties.color = lookup[feature.properties.id]
-        feature.properties.radius = 20
-      } else {
-        feature.properties.radius = 0
-      }
-    }
-
-    const z: any = this.mymap.getSource('my-data')
-    z.setData(this.myGeoJson)
-  }
-
   private async mapIsReady() {
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
+    this.loadingText = 'Fetching data'
     const jsonData = await this.fetchEmissionsData()
-    this.myGeoJson = await this.convertJsonToGeoJson(jsonData)
+
+    this.loadingText = 'Calculating ranges'
+    await this.calculateMaxValues(jsonData)
+
+    this.loadingText = 'Laying out tiles'
+
+    for (const p of this.pollutants) {
+      console.log(p)
+      this.pollutantsHexagons[p] = await this.convertJsonToGeoJson(jsonData, p)
+    }
 
     console.log(this.mapExtentXYXY)
+
+    this.pollutant = this.pollutants[0]
     this.addJsonToMap()
     // this.updateFlowsForTimeValue(this.firstEventTime)
 
