@@ -9,9 +9,9 @@
     .buttons-bar
       h4.heading Pollutant
       .pollutants
-        button.button(v-for="pollutant in pollutants"
-                      @click='clickedOrigins'
-                      :class='{"is-link": isOrigin ,"is-active": isOrigin}') {{pollutant}}
+        .hey(v-for="p in pollutants")
+          button.button(style="width:100%;" :class="{'is-warning': p===pollutant, 'is-black': p!==pollutant}"
+            @click="clickedPollutant(p)") {{p}}
 
     h4.heading(style="padding-left:0.5rem") Time of Day
     .slider-box
@@ -53,7 +53,7 @@ sharedStore.addVisualizationType({
 
 // choose your colormap: for emissions we'll use inferno
 // https://www.npmjs.com/package/scale-color-perceptual
-const colormap = inferno
+const colormap = viridis // inferno
 
 interface MapElement {
   lngLat: LngLat
@@ -108,11 +108,17 @@ export default class EmissionsGrid extends Vue {
   private project: any = {}
   private projection!: string
 
-  private pollutants = ['HC', 'NOX', 'NO2']
+  private pollutant: string = ''
+  private pollutantsMaxValue: { [id: string]: number } = {}
+
   private maxEmissionValue: number = 0
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
+  }
+
+  private get pollutants() {
+    return Object.keys(this.pollutantsMaxValue).sort()
   }
 
   public created() {}
@@ -129,7 +135,7 @@ export default class EmissionsGrid extends Vue {
         console.log(thing)
         return thing
       } catch (e) {
-        throw new Error('WHAT: emission fetch failed')
+        throw new Error(e)
       }
     } else if (result.status === 401) {
       throw new Error('Unauthorized: ' + (await result.text()))
@@ -227,7 +233,27 @@ export default class EmissionsGrid extends Vue {
     this.mapExtentXYXY[3] = Math.max(this.mapExtentXYXY[3], coordinates[1])
   }
 
+  private clickedPollutant(p: string) {
+    this.pollutant = p
+  }
+
+  private calculateMaxValues(data: any) {
+    for (const point of data.timeBins[0].value.cells) {
+      if (!point.value) continue
+
+      for (const pollutant of Object.keys(point.value)) {
+        if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
+          this.pollutantsMaxValue[pollutant] = point.value[pollutant]
+        }
+        this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
+      }
+    }
+    console.log({ MAX_VALUE: this.pollutantsMaxValue })
+  }
+
   private convertJsonToGeoJson(data: any) {
+    this.calculateMaxValues(data)
+
     const geojsonPoints: any = []
 
     this.firstEventTime = 1e20
@@ -556,5 +582,9 @@ a:focus {
   to {
     transform: translateX(0);
   }
+}
+
+.hey {
+  margin-top: 2px;
 }
 </style>
