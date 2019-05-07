@@ -1,5 +1,6 @@
 <template lang="pug">
 .main-content
+  #mymap
   .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
   .info-blob(v-if="!loadingText")
@@ -10,14 +11,17 @@
       h4.heading Pollutant
       .pollutants
         .hey(v-for="p in pollutants")
-          button.button(style="width:100%;" :class="{'is-warning': p===pollutant, 'is-black': p!==pollutant}"
+          button.button.pollutant(:class="{'is-warning': p===pollutant, 'is-black': p!==pollutant}"
             @click="clickedPollutant(p)") {{p}}
+      h4.heading Time of Day
+      .slider-box
+        time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
 
-    h4.heading(style="padding-left:0.5rem") Time of Day
-    .slider-box
-      time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
-
-  #mymap
+    .theme-choices
+      img.theme-button(v-for="theme in themes"
+                       :class="{'selected-theme': theme.colorRamp===chosenColorMap}"
+                       :src="theme.icon"
+                       @click="clickedTheme(theme)")
   //.left-overlay
   // h1.clock {{clockTime}}
 </template>
@@ -28,7 +32,6 @@ import * as timeConvert from 'convert-seconds'
 import mapboxgl from 'mapbox-gl'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import pako from 'pako'
-import proj4 from 'proj4'
 import readBlob from 'read-blob'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -50,10 +53,6 @@ sharedStore.addVisualizationType({
   requiredFileKeys: ['Events', 'Network'],
   requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
 })
-
-// choose your colormap: for emissions we'll use inferno
-// https://www.npmjs.com/package/scale-color-perceptual
-const colormap = inferno
 
 interface MapElement {
   lngLat: LngLat
@@ -111,7 +110,39 @@ export default class EmissionsGrid extends Vue {
   private pollutantsMaxValue: { [id: string]: number } = {}
   private pollutantsHexagons: { [id: string]: any } = {}
 
+  private themes: any = [
+    {
+      name: 'Inferno',
+      colorRamp: 'colorInferno',
+      icon: '/inferno.png',
+      style: 'mapbox://styles/mapbox/light-v9',
+    },
+    {
+      name: 'Viridis',
+      colorRamp: 'colorViridis',
+      icon: '/viridis.png',
+      style: 'mapbox://styles/mapbox/light-v9',
+    },
+    /* {
+      name: '1',
+      colorRamp: 'colorInferno',
+      icon: '',
+      style: 'mapbox://styles/mapbox/dark-v9',
+    },
+    {
+      name: '1',
+      colorRamp: 'colorViridis',
+      icon: '',
+      style: 'mapbox://styles/mapbox/dark-v9',
+    },
+    */
+  ]
+
   private maxEmissionValue: number = 0
+
+  // choose your colormap: for emissions we'll use inferno
+  // https://www.npmjs.com/package/scale-color-perceptual
+  private chosenColorMap: string = 'colorInferno'
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
@@ -203,6 +234,15 @@ export default class EmissionsGrid extends Vue {
     console.log({ LOCATIONS: this.noxLocations })
   }
 
+  private clickedTheme(theme: any) {
+    console.log('changing theme: ' + theme)
+    this.chosenColorMap = theme.colorRamp
+
+    // this.mymap.setStyle(theme.style)
+    // this.addJsonToMap()
+    this.mymap.setPaintProperty('my-layer', 'fill-color', ['get', theme.colorRamp])
+  }
+
   private addJsonToMap() {
     this.mymap.addSource('hexagons', {
       data: this.pollutantsHexagons[this.pollutants[0]],
@@ -215,7 +255,7 @@ export default class EmissionsGrid extends Vue {
         source: 'hexagons',
         type: 'fill',
         paint: {
-          'fill-color': ['get', 'color'],
+          'fill-color': ['get', this.chosenColorMap],
           'fill-opacity': ['get', 'op'],
         },
       },
@@ -234,7 +274,6 @@ export default class EmissionsGrid extends Vue {
   private clickedPollutant(p: string) {
     console.log(this.pollutantsHexagons[p])
     this.pollutant = p
-
     ;(this.mymap.getSource('hexagons') as any).setData(this.pollutantsHexagons[p])
   }
 
@@ -279,8 +318,11 @@ export default class EmissionsGrid extends Vue {
       const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
       const halfhexheight = 0.5 * hexheight
 
-      const color = colormap(value)
+      // Rapidly scale up opacity when rel.value is 0-20%; anything > 20% gets full opacity
       const op = Math.min(0.95, value * 5)
+
+      const colorInferno = inferno(value)
+      const colorViridis = viridis(value)
 
       // this.firstEventTime = Math.min(this.firstEventTime, point.time)
 
@@ -305,7 +347,7 @@ export default class EmissionsGrid extends Vue {
       const featureJson: any = {
         type: 'Feature',
         geometry: { type: 'Polygon', coordinates: [z] },
-        properties: { id: id, color: color, op: op }, // '#003388' },
+        properties: { id, op, colorInferno, colorViridis },
       }
 
       geojsonPoints.push(featureJson)
@@ -428,7 +470,7 @@ export default class EmissionsGrid extends Vue {
   grid-row: 1 / 3;
   grid-column: 1 / 4;
   overflow: hidden;
-  background: #222;
+  background: #fff;
 }
 
 .loading-message {
@@ -461,7 +503,6 @@ export default class EmissionsGrid extends Vue {
   grid-row: 2 / 3;
   grid-column: 1 / 4;
   background-color: #99a;
-  margin: 0.5rem;
   z-index: 2;
   border: solid 1px;
   border-color: #222;
@@ -489,7 +530,7 @@ a:focus {
 }
 
 .status-blob {
-  background-color: #222;
+  background-color: #fff;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
@@ -503,7 +544,7 @@ a:focus {
 }
 
 .status-blob p {
-  color: #ffa;
+  color: #0066a1;
 }
 
 .project-summary-block {
@@ -539,13 +580,19 @@ a:focus {
 
 .buttons-bar {
   margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+  padding: 0rem 0.25rem;
   height: 100%;
+}
+
+.pollutant {
+  width: 100%;
+  margin-bottom: 0.25rem;
 }
 
 .heading {
   text-align: left;
   color: #fff;
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
 @keyframes slideInFromLeft {
@@ -557,7 +604,29 @@ a:focus {
   }
 }
 
-.hey {
-  margin-top: 2px;
+.theme-choices {
+  display: flex;
+  flex-direction: row;
+  margin: 2px auto;
+}
+
+.theme-button {
+  width: 3rem;
+  height: 3rem;
+  margin: 0rem 0.5rem 0.5rem 0rem;
+  padding: 1px 1px;
+  background-color: black;
+}
+
+.theme-button:hover {
+  background-color: #999;
+}
+
+.selected-theme {
+  background-color: white;
+}
+
+.selected-theme:hover {
+  background-color: white;
 }
 </style>
