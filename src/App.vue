@@ -88,7 +88,9 @@ h6 {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 0.5rem 0rem 0.5rem 0rem;
-  background-image: linear-gradient(-150deg, #479ccc, #114d72); /*50a2d5*/
+  background-color: #242436;
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
+  /*  background-image: linear-gradient(-150deg, black, #052040); /* linear-gradient(-150deg, #479ccc, #114d72); */
   z-index: 5;
 }
 

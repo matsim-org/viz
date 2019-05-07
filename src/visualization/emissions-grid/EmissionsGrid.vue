@@ -19,7 +19,7 @@
 
     .theme-choices
       img.theme-button(v-for="theme in themes"
-                       :class="{'selected-theme': theme.colorRamp===chosenColorMap}"
+                       :class="{'selected-theme': theme.name === chosenTheme.name}"
                        :src="theme.icon"
                        @click="clickedTheme(theme)")
   //.left-overlay
@@ -96,6 +96,7 @@ export default class EmissionsGrid extends Vue {
 
   private currentTime: number = 0
   private firstEventTime: number = 0
+  private firstLoad: boolean = true
   private mymap!: mapboxgl.Map
   private mapExtentXYXY: any = [180, 90, -180, -90]
   private noxLocations: any
@@ -114,35 +115,34 @@ export default class EmissionsGrid extends Vue {
     {
       name: 'Inferno',
       colorRamp: 'colorInferno',
-      icon: '/inferno.png',
+      icon: '/infernwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
     {
       name: 'Viridis',
       colorRamp: 'colorViridis',
-      icon: '/viridis.png',
+      icon: '/viriwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
-    /* {
-      name: '1',
+    {
+      name: 'Indarko',
       colorRamp: 'colorInferno',
-      icon: '',
+      icon: '/inferno.png',
       style: 'mapbox://styles/mapbox/dark-v9',
     },
     {
-      name: '1',
+      name: 'Viridark',
       colorRamp: 'colorViridis',
-      icon: '',
+      icon: '/viridis.png',
       style: 'mapbox://styles/mapbox/dark-v9',
     },
-    */
   ]
 
   private maxEmissionValue: number = 0
 
   // choose your colormap: for emissions we'll use inferno
   // https://www.npmjs.com/package/scale-color-perceptual
-  private chosenColorMap: string = 'colorInferno'
+  private chosenTheme: any = this.themes[0]
 
   private get clockTime() {
     return this.convertSecondsToClockTime(this.currentTime)
@@ -181,20 +181,16 @@ export default class EmissionsGrid extends Vue {
     this.project = await this.fileApi.fetchProject(this.projectId)
     if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
 
+    // do things that can only be done after MapBox is fully initialized
     this.mymap = new mapboxgl.Map({
       bearing: 0,
       // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/light-v9',
+      style: this.chosenTheme.style,
       pitch: 0,
       zoom: 14,
     })
-
-    // this.myGeoJson = await this.convertJsonToGeoJson(jsondata)
-    // await this.buildEventDatabase(jsondata)
-
-    // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
   }
 
@@ -236,30 +232,40 @@ export default class EmissionsGrid extends Vue {
 
   private clickedTheme(theme: any) {
     console.log('changing theme: ' + theme)
-    this.chosenColorMap = theme.colorRamp
 
-    // this.mymap.setStyle(theme.style)
-    // this.addJsonToMap()
-    this.mymap.setPaintProperty('my-layer', 'fill-color', ['get', theme.colorRamp])
+    if (theme.style !== this.chosenTheme.style) {
+      console.log('changing style: ' + theme.style)
+      this.mymap.setStyle(theme.style)
+      // this.addJsonToMap()
+    }
+
+    console.log('5')
+    this.chosenTheme = theme
+
+    this.mymap.setPaintProperty('hex-layer', 'fill-extrusion-color', ['get', theme.colorRamp])
+    // this.mymap.setPaintProperty('my-layer', 'fill-color', ['get', theme.colorRamp])
   }
 
-  private addJsonToMap() {
+  private setJsonSource() {
     this.mymap.addSource('hexagons', {
       data: this.pollutantsHexagons[this.pollutants[0]],
       type: 'geojson',
     })
+  }
 
+  private addJsonToMap() {
     this.mymap.addLayer(
       {
-        id: 'my-layer',
+        id: 'hex-layer',
         source: 'hexagons',
-        type: 'fill',
+        type: 'fill-extrusion',
         paint: {
-          'fill-color': ['get', this.chosenColorMap],
-          'fill-opacity': ['get', 'op'],
+          'fill-extrusion-color': ['get', this.chosenTheme.colorRamp],
+          'fill-extrusion-opacity': 0.95, // ['get', 'op'],
+          'fill-extrusion-height': ['get', 'height'],
         },
-      },
-      'road-street'
+      }
+      // 'road-street'
       // 'water', 'tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
     ) // layer gets added just *under* this MapBox-defined layer.
   }
@@ -344,10 +350,12 @@ export default class EmissionsGrid extends Vue {
 
       const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
 
+      const height = 2000 * value
+
       const featureJson: any = {
         type: 'Feature',
         geometry: { type: 'Polygon', coordinates: [z] },
-        properties: { id, op, colorInferno, colorViridis },
+        properties: { id, op, value, height, colorInferno, colorViridis },
       }
 
       geojsonPoints.push(featureJson)
@@ -380,33 +388,37 @@ export default class EmissionsGrid extends Vue {
     return `${hms.hours}:${minutes}:${seconds}`
   }
 
-  private async mapIsReady() {
-    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
-
+  private async loadData() {
     this.loadingText = 'Fetching data'
     const jsonData = await this.fetchEmissionsData()
 
     this.loadingText = 'Calculating ranges'
     await this.calculateMaxValues(jsonData)
 
-    this.loadingText = 'Laying out tiles'
-
     for (const p of this.pollutants) {
       console.log(p)
+      this.loadingText = 'Laying out tiles: ' + p
       this.pollutantsHexagons[p] = await this.convertJsonToGeoJson(jsonData, p)
     }
 
     console.log(this.mapExtentXYXY)
 
     this.pollutant = this.pollutants[0]
+  }
+
+  // this is called every time map setStyle is called, too
+  private async mapIsReady() {
+    if (this.firstLoad) {
+      this.firstLoad = false
+      this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+      await this.loadData()
+      this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
+      this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
+    }
+
+    this.setJsonSource()
     this.addJsonToMap()
-    // this.updateFlowsForTimeValue(this.firstEventTime)
-
-    this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
-    this.mymap.fitBounds(this.mapExtentXYXY, { padding: 100 })
-
     this.loadingText = ''
-    // this.currentTime = this.firstEventTime
   }
 
   /*
@@ -613,7 +625,7 @@ a:focus {
 .theme-button {
   width: 3rem;
   height: 3rem;
-  margin: 0rem 0.5rem 0.5rem 0rem;
+  margin: 0rem 0.25rem 0.5rem 0.25rem;
   padding: 1px 1px;
   background-color: black;
 }
