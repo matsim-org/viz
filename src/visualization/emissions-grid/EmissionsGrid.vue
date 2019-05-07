@@ -99,6 +99,7 @@ export default class EmissionsGrid extends Vue {
   private firstLoad: boolean = true
   private mymap!: mapboxgl.Map
   private mapExtentXYXY: any = [180, 90, -180, -90]
+  private initialMapExtent: any = null
   private noxLocations: any
   private sharedState: any = sharedStore.state
 
@@ -113,18 +114,6 @@ export default class EmissionsGrid extends Vue {
 
   private themes: any = [
     {
-      name: 'Inferno',
-      colorRamp: 'colorInferno',
-      icon: '/infernwhite.png',
-      style: 'mapbox://styles/mapbox/light-v9',
-    },
-    {
-      name: 'Viridis',
-      colorRamp: 'colorViridis',
-      icon: '/viriwhite.png',
-      style: 'mapbox://styles/mapbox/light-v9',
-    },
-    {
       name: 'Indarko',
       colorRamp: 'colorInferno',
       icon: '/inferno.png',
@@ -135,6 +124,18 @@ export default class EmissionsGrid extends Vue {
       colorRamp: 'colorViridis',
       icon: '/viridis.png',
       style: 'mapbox://styles/mapbox/dark-v9',
+    },
+    {
+      name: 'Inferno',
+      colorRamp: 'colorInferno',
+      icon: '/infernwhite.png',
+      style: 'mapbox://styles/mapbox/light-v9',
+    },
+    {
+      name: 'Viridis',
+      colorRamp: 'colorViridis',
+      icon: '/viriwhite.png',
+      style: 'mapbox://styles/mapbox/light-v9',
     },
   ]
 
@@ -191,6 +192,16 @@ export default class EmissionsGrid extends Vue {
       pitch: 0,
       zoom: 14,
     })
+
+    this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
+    if (this.initialMapExtent) {
+      const lnglat = JSON.parse(this.initialMapExtent)
+      this.mymap.fitBounds(lnglat, {
+        padding: { top: 50, bottom: 100, right: 100, left: 300 },
+        animate: false,
+      })
+    }
+
     this.mymap.on('style.load', this.mapIsReady)
   }
 
@@ -277,6 +288,14 @@ export default class EmissionsGrid extends Vue {
     this.mapExtentXYXY[3] = Math.max(this.mapExtentXYXY[3], coordinates[1])
   }
 
+  private setMapExtent() {
+    localStorage.setItem(this.vizId + '-bounds', JSON.stringify(this.mapExtentXYXY))
+    this.mymap.fitBounds(this.mapExtentXYXY, {
+      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      animate: false,
+    })
+  }
+
   private clickedPollutant(p: string) {
     console.log(this.pollutantsHexagons[p])
     this.pollutant = p
@@ -299,7 +318,9 @@ export default class EmissionsGrid extends Vue {
       const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
       this.updateMapExtent([coordinates.x, coordinates.y])
     }
+
     console.log({ MAX_VALUE: this.pollutantsMaxValue })
+    this.setMapExtent()
   }
 
   private convertJsonToGeoJson(data: any, pollutantID: string) {
@@ -412,8 +433,11 @@ export default class EmissionsGrid extends Vue {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
       await this.loadData()
-      this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
-      this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
+
+      if (!this.initialMapExtent) {
+        this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
+        this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
+      }
     }
 
     this.setJsonSource()
@@ -542,7 +566,7 @@ a:focus {
 }
 
 .status-blob {
-  background-color: #fff;
+  background-color: #222;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
@@ -556,7 +580,7 @@ a:focus {
 }
 
 .status-blob p {
-  color: #0066a1;
+  color: #ffa; /* #0066a1; */
 }
 
 .project-summary-block {
