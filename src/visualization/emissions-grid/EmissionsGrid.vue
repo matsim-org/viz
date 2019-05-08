@@ -11,11 +11,14 @@
       h4.heading Pollutant
       .pollutants
         .hey(v-for="p in pollutants")
-          button.button.pollutant(:class="{'is-warning': p===pollutant, 'is-black': p!==pollutant}"
+          button.button.pollutant(
+            :class="{'is-warning': p===pollutant, 'is-gray': p!==pollutant}"
             @click="clickedPollutant(p)") {{p}}
       h4.heading Time of Day
       .slider-box
-        time-slider.time-slider(:bind="currentTime" :initialTime="currentTime" @change="changedSlider")
+        time-slider.time-slider(:bind="currentTime"
+                                :initialTime="currentTime"
+                                @change="changedSlider")
 
     .theme-choices
       img.theme-button(v-for="theme in themes"
@@ -114,18 +117,6 @@ export default class EmissionsGrid extends Vue {
 
   private themes: any = [
     {
-      name: 'Indarko',
-      colorRamp: 'colorInferno',
-      icon: '/inferno.png',
-      style: 'mapbox://styles/mapbox/dark-v9',
-    },
-    {
-      name: 'Viridark',
-      colorRamp: 'colorViridis',
-      icon: '/viridis.png',
-      style: 'mapbox://styles/mapbox/dark-v9',
-    },
-    {
       name: 'Inferno',
       colorRamp: 'colorInferno',
       icon: '/infernwhite.png',
@@ -136,6 +127,18 @@ export default class EmissionsGrid extends Vue {
       colorRamp: 'colorViridis',
       icon: '/viriwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
+    },
+    {
+      name: 'Indarko',
+      colorRamp: 'colorInferno',
+      icon: '/inferno.png',
+      style: 'mapbox://styles/mapbox/dark-v9',
+    },
+    {
+      name: 'Viridark',
+      colorRamp: 'colorViridis',
+      icon: '/viridis.png',
+      style: 'mapbox://styles/mapbox/dark-v9',
     },
   ]
 
@@ -566,7 +569,7 @@ a:focus {
 }
 
 .status-blob {
-  background-color: #222;
+  background-color: #fff;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
@@ -580,7 +583,7 @@ a:focus {
 }
 
 .status-blob p {
-  color: #ffa; /* #0066a1; */
+  color: #0066a2; /* #ffa; /* #0066a1; */
 }
 
 .project-summary-block {
@@ -596,13 +599,13 @@ a:focus {
   flex-direction: column;
   width: 16rem;
   height: 100vh;
-  background-color: #363a45;
+  background-color: #eeeeffee;
   margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 3;
-  opacity: 0.95;
+  opacity: 1;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
 }
@@ -627,7 +630,7 @@ a:focus {
 
 .heading {
   text-align: left;
-  color: #fff;
+  color: black;
   margin-top: 2rem;
 }
 
@@ -655,14 +658,14 @@ a:focus {
 }
 
 .theme-button:hover {
-  background-color: #999;
+  background-color: cyan;
 }
 
 .selected-theme {
-  background-color: white;
+  background-color: #6f6;
 }
 
 .selected-theme:hover {
-  background-color: white;
+  background-color: #6f6;
 }
 </style>
