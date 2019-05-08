@@ -25,8 +25,8 @@
                        :class="{'selected-theme': theme.name === chosenTheme.name}"
                        :src="theme.icon"
                        @click="clickedTheme(theme)")
-  //.left-overlay
-  // h1.clock {{clockTime}}
+    // .left-overlay
+    //   h1.clock {{clockTime}}
 </template>
 
 <script lang="ts">
@@ -113,18 +113,18 @@ export default class EmissionsGrid extends Vue {
 
   private pollutant: string = ''
   private pollutantsMaxValue: { [id: string]: number } = {}
-  private pollutantsHexagons: { [id: string]: any } = {}
+  private dataLookup: any = []
 
   private themes: any = [
     {
       name: 'Inferno',
-      colorRamp: 'colorInferno',
+      colorRamp: 'revInferno',
       icon: '/infernwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
     {
       name: 'Viridis',
-      colorRamp: 'colorViridis',
+      colorRamp: 'revViridis',
       icon: '/viriwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
@@ -141,8 +141,6 @@ export default class EmissionsGrid extends Vue {
       style: 'mapbox://styles/mapbox/dark-v9',
     },
   ]
-
-  private maxEmissionValue: number = 0
 
   // choose your colormap: for emissions we'll use inferno
   // https://www.npmjs.com/package/scale-color-perceptual
@@ -208,42 +206,6 @@ export default class EmissionsGrid extends Vue {
     this.mymap.on('style.load', this.mapIsReady)
   }
 
-  private sortTest() {
-    const ar = [1000, 5000, 5000, 9000, 10000]
-
-    const test = [0, 1000, 1500, 5000, 9500, 10000, 11000]
-    for (const z of test) {
-      const answer = this.getUpperBoundEventForTimepoint(ar, z, (a: number, b: number) => a - b)
-      console.log({ z, answer })
-    }
-  }
-
-  /**
-   * Build lookup database of NOX events from input data
-   */
-  private buildEventDatabase(data: any) {
-    this.noxLocations = {}
-    console.log(this.noxLocations)
-
-    for (const row of data) {
-      // generate a row-id if there isn't one
-      if (!row.id) row.id = row.lon.toString() + '/' + row.lat.toString()
-
-      // save the row
-      if (!this.noxLocations.hasOwnProperty(row.id)) {
-        this.noxLocations[row.id] = []
-      }
-      this.noxLocations[row.id].push(row)
-    }
-
-    // sort each location's events by timestamp
-    for (const location in this.noxLocations) {
-      if (!this.noxLocations.hasOwnProperty(location)) continue
-      this.noxLocations[location].sort((a: any, b: any) => a.time - b.time)
-    }
-    console.log({ LOCATIONS: this.noxLocations })
-  }
-
   private clickedTheme(theme: any) {
     console.log('changing theme: ' + theme)
 
@@ -253,18 +215,19 @@ export default class EmissionsGrid extends Vue {
       // this.addJsonToMap()
     }
 
-    console.log('5')
     this.chosenTheme = theme
-
     this.mymap.setPaintProperty('hex-layer', 'fill-extrusion-color', ['get', theme.colorRamp])
-    // this.mymap.setPaintProperty('my-layer', 'fill-color', ['get', theme.colorRamp])
   }
 
   private setJsonSource() {
-    this.mymap.addSource('hexagons', {
-      data: this.pollutantsHexagons[this.pollutants[0]],
-      type: 'geojson',
-    })
+    try {
+      this.mymap.addSource('hexagons', {
+        data: this.dataLookup[0].hexesByPollutant[this.pollutants[0]],
+        type: 'geojson',
+      })
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   private addJsonToMap() {
@@ -300,99 +263,123 @@ export default class EmissionsGrid extends Vue {
   }
 
   private clickedPollutant(p: string) {
-    console.log(this.pollutantsHexagons[p])
+    console.log(p)
     this.pollutant = p
-    ;(this.mymap.getSource('hexagons') as any).setData(this.pollutantsHexagons[p])
+    ;(this.mymap.getSource('hexagons') as any).setData(this.dataLookup[0].hexesByPollutant[p])
   }
 
   private async calculateMaxValues(data: any) {
-    for (const point of data.timeBins[0].value.cells) {
-      if (!point.value) continue
+    for (const bin of data.timeBins) {
+      for (const point of bin.value.cells) {
+        if (!point.value) continue
 
-      // set pollutant max-extent
-      for (const pollutant of Object.keys(point.value)) {
-        if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
-          this.pollutantsMaxValue[pollutant] = point.value[pollutant]
+        // set pollutant max-extent
+        for (const pollutant of Object.keys(point.value)) {
+          if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
+            this.pollutantsMaxValue[pollutant] = point.value[pollutant]
+          }
+          this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
         }
-        this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
+        // set map extent
+        const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
+        this.updateMapExtent([coordinates.x, coordinates.y])
       }
-
-      // set map extent
-      const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
-      this.updateMapExtent([coordinates.x, coordinates.y])
     }
 
     console.log({ MAX_VALUE: this.pollutantsMaxValue })
     this.setMapExtent()
   }
 
-  private convertJsonToGeoJson(data: any, pollutantID: string) {
-    const geojsonPoints: any = []
+  private getHexagon(point: any, hexwidth: number, hexheight: number, properties: any) {
+    // HEXagons
+    const coord = point.coordinate
+    const hexPoints = []
 
-    this.firstEventTime = 1e20
+    const halfhexheight = 0.5 * hexheight
 
-    const fullradius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
+    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
+    hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
+    hexPoints.push({ x: coord.x + hexwidth, y: coord.y - halfhexheight })
+    hexPoints.push({ x: coord.x, y: coord.y - hexheight })
+    hexPoints.push({ x: coord.x - hexwidth, y: coord.y - halfhexheight })
+    hexPoints.push({ x: coord.x - hexwidth, y: coord.y + halfhexheight })
+    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
 
-    this.maxEmissionValue = this.pollutantsMaxValue[pollutantID]
+    const z = hexPoints.map(mm => {
+      const longlat = Coords.toLngLat(this.projection, mm)
+      return [longlat.x, longlat.y]
+    })
 
-    for (const point of data.timeBins[0].value.cells) {
+    return {
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [z] },
+      properties: properties,
+    }
+  }
+
+  private buildLookupForTimeBins(data: any) {
+    const lookup: any = []
+    for (const bin of data.timeBins) {
+      const startTime = bin.startTime
+      const hexesByPollutant = this.calculateHexValuesForCells(bin.value.cells)
+
+      lookup.push({ startTime, hexesByPollutant })
+    }
+
+    console.log(lookup)
+    return lookup
+  }
+
+  private calculateHexValuesForCells(cells: any) {
+    const hexesByPollutant: any = {}
+    const fullRadius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
+
+    for (const p of this.pollutants) hexesByPollutant[p] = { type: 'FeatureCollection', features: [] }
+
+    for (const point of cells) {
       if (point.value === {}) continue
 
-      let value = point.value[pollutantID] / this.maxEmissionValue
-      if (!value) continue
-      if (value < 0.01) continue
-
-      if (value > 1) value = 1
-
-      const hexwidth = fullradius * Math.min(1.0, value * 10)
-      const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
-      const halfhexheight = 0.5 * hexheight
-
-      // Rapidly scale up opacity when rel.value is 0-20%; anything > 20% gets full opacity
-      const op = Math.min(0.95, value * 5)
-
-      const colorInferno = inferno(value)
-      const colorViridis = viridis(value)
-
-      // this.firstEventTime = Math.min(this.firstEventTime, point.time)
-
-      // HEXagons
-      const coord = point.coordinate
-      const hexPoints = []
-      hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-      hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
-      hexPoints.push({ x: coord.x + hexwidth, y: coord.y - halfhexheight })
-      hexPoints.push({ x: coord.x, y: coord.y - hexheight })
-      hexPoints.push({ x: coord.x - hexwidth, y: coord.y - halfhexheight })
-      hexPoints.push({ x: coord.x - hexwidth, y: coord.y + halfhexheight })
-      hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-
-      const z = hexPoints.map(mm => {
-        const longlat = Coords.toLngLat(this.projection, mm)
-        return [longlat.x, longlat.y]
-      })
-
-      const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
-
-      const height = 2000 * value
-
-      const featureJson: any = {
-        type: 'Feature',
-        geometry: { type: 'Polygon', coordinates: [z] },
-        properties: { id, op, value, height, colorInferno, colorViridis },
+      for (const p of this.pollutants) {
+        const pollutantHex = this.getHexagonValuesForPollutant(point, p, fullRadius)
+        if (pollutantHex) hexesByPollutant[p].features.push(pollutantHex)
       }
-
-      geojsonPoints.push(featureJson)
     }
-    console.log(geojsonPoints)
-    // this.currentTime = this.firstEventTime
 
-    return { type: 'FeatureCollection', features: geojsonPoints }
+    return hexesByPollutant
+  }
+
+  private getHexagonValuesForPollutant(point: any, p: string, fullRadius: number) {
+    let value = point.value[p] / this.pollutantsMaxValue[p]
+
+    if (!value) return null
+    if (value < 0.01) return null
+
+    if (value > 1) value = 1
+
+    const hexwidth = fullRadius * Math.min(1.0, value * 10)
+    const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
+
+    // Rapidly scale up opacity when rel.value is 0-20%; anything > 20% gets full opacity
+    const op = Math.min(0.95, value * 5)
+
+    const colorInferno = inferno(value)
+    const colorViridis = viridis(value)
+    const revInferno = inferno(1.0 - value)
+    const revViridis = viridis(1.0 - value)
+
+    const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
+    const height = 2000 * value
+
+    const properties = { id, value, height, op, colorInferno, colorViridis, revInferno, revViridis }
+    const hexagon = this.getHexagon(point, hexwidth, hexheight, properties)
+
+    return hexagon
   }
 
   private changedSlider(seconds: number) {
-    //    this.currentTime = seconds
-    //    this.updateFlowsForTimeValue(seconds)
+    console.log('SLIDER: ' + seconds)
+    this.currentTime = seconds
+    // this.updateFlowsForTimeValue(seconds)
   }
 
   private convertSecondsToClockTimeMinutes(index: number) {
@@ -419,11 +406,8 @@ export default class EmissionsGrid extends Vue {
     this.loadingText = 'Calculating ranges'
     await this.calculateMaxValues(jsonData)
 
-    for (const p of this.pollutants) {
-      console.log(p)
-      this.loadingText = 'Laying out tiles: ' + p
-      this.pollutantsHexagons[p] = await this.convertJsonToGeoJson(jsonData, p)
-    }
+    this.loadingText = 'Laying out tiles'
+    this.dataLookup = this.buildLookupForTimeBins(jsonData)
 
     console.log(this.mapExtentXYXY)
 
@@ -446,49 +430,6 @@ export default class EmissionsGrid extends Vue {
     this.setJsonSource()
     this.addJsonToMap()
     this.loadingText = ''
-  }
-
-  /*
-   * Binary search in JavaScript.
-   * Returns the index of of the element in a sorted array or (-n-1) where n is the insertion point for the new element.
-   * Parameters:
-   *     ar - A sorted array
-   *     el - An element to search for
-   *     compareFn - A comparator function. The function takes two arguments: (a, b) and returns:
-   *        a negative number  if a is less than b;
-   *        0 if a is equal to b;
-   *        a positive number of a is greater than b.
-   * The array may contain duplicate elements. If there are more than one equal elements in the array,
-   * the returned value can be the index of any one of the equal elements.
-   * More explicitly, this returns:
-   *    the index, if the key is found
-   *    -1, if the element is lower than anything found in the array
-   *    -n-1, thus use (-n + 2) to get the index of the upper-bound element
-   *
-   */
-  private binaryTimeSearch(ar: any, el: any, compareFn: any) {
-    let m = 0
-    let n = ar.length - 1
-    while (m <= n) {
-      // tslint:disable-next-line:no-bitwise
-      const k = (n + m) >> 1
-      const cmp = compareFn(el, ar[k].time)
-      if (cmp > 0) {
-        m = k + 1
-      } else if (cmp < 0) {
-        n = k - 1
-      } else {
-        return k
-      }
-    }
-    return -m - 1
-  }
-
-  // use binary search to get the latest event that has already happened
-  private getUpperBoundEventForTimepoint(ar: any, el: any, compareFn: any) {
-    const bAnswer = this.binaryTimeSearch(ar, el, compareFn)
-    if (bAnswer >= -1) return bAnswer
-    return -bAnswer - 2
   }
 }
 </script>
