@@ -113,7 +113,11 @@ export default class EmissionsGrid extends Vue {
 
   private pollutant: string = ''
   private pollutantsMaxValue: { [id: string]: number } = {}
-  private dataLookup: any = []
+  private pollutants: any = []
+  private dataLookup: any = {}
+
+  private timeBins: any = []
+  private selectedTimeBin = 0
 
   private themes: any = [
     {
@@ -150,10 +154,6 @@ export default class EmissionsGrid extends Vue {
     return this.convertSecondsToClockTime(this.currentTime)
   }
 
-  private get pollutants() {
-    return Object.keys(this.pollutantsMaxValue).sort()
-  }
-
   public created() {}
 
   public async fetchEmissionsData(): Promise<any> {
@@ -165,7 +165,6 @@ export default class EmissionsGrid extends Vue {
     if (result.ok) {
       try {
         const thing = await result.json()
-        console.log(thing)
         return thing
       } catch (e) {
         throw new Error(e)
@@ -212,7 +211,6 @@ export default class EmissionsGrid extends Vue {
     if (theme.style !== this.chosenTheme.style) {
       console.log('changing style: ' + theme.style)
       this.mymap.setStyle(theme.style)
-      // this.addJsonToMap()
     }
 
     this.chosenTheme = theme
@@ -220,9 +218,14 @@ export default class EmissionsGrid extends Vue {
   }
 
   private setJsonSource() {
+    const p = this.pollutant ? this.pollutant : this.pollutants[0]
+    const storageKey = p + ':' + this.timeBins[this.selectedTimeBin]
+
+    const jsonData = this.dataLookup[storageKey]
+
     try {
       this.mymap.addSource('hexagons', {
-        data: this.dataLookup[0].hexesByPollutant[this.pollutants[0]],
+        data: jsonData,
         type: 'geojson',
       })
     } catch (e) {
@@ -265,11 +268,18 @@ export default class EmissionsGrid extends Vue {
   private clickedPollutant(p: string) {
     console.log(p)
     this.pollutant = p
-    ;(this.mymap.getSource('hexagons') as any).setData(this.dataLookup[0].hexesByPollutant[p])
+
+    const storageKey = p + ':' + this.timeBins[this.selectedTimeBin]
+    const jsonData = this.dataLookup[storageKey]
+
+    if (jsonData) (this.mymap.getSource('hexagons') as any).setData(jsonData)
   }
 
   private async calculateMaxValues(data: any) {
     for (const bin of data.timeBins) {
+      // save the start times of all time bins
+      this.timeBins.push(bin.startTime)
+
       for (const point of bin.value.cells) {
         if (!point.value) continue
 
@@ -280,11 +290,14 @@ export default class EmissionsGrid extends Vue {
           }
           this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
         }
+
         // set map extent
         const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
         this.updateMapExtent([coordinates.x, coordinates.y])
       }
     }
+
+    this.pollutants = Object.keys(this.pollutantsMaxValue).sort()
 
     console.log({ MAX_VALUE: this.pollutantsMaxValue })
     this.setMapExtent()
@@ -318,16 +331,18 @@ export default class EmissionsGrid extends Vue {
   }
 
   private buildLookupForTimeBins(data: any) {
-    const lookup: any = []
     for (const bin of data.timeBins) {
       const startTime = bin.startTime
       const hexesByPollutant = this.calculateHexValuesForCells(bin.value.cells)
 
-      lookup.push({ startTime, hexesByPollutant })
-    }
+      for (const p of Object.keys(hexesByPollutant)) {
+        const key = p + ':' + startTime
+        console.log(key)
+        const output = hexesByPollutant[p]
 
-    console.log(lookup)
-    return lookup
+        this.dataLookup[key] = output
+      }
+    }
   }
 
   private calculateHexValuesForCells(cells: any) {
@@ -344,7 +359,6 @@ export default class EmissionsGrid extends Vue {
         if (pollutantHex) hexesByPollutant[p].features.push(pollutantHex)
       }
     }
-
     return hexesByPollutant
   }
 
@@ -377,9 +391,19 @@ export default class EmissionsGrid extends Vue {
   }
 
   private changedSlider(seconds: number) {
-    console.log('SLIDER: ' + seconds)
     this.currentTime = seconds
-    // this.updateFlowsForTimeValue(seconds)
+
+    let bin = -1
+    for (const startTime of this.timeBins) {
+      if (startTime > seconds) break
+      bin++
+    }
+
+    this.selectedTimeBin = bin
+    const storageKey = this.pollutant + ':' + this.timeBins[bin]
+
+    const jsonData = this.dataLookup[storageKey]
+    if (jsonData) (this.mymap.getSource('hexagons') as any).setData(jsonData)
   }
 
   private convertSecondsToClockTimeMinutes(index: number) {
@@ -400,14 +424,17 @@ export default class EmissionsGrid extends Vue {
   }
 
   private async loadData() {
+    console.log('Fetching')
     this.loadingText = 'Fetching data'
     const jsonData = await this.fetchEmissionsData()
 
+    console.log('Ranges')
     this.loadingText = 'Calculating ranges'
     await this.calculateMaxValues(jsonData)
 
+    console.log('Time bins')
     this.loadingText = 'Laying out tiles'
-    this.dataLookup = this.buildLookupForTimeBins(jsonData)
+    this.buildLookupForTimeBins(jsonData)
 
     console.log(this.mapExtentXYXY)
 
@@ -482,12 +509,13 @@ export default class EmissionsGrid extends Vue {
 .slider-box {
   grid-row: 2 / 3;
   grid-column: 1 / 4;
-  background-color: #99a;
+  background-color: white;
   z-index: 2;
   border: solid 1px;
-  border-color: #222;
+  border-color: #ccc;
   border-radius: 4px;
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
+  margin-top: 0.5rem;
 }
 
 h2,

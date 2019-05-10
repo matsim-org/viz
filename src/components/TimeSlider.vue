@@ -2,19 +2,21 @@
 .time-slider-main-content
   vue-slider.time-slider(v-bind="timeSlider" v-model="sliderValue")
   .clock-labels
-    .hour &nbsp;0:00
-    .hour 3:00
-    .hour 6:00
-    .hour 9:00
-    .hour 12:00
-    .hour 15:00
-    .hour 18:00
-    .hour 21:00
+    .hour 00
+    .hour 03
+    .hour 06
+    .hour 09
+    .hour 12
+    .hour 15
+    .hour 18
+    .hour 21
+    .hour 24
 </template>
 
 <script lang="ts">
 import * as timeConvert from 'convert-seconds'
 import vueSlider from 'vue-slider-component'
+import 'vue-slider-component/theme/default.css'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 @Component({ components: { 'vue-slider': vueSlider }, props: { initialTime: Number } })
@@ -22,29 +24,20 @@ export default class TimeSlider extends Vue {
   private sliderValue: number = 0
   private timeSlider = {
     disabled: false,
-    dotSize: 24,
     height: 8,
     min: 0,
     max: 86399,
     piecewise: false,
     show: true,
-    tooltip: 'always',
-    tooltipDir: 'center',
-    width: '100%',
+    contained: true,
     sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
-    tooltipStyle: [
-      { backgroundColor: '#f05b72', borderColor: '#f05b72' },
-      { backgroundColor: '#3498db', borderColor: '#3498db' },
-    ],
-    bgStyle: {
-      backgroundImage: '-webkit-linear-gradient(left, #eee, #eee)',
-      boxShadow: '1px 1px 2px 1px rgba(0,0,0,.36)',
-    },
     processStyle: {
       backgroundColor: '#00bb5588',
       borderColor: '#f05b72',
     },
-    formatter: (index: number) => {
+    tooltip: 'always',
+    'tooltip-placement': 'top',
+    'tooltip-formatter': (index: number) => {
       return this.convertSecondsToClockTimeMinutes(index)
     },
   }
@@ -92,18 +85,19 @@ export default class TimeSlider extends Vue {
   grid-template-rows: auto auto;
   grid-template-columns: auto;
   width: 100%;
-  padding: 0px 28px 2px 4px;
+  padding: 6px 4px 8px 4px;
 }
 
 .time-slider {
   grid-row: 1 / 2;
   grid-column: 1 / 2;
+  margin: 0px 4px;
 }
 
 .clock-labels {
   grid-row: 2 / 3;
   grid-column: 1 / 2;
-  color: white;
+  color: black;
   display: grid;
   grid-template-rows: auto;
   grid-template-columns: repeat(auto-fit, 1fr);
