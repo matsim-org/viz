@@ -150,7 +150,7 @@ export default class AppRouter {
           },
         },
         {
-          path: '/traffic-animation/:projectId/:vizId',
+          path: '/events-animation/:projectId/:vizId',
           component: EventsAnimation,
           name: 'EventsAnimation',
           props: route => {

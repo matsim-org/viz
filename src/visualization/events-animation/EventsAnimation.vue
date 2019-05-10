@@ -50,6 +50,18 @@
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Spinner from '@/components/Spinner.vue'
+import EventsAnimationAPI from '@/visualization/events-animation/EventsAnimationAPI'
+import SharedStore from '@/SharedStore'
+import Container from '@/visualization/events-animation/Container'
+
+// register events animation with shared store
+SharedStore.addVisualizationType({
+  typeName: 'events-animation',
+  prettyName: 'Traffic Animation 2',
+  description: 'Depict vehicles traveling in real time on the network.',
+  requiredFileKeys: ['events', 'network'],
+  requiredParamKeys: [],
+})
 
 @Component({
   components: { spinner: Spinner },
@@ -71,6 +83,8 @@ export default class EventsAnimation extends Vue {
   private progress = 'Done'
   private connected = false
 
+  private animation!: Container
+
   private get currentTime() {
     return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
   }
@@ -85,6 +99,21 @@ export default class EventsAnimation extends Vue {
 
   private get isFailed() {
     return this.progress === 'Failed'
+  }
+
+  private async created() {
+    const api = new EventsAnimationAPI(new URL('https:localhost:3060'), this.vizId, this.authStore.state.accessToken)
+    const config = await api.fetchConfiguration()
+  }
+
+  private async mounted() {
+    const canvas = this.$refs.canvas as HTMLCanvasElement
+    this.animation = new Container({
+      vizId: this.vizId,
+      endpoint: new URL('https://localhost:3060'),
+      canvas: canvas,
+      accessToken: this.authStore.state.accessToken,
+    })
   }
 
   private changeSpeedFactor(add: number) {
