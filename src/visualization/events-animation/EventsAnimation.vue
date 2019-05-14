@@ -81,7 +81,7 @@ export default class EventsAnimation extends Vue {
   private timestepSize = 1
   private playbackSpeedFactor = 0
   private progress = 'Done'
-  private connected = false
+  private connected = true
 
   private animation!: Container
 
@@ -101,11 +101,6 @@ export default class EventsAnimation extends Vue {
     return this.progress === 'Failed'
   }
 
-  private async created() {
-    const api = new EventsAnimationAPI(new URL('https:localhost:3060'), this.vizId, this.authStore.state.accessToken)
-    const config = await api.fetchConfiguration()
-  }
-
   private async mounted() {
     const canvas = this.$refs.canvas as HTMLCanvasElement
     this.animation = new Container({
@@ -121,7 +116,7 @@ export default class EventsAnimation extends Vue {
   }
 
   private togglePlayPause() {
-    console.log('toggle play pause is not yet implemented')
+    this.animation.testAgents()
   }
 
   private onRangeChanged(event: Event) {

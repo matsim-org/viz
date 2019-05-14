@@ -2,7 +2,7 @@ import Rectangle from './Rectangle'
 
 export default class MapState {
   private bounds: Rectangle
-  private viewPort: Rectangle
+  private viewport: Rectangle
   private scale = 1
 
   public get Bounds() {
@@ -11,7 +11,7 @@ export default class MapState {
 
   constructor(bounds: Rectangle) {
     this.bounds = bounds
-    this.viewPort = bounds
+    this.viewport = bounds
   }
 
   private static ZOOM_FACTOR() {
@@ -25,6 +25,35 @@ export default class MapState {
       toWidth * this.scale,
       toHeight * this.scale
     )
+  }
+
+  public resizeMapToRect(rectangle: Rectangle) {
+    const aspect = this.viewport.Width / this.viewport.Height
+    let newBounds
+
+    if (rectangle.Width > rectangle.Height) {
+      newBounds = Rectangle.createFromCenterWithDimensions(
+        rectangle.CenterX,
+        rectangle.CenterY,
+        rectangle.Width,
+        rectangle.Width / aspect
+      )
+    } else {
+      newBounds = Rectangle.createFromCenterWithDimensions(
+        rectangle.CenterX,
+        rectangle.CenterY,
+        rectangle.Height * aspect,
+        rectangle.Height
+      )
+    }
+    const newScale = newBounds.Width / this.viewport.Width
+    this.scale = isFinite(newScale) ? newScale : 1
+    this.bounds = newBounds
+  }
+
+  public resizeViewPort(toWidth: number, toHeight: number) {
+    this.viewport = new Rectangle(0, toWidth, toHeight, 0)
+    this.resizeMap(toWidth, toHeight)
   }
 
   public zoomOutReCenter(offsetX: number, offsetY: number) {

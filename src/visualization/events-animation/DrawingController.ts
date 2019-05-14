@@ -4,7 +4,8 @@ import MapInteractionController from './MapInteractionController'
 import MapState from './MapState'
 import Rectangle from './Rectangle'
 import BufferHolder from './BufferHolder'
-import { canvasToBlob } from 'blob-util'
+import { ServerConfiguration } from '@/visualization/events-animation/EventsAnimationAPI'
+import LinkTripsStore from './LinkTripsStore'
 
 export default class DrawingController {
   private renderer: WebGLRenderer
@@ -22,16 +23,63 @@ export default class DrawingController {
   )
   private mapInteractionController: MapInteractionController
   private networkStore: NetworkStore
+  private linkTripsStore: LinkTripsStore
+  private resizeHandler: (e: UIEvent) => void
+  private runAnimation = false
+  private time = 0
 
-  constructor(networkStore: NetworkStore, canvas: HTMLCanvasElement) {
+  constructor(
+    networkStore: NetworkStore,
+    linkTripsStore: LinkTripsStore,
+    canvas: HTMLCanvasElement,
+    config: ServerConfiguration
+  ) {
     this.networkStore = networkStore
+    this.linkTripsStore = linkTripsStore
     this.canvas = canvas
     this.renderer = new WebGLRenderer({ canvas: canvas, antialias: true })
     this.mapInteractionController = new MapInteractionController(this.mapState, canvas)
+
+    this.time = config.firstTimestep
+
+    this.resize()
+    this.resizeHandler = e => this.resize()
+    window.addEventListener('resize', this.resizeHandler)
+    this.mapState.resizeMapToRect(new Rectangle(config.left, config.right, config.top, config.bottom))
+    this.adjustCamera(this.mapState.Bounds)
+    this.initialize()
   }
 
-  public async initialize() {
+  public destroy() {
+    window.removeEventListener('resize', this.resizeHandler)
+  }
+
+  public startAnimation() {
+    if (!this.runAnimation) {
+      this.runAnimation = true
+      this.render()
+    }
+  }
+
+  public stopAnimation() {
+    this.runAnimation = false
+  }
+
+  public loadAgents() {
+    const trips = this.linkTripsStore.LinkTrips
+    if (trips) {
+      this.bufferHolder.updateAgentBufferAttribute('position', trips.fromPosition)
+      this.bufferHolder.updateAgentBufferAttribute('toPosition', trips.toPosition)
+      this.bufferHolder.updateAgentBufferAttribute('fromTime', trips.fromTime)
+      this.bufferHolder.updateAgentBufferAttribute('toTime', trips.toTime)
+      this.runAnimation = true
+      this.render()
+    }
+  }
+
+  private async initialize() {
     const networkData = await this.networkStore.getNetwork()
+    console.log('fetched network data')
     this.bufferHolder.clearNetworkBuffer()
     this.bufferHolder.loadNetworkBuffer(networkData)
     this.renderOnce()
@@ -41,7 +89,8 @@ export default class DrawingController {
     this.canvas.width = this.canvas.clientWidth
     this.canvas.height = this.canvas.clientHeight
 
-    this.mapState.resizeMap(this.canvas.width, this.canvas.height)
+    this.mapState.resizeViewPort(this.canvas.width, this.canvas.height)
+    this.adjustCamera(this.mapState.Bounds)
     this.renderer.setViewport(0, 0, this.canvas.width, this.canvas.height)
     this.renderOnce()
   }
@@ -54,7 +103,19 @@ export default class DrawingController {
     this.camera.updateProjectionMatrix()
   }
 
+  private render() {
+    if (this.runAnimation) {
+      requestAnimationFrame(() => this.render())
+      this.renderOnce()
+    }
+  }
+
   private renderOnce() {
+    if (this.time % 100 === 0) {
+      console.log(this.time)
+    }
+    this.bufferHolder.updateAgentBufferUniform('time', this.time)
     this.renderer.render(this.bufferHolder.Scene, this.camera)
+    this.time++
   }
 }

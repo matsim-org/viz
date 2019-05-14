@@ -15,6 +15,15 @@ export interface ServerConfiguration {
   progress: Progress
 }
 
+export interface LinkTrip {
+  enterTime: number
+  leaveTime: number
+  fromX: number
+  fromY: number
+  toX: number
+  toY: number
+}
+
 export default class EventsAnimationAPI {
   private endpoint: URL
   private accessToken: string
@@ -30,6 +39,10 @@ export default class EventsAnimationAPI {
 
   public async fetchNetwork(): Promise<ArrayBuffer> {
     return this.fetchArrayBuffer(this.endpoint + '/network')
+  }
+
+  public async fetchLinkTrips(fromTime: number, toTime: number): Promise<LinkTrip[]> {
+    return this.fetchJson(this.endpoint + '/linkTrips?from=' + fromTime + '&to=' + toTime)
   }
 
   private async fetchArrayBuffer(endpoint: string): Promise<ArrayBuffer> {
