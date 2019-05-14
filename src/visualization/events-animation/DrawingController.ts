@@ -111,9 +111,12 @@ export default class DrawingController {
   }
 
   private renderOnce() {
-    if (this.time % 100 === 0) {
+    if (this.linkTripsStore.LinkTrips && this.time > this.linkTripsStore.LinkTrips.latestTime) {
+      this.time = this.linkTripsStore.LinkTrips.earliestTime
+    } else if (this.time % 100 === 0) {
       console.log(this.time)
     }
+    this.time += 10
     this.bufferHolder.updateAgentBufferUniform('time', this.time)
     this.renderer.render(this.bufferHolder.Scene, this.camera)
     this.time++

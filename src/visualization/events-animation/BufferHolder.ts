@@ -4,12 +4,10 @@ import {
   BufferAttribute,
   BufferGeometry,
   LineSegments,
-  Mesh,
   Object3D,
   Color,
   ShaderMaterial,
   Points,
-  Geometry,
 } from 'three'
 import { linkTripVertexShader, linkTripFragmentShader } from '@/visualization/events-animation/Shader'
 
@@ -47,9 +45,8 @@ export default class BufferHolder {
       vertexShader: linkTripVertexShader,
       fragmentShader: linkTripFragmentShader,
       uniforms: {
-        time: { value: 0.0 },
         color: { value: new Color(0x3498db) },
-        size: { value: 20.0 },
+        time: { value: 0.0 },
       },
     })
     const points = new Points(this.createAgentBufferGeometry(), shaderMaterial)
@@ -68,7 +65,7 @@ export default class BufferHolder {
 
   public updateAgentBufferUniform(name: string, value: any) {
     const layer = this.scene.getObjectByName(BufferHolder.AGENT_LAYER()) as Points
-    ;(layer.material as ShaderMaterial).uniforms[name] = value
+    ;(layer.material as ShaderMaterial).uniforms[name].value = value
   }
 
   public clearNetworkBuffer() {

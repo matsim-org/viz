@@ -5,6 +5,8 @@ export interface LinkTripAsFloat32 {
   toPosition: Float32Array
   fromTime: Float32Array
   toTime: Float32Array
+  earliestTime: number
+  latestTime: number
 }
 export default class LinkTripReader {
   private data: LinkTrip[]
@@ -19,6 +21,8 @@ export default class LinkTripReader {
       toPosition: new Float32Array(this.data.length * 3),
       fromTime: new Float32Array(this.data.length),
       toTime: new Float32Array(this.data.length),
+      earliestTime: Number.MAX_VALUE,
+      latestTime: Number.MIN_VALUE,
     }
 
     for (let i = 0; i < this.data.length; i++) {
@@ -33,6 +37,13 @@ export default class LinkTripReader {
 
       result.fromTime[i] = linkTrip.enterTime
       result.toTime[i] = linkTrip.leaveTime
+
+      if (linkTrip.enterTime < result.earliestTime) {
+        result.earliestTime = linkTrip.enterTime
+      }
+      if (linkTrip.leaveTime > result.latestTime) {
+        result.latestTime = linkTrip.leaveTime
+      }
     }
     return result
   }
