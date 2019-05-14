@@ -61,23 +61,13 @@ export default class DrawingController {
     if (!this.runAnimation) {
       this.runAnimation = true
       this.render()
+      console.log('start animation')
     }
   }
 
   public stopAnimation() {
     this.runAnimation = false
-  }
-
-  public loadAgents() {
-    const trips = this.linkTripsStore.LinkTrips
-    if (trips) {
-      this.bufferHolder.updateAgentBufferAttribute('position', trips.fromPosition)
-      this.bufferHolder.updateAgentBufferAttribute('toPosition', trips.toPosition)
-      this.bufferHolder.updateAgentBufferAttribute('fromTime', trips.fromTime)
-      this.bufferHolder.updateAgentBufferAttribute('toTime', trips.toTime)
-      this.runAnimation = true
-      this.render()
-    }
+    console.log('stop animation')
   }
 
   private async initialize() {
@@ -110,19 +100,30 @@ export default class DrawingController {
   private render() {
     if (this.runAnimation) {
       requestAnimationFrame(() => this.render())
+      this.updateLinkTripData()
+      if (this.time % 1000 === 0) {
+        console.log(this.time)
+      }
+      this.time += 10
+
+      this.bufferHolder.updateAgentBufferUniform('time', this.time)
       this.renderOnce()
     }
   }
 
   private renderOnce() {
-    if (this.linkTripsStore.LinkTrips && this.time > this.linkTripsStore.LinkTrips.latestTime) {
-      this.time = this.linkTripsStore.LinkTrips.earliestTime
-    } else if (this.time % 100 === 0) {
-      console.log(this.time)
-    }
-    this.time += 1
-    this.bufferHolder.updateAgentBufferUniform('time', this.time)
+    // check whether we need to update the data on the graphics card
+    // if (this.linkTripsStore.getNextBlockBoundary(this.time) === this.time) {
+    // console.log('updating link data for time: ' + this.time)
+
     this.renderer.render(this.bufferHolder.Scene, this.camera)
-    this.time++
+  }
+
+  private updateLinkTripData() {
+    const trips = this.linkTripsStore.getLinkTrip(this.time)
+    this.bufferHolder.updateAgentBufferAttribute('position', trips.fromPosition)
+    this.bufferHolder.updateAgentBufferAttribute('toPosition', trips.toPosition)
+    this.bufferHolder.updateAgentBufferAttribute('fromTime', trips.fromTime)
+    this.bufferHolder.updateAgentBufferAttribute('toTime', trips.toTime)
   }
 }

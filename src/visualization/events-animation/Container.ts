@@ -14,6 +14,10 @@ export default class Container {
   private drawingController!: DrawingController
   private isrunning = false
 
+  public get IsRunning() {
+    return this.isrunning
+  }
+
   constructor(init: ContainerInit) {
     this.initialize(init)
   }
@@ -22,7 +26,6 @@ export default class Container {
     if (this.isrunning) {
       this.drawingController.stopAnimation()
     } else {
-      this.drawingController.loadAgents()
       this.drawingController.startAnimation()
     }
     this.isrunning = !this.isrunning

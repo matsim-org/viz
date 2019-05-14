@@ -23,7 +23,7 @@
       .actions
 
         button.button.playPause(v-on:click="togglePlayPause()")
-          template(v-if="isPlaying")
+          template(v-if="IsRunning")
             span.icon.is-small
               i.fas.fa-pause
           template(v-else)
@@ -84,6 +84,10 @@ export default class EventsAnimation extends Vue {
   private connected = true
 
   private animation!: Container
+
+  private get IsRunning() {
+    return this.animation ? this.animation.IsRunning : false
+  }
 
   private get currentTime() {
     return new Date(this.currentTimestep * 1000).toISOString().substr(11, 8)
