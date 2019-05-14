@@ -1,5 +1,5 @@
 import MapState from './MapState'
-import { SimpleEventEmmiter } from '@/project/Event'
+import SimpleEvent, { SimpleEventEmmiter } from '@/project/Event'
 
 export default class MapInteractionController {
   private mapState: MapState
@@ -13,7 +13,7 @@ export default class MapInteractionController {
 
   private changedEvent = new SimpleEventEmmiter<MapState>()
 
-  public get ChangedEvent() {
+  public get ChangedEvent(): SimpleEvent<MapState> {
     return this.changedEvent
   }
 
@@ -52,7 +52,7 @@ export default class MapInteractionController {
 
   private onPointerMove(event: PointerEvent) {
     if (this.isPointerDown) {
-      this.mapState.moveMap(event.movementX, event.movementY)
+      this.mapState.moveMap(event.movementX, -event.movementY)
       this.changedEvent.emmit(this.mapState)
     }
   }

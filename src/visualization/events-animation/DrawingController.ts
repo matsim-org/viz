@@ -25,6 +25,7 @@ export default class DrawingController {
   private networkStore: NetworkStore
   private linkTripsStore: LinkTripsStore
   private resizeHandler: (e: UIEvent) => void
+  private mapInteractionHandler: (e: MapState) => void
   private runAnimation = false
   private time = 0
 
@@ -39,7 +40,8 @@ export default class DrawingController {
     this.canvas = canvas
     this.renderer = new WebGLRenderer({ canvas: canvas, antialias: true })
     this.mapInteractionController = new MapInteractionController(this.mapState, canvas)
-
+    this.mapInteractionHandler = mapState => this.adjustCamera(mapState.Bounds)
+    this.mapInteractionController.ChangedEvent.addEventHandler(this.mapInteractionHandler)
     this.time = config.firstTimestep
 
     this.resize()
@@ -52,6 +54,7 @@ export default class DrawingController {
 
   public destroy() {
     window.removeEventListener('resize', this.resizeHandler)
+    this.mapInteractionController.ChangedEvent.removeEventHandler(this.mapInteractionHandler)
   }
 
   public startAnimation() {
@@ -101,6 +104,7 @@ export default class DrawingController {
     this.camera.top = bounds.Top
     this.camera.bottom = bounds.Bottom
     this.camera.updateProjectionMatrix()
+    this.renderOnce()
   }
 
   private render() {
@@ -116,7 +120,7 @@ export default class DrawingController {
     } else if (this.time % 100 === 0) {
       console.log(this.time)
     }
-    this.time += 10
+    this.time += 1
     this.bufferHolder.updateAgentBufferUniform('time', this.time)
     this.renderer.render(this.bufferHolder.Scene, this.camera)
     this.time++
