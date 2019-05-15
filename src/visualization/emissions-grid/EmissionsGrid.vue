@@ -248,7 +248,7 @@ export default class EmissionsGrid extends Vue {
     }
 
     this.chosenTheme = theme
-    this.mymap.setPaintProperty('hex-layer', 'fill-extrusion-color', ['get', theme.colorRamp])
+    this.mymap.setPaintProperty('hex-layer', 'fill-color', ['get', theme.colorRamp]) //fill-extrusion-color
   }
 
   private setJsonSource() {
@@ -271,11 +271,11 @@ export default class EmissionsGrid extends Vue {
       {
         id: 'hex-layer',
         source: 'hexagons',
-        type: 'fill-extrusion',
+        type: 'fill',
         paint: {
-          'fill-extrusion-color': ['get', this.chosenTheme.colorRamp],
-          'fill-extrusion-opacity': 0.95, // ['get', 'op'],
-          'fill-extrusion-height': ['get', 'height'],
+          'fill-color': ['get', this.chosenTheme.colorRamp],
+          'fill-opacity': ['get', 'op'],
+          // 'fill-height': ['get', 'height'],
         },
       }
       // 'road-street'
