@@ -156,8 +156,42 @@ export default class EmissionsGrid extends Vue {
 
   public created() {}
 
+  public async fetchEmissionsBins(): Promise<any> {
+    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/bins`, {
+      mode: 'cors',
+      headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
+    })
+
+    if (result.ok) {
+      try {
+        const json = await result.json()
+        return json
+      } catch (e) {
+        throw new Error(e)
+      }
+    } else if (result.status === 401) {
+      throw new Error('Unauthorized: ' + (await result.text()))
+    } else {
+      throw new Error(await result.text())
+    }
+  }
+
   public async fetchEmissionsData(): Promise<any> {
-    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/data`, {
+    const bins = await this.fetchEmissionsBins()
+    const sortedBins = bins.bins.sort((a: number, b: number) => a - b)
+
+    const allResults: any = { timeBins: [] }
+
+    for (const startTime of sortedBins) {
+      const result = await this.fetchEmissionsDataForStartTime(startTime)
+      const bin = { startTime, value: result }
+      allResults.timeBins.push(bin)
+    }
+    return allResults
+  }
+
+  public async fetchEmissionsDataForStartTime(startTime: number): Promise<any> {
+    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/data?startTime=${startTime}`, {
       mode: 'cors',
       headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
     })
@@ -222,7 +256,6 @@ export default class EmissionsGrid extends Vue {
     const storageKey = p + ':' + this.timeBins[this.selectedTimeBin]
 
     const jsonData = this.dataLookup[storageKey]
-
     try {
       this.mymap.addSource('hexagons', {
         data: jsonData,
