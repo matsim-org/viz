@@ -27,6 +27,15 @@ interface BreadCrumb {
   link: string
 }
 
+// Register a global custom directive called `v-focus`
+Vue.directive('focus', {
+  // When the bound element is inserted into the DOM...
+  inserted: function(el) {
+    // Focus the element
+    el.focus()
+  },
+})
+
 @Component({ components: { 'system-left-bar': SystemLeftBar } })
 export default class App extends Vue {
   private breadcrumbs: BreadCrumb[] = []

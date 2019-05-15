@@ -4,7 +4,10 @@
     div(slot="content")
       .cuteBlueHeading: h1 Enter project name
       p (e.g., city, sponsor, etc.)
-      input.input.is-medium(v-model="projectName" placeholder="Project Name")
+      input.input.is-medium(v-model="projectName" placeholder="Project Name"
+                            v-focus
+                            @keyup.enter="handleCreateClicked()"
+                            @keyup.esc="cancel()")
       error(v-if="isError" v-bind:message="errorMessage")
     div(slot="actions")
       button.button.negative(v-on:click="cancel()") Cancel
@@ -45,7 +48,8 @@ export default class CreateProjectViewModel extends vueInstance {
   private async handleCreateClicked() {
     try {
       const newProject = await this.projectStore.createProject(this.projectName)
-      this.$router.push({ path: `/project/${newProject.id}` })
+      this.close()
+      // this.$router.push({ path: `/project/${newProject.id}` })
     } catch (error) {
       this.errorMessage = 'Uh oh, Could not create project.'
     }
