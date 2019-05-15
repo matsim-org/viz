@@ -11,13 +11,14 @@ export default class MyWorker extends AsyncWorkerConnector {
 
   public static async create(params: InitParams) {
     console.log('<< WORKER __ Create called!')
-    const fetcher = new MyWorker()
-    await fetcher.initialize(params)
-    return fetcher
+    const worker = new MyWorker()
+    await worker.initialize(params)
+    return worker
   }
 
-  public async fetchXML() {
-    return this.postAsyncWorkerMessage(MethodNames.FetchXML, {}) // no data, everything is in init
+  public async fetchEmissionsData() {
+    // no data, everything is in init
+    return this.postAsyncWorkerMessage(MethodNames.FetchEmissionsData, {})
   }
 
   private async initialize(params: InitParams) {

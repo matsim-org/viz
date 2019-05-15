@@ -1,7 +1,8 @@
 export interface InitParams {
   accessToken: string
-  fileId: string
   projectId: string
+  bins: any[]
+  url: string
 }
 
 /*
@@ -11,5 +12,5 @@ export interface PlanRequestParams {
 */
 
 export enum MethodNames {
-  FetchXML = 'FetchXML',
+  FetchEmissionsData = 'FetchEmissionsData',
 }

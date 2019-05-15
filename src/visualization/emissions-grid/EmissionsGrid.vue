@@ -48,6 +48,7 @@ import sharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
+import MyWorker from './MyWorker'
 
 sharedStore.addVisualizationType({
   typeName: 'emissions',
@@ -119,6 +120,8 @@ export default class EmissionsGrid extends Vue {
   private timeBins: any = []
   private selectedTimeBin = 0
 
+  private _myWorker: any
+
   private themes: any = [
     {
       name: 'Inferno',
@@ -177,37 +180,22 @@ export default class EmissionsGrid extends Vue {
   }
 
   public async fetchEmissionsData(): Promise<any> {
+    console.log('1')
     const bins = await this.fetchEmissionsBins()
     const sortedBins = bins.bins.sort((a: number, b: number) => a - b)
+    console.log('2')
 
-    const allResults: any = { timeBins: [] }
-
-    for (const startTime of sortedBins) {
-      const result = await this.fetchEmissionsDataForStartTime(startTime)
-      const bin = { startTime, value: result }
-      allResults.timeBins.push(bin)
-    }
-    return allResults
-  }
-
-  public async fetchEmissionsDataForStartTime(startTime: number): Promise<any> {
-    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/data?startTime=${startTime}`, {
-      mode: 'cors',
-      headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
+    // spawn transit helper web worker
+    this._myWorker = await MyWorker.create({
+      accessToken: this.authStore.state.accessToken,
+      projectId: this.projectId,
+      bins: sortedBins,
+      url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
     })
 
-    if (result.ok) {
-      try {
-        const thing = await result.json()
-        return thing
-      } catch (e) {
-        throw new Error(e)
-      }
-    } else if (result.status === 401) {
-      throw new Error('Unauthorized: ' + (await result.text()))
-    } else {
-      throw new Error(await result.text())
-    }
+    this.loadingText = 'Loading thingies...'
+    const data = await this._myWorker.fetchEmissionsData()
+    return data
   }
 
   // VUE LIFECYCLE: mounted

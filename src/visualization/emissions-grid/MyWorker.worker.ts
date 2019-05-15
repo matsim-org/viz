@@ -4,10 +4,6 @@ import AsyncBackgroundWorker, {
 } from '@/visualization/frame-animation/modell/background/AsyncBackgroundWorker'
 
 import { InitParams, MethodNames } from './MyWorkerContract'
-
-import * as BlobUtil from 'blob-util'
-import pako from 'pako'
-import xml2js from 'xml2js'
 import globalConfig from '@/config/Config'
 
 class MyWorker extends AsyncBackgroundWorker {
@@ -19,78 +15,48 @@ class MyWorker extends AsyncBackgroundWorker {
 
   public async handleMethodCall(call: MethodCall): Promise<MethodResult> {
     switch (call.method) {
-      case MethodNames.FetchXML:
-        return this.fetchXml()
+      case MethodNames.FetchEmissionsData:
+        return this.fetchEmissionsData()
       default:
         throw new Error('No method with name ' + call.method)
     }
   }
 
-  private async fetchWithAuth() {
-    const url = `${globalConfig.fileServer}/projects/${this.params.projectId}/files/${this.params.fileId}`
-    const headers = new Headers()
-    headers.append('Authorization', 'Bearer ' + this.params.accessToken)
-
-    const response = await fetch(url, { mode: 'cors', credentials: 'include', headers: headers })
-
-    return await response.blob()
-  }
-
-  private async fetchXml() {
+  private async fetchEmissionsData() {
     console.log({ WORKER_STARTING_UP: this.params })
 
-    const blob = await this.fetchWithAuth()
-    const data = await this.getDataFromBlob(blob)
-    const xml = await this.parseXML(data)
+    const allResults: any = { timeBins: [] }
 
-    console.log({ WORKER_DONE: xml })
-    return { data: xml }
+    for (const startTime of this.params.bins) {
+      const result = await this.fetchEmissionsDataForStartTime(startTime)
+      const bin = { startTime, value: result }
+      allResults.timeBins.push(bin)
+    }
+    console.log({ WORKER_DONE: allResults })
+
+    return { data: allResults }
   }
 
-  private async getDataFromBlob(blob: Blob) {
-    // TEMP HACK. Need user agent to determine whether GZIP is regular (Chrome)
-    // or double (firefox).  Can add others later.
-    console.log(navigator.userAgent)
+  private async fetchEmissionsDataForStartTime(startTime: number): Promise<any> {
+    console.log('fetching startTime ' + startTime)
 
-    let isFirefox = true
-    // are we on windows
-    if (navigator.appVersion.indexOf('Win') > -1) {
-      isFirefox = navigator.userAgent.indexOf('like Gecko') === -1
-    }
-
-    console.log('IS FIREFOX on WINDOWS: ' + isFirefox)
-
-    const data: any = await BlobUtil.blobToArrayBuffer(blob)
-
-    try {
-      // try single-gzipped
-      const gunzip1 = pako.inflate(data, { to: 'string' })
-      if (gunzip1.startsWith('<?xml')) return gunzip1
-
-      // try double-gzipped
-      const dgunzip1 = pako.inflate(data)
-      const gunzip2 = pako.inflate(dgunzip1, { to: 'string' })
-      if (gunzip2.startsWith('<?xml')) return gunzip2
-    } catch (e) {
-      // it's ok if it failed because it might be text vvvv
-    }
-
-    // try text
-    const text: string = await BlobUtil.blobToBinaryString(blob)
-    return text
-  }
-
-  private parseXML(xml: string): Promise<string> {
-    const parser = new xml2js.Parser({ preserveChildrenOrder: true, strict: true })
-    return new Promise((resolve, reject) => {
-      parser.parseString(xml, function(err: Error, result: string) {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(result)
-        }
-      })
+    const result = await fetch(this.params.url + startTime, {
+      mode: 'cors',
+      headers: { Authorization: 'Bearer ' + this.params.accessToken },
     })
+
+    if (result.ok) {
+      try {
+        const thing = await result.json()
+        return thing
+      } catch (e) {
+        throw new Error(e)
+      }
+    } else if (result.status === 401) {
+      throw new Error('Unauthorized: ' + (await result.text()))
+    } else {
+      throw new Error(await result.text())
+    }
   }
 }
 
