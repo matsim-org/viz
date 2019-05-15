@@ -16,7 +16,6 @@
 <script lang="ts">
 import * as timeConvert from 'convert-seconds'
 import vueSlider from 'vue-slider-component'
-import 'vue-slider-component/theme/default.css'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 @Component({ components: { 'vue-slider': vueSlider }, props: { initialTime: Number } })
@@ -80,6 +79,8 @@ export default class TimeSlider extends Vue {
 </script>
 
 <style scoped>
+@import '../../node_modules/vue-slider-component/theme/default.css';
+
 .time-slider-main-content {
   display: grid;
   grid-template-rows: auto auto;

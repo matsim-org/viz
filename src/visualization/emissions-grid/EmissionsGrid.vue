@@ -248,7 +248,7 @@ export default class EmissionsGrid extends Vue {
     }
 
     this.chosenTheme = theme
-    this.mymap.setPaintProperty('hex-layer', 'fill-color', ['get', theme.colorRamp]) //fill-extrusion-color
+    this.mymap.setPaintProperty('hex-layer', 'fill-color', ['get', theme.colorRamp]) // fill-extrusion-color
   }
 
   private setJsonSource() {
@@ -275,10 +275,9 @@ export default class EmissionsGrid extends Vue {
         paint: {
           'fill-color': ['get', this.chosenTheme.colorRamp],
           'fill-opacity': ['get', 'op'],
-          // 'fill-height': ['get', 'height'],
         },
-      }
-      // 'road-street'
+      },
+      'road-street'
       // 'water', 'tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
     ) // layer gets added just *under* this MapBox-defined layer.
   }
