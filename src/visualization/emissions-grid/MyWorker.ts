@@ -16,9 +16,9 @@ export default class MyWorker extends AsyncWorkerConnector {
     return worker
   }
 
-  public async fetchEmissionsData() {
+  public async loadData() {
     // no data, everything is in init
-    return this.postAsyncWorkerMessage(MethodNames.FetchEmissionsData, {})
+    return this.postAsyncWorkerMessage(MethodNames.LoadData, {})
   }
 
   private async initialize(params: InitParams) {

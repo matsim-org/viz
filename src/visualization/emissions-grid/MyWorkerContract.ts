@@ -1,7 +1,9 @@
 export interface InitParams {
   accessToken: string
-  projectId: string
   bins: any[]
+  cellSize: string
+  projectId: string
+  projection: string
   url: string
 }
 
@@ -12,5 +14,5 @@ export interface PlanRequestParams {
 */
 
 export enum MethodNames {
-  FetchEmissionsData = 'FetchEmissionsData',
+  LoadData = 'LoadData',
 }

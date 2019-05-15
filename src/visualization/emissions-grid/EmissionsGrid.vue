@@ -188,13 +188,16 @@ export default class EmissionsGrid extends Vue {
     // spawn transit helper web worker
     this._myWorker = await MyWorker.create({
       accessToken: this.authStore.state.accessToken,
-      projectId: this.projectId,
       bins: sortedBins,
+      cellSize: this.visualization.parameters['Cell size'].value,
+      projectId: this.projectId,
+      projection: this.projection,
       url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
     })
 
     this.loadingText = 'Loading thingies...'
     const data = await this._myWorker.fetchEmissionsData()
+    console.log({ data })
     return data
   }
 
@@ -215,15 +218,18 @@ export default class EmissionsGrid extends Vue {
       zoom: 14,
     })
 
-    this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
-    if (this.initialMapExtent) {
-      const lnglat = JSON.parse(this.initialMapExtent)
-      this.mymap.fitBounds(lnglat, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
-        animate: false,
-      })
+    try {
+      this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
+      if (this.initialMapExtent) {
+        const lnglat = JSON.parse(this.initialMapExtent)
+        this.mymap.fitBounds(lnglat, {
+          padding: { top: 50, bottom: 100, right: 100, left: 300 },
+          animate: false,
+        })
+      }
+    } catch (e) {
+      console.log(e)
     }
-
     this.mymap.on('style.load', this.mapIsReady)
   }
 
@@ -444,21 +450,35 @@ export default class EmissionsGrid extends Vue {
   }
 
   private async loadData() {
-    console.log('Fetching')
-    this.loadingText = 'Fetching data'
-    const jsonData = await this.fetchEmissionsData()
+    console.log('1')
+    const bins = await this.fetchEmissionsBins()
+    const sortedBins = bins.bins.sort((a: number, b: number) => a - b)
+    console.log('2')
 
-    console.log('Ranges')
-    this.loadingText = 'Calculating ranges'
-    await this.calculateMaxValues(jsonData)
+    // spawn transit helper web worker
+    this._myWorker = await MyWorker.create({
+      accessToken: this.authStore.state.accessToken,
+      bins: sortedBins,
+      cellSize: this.visualization.parameters['Cell size'].value,
+      projectId: this.projectId,
+      projection: this.projection,
+      url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
+    })
 
-    console.log('Time bins')
-    this.loadingText = 'Laying out tiles'
-    this.buildLookupForTimeBins(jsonData)
+    this.loadingText = 'Loading thingies...'
+    const data = await this._myWorker.loadData()
+    console.log({ data })
 
-    console.log(this.mapExtentXYXY)
+    this.dataLookup = data.dataLookup
+    this.pollutantsMaxValue = data.pollutantsMaxValue
+    this.mapExtentXYXY = data.mapExtentXYXY
+    this.pollutants = data.pollutants
+    this.timeBins = data.timeBins
 
+    // this.setMapExtent()
     this.pollutant = this.pollutants[0]
+
+    console.log({ ZZ: this.dataLookup })
   }
 
   // this is called every time map setStyle is called, too
@@ -467,13 +487,13 @@ export default class EmissionsGrid extends Vue {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
       await this.loadData()
-
+      /*
       if (!this.initialMapExtent) {
         this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
         this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
       }
+*/
     }
-
     this.setJsonSource()
     this.addJsonToMap()
     this.loadingText = ''
