@@ -25,8 +25,6 @@
                        :class="{'selected-theme': theme.name === chosenTheme.name}"
                        :src="theme.icon"
                        @click="clickedTheme(theme)")
-    // .left-overlay
-    //   h1.clock {{clockTime}}
 </template>
 
 <script lang="ts">
@@ -48,6 +46,7 @@ import sharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
+import MyWorker from './MyWorker'
 
 sharedStore.addVisualizationType({
   typeName: 'emissions',
@@ -119,6 +118,8 @@ export default class EmissionsGrid extends Vue {
   private timeBins: any = []
   private selectedTimeBin = 0
 
+  private _myWorker: any
+
   private themes: any = [
     {
       name: 'Inferno',
@@ -150,22 +151,22 @@ export default class EmissionsGrid extends Vue {
   // https://www.npmjs.com/package/scale-color-perceptual
   private chosenTheme: any = this.themes[0]
 
-  private get clockTime() {
-    return this.convertSecondsToClockTime(this.currentTime)
+  public beforeDestroy() {
+    if (this._myWorker) this._myWorker.destroy()
   }
 
   public created() {}
 
-  public async fetchEmissionsData(): Promise<any> {
-    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/data`, {
+  public async fetchEmissionsBins(): Promise<any> {
+    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/bins`, {
       mode: 'cors',
       headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
     })
 
     if (result.ok) {
       try {
-        const thing = await result.json()
-        return thing
+        const json = await result.json()
+        return json
       } catch (e) {
         throw new Error(e)
       }
@@ -193,15 +194,18 @@ export default class EmissionsGrid extends Vue {
       zoom: 14,
     })
 
-    this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
-    if (this.initialMapExtent) {
-      const lnglat = JSON.parse(this.initialMapExtent)
-      this.mymap.fitBounds(lnglat, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
-        animate: false,
-      })
+    try {
+      this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
+      if (this.initialMapExtent) {
+        const lnglat = JSON.parse(this.initialMapExtent)
+        this.mymap.fitBounds(lnglat, {
+          padding: { top: 50, bottom: 100, right: 100, left: 300 },
+          animate: false,
+        })
+      }
+    } catch (e) {
+      console.log(e)
     }
-
     this.mymap.on('style.load', this.mapIsReady)
   }
 
@@ -214,7 +218,7 @@ export default class EmissionsGrid extends Vue {
     }
 
     this.chosenTheme = theme
-    this.mymap.setPaintProperty('hex-layer', 'fill-extrusion-color', ['get', theme.colorRamp])
+    this.mymap.setPaintProperty('hex-layer', 'fill-color', ['get', theme.colorRamp]) // fill-extrusion-color
   }
 
   private setJsonSource() {
@@ -222,7 +226,6 @@ export default class EmissionsGrid extends Vue {
     const storageKey = p + ':' + this.timeBins[this.selectedTimeBin]
 
     const jsonData = this.dataLookup[storageKey]
-
     try {
       this.mymap.addSource('hexagons', {
         data: jsonData,
@@ -238,23 +241,15 @@ export default class EmissionsGrid extends Vue {
       {
         id: 'hex-layer',
         source: 'hexagons',
-        type: 'fill-extrusion',
+        type: 'fill',
         paint: {
-          'fill-extrusion-color': ['get', this.chosenTheme.colorRamp],
-          'fill-extrusion-opacity': 0.95, // ['get', 'op'],
-          'fill-extrusion-height': ['get', 'height'],
+          'fill-color': ['get', this.chosenTheme.colorRamp],
+          'fill-opacity': ['get', 'op'],
         },
-      }
-      // 'road-street'
+      },
+      'road-street'
       // 'water', 'tunnel-street-low' // water, road-street, road-secondary-tertiary, building...
     ) // layer gets added just *under* this MapBox-defined layer.
-  }
-
-  private updateMapExtent(coordinates: any) {
-    this.mapExtentXYXY[0] = Math.min(this.mapExtentXYXY[0], coordinates[0])
-    this.mapExtentXYXY[1] = Math.min(this.mapExtentXYXY[1], coordinates[1])
-    this.mapExtentXYXY[2] = Math.max(this.mapExtentXYXY[2], coordinates[0])
-    this.mapExtentXYXY[3] = Math.max(this.mapExtentXYXY[3], coordinates[1])
   }
 
   private setMapExtent() {
@@ -275,121 +270,6 @@ export default class EmissionsGrid extends Vue {
     if (jsonData) (this.mymap.getSource('hexagons') as any).setData(jsonData)
   }
 
-  private async calculateMaxValues(data: any) {
-    for (const bin of data.timeBins) {
-      // save the start times of all time bins
-      this.timeBins.push(bin.startTime)
-
-      for (const point of bin.value.cells) {
-        if (!point.value) continue
-
-        // set pollutant max-extent
-        for (const pollutant of Object.keys(point.value)) {
-          if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
-            this.pollutantsMaxValue[pollutant] = point.value[pollutant]
-          }
-          this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
-        }
-
-        // set map extent
-        const coordinates = Coords.toLngLat(this.projection, { x: point.coordinate.x, y: point.coordinate.y })
-        this.updateMapExtent([coordinates.x, coordinates.y])
-      }
-    }
-
-    this.pollutants = Object.keys(this.pollutantsMaxValue).sort()
-
-    console.log({ MAX_VALUE: this.pollutantsMaxValue })
-    this.setMapExtent()
-  }
-
-  private getHexagon(point: any, hexwidth: number, hexheight: number, properties: any) {
-    // HEXagons
-    const coord = point.coordinate
-    const hexPoints = []
-
-    const halfhexheight = 0.5 * hexheight
-
-    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-    hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
-    hexPoints.push({ x: coord.x + hexwidth, y: coord.y - halfhexheight })
-    hexPoints.push({ x: coord.x, y: coord.y - hexheight })
-    hexPoints.push({ x: coord.x - hexwidth, y: coord.y - halfhexheight })
-    hexPoints.push({ x: coord.x - hexwidth, y: coord.y + halfhexheight })
-    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-
-    const z = hexPoints.map(mm => {
-      const longlat = Coords.toLngLat(this.projection, mm)
-      return [longlat.x, longlat.y]
-    })
-
-    return {
-      type: 'Feature',
-      geometry: { type: 'Polygon', coordinates: [z] },
-      properties: properties,
-    }
-  }
-
-  private buildLookupForTimeBins(data: any) {
-    for (const bin of data.timeBins) {
-      const startTime = bin.startTime
-      const hexesByPollutant = this.calculateHexValuesForCells(bin.value.cells)
-
-      for (const p of Object.keys(hexesByPollutant)) {
-        const key = p + ':' + startTime
-        console.log(key)
-        const output = hexesByPollutant[p]
-
-        this.dataLookup[key] = output
-      }
-    }
-  }
-
-  private calculateHexValuesForCells(cells: any) {
-    const hexesByPollutant: any = {}
-    const fullRadius = 0.5 * parseFloat(this.visualization.parameters['Cell size'].value)
-
-    for (const p of this.pollutants) hexesByPollutant[p] = { type: 'FeatureCollection', features: [] }
-
-    for (const point of cells) {
-      if (point.value === {}) continue
-
-      for (const p of this.pollutants) {
-        const pollutantHex = this.getHexagonValuesForPollutant(point, p, fullRadius)
-        if (pollutantHex) hexesByPollutant[p].features.push(pollutantHex)
-      }
-    }
-    return hexesByPollutant
-  }
-
-  private getHexagonValuesForPollutant(point: any, p: string, fullRadius: number) {
-    let value = point.value[p] / this.pollutantsMaxValue[p]
-
-    if (!value) return null
-    if (value < 0.01) return null
-
-    if (value > 1) value = 1
-
-    const hexwidth = fullRadius * Math.min(1.0, value * 10)
-    const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
-
-    // Rapidly scale up opacity when rel.value is 0-20%; anything > 20% gets full opacity
-    const op = Math.min(0.95, value * 5)
-
-    const colorInferno = inferno(value)
-    const colorViridis = viridis(value)
-    const revInferno = inferno(1.0 - value)
-    const revViridis = viridis(1.0 - value)
-
-    const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
-    const height = 2000 * value
-
-    const properties = { id, value, height, op, colorInferno, colorViridis, revInferno, revViridis }
-    const hexagon = this.getHexagon(point, hexwidth, hexheight, properties)
-
-    return hexagon
-  }
-
   private changedSlider(seconds: number) {
     this.currentTime = seconds
 
@@ -406,38 +286,32 @@ export default class EmissionsGrid extends Vue {
     if (jsonData) (this.mymap.getSource('hexagons') as any).setData(jsonData)
   }
 
-  private convertSecondsToClockTimeMinutes(index: number) {
-    try {
-      const hms = timeConvert(index)
-      const minutes = ('00' + hms.minutes).slice(-2)
-      return `${hms.hours}:${minutes}`
-    } catch (e) {
-      return '0'
-    }
-  }
-
-  private convertSecondsToClockTime(index: number) {
-    const hms = timeConvert(index)
-    const minutes = ('00' + hms.minutes).slice(-2)
-    const seconds = ('00' + hms.seconds).slice(-2)
-    return `${hms.hours}:${minutes}:${seconds}`
-  }
-
   private async loadData() {
-    console.log('Fetching')
-    this.loadingText = 'Fetching data'
-    const jsonData = await this.fetchEmissionsData()
+    console.log('1')
+    const bins = await this.fetchEmissionsBins()
+    const sortedBins = bins.bins.sort((a: number, b: number) => a - b)
+    console.log('2')
 
-    console.log('Ranges')
-    this.loadingText = 'Calculating ranges'
-    await this.calculateMaxValues(jsonData)
+    // spawn transit helper web worker
+    this._myWorker = await MyWorker.create({
+      accessToken: this.authStore.state.accessToken,
+      bins: sortedBins,
+      cellSize: this.visualization.parameters['Cell size'].value,
+      projectId: this.projectId,
+      projection: this.projection,
+      url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
+    })
 
-    console.log('Time bins')
-    this.loadingText = 'Laying out tiles'
-    this.buildLookupForTimeBins(jsonData)
+    this.loadingText = 'Loading Emissions Grid Data...'
+    const data = await this._myWorker.loadData()
 
-    console.log(this.mapExtentXYXY)
+    this.dataLookup = data.dataLookup
+    this.pollutantsMaxValue = data.pollutantsMaxValue
+    this.mapExtentXYXY = data.mapExtentXYXY
+    this.pollutants = data.pollutants
+    this.timeBins = data.timeBins
 
+    this.setMapExtent()
     this.pollutant = this.pollutants[0]
   }
 
@@ -446,6 +320,7 @@ export default class EmissionsGrid extends Vue {
     if (this.firstLoad) {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
       await this.loadData()
 
       if (!this.initialMapExtent) {
@@ -453,9 +328,9 @@ export default class EmissionsGrid extends Vue {
         this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
       }
     }
-
     this.setJsonSource()
     this.addJsonToMap()
+
     this.loadingText = ''
   }
 }
@@ -492,18 +367,6 @@ export default class EmissionsGrid extends Vue {
   grid-column: 1 / 2;
   z-index: 5000;
   pointer-events: none;
-}
-
-.clock {
-  color: #ccc;
-  background-color: #99a;
-  margin: 0.5rem;
-  padding: 0px 5px;
-  border: solid 1px;
-  border-color: #222;
-  border-radius: 4px;
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
-  font-size: 1.5rem;
 }
 
 .slider-box {
