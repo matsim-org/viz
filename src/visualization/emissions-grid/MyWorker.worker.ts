@@ -35,6 +35,7 @@ class MyWorker extends AsyncBackgroundWorker {
     const jsonData = await this.fetchEmissionsData()
 
     console.log('Ranges')
+
     await this.calculateMaxValues(jsonData)
 
     console.log('Time bins')
