@@ -49,7 +49,7 @@ class MyWorker extends AsyncBackgroundWorker {
         dataLookup: this.dataLookup,
         pollutants: this.pollutants,
         pollutantsMaxValue: this.pollutantsMaxValue,
-        mapExtent: this.mapExtentXYXY,
+        mapExtentXYXY: this.mapExtentXYXY,
         timeBins: this.timeBins,
       },
     }

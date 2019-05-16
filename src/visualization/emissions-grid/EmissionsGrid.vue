@@ -151,6 +151,10 @@ export default class EmissionsGrid extends Vue {
   // https://www.npmjs.com/package/scale-color-perceptual
   private chosenTheme: any = this.themes[0]
 
+  public beforeDestroy() {
+    if (this._myWorker) this._myWorker.destroy()
+  }
+
   public created() {}
 
   public async fetchEmissionsBins(): Promise<any> {
@@ -298,7 +302,7 @@ export default class EmissionsGrid extends Vue {
       url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
     })
 
-    this.loadingText = 'Loading thingies...'
+    this.loadingText = 'Loading Emissions Grid Data...'
     const data = await this._myWorker.loadData()
 
     this.dataLookup = data.dataLookup
@@ -307,7 +311,7 @@ export default class EmissionsGrid extends Vue {
     this.pollutants = data.pollutants
     this.timeBins = data.timeBins
 
-    // this.setMapExtent()
+    this.setMapExtent()
     this.pollutant = this.pollutants[0]
   }
 
@@ -316,13 +320,13 @@ export default class EmissionsGrid extends Vue {
     if (this.firstLoad) {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
       await this.loadData()
-      /*
+
       if (!this.initialMapExtent) {
         this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
         this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
       }
-      */
     }
     this.setJsonSource()
     this.addJsonToMap()
