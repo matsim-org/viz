@@ -39,11 +39,12 @@ export default class VizThumbnail extends Vue {
   grid-template-rows: 1fr auto;
   border-top: solid 2px #479ccc;
   background-color: #f4f4f4;
-  height: 10rem;
+  min-height: 10rem;
 }
 
 .card:hover {
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 50, 0.3);
+  box-shadow: 1px 2px 5px 1px rgba(0, 0, 50, 0.4);
+  border-top: solid 2px #4c20e9;
   cursor: pointer;
 }
 
@@ -82,7 +83,10 @@ export default class VizThumbnail extends Vue {
 }
 
 .card-subtitle {
+  text-align: right;
   font-size: 13px;
+  margin-top: -5px;
+  margin-right: -0.75rem;
 }
 
 .card .card-actions {

@@ -321,8 +321,6 @@ section {
   grid-row: 1 / 2;
   width: 16rem;
   height: 100vh;
-  background-color: #eef;
-  color: #eee;
   display: flex;
   flex-direction: column;
 }
@@ -410,7 +408,7 @@ section {
 .viz-table {
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, 20rem);
+  grid-template-columns: repeat(auto-fill, 25rem);
   list-style: none;
   padding-left: 0px;
   margin-top: 2rem;

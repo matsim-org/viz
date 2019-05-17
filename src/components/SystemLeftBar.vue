@@ -75,8 +75,8 @@ export default class SystemLeftBar extends Vue {
 }
 
 .nav-item:hover {
-  color: #ffa;
-  border-left: 0.2rem solid #ffa;
+  color: #fdfd91;
+  border-left: 0.2rem solid #fdfd91;
   cursor: pointer;
 }
 
@@ -85,7 +85,6 @@ export default class SystemLeftBar extends Vue {
 }
 
 .icon-label {
-  text-transform: uppercase;
   margin-top: 0.25rem;
   font-size: 0.7rem;
 }
