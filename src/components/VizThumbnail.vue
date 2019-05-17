@@ -3,10 +3,10 @@
   .card-image(:style='{"background-image":thumbnail}')
   .card-top
     .card-title {{viz.title}}
-    .card-subtitle {{viz.description}}
+    .card-subtitle {{description}}
   .card-bottom
-    .card-subtitle {{viz.type}}
-    .card-subtitle {{timestamp}}
+    .card-endnotes {{viz.type}}
+    .card-endnotes {{timestamp}}
   .card-actions
     a(title="Remove" @click.stop="$emit('remove')"): i.fas.fa-times
     a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
@@ -20,6 +20,13 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 export default class VizThumbnail extends Vue {
   @Prop({ required: true })
   private viz: any
+
+  private get description() {
+    if (!this.viz.properties) return ''
+    if (!this.viz.properties.description) return ''
+
+    return this.viz.properties.description
+  }
 
   private get timestamp() {
     return new Date(this.viz.createdAt * 1000.0).toUTCString().slice(0, -7)
@@ -72,7 +79,7 @@ export default class VizThumbnail extends Vue {
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.1rem;
-  margin-bottom: auto;
+  margin-bottom: 0.5rem;
   margin-right: 0.5rem;
 }
 
@@ -82,11 +89,17 @@ export default class VizThumbnail extends Vue {
   padding: 0.5rem 1.5rem 0.25rem 0.5rem;
 }
 
-.card-subtitle {
-  text-align: right;
+.card-endnotes {
   font-size: 13px;
-  margin-top: -5px;
+  margin-top: -3px;
   margin-right: -0.75rem;
+  text-align: right;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  line-height: 0.9rem;
+  margin-right: -2px;
 }
 
 .card .card-actions {

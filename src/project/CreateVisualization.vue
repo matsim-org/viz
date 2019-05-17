@@ -137,6 +137,10 @@ export default class CreateVisualizationViewModel extends Vue {
     this.selectedVizType = chosenViz
     this.onVizTypeChanged(this.selectedVizType)
 
+    // fill in title & description
+    if (viz.title) this.title = viz.title
+    if (viz.properties && viz.properties.description) this.description = viz.properties.description
+
     // fill in parameters
     for (const p in viz.parameters) {
       if (!viz.parameters.hasOwnProperty(p)) continue
