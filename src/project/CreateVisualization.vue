@@ -47,8 +47,8 @@ modal(@close-requested="cancel()")
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.button.negative(@click="cancel()") Cancel
-          button.button.is-link.accent(@click="createVisualization()") Create
+          button.button.is-rounded.negative(@click="cancel()") Cancel
+          button.button.is-rounded.is-link.accent(@click="createVisualization()") Create
 </template>
 
 <script lang="ts">

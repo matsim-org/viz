@@ -27,10 +27,10 @@ export default class SystemLeftBar extends Vue {
 
   private topItems = [
     { id: 'Home', icon: 'fa-home', url: '/' },
-    { id: 'Map', icon: 'fa-map', url: '/' },
-    { id: 'Run Log', icon: 'fa-database', url: '/' },
+    // { id: 'Map', icon: 'fa-map', url: '/' },
+    // { id: 'Run Log', icon: 'fa-database', url: '/' },
   ]
-  private bottomItems = [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
+  private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
 
   public async created() {}
 

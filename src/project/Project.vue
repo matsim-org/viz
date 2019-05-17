@@ -27,14 +27,11 @@
         list-header(v-on:btnClicked="onAddVisualization" title="Visualizations" btnTitle="Add Viz")
         .visualizations
           .emptyMessage(v-if="project.visualizations && project.visualizations.length === 0")
-            span No Visualizations yet. Add some!
+            span No visualizations yet.
+
           .viz-table(v-else)
-            .viz-item(v-for="viz in project.visualizations"
-                      @click="onSelectVisualization(viz)"
-                      :key="viz.id")
-                viz-thumbnail(@edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
-                  .itemTitle(slot="title"): p {{ title(viz) }}
-                  p(slot="content") {{ description(viz) }}
+            .viz-item(v-for="viz in sortedVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
+              viz-thumbnail(:viz="viz" @edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
 
       section
         list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")
@@ -47,7 +44,7 @@
         .file-area
           .files
             .emptyMessage(v-if="project.files && project.files.length === 0")
-              span No files yet. Add some!
+              span No files yet.
             .fileList(v-else)
               .fileItem(v-for="file in filesToShow")
                 list-element( v-bind:key="file.id")
@@ -151,6 +148,10 @@ export default class ProjectViewModel extends vueInstance {
     return this.projectState.isFetching
   }
 
+  private get sortedVisualizations() {
+    return this.project.visualizations.sort((a: any, b: any) => b.createdAt - a.createdAt)
+  }
+
   private get project() {
     return this.projectState.selectedProject
   }
@@ -200,21 +201,6 @@ export default class ProjectViewModel extends vueInstance {
       }
       return false
     })
-  }
-
-  private title(viz: Visualization) {
-    if (!viz.parameters) return viz.type
-    if (viz.parameters.Title) return viz.parameters.Title.value
-    if (viz.parameters.Description) return viz.parameters.Description.value
-    return viz.type // fallback
-  }
-
-  private description(viz: Visualization) {
-    const fallback = '' + viz.type + ': ' + viz.id.substring(0, 6)
-    if (!viz.parameters) return fallback
-    if (!viz.parameters.Title) return fallback
-    if (viz.parameters.Description) return viz.parameters.Description.value
-    return fallback
   }
 
   private onAddVisualization() {
@@ -318,22 +304,15 @@ export default class ProjectViewModel extends vueInstance {
 </script>
 
 <style scoped>
-.heroContainer {
-  padding: 3rem 1.5rem;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
 section {
-  margin: 2rem 1.5rem 2rem 1.5rem;
+  margin: 2rem 3rem 2rem 3rem;
 }
 
 .project {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
-  background-color: #eee;
+  background-color: #fff;
   height: 100vh;
 }
 
@@ -342,7 +321,7 @@ section {
   grid-row: 1 / 2;
   width: 16rem;
   height: 100vh;
-  background-color: #242831;
+  background-color: #eef;
   color: #eee;
   display: flex;
   flex-direction: column;
@@ -431,9 +410,10 @@ section {
 .viz-table {
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, 240px);
+  grid-template-columns: repeat(auto-fill, 20rem);
   list-style: none;
   padding-left: 0px;
+  margin-top: 2rem;
   margin-bottom: 0px;
   overflow-y: auto;
 }
@@ -442,7 +422,8 @@ section {
   display: table-cell;
   padding: 0 0 0 0;
   vertical-align: top;
-  width: 240px;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
 }
 
 .drop {
@@ -478,28 +459,7 @@ section {
   padding-bottom: 1.5rem;
 }
 
-.title-band {
-  background-color: #363a45;
-  padding: 1.5rem 1rem 2rem 1rem;
-  text-align: center;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-}
-
-.title-band h3 {
-  color: #eee;
-}
-
-.title-band h4 {
-  color: #aaa;
-}
-
-.title-details {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  margin: auto 0rem;
-}
+/*  background-color: #363a45; */
 
 .editButton {
   grid-column: 2 / 3;

@@ -1,141 +1,117 @@
 <template lang="pug">
 .card
-  .card-image
+  .card-image(:style='{"background-image":thumbnail}')
+  .card-top
+    .card-title {{viz.title}}
+    .card-subtitle {{viz.description}}
+  .card-bottom
+    .card-subtitle {{viz.type}}
+    .card-subtitle {{timestamp}}
   .card-actions
-    a(title="Edit..." @click.stop="$emit('edit')")
-      i.fas.fa-edit
-    // a(title="Share..." @click.stop="$emit('share')")
-    //   i.fas.fa-share
-    a(title="Remove" @click.stop="$emit('remove')")
-      i.fas.fa-times
-  .card-content
-    .card-title
-      slot(name="title")
-    .card-subtitle
-      slot(name="content")
+    a(title="Remove" @click.stop="$emit('remove')"): i.fas.fa-times
+    a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
+    // a(title="Share..." @click.stop="$emit('share')"): i.fas.fa-share
+
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({})
+import { Vue, Component, Prop } from 'vue-property-decorator'
+@Component({ props: { viz: {} } })
+export default class VizThumbnail extends Vue {
+  @Prop({ required: true })
+  private viz: any
+
+  private get timestamp() {
+    return new Date(this.viz.createdAt * 1000.0).toUTCString().slice(0, -7)
+  }
+
+  private get thumbnail() {
+    // if (this.viz.thumbnail) return `url(data:image/png;base64,${this.viz.thumbnail})`
+    return `url("/${this.viz.type}.png")`
+  }
+}
 </script>
 
 <style scoped>
-.listItem {
-  display: flex;
-  flex-direction: row;
-  padding: 0rem 0.25rem 0rem 0.25rem;
-  border-bottom: 1px solid lightgray;
-}
-
-.listItem:hover {
-  background-color: rgb(240, 240, 240);
-}
-
-.clickContent {
-  flex: 1;
-  background-color: transparent;
-  border: none;
-  font-family: inherit;
-  padding: 0;
-  margin: 0;
-  text-align: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  padding: 1rem 1rem 1rem 0;
-  transition-duration: 0.25s;
-}
-
-.title {
-  font-weight: bold;
-}
-
-.main {
-  font-weight: lighter;
-  color: gray;
-}
-
-.accessory {
-  display: flex;
-  align-items: center;
-}
-
-.card .card-image {
-  overflow: hidden;
-  grid-column: 1/2;
-  grid-row: 1/2;
-  z-index: 3;
-}
-
-.card .card-image:hover {
-  z-index: 1;
+.card {
+  display: grid;
+  grid-template-columns: 5rem 1fr 2rem;
+  grid-template-rows: 1fr auto;
+  border-top: solid 2px #479ccc;
+  background-color: #f4f4f4;
+  height: 10rem;
 }
 
 .card:hover {
-  box-shadow: 0 2px 7px 0 rgba(0, 0, 0, 0.5);
-  -webkit-box-shadow: 4 2px 7px 0 rgba(0, 0, 0, 0.5);
-  -moz-box-shadow: 4 2px 7px 0 rgba(0, 0, 0, 0.5);
-}
-
-.card {
-  display: grid;
-  margin: 20px 20px 20px 0px;
-  grid-template-columns: auto;
-  grid-template-rows: auto auto;
-  -webkit-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
-  -moz-box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
-  box-shadow: 4 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
-}
-
-.card .card-content {
-  padding: 10px;
-}
-
-.card .card-content:hover {
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 50, 0.3);
   cursor: pointer;
 }
 
-.card .card-content .card-title {
-  display: block;
-  font-size: 18px;
-  font-weight: bold;
+.card .card-image {
+  background-size: cover;
+  grid-column: 1/2;
+  grid-row: 1/3;
+  overflow: hidden;
+  background-color: #e8e8ea;
 }
 
-.card .card-content .card-subtitle {
-  display: block;
+.card .card-top {
+  grid-column: 2/4;
+  grid-row: 1/2;
+  padding: 0.5rem 1.5rem 1rem 0.5rem;
+  background-color: #f4f4f4;
+  z-index: 8;
+}
+
+.card-top:hover {
+  z-index: 2;
+}
+
+.card .card-top .card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1.1rem;
+  margin-bottom: auto;
+  margin-right: 0.5rem;
+}
+
+.card .card-bottom {
+  grid-column: 2/4;
+  grid-row: 2/3;
+  padding: 0.5rem 1.5rem 0.25rem 0.5rem;
+}
+
+.card-subtitle {
   font-size: 13px;
 }
 
 .card .card-actions {
-  background-color: #aaaa99;
-  margin: 6px 3px auto auto;
-  padding: 2px;
+  grid-column: 3/4;
+  grid-row: 1/3;
+  display: flex;
   border-radius: 4px;
-  grid-column: 1/2;
-  grid-row: 1/2;
-  z-index: 2;
+  flex-direction: column;
+  margin: 3px 3px auto auto;
+  padding: 2px;
+  z-index: 5;
 }
 
 .card .card-actions:hover {
-  z-index: 10;
-  text-decoration: none;
+  z-index: 20;
 }
 
 .card .card-actions a {
   font-size: 1rem;
-  color: green;
-  text-transform: uppercase;
-  padding: 2px 6px;
+  color: #ccc;
+  padding: 0px 0px 4px 0px;
+  text-align: center;
 }
 
 .card .card-actions a:hover {
-  color: #cc2222;
-  background-color: #ffffff99;
-  z-index: 4;
+  color: #479ccc;
 }
 
-.card-image {
-  background-color: #aaaa99;
-  height: 2.5rem;
+.thumbnail-pic {
+  background-size: cover;
 }
 </style>

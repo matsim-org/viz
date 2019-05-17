@@ -133,8 +133,6 @@ export default class SummaryStrip extends Vue {
   grid-row: 1 / 2;
   width: 16rem;
   height: 100vh;
-  background-color: #242831;
-  color: #eee;
   display: flex;
   flex-direction: column;
 }
@@ -159,15 +157,15 @@ export default class SummaryStrip extends Vue {
   padding: 1rem 3rem;
   margin: 1rem 0rem 1.5rem 0rem;
   text-align: center;
-  border: 0.2rem dashed #aaa;
+  border: 0.2rem dashed black;
   border-radius: 0.25rem;
-  color: #aaa;
+  color: #222;
   font-size: 0.8rem;
 }
 
 .drop:hover {
-  border: 0.2rem dashed #ffa;
-  color: white;
+  border: 0.2rem dashed #097c43;
+  color: #4799cc;
 }
 
 .drop.over {
@@ -177,7 +175,7 @@ export default class SummaryStrip extends Vue {
 }
 
 .title-band {
-  background-color: #363a45;
+  background-color: #aab;
   padding: 1.5rem 1rem 2rem 1rem;
   text-align: center;
   display: grid;
@@ -186,11 +184,11 @@ export default class SummaryStrip extends Vue {
 }
 
 .title-band h3 {
-  color: #eee;
+  color: #222;
 }
 
 .title-band h4 {
-  color: #aaa;
+  color: #666;
 }
 
 .title-details {
@@ -265,20 +263,22 @@ active {
 }
 
 .modelRun {
-  padding: 0.3rem 0rem 0.3rem 1.2rem;
+  margin-left: 1rem;
+  padding: 0.5rem 0rem 0.5rem 1.2rem;
   font-size: 0.9rem;
   border-radius: 1.3rem 0rem 0rem 1.3rem;
-  color: #eee;
+  color: #333;
 }
 
 .modelRun:hover {
-  background-color: #363a45;
+  background-color: #f8f8ff;
   cursor: pointer;
 }
 
 .modelRun.selected {
-  background-color: #eee;
+  background-color: white;
   color: #223;
+  font-weight: bold;
 }
 
 .dropzone {
@@ -289,7 +289,7 @@ active {
 .gettingStarted {
   padding: 1rem 1rem 1rem 0rem;
   font-size: 0.8rem;
-  color: #ccc;
+  color: #222;
 }
 
 .project-name {
