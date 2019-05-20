@@ -46,7 +46,7 @@
             .emptyMessage(v-if="project.files && project.files.length === 0")
               span No files yet.
             .fileList(v-else)
-              .fileItem(v-for="file in filesToShow")
+              .fileItem(v-for="file in filesToShow"  @click="clickedFile(file)")
                 list-element( v-bind:key="file.id")
                   .itemTitle(slot="title")
                     span {{file.userFileName}}
@@ -86,6 +86,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import mediumZoom from 'medium-zoom'
+import download from 'downloadjs'
 
 import CreateVisualization from '@/project/CreateVisualization.vue'
 import FileUpload from '@/project/FileUpload.vue'
@@ -261,6 +262,14 @@ export default class ProjectViewModel extends vueInstance {
 
   private onSelectVisualization(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+  }
+
+  private async clickedFile(item: FileEntry) {
+    const confirmDownload = confirm(`Download ${item.userFileName}?\nFile is ${filesize(item.sizeInBytes)}.`)
+    if (!confirmDownload) return
+
+    const blob = await this.fileApi.downloadFile(item.id, this.projectId)
+    download(blob, item.userFileName, item.contentType)
   }
 
   private readableFileSize(bytes: number): string {
