@@ -86,7 +86,7 @@ export default class StartPage extends Vue {
 
 <style scoped>
 .page-content {
-  background-color: #eee;
+  background-color: white;
 }
 
 .start-page-content {

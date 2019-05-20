@@ -27,10 +27,10 @@ export default class SystemLeftBar extends Vue {
 
   private topItems = [
     { id: 'Home', icon: 'fa-home', url: '/' },
-    { id: 'Map', icon: 'fa-map', url: '/' },
-    { id: 'Run Log', icon: 'fa-database', url: '/' },
+    // { id: 'Map', icon: 'fa-map', url: '/' },
+    // { id: 'Run Log', icon: 'fa-database', url: '/' },
   ]
-  private bottomItems = [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
+  private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
 
   public async created() {}
 
@@ -75,8 +75,8 @@ export default class SystemLeftBar extends Vue {
 }
 
 .nav-item:hover {
-  color: #ffa;
-  border-left: 0.2rem solid #ffa;
+  color: #fdfd91;
+  border-left: 0.2rem solid #fdfd91;
   cursor: pointer;
 }
 
@@ -85,7 +85,6 @@ export default class SystemLeftBar extends Vue {
 }
 
 .icon-label {
-  text-transform: uppercase;
   margin-top: 0.25rem;
   font-size: 0.7rem;
 }

@@ -18,8 +18,7 @@
               @click="$emit('onSelectModelRun', modelRun)"
               :key="modelRun.name"
               :class="{selected: modelRun.name === selectedRun}") {{ modelRun.name }}
-    p.gettingStarted(v-if="modelRuns.length===0") To get started, upload some files from a model run, such as a network.xml file or other standard MATSim outputs.
-    p.gettingStarted(v-if="modelRuns.length===0") If you upload the contents of a MATSim output iteration, many standard visualizations will be available.
+    p.gettingStarted(v-if="modelRuns.length===0") You can organize project files by model run when you upload them.
 
   .summary-category.dropzone
     h3.section-head Project Files
@@ -133,10 +132,10 @@ export default class SummaryStrip extends Vue {
   grid-row: 1 / 2;
   width: 16rem;
   height: 100vh;
-  background-color: #242831;
-  color: #eee;
   display: flex;
   flex-direction: column;
+  background-color: #444855;
+  color: #eee;
 }
 
 .header {
@@ -159,15 +158,15 @@ export default class SummaryStrip extends Vue {
   padding: 1rem 3rem;
   margin: 1rem 0rem 1.5rem 0rem;
   text-align: center;
-  border: 0.2rem dashed #aaa;
+  border: 0.2rem dashed black;
   border-radius: 0.25rem;
-  color: #aaa;
+  color: #ddd;
   font-size: 0.8rem;
 }
 
 .drop:hover {
-  border: 0.2rem dashed #ffa;
-  color: white;
+  border: 0.2rem dashed #097c43;
+  color: #4799cc;
 }
 
 .drop.over {
@@ -177,7 +176,7 @@ export default class SummaryStrip extends Vue {
 }
 
 .title-band {
-  background-color: #363a45;
+  background-color: #555a6e;
   padding: 1.5rem 1rem 2rem 1rem;
   text-align: center;
   display: grid;
@@ -186,11 +185,11 @@ export default class SummaryStrip extends Vue {
 }
 
 .title-band h3 {
-  color: #eee;
+  color: white;
 }
 
 .title-band h4 {
-  color: #aaa;
+  color: #666;
 }
 
 .title-details {
@@ -211,8 +210,8 @@ export default class SummaryStrip extends Vue {
 
 .editButton:hover,
 active {
-  color: #ffa;
-  border: solid 1px #ffa;
+  color: #fdfd91;
+  border: solid 1px #fdfd91;
   cursor: pointer;
 }
 
@@ -253,9 +252,9 @@ active {
 }
 
 .section-head {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  color: #479ccc;
+  color: #4ba6db;
   font-size: 0.9rem;
 }
 
@@ -265,20 +264,22 @@ active {
 }
 
 .modelRun {
-  padding: 0.3rem 0rem 0.3rem 1.2rem;
+  margin-left: 1rem;
+  padding: 0.5rem 0rem 0.5rem 1.2rem;
   font-size: 0.9rem;
   border-radius: 1.3rem 0rem 0rem 1.3rem;
-  color: #eee;
+  color: #ddd;
 }
 
 .modelRun:hover {
-  background-color: #363a45;
+  background-color: #556;
   cursor: pointer;
 }
 
 .modelRun.selected {
-  background-color: #eee;
+  background-color: white;
   color: #223;
+  font-weight: bold;
 }
 
 .dropzone {
@@ -289,7 +290,7 @@ active {
 .gettingStarted {
   padding: 1rem 1rem 1rem 0rem;
   font-size: 0.8rem;
-  color: #ccc;
+  color: #ddd;
 }
 
 .project-name {
