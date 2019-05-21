@@ -5,14 +5,20 @@
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
-    .buttons-bar
-      button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
-      button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
+    .widgets
+      h4.heading Show:
+      .buttons-bar
+        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
+        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+
+      h4.heading Time of day:
+      time-slider.time-slider
+      span.checkbox
+        input(type="checkbox" v-model="showTimeRange")
+        | &nbsp;Show time range
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
-    // b Time of day:
-    // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
   // legend-box.legend(:rows="legendRows")
 </template>
@@ -36,13 +42,13 @@ import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
-import TimeSlider from '@/components/TimeSlider.vue'
+import TimeSlider from '@/components/TimeSlider2.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
 const COLOR_CATEGORIES = 16
-
+/*
 const vegaChart: any = {
   $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
   description: 'A simple bar chart with embedded data.',
@@ -55,27 +61,7 @@ const vegaChart: any = {
     y: { field: 'Trips From', type: 'quantitative' },
   },
 }
-
-proj4.defs([
-  [
-    // south africa
-    'EPSG:2048',
-    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
-  ],
-  [
-    // berlin
-    'EPSG:31468',
-    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
-  ],
-  [
-    // cottbus
-    'EPSG:25833',
-    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
-  ],
-])
-
-// aliases
-proj4.defs('DK4', proj4.defs('EPSG:31468'))
+*/
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -124,6 +110,7 @@ export default class AggregateOD extends Vue {
   private marginals: any = {}
   private hoveredStateId: any = 0
 
+  private showTimeRange = true
   private isOrigin: boolean = true
   private selectedCentroid = 0
   private maxZonalTotal: number = 0
@@ -320,7 +307,7 @@ export default class AggregateOD extends Vue {
     for (let i = 0; i < 24; i++) {
       values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
     }
-    vegaChart.data.values = values
+    // vegaChart.data.values = values
     // vegaEmbed('#mychart', vegaChart)
 
     this.fadeUnselectedLinks(id)
@@ -736,9 +723,8 @@ h3 {
   font-size: 16px;
 }
 
-h4,
-p {
-  margin: 0px 10px;
+h4 {
+  margin-left: 3px;
 }
 
 #container {
@@ -795,6 +781,7 @@ p {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
+  margin-bottom: 2rem;
 }
 
 .project-summary-block {
@@ -810,10 +797,9 @@ p {
   flex-direction: column;
   width: 16rem;
   height: 100vh;
-  background-color: #eeeeffbb;
+  background-color: #eeeeffdd;
   margin: 0px 0px;
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
-  text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 3;
   opacity: 1;
@@ -830,10 +816,10 @@ p {
   }
 }
 
-.routeList {
-  width: 16rem;
-  height: 100%;
-  overflow-y: auto;
+.widgets {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 0.5rem;
 }
 
 .status-blob p {
@@ -848,11 +834,32 @@ p {
 }
 
 .buttons-bar {
-  margin: auto 0.5rem 0.5rem 0.5rem;
+  text-align: center;
 }
 
 .buttons-bar button {
-  width: 48%;
-  margin-right: 2px;
+  width: 45%;
+  margin-right: 3px;
+}
+
+.time-slider {
+  background-color: white;
+  border: solid 1px;
+  border-color: #ccc;
+  border-radius: 4px;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
+  margin: 1.3rem 5px auto 5px;
+}
+
+.heading {
+  text-align: left;
+  color: black;
+  margin-top: 2rem;
+}
+
+.checkbox {
+  font-size: 12px;
+  margin-top: 0.5rem;
+  margin-left: 0.5rem;
 }
 </style>
