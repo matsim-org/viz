@@ -26,6 +26,7 @@ proj4.defs([
 
 // aliases for existing definitions here
 proj4.defs('DK4', proj4.defs('EPSG:31468'))
+proj4.defs('GK4', proj4.defs('EPSG:31468'))
 
 // aliases for common cities
 proj4.defs('Cottbus', proj4.defs('EPSG:25833'))
