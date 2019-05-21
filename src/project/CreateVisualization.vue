@@ -47,8 +47,8 @@ modal(@close-requested="cancel()")
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.button.negative(@click="cancel()") Cancel
-          button.button.is-link.accent(@click="createVisualization()") Create
+          button.button.is-rounded.negative(@click="cancel()") Cancel
+          button.button.is-rounded.is-link.accent(@click="createVisualization()") Create
 </template>
 
 <script lang="ts">
@@ -136,6 +136,10 @@ export default class CreateVisualizationViewModel extends Vue {
 
     this.selectedVizType = chosenViz
     this.onVizTypeChanged(this.selectedVizType)
+
+    // fill in title & description
+    if (viz.title) this.title = viz.title
+    if (viz.properties && viz.properties.description) this.description = viz.properties.description
 
     // fill in parameters
     for (const p in viz.parameters) {
