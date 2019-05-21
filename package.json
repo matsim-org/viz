@@ -48,7 +48,7 @@
     "vue-drag-drop": "^1.1.4",
     "vue-property-decorator": "^7.2.0",
     "vue-router": "^3.0.2",
-    "vue-slider-component": "^2.8.12",
+    "vue-slider-component": "^3.0.31",
     "vue2-dropzone": "^3.5.2",
     "xml2js": "^0.4.19"
   },

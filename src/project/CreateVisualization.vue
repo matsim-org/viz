@@ -1,5 +1,5 @@
 <template lang="pug">
-modal(v-on:close-requested="cancel()")
+modal(@close-requested="cancel()")
     div(slot="header") {{editVisualization ? 'Edit' : 'Create New'}} Visualization
 
     div(slot="content")
@@ -15,7 +15,7 @@ modal(v-on:close-requested="cancel()")
             .field
               label.label Title
               .control
-                input.input(type="text" v-model="title")
+                input.input(type="text" v-model="title" v-focus)
             .field
               label.label Description
               .control
@@ -47,8 +47,8 @@ modal(v-on:close-requested="cancel()")
         div(v-if="isRequesting")
           .ui.active.small.inline.loader
         div(v-else)
-          button.button.negative(v-on:click="cancel()") Cancel
-          button.button.is-link.accent(v-on:click="createVisualization()") Create
+          button.button.negative(@click="cancel()") Cancel
+          button.button.is-link.accent(@click="createVisualization()") Create
 </template>
 
 <script lang="ts">
