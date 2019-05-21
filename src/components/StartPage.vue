@@ -90,6 +90,8 @@ export default class StartPage extends Vue {
   }
 
   public async created() {
+    if (!this.projectStore) return
+
     this.projectState = this.projectStore.State
 
     try {

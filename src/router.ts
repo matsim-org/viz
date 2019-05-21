@@ -65,7 +65,6 @@ export default class AppRouter {
           path: '/aggregate-od/:projectId/:vizId',
           name: 'AggregateOD',
           component: AggregateOD,
-          meta: { authRequired: true },
           props: route => {
             return {
               vizId: route.params.vizId,
@@ -79,7 +78,6 @@ export default class AppRouter {
           path: '/sankey/:projectId/:vizId',
           name: 'SankeyDiagram',
           component: SankeyDiagram,
-          meta: { authRequired: true },
           props: route => {
             return {
               vizId: route.params.vizId,
