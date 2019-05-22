@@ -4,12 +4,12 @@
         .spinnerContainer(v-if="isLoading")
             spinner
         .visualizations(v-else)
-            p.nothing(v-if="numberOfVisibleVisualizations == 0") No public visualizations for this project.
+            p.nothing(v-if="visualizationsWithoutFrameAnimation.length == 0") No public visualizations for this project.
             .visualization-item(
-                v-for="viz in project.visualizations"
+                v-for="viz in visualizationsWithoutFrameAnimation"
                 :key="viz.id"
                 @click="$emit('viz-selected', viz)")
-              viz-thumbnail(v-if="viz.type != 'frame-animation'" :viz="viz")
+              viz-thumbnail(:viz="viz")
 </template>
 
 <script lang="ts">
@@ -42,8 +42,8 @@ export default class ProjectListItem extends Vue {
     }
   }
 
-  public get numberOfVisibleVisualizations() {
-    return this.project.visualizations.filter(v => v.type !== 'frame-animation').length
+  public get visualizationsWithoutFrameAnimation() {
+    return this.project.visualizations.filter(v => v.type !== 'frame-animation')
   }
 }
 </script>
