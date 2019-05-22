@@ -8,7 +8,7 @@
                 v-for="viz in project.visualizations"
                 :key="viz.id"
                 @click="$emit('viz-selected', viz)")
-              viz-thumbnail(:viz="viz")
+              viz-thumbnail(v-if="viz.type != 'frame-animation'" :viz="viz")
 </template>
 
 <script lang="ts">

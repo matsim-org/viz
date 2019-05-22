@@ -165,7 +165,7 @@ export default class StartPage extends Vue {
 }
 
 .start-page-content {
-  padding: 0rem 3rem;
+  padding: 0rem 3rem 2rem 3rem;
   overflow-y: auto;
   max-width: 65rem;
   margin: auto;
