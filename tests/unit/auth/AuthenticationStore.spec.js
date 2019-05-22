@@ -23,7 +23,14 @@ describe('AuthenticationStore', () => {
     authStore.logOut()
 
     expect(fetchMock.lastUrl()).toBe(Config.authServer + '/logout')
-    expect(authStore.state.idToken).toEqual({})
+    expect(authStore.state.idToken).toEqual({
+      exp: 0,
+      iat: 0,
+      iss: new URL('https://issuer.url'),
+      jti: '',
+      nonce: '',
+      sub: '',
+    })
     expect(authStore.state.accessToken).toBe('')
     expect(authStore.state.status).toBe(AuthenticationStatus.NotAuthenticated)
     expect(sessionStorage.setItem).toHaveBeenCalledTimes(1)

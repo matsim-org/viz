@@ -58,7 +58,7 @@ async function setUpProjectStore() {
 
   const projectStore = new ProjectStore(fileApi, uploadStore)
   // fill the store with some projects
-  await projectStore.fetchProjects()
+  await projectStore.fetchPersonalProjects()
   expect(projectStore.State.projects.length).toEqual(2)
   return projectStore
 }

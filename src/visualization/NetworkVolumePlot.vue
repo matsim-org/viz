@@ -27,7 +27,7 @@ SharedStore.addVisualizationType({
 
 // store is the component data store -- the state of the component.
 const store: any = {
-  loadingText: 'MATSim Volume Plot',
+  loadingText: 'Network Volume Plot',
   visualization: null,
   project: {},
   api: FileAPI,
@@ -98,7 +98,7 @@ async function loadNetwork() {
   try {
     const ROAD_NET = store.visualization.inputFiles.geoJson.fileEntry.id
     console.log({ ROAD_NET, PROJECT: store.projectId })
-    store.loadingText = 'Loading network...'
+    // store.loadingText = 'Loading network...'
     // get the blob data
     const roadBlob = await store.api.downloadFile(ROAD_NET, store.projectId)
     let road = await readBlob.text(roadBlob)
@@ -220,7 +220,7 @@ function clickedOnTaz(e: MapElement) {
 
 <style scoped>
 #container {
-  background-color: #fff;
+  background-color: black;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto;
@@ -233,7 +233,7 @@ function clickedOnTaz(e: MapElement) {
 #mymap {
   width: 100%;
   height: 100%;
-  background-color: white;
+  background-color: black;
   overflow: hidden;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
@@ -241,13 +241,21 @@ function clickedOnTaz(e: MapElement) {
 }
 
 .status-blob {
-  background-color: #ccc;
-  opacity: 0.7;
-  margin: auto 0;
-  padding: 15px 0px;
-  text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
+  background-color: #222;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
+  box-shadow: 0 0 8px #00000040;
+  opacity: 0.9;
+  margin: auto 0px auto -10px;
+  padding: 3rem 0px;
+  text-align: center;
   z-index: 2;
+}
+
+.status-blob h2 {
+  color: #ffa;
+  font-weight: normal;
 }
 </style>

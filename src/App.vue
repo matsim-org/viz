@@ -93,7 +93,7 @@ h6 {
 }
 
 .left-nav-strip {
-  width: 3.5rem;
+  width: 3.75rem;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 0.5rem 0rem 0.5rem 0rem;

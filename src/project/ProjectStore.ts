@@ -2,6 +2,7 @@ import FileAPI from '@/communication/FileAPI'
 
 import UploadStore from './UploadStore'
 import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
+import { stringify } from 'querystring'
 
 export interface ProjectState {
   projects: Project[]
@@ -28,10 +29,25 @@ export default class ProjectStore {
     uploadStore.FileUploadedEvent.addEventHandler(fileEntry => this.addFileEntry(fileEntry))
   }
 
-  public async fetchProjects() {
+  public async fetchPersonalProjects() {
     this.state.isFetching = true
     try {
-      this.state.projects = await this.api.fetchAllPersonalProjects()
+      const personalProjects = await this.api.fetchAllPersonalProjects()
+      personalProjects.forEach(project => {
+        if (this.state.projects.findIndex(p => p.id === project.id) < 0) this.state.projects.push(project)
+      })
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async fetchPublicProjects() {
+    this.state.isFetching = true
+    try {
+      const projects = await this.api.fetchAllPublicProjects()
+      projects.forEach(project => {
+        if (this.state.projects.findIndex(p => p.id === project.id) < 0) this.state.projects.push(project)
+      })
     } finally {
       this.state.isFetching = false
     }

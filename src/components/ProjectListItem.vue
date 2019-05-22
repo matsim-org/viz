@@ -1,28 +1,24 @@
 <template lang="pug">
     li.project
         h5.title.is-5 {{ project.name }}
-        .visualizations(v-if="!isLoading")
+        .spinnerContainer(v-if="isLoading")
+            spinner
+        .visualizations(v-else)
             .visualization-item(
-                    v-for="viz in project.visualizations"
-                    v-bind:key="viz.id"
-                    v-on:click="$emit('viz-selected', viz)")
-                .card.hoverable
-                    .card-image
-                    .card-content
-                        h6.card-title {{viz.type}}
-                        .card-subtitle {{viz.type}}: {{viz.id.substring(0,5)}}
-        .spinnerContainer(v-else)
-          spinner
+                v-for="viz in project.visualizations"
+                :key="viz.id"
+                @click="$emit('viz-selected', viz)")
+              viz-thumbnail(:viz="viz")
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import Spinner from '@/components/Spinner.vue'
 import { Project } from '@/entities/Entities'
+import Spinner from '@/components/Spinner.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ProjectStore from '@/project/ProjectStore'
 
-@Component({ components: { spinner: Spinner } })
+@Component({ components: { spinner: Spinner, 'viz-thumbnail': VizThumbnail } })
 export default class ProjectListItem extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
@@ -59,13 +55,13 @@ export default class ProjectListItem extends Vue {
   margin-bottom: 2rem;
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, 240px);
+  grid-template-columns: repeat(auto-fill, 325px);
 }
 
 .visualization-item {
   display: table-cell;
   vertical-align: top;
-  width: 240px;
+  width: 325px;
   padding: -20px;
 }
 

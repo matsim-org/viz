@@ -1,29 +1,53 @@
 <template lang="pug">
 .page-content
   .start-page-content
-    h2.title.is-2 Welcome to MATSim-Viz!
-    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs.
-    p.info This tool is being developed by the VSP Department at the Technische Universität in Berlin, Germany.
+    .matsim-logo-panel
+      img.matsim-logo(src='/matsim-logo-white.png')
+    .masthead
+      .info-left
+        h2.title.is-2 Welcome to MATSim-Viz!
+        p You've found the "MATSim Visualizer", an experimental web-based visualization platform for exploring MATSim outputs.&nbsp;
+          a(href="https://matsim.org") MATSim
+          |  is an open-source framework for implementing large-scale agent-based transport simulations.
+      .info-right
+        img.vsp-logo(src='/vsp-logo.png')
+        p Transport Systems Planning<br/>and Transport Telematics
+        p Technische Universität<br/>Berlin, Germany
+        p: a(href="https://vsp.tu-berlin.de") vsp.tu-berlin.de
 
     .about(v-if="isAuthenticated")
       h4.title.is-4 My Projects
-      my-projects( :projectStore="projectStore")
+      list-header(v-on:btnClicked="onCreateClicked" title="" btnTitle="New Project")
 
-    //.about
-    //  h4.title.is-4 Public Gallery
-    //  p.info Researchers have made these results available on the open web. Have a look around!
+      div.emptyMessage(v-if="personalProjects.length === 0")
+        p.info You don't have any projects yet. Create one!
+      .projectList(v-else)
+        list-element(v-for="project in personalProjects"
+                  v-bind:key="project.id"
+                  v-on:itemClicked="onProjectSelected(project)")
+          span(slot="title") {{project.name}}
+          span(slot="content") {{project.id}}
+          button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
 
-    //ul.projects
-    //  .project-row(v-for="project in projects" :key="project.id")
-    //    project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
-    //                    :project="project"
-    //                    :project-store="projectStore"
-    //                    @viz-selected="onVizSelected") {{ project.name }}
+    .about
+      h4.title.is-4 Visualization Gallery
+      p.info The following example visualizations are available without a login. Note these are for illustrative purposes only. No real scenario data is depicted.
+
+      ul.projects
+      .project-row(v-for="project in publicProjects" :key="project.id")
+        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
+                        :project="project"
+                        :project-store="projectStore"
+                        @viz-selected="onVizSelected") {{ project.name }}
+
+      p.info If you have a MATSim-Viz login, you may have access to additional projects and visualizations.
 
     .about
       h4.title.is-4 About MATSim
       p.info You can find out more about MATSim at&nbsp;
         a(href="https://matsim.org" target="_blank") https://matsim.org
+
+  create-project(v-if="showCreateProject" v-on:close="onCreateProjectClosed" v-bind:project-store="projectStore")
 </template>
 
 <script lang="ts">
@@ -32,12 +56,21 @@ import AuthenticationStore, { AuthenticationStatus } from '@/auth/Authentication
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
-import Projects from '@/project/Projects.vue'
-import ProjectStore, { ProjectState } from '@/project/ProjectStore'
-import { Visualization } from '@/entities/Entities'
+import ListHeader from '@/components/ListHeader.vue'
+import CreateProject from '@/project/CreateProject.vue'
+import ProjectStore, { ProjectState, ProjectVisibility } from '@/project/ProjectStore'
+import { Visualization, PermissionType, Project } from '@/entities/Entities'
 import { Vue, Component, Prop } from 'vue-property-decorator'
+import ListElementVue from './ListElement.vue'
 
-@Component({ components: { 'project-list-item': ProjectListItem, 'my-projects': Projects } })
+@Component({
+  components: {
+    'project-list-item': ProjectListItem,
+    'list-header': ListHeader,
+    'list-element': ListElementVue,
+    'create-project': CreateProject,
+  },
+})
 export default class StartPage extends Vue {
   @Prop({ type: ProjectStore, required: true })
   private projectStore!: ProjectStore
@@ -45,28 +78,40 @@ export default class StartPage extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
 
-  // this assignment is necessary to make vue watch the state
-  private projectState: any = {}
+  private showCreateProject = false
+
+  // this assignment is necessary to make vue watch the state. Later we switch it out with the actual
+  // state of the projectStore
+  private projectState: ProjectState = {
+    projects: [],
+    selectedProject: {} as Project,
+    isFetching: false,
+  }
 
   private get isAuthenticated() {
     if (!this.authStore) return false
     return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
-  private get projects() {
-    if (!this.projectState) return []
-    return this.projectState.projects
+  private get publicProjects() {
+    return this.projectState.projects.filter(project => this.isPublicProject(project))
+  }
+
+  private get personalProjects() {
+    return this.projectState.projects.filter(project => this.isPersonalProject(project))
   }
 
   public async created() {
     if (!this.projectStore) return
 
-    try {
-      this.projectState = this.projectStore.State
+    this.projectState = this.projectStore.State
 
+    try {
+      const publicProjectsPromise = this.projectStore.fetchPublicProjects()
+      if (this.isAuthenticated) await this.projectStore.fetchPersonalProjects()
       // start fetching data as soon as possible. Hence do this in 'created' callback
-      await this.projectStore.fetchProjects()
-      this.projects.forEach((project: any) => this.projectStore.fetchVisualizationsForProject(project))
+      await publicProjectsPromise
+      this.publicProjects.forEach((project: any) => this.projectStore.fetchVisualizationsForProject(project))
     } catch (error) {
       console.log(error)
     }
@@ -81,6 +126,36 @@ export default class StartPage extends Vue {
   private onVizSelected(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })
   }
+
+  private onProjectSelected(project: Project) {
+    this.$router.push({ path: `/project/${project.id}` })
+  }
+
+  private onCreateClicked() {
+    this.showCreateProject = true
+  }
+
+  private onCreateProjectClosed() {
+    this.showCreateProject = false
+  }
+
+  private async onDeleteProject(project: Project) {
+    try {
+      await this.projectStore.deleteProject(project)
+    } catch (error) {
+      console.log('error')
+    }
+  }
+
+  private isPublicProject(project: Project) {
+    return project.permissions.findIndex(permission => permission.agent.authId === 'allUsers') >= 0
+  }
+
+  private isPersonalProject(project: Project) {
+    return (
+      project.permissions.findIndex(permission => permission.agent.authId === this.authStore.state.idToken.sub) >= 0
+    )
+  }
 }
 </script>
 
@@ -90,17 +165,16 @@ export default class StartPage extends Vue {
 }
 
 .start-page-content {
-  padding: 3rem 3rem;
+  padding: 0rem 3rem;
   overflow-y: auto;
-  max-width: 60rem;
+  max-width: 65rem;
   margin: auto;
-  border-top: 2rem solid #cc5427;
 }
 
 .about {
   margin-top: 4rem;
-  padding-top: 0.25rem;
-  border-top: 0.2rem solid #479ccc;
+  padding-top: 0rem;
+  border-top: 0.15rem solid #479ccc;
 }
 
 .about h4 {
@@ -113,5 +187,64 @@ export default class StartPage extends Vue {
 
 .projects {
   margin-top: 2rem;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: row;
+  margin-top: 3rem;
+}
+
+.vsp-logo {
+  margin-left: auto;
+  width: 300px;
+}
+
+.info-right {
+  border-left: solid 1px #ddd;
+  padding: 0.25rem 0rem 0.25rem 1rem;
+  margin-left: 1rem;
+  margin-right: 0.25rem;
+  width: 300px;
+  text-align: right;
+  font-size: 12px;
+}
+
+p {
+  margin-top: 8px;
+}
+
+.info-right p {
+  margin-top: 8px;
+  line-height: 1.1;
+  width: 200px;
+}
+
+a {
+  color: #479ccc;
+}
+
+a:hover {
+  color: #b50e1f;
+}
+
+.info-right a {
+  color: #c50e1f;
+}
+
+.info-right a:hover {
+  color: #479ccc;
+}
+
+.matsim-logo-panel {
+  background-color: #479ccc;
+  height: 4.5rem;
+}
+
+.matsim-logo {
+  margin-right: 1rem;
+  margin-top: 1rem;
+  float: right;
+  height: 2.5rem;
 }
 </style>
