@@ -1,9 +1,19 @@
 <template lang="pug">
 .page-content
   .start-page-content
-    h2.title.is-2 Welcome to MATSim-Viz!
-    p.info You've found the MATSim Visualizer, an experimental web-based visualization platform for exploring MATSim outputs.
-    p.info This tool is being developed by the VSP Department at the Technische Universität in Berlin, Germany.
+    .matsim-logo-panel
+      img.matsim-logo(src='/matsim-logo-white.png')
+    .masthead
+      .info-left
+        h2.title.is-2 Welcome to MATSim-Viz!
+        p You've found the "MATSim Visualizer", an experimental web-based visualization platform for exploring MATSim outputs.&nbsp;
+          a(href="https://matsim.org") MATSim
+          |  is an open-source framework for implementing large-scale agent-based transport simulations.
+      .info-right
+        img.vsp-logo(src='/vsp-logo.png')
+        p Transport Systems Planning<br/>and Transport Telematics
+        p Technische Universität<br/>Berlin, Germany
+        p: a(href="https://vsp.tu-berlin.de") vsp.tu-berlin.de
 
     .about(v-if="isAuthenticated")
       h4.title.is-4 My Projects
@@ -20,15 +30,17 @@
           button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
 
     .about
-     h4.title.is-4 Public Projects
-     p.info Researchers have made these results available on the open web. Have a look around!
+      h4.title.is-4 Visualization Gallery
+      p.info The following example visualizations are available without a login. Note these are for illustrative purposes only. No real scenario data is depicted.
 
-    ul.projects
-     .project-row(v-for="project in publicProjects" :key="project.id")
-       project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
-                       :project="project"
-                       :project-store="projectStore"
-                       @viz-selected="onVizSelected") {{ project.name }}
+      ul.projects
+      .project-row(v-for="project in publicProjects" :key="project.id")
+        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
+                        :project="project"
+                        :project-store="projectStore"
+                        @viz-selected="onVizSelected") {{ project.name }}
+
+      p.info If you have a MATSim-Viz login, you may have access to additional projects and visualizations.
 
     .about
       h4.title.is-4 About MATSim
@@ -90,6 +102,8 @@ export default class StartPage extends Vue {
   }
 
   public async created() {
+    if (!this.projectStore) return
+
     this.projectState = this.projectStore.State
 
     try {
@@ -151,17 +165,16 @@ export default class StartPage extends Vue {
 }
 
 .start-page-content {
-  padding: 3rem 3rem;
+  padding: 0rem 3rem;
   overflow-y: auto;
-  max-width: 60rem;
+  max-width: 65rem;
   margin: auto;
-  border-top: 2rem solid #cc5427;
 }
 
 .about {
   margin-top: 4rem;
-  padding-top: 0.25rem;
-  border-top: 0.2rem solid #479ccc;
+  padding-top: 0rem;
+  border-top: 0.15rem solid #479ccc;
 }
 
 .about h4 {
@@ -174,5 +187,64 @@ export default class StartPage extends Vue {
 
 .projects {
   margin-top: 2rem;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: row;
+  margin-top: 3rem;
+}
+
+.vsp-logo {
+  margin-left: auto;
+  width: 300px;
+}
+
+.info-right {
+  border-left: solid 1px #ddd;
+  padding: 0.25rem 0rem 0.25rem 1rem;
+  margin-left: 1rem;
+  margin-right: 0.25rem;
+  width: 300px;
+  text-align: right;
+  font-size: 12px;
+}
+
+p {
+  margin-top: 8px;
+}
+
+.info-right p {
+  margin-top: 8px;
+  line-height: 1.1;
+  width: 200px;
+}
+
+a {
+  color: #479ccc;
+}
+
+a:hover {
+  color: #b50e1f;
+}
+
+.info-right a {
+  color: #c50e1f;
+}
+
+.info-right a:hover {
+  color: #479ccc;
+}
+
+.matsim-logo-panel {
+  background-color: #479ccc;
+  height: 4.5rem;
+}
+
+.matsim-logo {
+  margin-right: 1rem;
+  margin-top: 1rem;
+  float: right;
+  height: 2.5rem;
 }
 </style>

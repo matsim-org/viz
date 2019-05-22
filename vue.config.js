@@ -18,7 +18,7 @@ module.exports = {
     output: {
       globalObject: 'self',
     },
-    devtool: 'source-map',
+    // devtool: 'source-map',
     module: {
       rules: [
         {
