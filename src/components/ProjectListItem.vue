@@ -4,6 +4,7 @@
         .spinnerContainer(v-if="isLoading")
             spinner
         .visualizations(v-else)
+            p.nothing(v-if="numberOfVisibleVisualizations == 0") No public visualizations for this project.
             .visualization-item(
                 v-for="viz in project.visualizations"
                 :key="viz.id"
@@ -39,6 +40,10 @@ export default class ProjectListItem extends Vue {
     } finally {
       this.isLoading = false
     }
+  }
+
+  public get numberOfVisibleVisualizations() {
+    return this.project.visualizations.filter(v => v.type !== 'frame-animation').length
   }
 }
 </script>
@@ -79,6 +84,13 @@ export default class ProjectListItem extends Vue {
 .card-image {
   background-color: #cc9547;
   height: 2rem;
+}
+
+.nothing {
+  margin-top: -1rem;
+  color: #444;
+  font-size: 14px;
+  font-style: italic;
 }
 </style>
 
