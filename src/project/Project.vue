@@ -31,7 +31,12 @@
 
           .viz-table(v-else)
             .viz-item(v-for="viz in sortedVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
-              viz-thumbnail(:viz="viz" @edit="onEditViz(viz)" @remove="onRemoveViz(viz)" @share="onShareViz(viz)")
+              viz-thumbnail(:viz="viz"
+                            :showActionButtons="true"
+                            @edit="onEditViz(viz)"
+                            @remove="onRemoveViz(viz)"
+                            @share="onShareViz(viz)"
+              )
 
       section
         list-header(v-on:btnClicked="onAddFiles" title="Project Files" btnTitle="Add File")

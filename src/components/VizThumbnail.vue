@@ -7,7 +7,7 @@
   .card-bottom
     .card-endnotes {{viz.type}}
     .card-endnotes {{timestamp}}
-  .card-actions
+  .card-actions(v-if="showActionButtons")
     a(title="Remove" @click.stop="$emit('remove')"): i.fas.fa-times
     a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
     // a(title="Share..." @click.stop="$emit('share')"): i.fas.fa-share
@@ -20,6 +20,9 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 export default class VizThumbnail extends Vue {
   @Prop({ required: true })
   private viz: any
+
+  @Prop()
+  private showActionButtons?: boolean
 
   private get description() {
     if (!this.viz.properties) return ''
@@ -51,7 +54,7 @@ export default class VizThumbnail extends Vue {
 
 .card:hover {
   box-shadow: 1px 2px 5px 1px rgba(0, 0, 50, 0.4);
-  border-top: solid 2px #4c20e9;
+  border-top: solid 2px #b50e1f;
   cursor: pointer;
 }
 
@@ -78,7 +81,7 @@ export default class VizThumbnail extends Vue {
 .card .card-top .card-title {
   font-size: 1.1rem;
   font-weight: bold;
-  line-height: 1.1rem;
+  line-height: 1.2rem;
   margin-bottom: 0.5rem;
   margin-right: 0.5rem;
 }
