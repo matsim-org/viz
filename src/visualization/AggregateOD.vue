@@ -5,7 +5,7 @@
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
     .widgets
       h4.heading Show:
       .buttons-bar
@@ -15,10 +15,10 @@
         button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destination
 
       h4.heading Time of day:
-      time-slider.time-slider
-      span.checkbox
-        input(type="checkbox" v-model="showTimeRange")
-        | &nbsp;Show time range
+      time-slider.time-slider(:stops='headers' @change='changedSlider')
+      // span.checkbox
+      //   input(type="checkbox" v-model="showTimeRange")
+      //   | &nbsp;Show range
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
@@ -215,9 +215,23 @@ export default class AggregateOD extends Vue {
         const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
         const fade = 0.7
 
+        const properties: any = {
+          id: id,
+          orig: link.orig,
+          dest: link.dest,
+          'All >>': link.daily,
+          daily: link.daily,
+          color,
+          fade,
+        }
+
+        link.values.forEach((value: number, i: number) => {
+          properties[this.headers[i + 1]] = value ? value : 0
+        })
+
         const feature: any = {
           type: 'Feature',
-          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color, fade },
+          properties,
           geometry: {
             type: 'LineString',
             coordinates: [origCoord, destCoord],
@@ -241,8 +255,8 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['max', 1, ['get', 'daily']],
-          'line-offset': ['*', 0.5, ['get', 'daily']],
+          'line-width': ['*', 2, ['get', 'daily']],
+          'line-offset': ['*', 1, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
       },
@@ -367,17 +381,15 @@ export default class AggregateOD extends Vue {
 
   private convertRegionColors(geojson: FeatureCollection) {
     for (const feature of geojson.features) {
-      if (!feature.properties) {
-        continue
-      } else {
-        const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
-        const ratio = daily / this.maxZonalTotal
+      if (!feature.properties) continue
 
-        let blue = 128 + 127 * (1.0 - ratio)
-        if (!blue) blue = 255
+      const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
+      const ratio = daily / this.maxZonalTotal
 
-        feature.properties.blue = blue
-      }
+      let blue = 128 + 127 * (1.0 - ratio)
+      if (!blue) blue = 255
+
+      feature.properties.blue = blue
     }
   }
 
@@ -612,7 +624,7 @@ export default class AggregateOD extends Vue {
     const headers = lines[0].split(separator).map(a => a.trim())
     this.rowName = headers[0]
     this.colName = headers[1]
-    this.headers = headers.slice(2)
+    this.headers = ['All >>'].concat(headers.slice(2))
 
     console.log(this.headers)
 
@@ -673,9 +685,9 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'line',
         paint: {
-          'line-color': '#66c',
-          'line-opacity': 1.0,
-          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 4, 0],
+          'line-color': '#66f',
+          'line-opacity': 0.5,
+          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 3, 1],
         },
       },
       'centroid-layer'
@@ -726,6 +738,8 @@ export default class AggregateOD extends Vue {
 
   private changedSlider(value: any) {
     console.log({ value })
+    this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, ['get', value]])
+    this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, ['get', value]])
   }
 }
 
@@ -856,6 +870,7 @@ h4 {
 
 .buttons-bar {
   text-align: center;
+  margin-top: 0.5rem;
 }
 
 .buttons-bar button {
@@ -868,8 +883,7 @@ h4 {
   border: solid 1px;
   border-color: #ccc;
   border-radius: 4px;
-  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
-  margin: 1.3rem 5px auto 5px;
+  margin: 0.5rem 0px auto 0px;
 }
 
 .heading {

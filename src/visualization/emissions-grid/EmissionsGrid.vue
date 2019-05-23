@@ -48,7 +48,6 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
 
-/*
 sharedStore.addVisualizationType({
   typeName: 'emissions',
   prettyName: 'Emissions Grid',
@@ -56,7 +55,6 @@ sharedStore.addVisualizationType({
   requiredFileKeys: ['Events', 'Network'],
   requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
 })
-*/
 
 interface MapElement {
   lngLat: LngLat
