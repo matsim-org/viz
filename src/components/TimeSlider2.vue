@@ -92,11 +92,6 @@ export default class TimeSlider extends Vue {
   padding: 0.5rem 0.5rem 2rem 0.5rem;
 }
 
-.vue-slider-mark-label {
-  color: red;
-  font-size: 8px;
-}
-
 .time-slider {
   margin-left: 0.7rem;
   margin-bottom: 0.2rem;
