@@ -9,8 +9,10 @@
     .widgets
       h4.heading Show:
       .buttons-bar
-        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
-        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+        // {{rowName}}
+        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origin
+        // {{colName}}
+        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destination
 
       h4.heading Time of day:
       time-slider.time-slider
@@ -110,6 +112,10 @@ export default class AggregateOD extends Vue {
   private marginals: any = {}
   private hoveredStateId: any = 0
 
+  private rowName: string = ''
+  private colName: string = ''
+  private headers: string[] = []
+
   private showTimeRange = true
   private isOrigin: boolean = true
   private selectedCentroid = 0
@@ -146,8 +152,6 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
-
-    if (SharedStore.debug) console.log(this.visualization)
   }
 
   private get legendRows() {
@@ -589,20 +593,21 @@ export default class AggregateOD extends Vue {
 
   private processHourlyData(csvData: string) {
     const lines = csvData.split('\n')
-    if (lines[0].trim().split(';').length !== 26) {
-      this.loadingText = 'CSV data does not have O,D, and then 24 hourly columns.'
-      return
-    }
+    const separator = lines[0].indexOf(';') > 0 ? ';' : ','
 
-    this.loadingText = 'Analyzing hourly data...'
+    this.loadingText = 'Processing hourly data...'
 
     // data is in format: o,d, value[1], value[2], value[3]...
+    const headers = lines[0].split(separator).map(a => a.trim())
+    this.rowName = headers[0]
+    this.colName = headers[1]
+    this.headers = headers.slice(2)
+
+    console.log(this.headers)
+
     for (const row of lines.slice(1)) {
-      const columns = row.split(';')
-      if (columns.length !== 26) continue
-      const values = columns.slice(2).map(a => {
-        return parseFloat(a)
-      })
+      const columns = row.split(separator)
+      const values = columns.slice(2).map(a => parseFloat(a))
 
       // build zone matrix
       const i = columns[0]
@@ -610,14 +615,13 @@ export default class AggregateOD extends Vue {
       if (!this.zoneData[i]) this.zoneData[i] = {}
       this.zoneData[i][j] = values
 
-      // calculate daily values
-      const daily = values.slice(2).reduce((total, num) => {
-        return total + num
-      })
+      // calculate daily/total values
+      const daily = values.reduce((a, b) => a + b, 0)
+
       if (!this.dailyData[i]) this.dailyData[i] = {}
       this.dailyData[i][j] = daily
 
-      // save daily on the links too
+      // save total on the links too
       if (daily !== 0) {
         const rowName = String(columns[0]) + ':' + String(columns[1])
         this.linkData[rowName] = { orig: columns[0], dest: columns[1], daily, values }

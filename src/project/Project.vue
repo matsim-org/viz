@@ -155,6 +155,7 @@ export default class ProjectViewModel extends vueInstance {
   }
 
   private get sortedVisualizations() {
+    if (!this.project || !this.project.visualizations) return {}
     return this.project.visualizations.sort((a: any, b: any) => b.createdAt - a.createdAt)
   }
 
