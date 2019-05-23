@@ -290,6 +290,11 @@ export default class AggregateOD extends Vue {
     })
   }
 
+  private unselectAllCentroids() {
+    this.fadeUnselectedLinks(-1)
+    this.selectedCentroid = 0
+  }
+
   private clickedOnCentroid(e: any) {
     console.log({ CLICK: e })
 
@@ -299,6 +304,12 @@ export default class AggregateOD extends Vue {
     console.log(centroid)
 
     const id = centroid.id
+
+    // a second click on a centroid UNselects it.
+    if (id === this.selectedCentroid) {
+      this.unselectAllCentroids()
+      return
+    }
 
     this.selectedCentroid = id
 
@@ -707,9 +718,15 @@ export default class AggregateOD extends Vue {
     return line
   }
 
-  private pressedEscape() {}
+  private pressedEscape() {
+    this.unselectAllCentroids()
+  }
 
   private pressedArrowKey(delta: number) {}
+
+  private changedSlider(value: any) {
+    console.log({ value })
+  }
 }
 
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
