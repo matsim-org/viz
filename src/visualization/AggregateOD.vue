@@ -7,18 +7,18 @@
     .info-header
       h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
     .widgets
-      h4.heading Show:
+      h4.heading Time of day:
+      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
+      span.checkbox
+         input(type="checkbox" v-model="showTimeRange")
+         | &nbsp;Show range
+
+      h4.heading Show totals:
       .buttons-bar
         // {{rowName}}
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origin
         // {{colName}}
         button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destination
-
-      h4.heading Time of day:
-      time-slider.time-slider(:stops='headers' @change='changedSlider')
-      // span.checkbox
-      //   input(type="checkbox" v-model="showTimeRange")
-      //   | &nbsp;Show range
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
@@ -36,7 +36,7 @@ import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
 import proj4 from 'proj4'
 import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
@@ -49,7 +49,9 @@ import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
-const COLOR_CATEGORIES = 16
+const TOTAL_MSG = 'All >>'
+const FADED = 0.0 // 0.15
+
 /*
 const vegaChart: any = {
   $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
@@ -116,7 +118,8 @@ export default class AggregateOD extends Vue {
   private colName: string = ''
   private headers: string[] = []
 
-  private showTimeRange = true
+  private showTimeRange = false
+
   private isOrigin: boolean = true
   private selectedCentroid = 0
   private maxZonalTotal: number = 0
@@ -126,6 +129,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
+  private sliderValue: number[] = [0, 5]
   private projection!: string
   private hoverId: any
 
@@ -143,6 +147,11 @@ export default class AggregateOD extends Vue {
 
     await this.getVizDetails()
     this.setupMap()
+  }
+
+  @Watch('showTimeRange')
+  private clickedRange(useRange: boolean) {
+    console.log(useRange)
   }
 
   private async getVizDetails() {
@@ -219,15 +228,14 @@ export default class AggregateOD extends Vue {
           id: id,
           orig: link.orig,
           dest: link.dest,
-          'All >>': link.daily,
           daily: link.daily,
           color,
           fade,
         }
-
-        link.values.forEach((value: number, i: number) => {
-          properties[this.headers[i + 1]] = value ? value : 0
-        })
+        ;(properties[TOTAL_MSG] = link.daily),
+          link.values.forEach((value: number, i: number) => {
+            properties[this.headers[i + 1]] = value ? value : 0
+          })
 
         const feature: any = {
           type: 'Feature',
@@ -347,7 +355,7 @@ export default class AggregateOD extends Vue {
 
     for (const feature of this.spiderLinkFeatureCollection.features) {
       const endpoints = feature.properties.id.split(':')
-      let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : 0.15
+      let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : FADED
       if (id === -1) fade = 0.7
       feature.properties.fade = fade
     }
@@ -624,7 +632,7 @@ export default class AggregateOD extends Vue {
     const headers = lines[0].split(separator).map(a => a.trim())
     this.rowName = headers[0]
     this.colName = headers[1]
-    this.headers = ['All >>'].concat(headers.slice(2))
+    this.headers = [TOTAL_MSG].concat(headers.slice(2))
 
     console.log(this.headers)
 
@@ -673,7 +681,7 @@ export default class AggregateOD extends Vue {
         type: 'fill',
         paint: {
           'fill-color': ['rgb', ['get', 'blue'], ['get', 'blue'], 255],
-          'fill-opacity': 0.8,
+          'fill-opacity': 0.7,
         },
       },
       'road-primary'
@@ -737,13 +745,30 @@ export default class AggregateOD extends Vue {
   private pressedArrowKey(delta: number) {}
 
   private changedSlider(value: any) {
-    console.log({ value })
-    this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, ['get', value]])
-    this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, ['get', value]])
+    if (!this.showTimeRange) {
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, ['get', value]])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, ['get', value]])
+    } else {
+      const sumElements: any = ['+']
+
+      // build the summation expressions: e.g. ['+', ['get', '1'], ['get', '2']]
+      let include = false
+      for (const header of this.headers) {
+        if (header === value[0]) include = true
+
+        // don't double-count the total
+        if (header === TOTAL_MSG) continue
+
+        if (include) sumElements.push(['get', header])
+
+        if (header === value[1]) include = false
+      }
+
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, sumElements])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, sumElements])
+    }
   }
 }
-
-const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 </script>
 
 <style scoped>
@@ -855,6 +880,8 @@ h4 {
   display: flex;
   flex-direction: column;
   padding: 0px 0.5rem;
+  margin-top: auto;
+  margin-bottom: 1rem;
 }
 
 .status-blob p {
@@ -869,13 +896,15 @@ h4 {
 }
 
 .buttons-bar {
+  display: flex;
+  flex-direction: row;
   text-align: center;
-  margin-top: 0.5rem;
 }
 
 .buttons-bar button {
-  width: 45%;
-  margin-right: 3px;
+  flex-grow: 1;
+  width: 50%;
+  margin: 0px 2px;
 }
 
 .time-slider {
@@ -883,7 +912,7 @@ h4 {
   border: solid 1px;
   border-color: #ccc;
   border-radius: 4px;
-  margin: 0.5rem 0px auto 0px;
+  margin: 0rem 0px auto 0px;
 }
 
 .heading {
@@ -894,7 +923,9 @@ h4 {
 
 .checkbox {
   font-size: 12px;
-  margin-top: 0.5rem;
-  margin-left: 0.5rem;
+  margin-top: 0.25rem;
+  margin-left: auto;
+  margin-right: 0.5rem;
+  color: #24c;
 }
 </style>

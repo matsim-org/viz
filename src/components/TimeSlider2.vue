@@ -10,18 +10,24 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 @Component({ components: { 'vue-slider': vueSlider } })
 export default class TimeSlider extends Vue {
+  private TOTAL_MSG = 'All >>'
+
   @Prop()
   private initialTime!: number
 
   @Prop()
-  private stops!: ['All >>']
-  private sliderValue: any = 'All >>'
+  private useRange!: false
+
+  @Prop()
+  private stops!: any
+  private sliderValue: any = this.TOTAL_MSG
 
   private timeSlider = {
-    disabled: false,
     height: 6,
     piecewise: true,
     show: true,
+    'enable-cross': false,
+    minRange: 1,
     marks: [this.stops[0], this.stops[Math.floor(this.stops.length / 2)], this.stops[this.stops.length - 1]],
     contained: true,
     sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
@@ -47,6 +53,16 @@ export default class TimeSlider extends Vue {
     this.sliderValue = seconds
   }
 
+  @Watch('useRange')
+  private changeUseRange(useIt: boolean) {
+    if (useIt) {
+      this.sliderValue = [this.stops[0], this.stops[this.stops.length - 1]]
+    } else {
+      this.sliderValue = [this.stops[0]]
+    }
+    console.log('changed to: ' + this.sliderValue)
+  }
+
   @Watch('stops')
   private setStops(newStops: any) {
     console.log({ newStops })
@@ -54,14 +70,14 @@ export default class TimeSlider extends Vue {
   }
 
   @Watch('sliderValue')
-  private sliderChangedEvent(seconds: number) {
-    console.log(seconds)
-    this.$emit('change', seconds)
+  private sliderChangedEvent(result: any) {
+    console.log(result)
+    this.$emit('change', result)
   }
 
   private dataFunction() {
     return {
-      value: this.stops ? this.stops[0] : 0,
+      value: this.sliderValue,
       data: this.stops,
     }
   }
