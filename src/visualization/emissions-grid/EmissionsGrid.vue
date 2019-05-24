@@ -166,6 +166,7 @@ export default class EmissionsGrid extends Vue {
     if (result.ok) {
       try {
         const json = await result.json()
+        console.log({ json })
         return json
       } catch (e) {
         throw new Error(e)
@@ -287,10 +288,8 @@ export default class EmissionsGrid extends Vue {
   }
 
   private async loadData() {
-    console.log('1')
     const bins = await this.fetchEmissionsBins()
-    const sortedBins = bins.bins.sort((a: number, b: number) => a - b)
-    console.log('2')
+    const sortedBins = bins.sort((a: number, b: number) => a - b)
 
     // spawn transit helper web worker
     this._myWorker = await MyWorker.create({
