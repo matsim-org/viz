@@ -1,16 +1,6 @@
 <template lang="pug">
 .time-slider-main-content
   vue-slider.time-slider(v-bind="timeSlider" v-model="sliderValue")
-  .clock-labels
-    .hour 00
-    .hour 03
-    .hour 06
-    .hour 09
-    .hour 12
-    .hour 15
-    .hour 18
-    .hour 21
-    .hour 24
 </template>
 
 <script lang="ts">
@@ -18,16 +8,27 @@ import * as timeConvert from 'convert-seconds'
 import vueSlider from 'vue-slider-component'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
-@Component({ components: { 'vue-slider': vueSlider }, props: { initialTime: Number } })
+@Component({ components: { 'vue-slider': vueSlider } })
 export default class TimeSlider extends Vue {
-  private sliderValue: number = 0
+  private TOTAL_MSG = 'All >>'
+
+  @Prop()
+  private initialTime!: number
+
+  @Prop()
+  private useRange!: false
+
+  @Prop()
+  private stops!: any
+  private sliderValue: any = this.TOTAL_MSG
+
   private timeSlider = {
-    disabled: false,
-    height: 8,
-    min: 0,
-    max: 86399,
-    piecewise: false,
+    height: 6,
+    piecewise: true,
     show: true,
+    'enable-cross': false,
+    minRange: 1,
+    marks: [this.stops[0], this.stops[Math.floor(this.stops.length / 2)], this.stops[this.stops.length - 1]],
     contained: true,
     sliderStyle: [{ backgroundColor: '#f05b72' }, { backgroundColor: '#3498db' }],
     processStyle: {
@@ -35,10 +36,8 @@ export default class TimeSlider extends Vue {
       borderColor: '#f05b72',
     },
     tooltip: 'always',
-    'tooltip-placement': 'top',
-    'tooltip-formatter': (index: number) => {
-      return this.convertSecondsToClockTimeMinutes(index)
-    },
+    'tooltip-placement': 'bottom',
+    data: this.stops,
   }
 
   private get clockTime() {
@@ -54,9 +53,33 @@ export default class TimeSlider extends Vue {
     this.sliderValue = seconds
   }
 
+  @Watch('useRange')
+  private changeUseRange(useIt: boolean) {
+    if (useIt) {
+      this.sliderValue = [this.stops[0], this.stops[this.stops.length - 1]]
+    } else {
+      this.sliderValue = [this.stops[0]]
+    }
+    console.log('changed to: ' + this.sliderValue)
+  }
+
+  @Watch('stops')
+  private setStops(newStops: any) {
+    console.log({ newStops })
+    this.stops = newStops
+  }
+
   @Watch('sliderValue')
-  private sliderChangedEvent(seconds: number) {
-    this.$emit('change', seconds)
+  private sliderChangedEvent(result: any) {
+    console.log(result)
+    this.$emit('change', result)
+  }
+
+  private dataFunction() {
+    return {
+      value: this.sliderValue,
+      data: this.stops,
+    }
   }
 
   private convertSecondsToClockTimeMinutes(index: number) {
@@ -82,32 +105,11 @@ export default class TimeSlider extends Vue {
 @import '../../node_modules/vue-slider-component/theme/default.css';
 
 .time-slider-main-content {
-  display: grid;
-  grid-template-rows: auto auto;
-  grid-template-columns: auto;
-  padding: 6px 4px 8px 4px;
+  padding: 0.5rem 0.5rem 2rem 0.5rem;
 }
 
 .time-slider {
-  grid-row: 1 / 2;
-  grid-column: 1 / 2;
-  margin: 0px 4px;
-}
-
-.clock-labels {
-  grid-row: 2 / 3;
-  grid-column: 1 / 2;
-  color: black;
-  display: grid;
-  grid-template-rows: auto;
-  grid-template-columns: repeat(auto-fit, 1fr);
-  width: 100%;
-  font-size: 10px;
-  margin-top: 0px;
-  pointer-events: none;
-}
-
-.hour {
-  grid-row: 1/2;
+  margin-left: 0.7rem;
+  margin-bottom: 0.2rem;
 }
 </style>

@@ -48,7 +48,6 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
 
-/*
 sharedStore.addVisualizationType({
   typeName: 'emissions',
   prettyName: 'Emissions Grid',
@@ -56,7 +55,6 @@ sharedStore.addVisualizationType({
   requiredFileKeys: ['Events', 'Network'],
   requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
 })
-*/
 
 interface MapElement {
   lngLat: LngLat
@@ -380,7 +378,7 @@ export default class EmissionsGrid extends Vue {
   border-color: #ccc;
   border-radius: 4px;
   box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
-  margin-top: 0.5rem;
+  margin-top: 2rem;
 }
 
 h2,

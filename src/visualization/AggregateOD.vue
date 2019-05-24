@@ -5,14 +5,22 @@
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Trips between aggregate areas
-    .buttons-bar
-      button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
-      button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
+    .widgets
+      h4.heading Time of day:
+      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
+      span.checkbox
+         input(type="checkbox" v-model="showTimeRange")
+         | &nbsp;Show range
+
+      h4.heading Show totals:
+      .buttons-bar
+        // {{rowName}}
+        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origin
+        // {{colName}}
+        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destination
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
-    // b Time of day:
-    // time-slider(style="margin: 1rem 0rem 1rem 0.25rem")
   #mymap
   // legend-box.legend(:rows="legendRows")
 </template>
@@ -28,7 +36,7 @@ import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
 import proj4 from 'proj4'
 import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
@@ -36,13 +44,15 @@ import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
-import TimeSlider from '@/components/TimeSlider.vue'
+import TimeSlider from '@/components/TimeSlider2.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
 
-const COLOR_CATEGORIES = 16
+const TOTAL_MSG = 'All >>'
+const FADED = 0.0 // 0.15
 
+/*
 const vegaChart: any = {
   $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
   description: 'A simple bar chart with embedded data.',
@@ -55,27 +65,7 @@ const vegaChart: any = {
     y: { field: 'Trips From', type: 'quantitative' },
   },
 }
-
-proj4.defs([
-  [
-    // south africa
-    'EPSG:2048',
-    '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
-  ],
-  [
-    // berlin
-    'EPSG:31468',
-    '+proj=tmerc +lat_0=0 +lon_0=12 +k=1 +x_0=4500000 +y_0=0 +ellps=bessel +datum=potsdam +units=m +no_defs',
-  ],
-  [
-    // cottbus
-    'EPSG:25833',
-    '+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs',
-  ],
-])
-
-// aliases
-proj4.defs('DK4', proj4.defs('EPSG:31468'))
+*/
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -124,6 +114,12 @@ export default class AggregateOD extends Vue {
   private marginals: any = {}
   private hoveredStateId: any = 0
 
+  private rowName: string = ''
+  private colName: string = ''
+  private headers: string[] = []
+
+  private showTimeRange = false
+
   private isOrigin: boolean = true
   private selectedCentroid = 0
   private maxZonalTotal: number = 0
@@ -133,6 +129,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
+  private sliderValue: number[] = [0, 5]
   private projection!: string
   private hoverId: any
 
@@ -152,6 +149,11 @@ export default class AggregateOD extends Vue {
     this.setupMap()
   }
 
+  @Watch('showTimeRange')
+  private clickedRange(useRange: boolean) {
+    console.log(useRange)
+  }
+
   private async getVizDetails() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
@@ -159,8 +161,6 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
-
-    if (SharedStore.debug) console.log(this.visualization)
   }
 
   private get legendRows() {
@@ -224,9 +224,22 @@ export default class AggregateOD extends Vue {
         const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
         const fade = 0.7
 
+        const properties: any = {
+          id: id,
+          orig: link.orig,
+          dest: link.dest,
+          daily: link.daily,
+          color,
+          fade,
+        }
+        ;(properties[TOTAL_MSG] = link.daily),
+          link.values.forEach((value: number, i: number) => {
+            properties[this.headers[i + 1]] = value ? value : 0
+          })
+
         const feature: any = {
           type: 'Feature',
-          properties: { id: id, orig: link.orig, dest: link.dest, daily: link.daily, color, fade },
+          properties,
           geometry: {
             type: 'LineString',
             coordinates: [origCoord, destCoord],
@@ -250,8 +263,8 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['max', 1, ['get', 'daily']],
-          'line-offset': ['*', 0.5, ['get', 'daily']],
+          'line-width': ['*', 2, ['get', 'daily']],
+          'line-offset': ['*', 1, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
       },
@@ -299,6 +312,11 @@ export default class AggregateOD extends Vue {
     })
   }
 
+  private unselectAllCentroids() {
+    this.fadeUnselectedLinks(-1)
+    this.selectedCentroid = 0
+  }
+
   private clickedOnCentroid(e: any) {
     console.log({ CLICK: e })
 
@@ -308,6 +326,12 @@ export default class AggregateOD extends Vue {
     console.log(centroid)
 
     const id = centroid.id
+
+    // a second click on a centroid UNselects it.
+    if (id === this.selectedCentroid) {
+      this.unselectAllCentroids()
+      return
+    }
 
     this.selectedCentroid = id
 
@@ -320,7 +344,7 @@ export default class AggregateOD extends Vue {
     for (let i = 0; i < 24; i++) {
       values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
     }
-    vegaChart.data.values = values
+    // vegaChart.data.values = values
     // vegaEmbed('#mychart', vegaChart)
 
     this.fadeUnselectedLinks(id)
@@ -331,7 +355,7 @@ export default class AggregateOD extends Vue {
 
     for (const feature of this.spiderLinkFeatureCollection.features) {
       const endpoints = feature.properties.id.split(':')
-      let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : 0.15
+      let fade = endpoints[0] === String(id) || endpoints[1] === String(id) ? 0.7 : FADED
       if (id === -1) fade = 0.7
       feature.properties.fade = fade
     }
@@ -365,17 +389,15 @@ export default class AggregateOD extends Vue {
 
   private convertRegionColors(geojson: FeatureCollection) {
     for (const feature of geojson.features) {
-      if (!feature.properties) {
-        continue
-      } else {
-        const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
-        const ratio = daily / this.maxZonalTotal
+      if (!feature.properties) continue
 
-        let blue = 128 + 127 * (1.0 - ratio)
-        if (!blue) blue = 255
+      const daily = this.isOrigin ? feature.properties.dailyFrom : feature.properties.dailyTo
+      const ratio = daily / this.maxZonalTotal
 
-        feature.properties.blue = blue
-      }
+      let blue = 128 + 127 * (1.0 - ratio)
+      if (!blue) blue = 255
+
+      feature.properties.blue = blue
     }
   }
 
@@ -602,20 +624,21 @@ export default class AggregateOD extends Vue {
 
   private processHourlyData(csvData: string) {
     const lines = csvData.split('\n')
-    if (lines[0].trim().split(';').length !== 26) {
-      this.loadingText = 'CSV data does not have O,D, and then 24 hourly columns.'
-      return
-    }
+    const separator = lines[0].indexOf(';') > 0 ? ';' : ','
 
-    this.loadingText = 'Analyzing hourly data...'
+    this.loadingText = 'Processing hourly data...'
 
     // data is in format: o,d, value[1], value[2], value[3]...
+    const headers = lines[0].split(separator).map(a => a.trim())
+    this.rowName = headers[0]
+    this.colName = headers[1]
+    this.headers = [TOTAL_MSG].concat(headers.slice(2))
+
+    console.log(this.headers)
+
     for (const row of lines.slice(1)) {
-      const columns = row.split(';')
-      if (columns.length !== 26) continue
-      const values = columns.slice(2).map(a => {
-        return parseFloat(a)
-      })
+      const columns = row.split(separator)
+      const values = columns.slice(2).map(a => parseFloat(a))
 
       // build zone matrix
       const i = columns[0]
@@ -623,14 +646,13 @@ export default class AggregateOD extends Vue {
       if (!this.zoneData[i]) this.zoneData[i] = {}
       this.zoneData[i][j] = values
 
-      // calculate daily values
-      const daily = values.slice(2).reduce((total, num) => {
-        return total + num
-      })
+      // calculate daily/total values
+      const daily = values.reduce((a, b) => a + b, 0)
+
       if (!this.dailyData[i]) this.dailyData[i] = {}
       this.dailyData[i][j] = daily
 
-      // save daily on the links too
+      // save total on the links too
       if (daily !== 0) {
         const rowName = String(columns[0]) + ':' + String(columns[1])
         this.linkData[rowName] = { orig: columns[0], dest: columns[1], daily, values }
@@ -659,7 +681,7 @@ export default class AggregateOD extends Vue {
         type: 'fill',
         paint: {
           'fill-color': ['rgb', ['get', 'blue'], ['get', 'blue'], 255],
-          'fill-opacity': 0.8,
+          'fill-opacity': 0.7,
         },
       },
       'road-primary'
@@ -671,9 +693,9 @@ export default class AggregateOD extends Vue {
         source: 'shpsource',
         type: 'line',
         paint: {
-          'line-color': '#66c',
-          'line-opacity': 1.0,
-          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 4, 0],
+          'line-color': '#66f',
+          'line-opacity': 0.5,
+          'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 3, 1],
         },
       },
       'centroid-layer'
@@ -716,12 +738,37 @@ export default class AggregateOD extends Vue {
     return line
   }
 
-  private pressedEscape() {}
+  private pressedEscape() {
+    this.unselectAllCentroids()
+  }
 
   private pressedArrowKey(delta: number) {}
-}
 
-const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
+  private changedSlider(value: any) {
+    if (!this.showTimeRange) {
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, ['get', value]])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, ['get', value]])
+    } else {
+      const sumElements: any = ['+']
+
+      // build the summation expressions: e.g. ['+', ['get', '1'], ['get', '2']]
+      let include = false
+      for (const header of this.headers) {
+        if (header === value[0]) include = true
+
+        // don't double-count the total
+        if (header === TOTAL_MSG) continue
+
+        if (include) sumElements.push(['get', header])
+
+        if (header === value[1]) include = false
+      }
+
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, sumElements])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, sumElements])
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -736,9 +783,8 @@ h3 {
   font-size: 16px;
 }
 
-h4,
-p {
-  margin: 0px 10px;
+h4 {
+  margin-left: 3px;
 }
 
 #container {
@@ -795,6 +841,7 @@ p {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
+  margin-bottom: 2rem;
 }
 
 .project-summary-block {
@@ -810,10 +857,9 @@ p {
   flex-direction: column;
   width: 16rem;
   height: 100vh;
-  background-color: #eeeeffbb;
+  background-color: #eeeeffdd;
   margin: 0px 0px;
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
-  text-align: center;
   grid-column: 1 / 2;
   grid-row: 1 / 3;
   opacity: 1;
@@ -830,10 +876,12 @@ p {
   }
 }
 
-.routeList {
-  width: 16rem;
-  height: 100%;
-  overflow-y: auto;
+.widgets {
+  display: flex;
+  flex-direction: column;
+  padding: 0px 0.5rem;
+  margin-top: auto;
+  margin-bottom: 1rem;
 }
 
 .status-blob p {
@@ -848,11 +896,36 @@ p {
 }
 
 .buttons-bar {
-  margin: auto 0.5rem 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: row;
+  text-align: center;
 }
 
 .buttons-bar button {
-  width: 48%;
-  margin-right: 2px;
+  flex-grow: 1;
+  width: 50%;
+  margin: 0px 2px;
+}
+
+.time-slider {
+  background-color: white;
+  border: solid 1px;
+  border-color: #ccc;
+  border-radius: 4px;
+  margin: 0rem 0px auto 0px;
+}
+
+.heading {
+  text-align: left;
+  color: black;
+  margin-top: 2rem;
+}
+
+.checkbox {
+  font-size: 12px;
+  margin-top: 0.25rem;
+  margin-left: auto;
+  margin-right: 0.5rem;
+  color: #24c;
 }
 </style>
