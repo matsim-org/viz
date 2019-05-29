@@ -13,12 +13,15 @@
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
-      h4.heading Show totals:
+      h4.heading Scale:
+      time-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
+
+      h4.heading Show totals for:
       .buttons-bar
         // {{rowName}}
-        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origin
+        button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
-        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destination
+        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
@@ -66,6 +69,8 @@ const vegaChart: any = {
   },
 }
 */
+
+const SCALE = [1, 5, 10, 50, 100, 500]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -130,6 +135,10 @@ export default class AggregateOD extends Vue {
   private visualization!: Visualization
 
   private sliderValue: number[] = [0, 5]
+  private scaleValues = SCALE
+  private currentScale = SCALE[0]
+  private currentTimeBin = TOTAL_MSG
+
   private projection!: string
   private hoverId: any
 
@@ -263,8 +272,8 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['*', 2, ['get', 'daily']],
-          'line-offset': ['*', 1, ['get', 'daily']],
+          'line-width': ['*', 1, ['get', 'daily']],
+          'line-offset': ['*', 0.5, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
       },
@@ -745,9 +754,12 @@ export default class AggregateOD extends Vue {
   private pressedArrowKey(delta: number) {}
 
   private changedSlider(value: any) {
+    this.currentTimeBin = value
+    const widthFactor = this.currentScale
+
     if (!this.showTimeRange) {
-      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, ['get', value]])
-      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, ['get', value]])
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 0.5 * widthFactor, ['get', value]])
     } else {
       const sumElements: any = ['+']
 
@@ -764,9 +776,15 @@ export default class AggregateOD extends Vue {
         if (header === value[1]) include = false
       }
 
-      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', 2, sumElements])
-      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 1, sumElements])
+      this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, sumElements])
+      this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 0.5 * widthFactor, sumElements])
     }
+  }
+
+  private changedScale(value: any) {
+    console.log({ slider: value, timebin: this.currentTimeBin })
+    this.currentScale = 1.0 / value
+    this.changedSlider(this.currentTimeBin)
   }
 }
 </script>
@@ -908,6 +926,14 @@ h4 {
 }
 
 .time-slider {
+  background-color: white;
+  border: solid 1px;
+  border-color: #ccc;
+  border-radius: 4px;
+  margin: 0rem 0px auto 0px;
+}
+
+.scale-slider {
   background-color: white;
   border: solid 1px;
   border-color: #ccc;
