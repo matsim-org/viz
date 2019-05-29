@@ -158,7 +158,7 @@ export default class EmissionsGrid extends Vue {
   public created() {}
 
   public async fetchEmissionsBins(): Promise<any> {
-    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/bins`, {
+    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/startTimes`, {
       mode: 'cors',
       headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
     })
@@ -298,7 +298,7 @@ export default class EmissionsGrid extends Vue {
       cellSize: this.visualization.parameters['Cell size'].value,
       projectId: this.projectId,
       projection: this.projection,
-      url: `${Config.emissionsServer}/${this.vizId}/data?startTime=`,
+      url: `${Config.emissionsServer}/${this.vizId}/bin?startTime=`,
     })
 
     this.loadingText = 'Loading Emissions Grid Data...'
