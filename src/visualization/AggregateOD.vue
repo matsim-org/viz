@@ -73,9 +73,9 @@ const vegaChart: any = {
 const SCALE = [1, 5, 10, 50, 100, 500]
 
 const INPUTS = {
-  OD_FLOWS: 'O/D Flows (.csv)',
-  SHP_FILE: 'Shapefile .SHP',
-  DBF_FILE: 'Shapefile .DBF',
+  ZONES: 'Zones',
+  NETWORK: 'Network',
+  EVENTS: 'Events',
 }
 
 // register component with the SharedStore
@@ -83,8 +83,8 @@ SharedStore.addVisualizationType({
   typeName: 'aggregate-od',
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
-  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
+  requiredFileKeys: [INPUTS.ZONES, INPUTS.NETWORK, INPUTS.EVENTS],
+  requiredParamKeys: [],
 })
 
 @Component({
@@ -203,8 +203,13 @@ export default class AggregateOD extends Vue {
   }
 
   private async mapIsReady() {
-    const files = await this.loadFiles()
-    if (files) {
+    // const files = await this.loadFiles()
+    const geojson = await this.loadGeoJson()
+    const relations = await this.loadRelations()
+
+    if (geojson && relations) {
+    }
+    /*if (files) {
       this.setMapExtent()
       const geojson = await this.processInputs(files)
       this.processHourlyData(files.odFlows)
@@ -216,8 +221,27 @@ export default class AggregateOD extends Vue {
       this.buildSpiderLinks()
       this.setupKeyListeners()
     }
-
+*/
     this.loadingText = ''
+  }
+
+  private async loadGeoJson() {
+    const result = await fetch('https://localhost:3070/' + this.vizId + '/cells')
+    if (result.ok) {
+      const geojson = await result.json()
+      return geojson
+    } else {
+      throw new Error('could not download goejson')
+    }
+  }
+
+  private async loadRelations() {
+    const result = await fetch('https://localhost:3070/' + this.vizId + '/relations')
+    if (result.ok) {
+      return await result.json()
+    } else {
+      throw new Error('could not fetch relations')
+    }
   }
 
   private buildSpiderLinks() {
@@ -514,7 +538,7 @@ export default class AggregateOD extends Vue {
     })
   }
 
-  private async loadFiles() {
+  /*private async loadFiles() {
     try {
       this.loadingText = 'Loading files...'
 
@@ -538,7 +562,7 @@ export default class AggregateOD extends Vue {
       this.loadingText = '' + e
       return null
     }
-  }
+  }*/
 
   private async processInputs(files: any) {
     this.loadingText = 'Converting to GeoJSON...'
