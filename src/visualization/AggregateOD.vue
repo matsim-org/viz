@@ -69,6 +69,11 @@ const vegaChart: any = {
   },
 }
 */
+interface OdRelation {
+  fromIndex: number
+  toIndex: number
+  tripsByMode: { [key: string]: number }
+}
 
 const SCALE = [1, 5, 10, 50, 100, 500]
 
@@ -208,6 +213,9 @@ export default class AggregateOD extends Vue {
     const relations = await this.loadRelations()
 
     if (geojson && relations) {
+      this.setMapExtent()
+      this.createCentroids(geojson, relations)
+      // this.addGeojsonToMap(geojson)
     }
     /*if (files) {
       this.setMapExtent()
@@ -242,6 +250,155 @@ export default class AggregateOD extends Vue {
     } else {
       throw new Error('could not fetch relations')
     }
+  }
+
+  private createZoneMatrix(odData: OdRelation[]) {
+    odData.forEach(relation => {})
+  }
+  private createCentroids(geojson: FeatureCollection, odData: OdRelation[]) {
+    const centroids = geojson.features.map((feature, index) => {
+      const centroid: any = turf.centerOfMass(feature as any)
+      centroid.properties.dailyFrom = 0
+      centroid.properties.dailyTo = 0
+      centroid.properties.totalFromTo = 0
+      centroid.properties.id = index
+      return centroid
+    })
+
+    odData.forEach(relation => {
+      const carCount = relation.tripsByMode['car']
+      centroids[relation.fromIndex].properties.dailyFrom += carCount
+      centroids[relation.fromIndex].properties.totalFromTo += carCount
+      centroids[relation.toIndex].properties.dailyTo += carCount
+      centroids[relation.toIndex].properties.totalFromTo += carCount
+    })
+
+    centroids.forEach(centroid => {
+      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+    })
+
+    // don't know how to update map extent probably better to do 'zoom to layer' or something
+
+    this.centroidSource = centroids
+
+    this.mymap.addSource('centroids', {
+      data: this.centroidSource,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer({
+      id: 'centroid-layer',
+      source: 'centroids',
+      type: 'circle',
+      paint: {
+        'circle-color': '#ec0',
+        'circle-radius': ['get', 'width'],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white',
+      },
+    })
+
+    this.mymap.addLayer({
+      id: 'centroid-label-layer',
+      source: 'centroids',
+      type: 'symbol',
+      layout: {
+        'text-field': '{dailyFrom}',
+        'text-size': 11,
+      },
+    })
+
+    const parent = this
+
+    this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.clickedOnCentroid(e)
+    })
+
+    // turn "hover cursor" into a pointer, so user knows they can click.
+    this.mymap.on('mousemove', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
+    })
+
+    // and back to normal when they mouse away
+    this.mymap.on('mouseleave', 'centroid-layer', function() {
+      parent.mymap.getCanvas().style.cursor = 'grab'
+    })
+  }
+
+  private addCentroids(geojson: FeatureCollection) {
+    const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+    for (const feature of geojson.features) {
+      const centroid: any = turf.centerOfMass(feature as any)
+
+      centroid.properties.id = feature.id
+      const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
+      const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
+      centroid.properties.dailyFrom = dailyFrom
+      centroid.properties.dailyTo = dailyTo
+      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
+      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+
+      if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
+      if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
+
+      if (!feature.properties) feature.properties = {}
+      feature.properties.dailyFrom = dailyFrom
+      feature.properties.dailyTo = dailyTo
+
+      if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
+        centroids.features.push(centroid)
+        if (feature.properties) this.centroids[feature.properties.NO] = centroid
+        this.updateMapExtent(centroid.geometry.coordinates)
+      }
+    }
+
+    this.centroidSource = centroids
+
+    console.log({ CENTROIDS: this.centroids })
+
+    this.mymap.addSource('centroids', {
+      data: this.centroidSource,
+      type: 'geojson',
+    } as any)
+
+    this.mymap.addLayer({
+      id: 'centroid-layer',
+      source: 'centroids',
+      type: 'circle',
+      paint: {
+        'circle-color': '#ec0',
+        'circle-radius': ['get', 'width'],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white',
+      },
+    })
+
+    this.mymap.addLayer({
+      id: 'centroid-label-layer',
+      source: 'centroids',
+      type: 'symbol',
+      layout: {
+        'text-field': '{dailyFrom}',
+        'text-size': 11,
+      },
+    })
+
+    const parent = this
+
+    this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.clickedOnCentroid(e)
+    })
+
+    // turn "hover cursor" into a pointer, so user knows they can click.
+    this.mymap.on('mousemove', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
+      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
+    })
+
+    // and back to normal when they mouse away
+    this.mymap.on('mouseleave', 'centroid-layer', function() {
+      parent.mymap.getCanvas().style.cursor = 'grab'
+    })
   }
 
   private buildSpiderLinks() {
@@ -432,82 +589,6 @@ export default class AggregateOD extends Vue {
 
       feature.properties.blue = blue
     }
-  }
-
-  private addCentroids(geojson: FeatureCollection) {
-    const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
-
-    for (const feature of geojson.features) {
-      const centroid: any = turf.centerOfMass(feature as any)
-
-      centroid.properties.id = feature.id
-      const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
-      const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
-      centroid.properties.dailyFrom = dailyFrom
-      centroid.properties.dailyTo = dailyTo
-      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
-      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
-
-      if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
-      if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
-
-      if (!feature.properties) feature.properties = {}
-      feature.properties.dailyFrom = dailyFrom
-      feature.properties.dailyTo = dailyTo
-
-      if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
-        centroids.features.push(centroid)
-        if (feature.properties) this.centroids[feature.properties.NO] = centroid
-        this.updateMapExtent(centroid.geometry.coordinates)
-      }
-    }
-
-    this.centroidSource = centroids
-
-    console.log({ CENTROIDS: this.centroids })
-
-    this.mymap.addSource('centroids', {
-      data: this.centroidSource,
-      type: 'geojson',
-    } as any)
-
-    this.mymap.addLayer({
-      id: 'centroid-layer',
-      source: 'centroids',
-      type: 'circle',
-      paint: {
-        'circle-color': '#ec0',
-        'circle-radius': ['get', 'width'],
-        'circle-stroke-width': 3,
-        'circle-stroke-color': 'white',
-      },
-    })
-
-    this.mymap.addLayer({
-      id: 'centroid-label-layer',
-      source: 'centroids',
-      type: 'symbol',
-      layout: {
-        'text-field': '{dailyFrom}',
-        'text-size': 11,
-      },
-    })
-
-    const parent = this
-
-    this.mymap.on('click', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
-      parent.clickedOnCentroid(e)
-    })
-
-    // turn "hover cursor" into a pointer, so user knows they can click.
-    this.mymap.on('mousemove', 'centroid-layer', function(e: mapboxgl.MapMouseEvent) {
-      parent.mymap.getCanvas().style.cursor = e ? 'pointer' : 'grab'
-    })
-
-    // and back to normal when they mouse away
-    this.mymap.on('mouseleave', 'centroid-layer', function() {
-      parent.mymap.getCanvas().style.cursor = 'grab'
-    })
   }
 
   private setMapExtent() {
