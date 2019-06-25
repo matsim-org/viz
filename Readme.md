@@ -16,7 +16,11 @@ The recommended editor is [Visual Studio Code](https://code.visualstudio.com/Dow
 
 # install
 
-### prerequisites
+You'll need to install Node.js and NPM to build locally. Instructions for each platform are below.
+
+##### windows
+
+...
 
 ##### macports
 
