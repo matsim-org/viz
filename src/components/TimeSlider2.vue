@@ -10,7 +10,7 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 @Component({ components: { 'vue-slider': vueSlider } })
 export default class TimeSlider extends Vue {
-  private TOTAL_MSG = 'All >>'
+  private TOTAL_MSG = 'Any >>'
 
   @Prop()
   private initialTime!: number
@@ -25,7 +25,7 @@ export default class TimeSlider extends Vue {
   private timeSlider = {
     height: 6,
     piecewise: true,
-    show: true,
+    show: false,
     'enable-cross': false,
     minRange: 1,
     marks: [this.stops[0], this.stops[Math.floor(this.stops.length / 2)], this.stops[this.stops.length - 1]],
