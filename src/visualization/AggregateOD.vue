@@ -14,7 +14,7 @@
          | &nbsp;Show range
 
       h4.heading Scale:
-      time-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
+      scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
 
       h4.heading Show totals for:
       .buttons-bar
@@ -48,6 +48,7 @@ import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider2.vue'
+import ScaleSlider from '@/components/ScaleSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
@@ -70,7 +71,7 @@ const vegaChart: any = {
 }
 */
 
-const SCALE = [1, 5, 10, 50, 100, 500]
+const SCALE = [500, 100, 50, 10, 5, 1]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -92,6 +93,7 @@ SharedStore.addVisualizationType({
     'legend-box': LegendBox,
     'project-summary-block': ProjectSummaryBlock,
     'time-slider': TimeSlider,
+    'scale-slider': ScaleSlider,
   },
 })
 export default class AggregateOD extends Vue {
@@ -134,7 +136,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
-  private sliderValue: number[] = [0, 5]
+  private sliderValue: number[] = [500, 0]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
   private currentTimeBin = TOTAL_MSG
@@ -755,7 +757,7 @@ export default class AggregateOD extends Vue {
 
   private changedSlider(value: any) {
     this.currentTimeBin = value
-    const widthFactor = this.currentScale
+    const widthFactor = this.currentScale / 500
 
     if (!this.showTimeRange) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
@@ -783,7 +785,7 @@ export default class AggregateOD extends Vue {
 
   private changedScale(value: any) {
     console.log({ slider: value, timebin: this.currentTimeBin })
-    this.currentScale = 1.0 / value
+    this.currentScale = value
     this.changedSlider(this.currentTimeBin)
   }
 }
