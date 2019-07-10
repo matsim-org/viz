@@ -25,7 +25,7 @@
 
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
-  // legend-box.legend(:rows="legendRows")
+  legend-box.legend(:rows="legendRows")
 </template>
 
 <script lang="ts">
@@ -44,7 +44,7 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
-import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
+import LegendBox from '@/visualization/LegendBoxOD.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider2.vue'
@@ -175,7 +175,7 @@ export default class AggregateOD extends Vue {
   }
 
   private get legendRows() {
-    return [['#a03919', 'Rail'], ['#448', 'Bus']]
+    return [['#00aa66'], ['#880033'], ['v']]
   }
 
   private setupMap() {
@@ -234,7 +234,6 @@ export default class AggregateOD extends Vue {
         const destCoord = this.centroids[link.dest].geometry.coordinates
         const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
         const fade = 0.7
-
         const properties: any = {
           id: id,
           orig: link.orig,
