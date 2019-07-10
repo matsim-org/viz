@@ -71,7 +71,7 @@ const vegaChart: any = {
 }
 */
 
-const SCALE = [500, 100, 50, 10, 5, 1]
+const SCALE = [500, 250, 100, 50, 10, 5, 1]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -175,13 +175,13 @@ export default class AggregateOD extends Vue {
   }
 
   private get legendRows() {
-    return [['#00aa66'], ['#880033']]
+    return ['#00aa66', '#880033', '⇵', this.currentScale / 500]
   }
 
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       container: 'mymap',
-      logoPosition: 'bottom-left',
+      logoPosition: 'top-right',
       style: 'mapbox://styles/mapbox/outdoors-v9',
     })
 

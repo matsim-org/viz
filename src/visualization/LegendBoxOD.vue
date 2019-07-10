@@ -2,9 +2,9 @@
 #legend-container
   p.title Legend:
   .legend-item(v-for="item in rows")
-    .legend-col-1(:style="{'background-color': item[0]}")
-    .legend-col-2(:style="{'background-color': item[1]}")
-  .direction ⇵
+    .legend-col(v-if ="typeof item === 'string' && item.includes('#')")(:style="{'background-color': item}")
+    .legend-element(v-if ="typeof item === 'string' && !item.includes('#')") ⇵
+    .legend-element(v-if="typeof item === 'number'") {{item}}
 </template>
 
 <script lang="ts">
@@ -39,30 +39,27 @@ export default class LegendBox extends Vue {
   font-size: 0.8rem;
 }
 
-.legend-col-1 {
+.legend-col {
   width: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 0.7rem;
   height: 2rem;
 }
 
-.legend-col-2 {
-  margin-left: 0rem;
-}
 p.title {
   color: #ccc;
   font-size: 0.9rem;
   text-transform: uppercase;
   margin-bottom: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.1rem;
   margin-right: 2rem;
   font-weight: normal;
 }
-.direction {
+.legend-element {
   color: #ffffff;
   font-size: 1.2rem;
   font-weight: normal;
-  padding-left: 1rem;
   margin-right: 1rem;
-  margin-top: 0.5rem;
+  margin-left: 0.5rem;
+  margin-top: 0.7rem;
 }
 </style>
