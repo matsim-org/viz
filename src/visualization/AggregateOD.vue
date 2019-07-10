@@ -175,7 +175,7 @@ export default class AggregateOD extends Vue {
   }
 
   private get legendRows() {
-    return [['#00aa66'], ['#880033'], ['v']]
+    return [['#00aa66'], ['#880033']]
   }
 
   private setupMap() {

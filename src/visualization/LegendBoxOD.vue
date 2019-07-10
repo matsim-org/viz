@@ -5,9 +5,6 @@
     .legend-col-1(:style="{'background-color': item[0]}")
     .legend-col-2(:style="{'background-color': item[1]}")
   .direction ⇵
-
-
-
 </template>
 
 <script lang="ts">
@@ -44,6 +41,8 @@ export default class LegendBox extends Vue {
 
 .legend-col-1 {
   width: 1rem;
+  margin-top: 0.5rem;
+  height: 2rem;
 }
 
 .legend-col-2 {
@@ -54,12 +53,16 @@ p.title {
   font-size: 0.9rem;
   text-transform: uppercase;
   margin-bottom: 1rem;
-  margin-right: 1rem;
+  margin-top: 1rem;
+  margin-right: 2rem;
   font-weight: normal;
 }
 .direction {
   color: #ffffff;
   font-size: 1.2rem;
   font-weight: normal;
+  padding-left: 1rem;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
 }
 </style>
