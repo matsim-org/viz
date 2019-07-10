@@ -35,7 +35,7 @@ import * as BlobUtil from 'blob-util'
 import * as shapefile from 'shapefile'
 import * as turf from '@turf/turf'
 import colormap from 'colormap'
-import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
+import mapboxgl, { MapMouseEvent, PositionOptions } from 'mapbox-gl'
 import proj4 from 'proj4'
 import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
@@ -198,6 +198,7 @@ export default class AggregateOD extends Vue {
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
+    this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
   }
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
@@ -910,7 +911,7 @@ h4 {
 .legend {
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  margin: auto 0.5rem 2rem auto;
+  margin: auto 0.5rem 4rem auto;
   z-index: 10;
 }
 
