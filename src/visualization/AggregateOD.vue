@@ -178,7 +178,7 @@ export default class AggregateOD extends Vue {
   }
 
   private get legendRows() {
-    return ['#00aa66', '#880033', '⇵ ']
+    return ['#00aa66', '#880033', '↓', '↑']
   }
   private get scaleRows() {
     return this.currentScale / 500

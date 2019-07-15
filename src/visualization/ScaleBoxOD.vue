@@ -2,7 +2,7 @@
 #scale-container
   p.title Scale:
     .scale-element() {{"|↔︎|"}} 
-    .scale-scale() {{"~" + 25/this.rows + " trips"}}
+    .scale-scale() {{"~ " + 25/this.rows + " trips"}}
 
 </template>
 

@@ -3,7 +3,8 @@
   p.title Legend:
   .legend-item(v-for="item in rows")
     .legend-col(v-if ="typeof item === 'string' && item.includes('#')")(:style="{'background-color': item}")
-    .legend-element(v-if ="typeof item === 'string' && !item.includes('#')") {{item}}
+    .legend-element1(v-if ="typeof item === 'string' && !item.includes('#') && item == ('↓')") {{item}}
+    .legend-element2(v-if ="typeof item === 'string' && !item.includes('#') && item != ('↓')") {{item}}
 </template>
 
 <script lang="ts">
@@ -54,19 +55,23 @@ p.title {
   margin-right: 2rem;
   font-weight: normal;
 }
-.legend-element {
-  color: #ffffffe1;
+.legend-element1 {
+  color: #000000;
   font-size: 1.2rem;
-  font-weight: normal;
+  stroke: black;
+  font-weight: bold;
   margin-right: 1rem;
-  margin-left: 0.5rem;
+  margin-left: -1.75rem;
   margin-top: 0.7rem;
 }
-.legend-scale {
-  color: #ffffffe1;
-  font-size: large;
-  margin-left: 0.5rem;
+
+.legend-element2 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  stroke: white;
+  font-weight: bold;
+  margin-right: 1rem;
+  margin-left: -0.8rem;
   margin-top: 0.7rem;
-  position: relative;
 }
 </style>
