@@ -26,6 +26,7 @@
     // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
   legend-box.legend(:rows="legendRows")
+  scale-box.scale(:rows="scaleRows")
 </template>
 
 <script lang="ts">
@@ -45,6 +46,7 @@ import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/LegendBoxOD.vue'
+import ScaleBox from '@/visualization/ScaleBoxOD.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider2.vue'
@@ -91,6 +93,7 @@ SharedStore.addVisualizationType({
 @Component({
   components: {
     'legend-box': LegendBox,
+    'scale-box': ScaleBox,
     'project-summary-block': ProjectSummaryBlock,
     'time-slider': TimeSlider,
     'scale-slider': ScaleSlider,
@@ -175,7 +178,10 @@ export default class AggregateOD extends Vue {
   }
 
   private get legendRows() {
-    return ['#00aa66', '#880033', '⇵', this.currentScale / 500]
+    return ['#00aa66', '#880033', '⇵ ']
+  }
+  private get scaleRows() {
+    return this.currentScale / 500
   }
 
   private setupMap() {
@@ -909,12 +915,17 @@ h4 {
 }
 
 .legend {
-  grid-column: 1 / 3;
+  grid-column: 1/3;
   grid-row: 1 / 3;
-  margin: auto 0.5rem 4rem auto;
+  margin: auto 0.7rem 8rem auto;
   z-index: 10;
 }
-
+.scale {
+  grid-column: 1/3;
+  grid-row: 1/3;
+  margin: auto 0.7rem 3.5rem auto;
+  z-index: 10;
+}
 .buttons-bar {
   display: flex;
   flex-direction: row;
