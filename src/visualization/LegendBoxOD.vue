@@ -27,27 +27,26 @@ export default class LegendBox extends Vue {
   display: flex;
   flex-direction: row;
   color: white;
-  background-color: #222222cc;
-  padding: 0.5rem 0.5rem;
-  border: solid 1px #666;
+  background-color: rgba(255, 255, 255, 0.781);
+  padding: 0rem 0.5rem;
+  border: solid 1px rgba(161, 160, 160, 0.781);
   border-radius: 2px;
 }
 
 .legend-item {
   display: flex;
   flex-direction: row;
-  margin-bottom: 0.25rem;
   font-size: 0.8rem;
 }
 
 .legend-col {
   width: 1rem;
-  margin-top: 0.7rem;
+  margin-top: 0.6rem;
   height: 2rem;
 }
 
 p.title {
-  color: #ccc;
+  color: rgba(51, 51, 51, 0.877);
   font-size: 0.9rem;
   text-transform: uppercase;
   margin-bottom: 1rem;
@@ -56,22 +55,22 @@ p.title {
   font-weight: normal;
 }
 .legend-element1 {
-  color: #000000;
+  color: black;
   font-size: 1.2rem;
   stroke: black;
   font-weight: bold;
-  margin-right: 1rem;
+  margin-right: 0.8rem;
   margin-left: -1.75rem;
-  margin-top: 0.7rem;
+  margin-top: 0.6rem;
 }
 
 .legend-element2 {
-  color: #ffffff;
+  color: whitesmoke;
   font-size: 1.2rem;
   stroke: white;
   font-weight: bold;
-  margin-right: 1rem;
+  margin-right: 0.8rem;
   margin-left: -0.8rem;
-  margin-top: 0.7rem;
+  margin-top: 0.6rem;
 }
 </style>

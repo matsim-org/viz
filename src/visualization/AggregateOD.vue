@@ -917,7 +917,7 @@ h4 {
 .legend {
   grid-column: 1/3;
   grid-row: 1 / 3;
-  margin: auto 0.7rem 8rem auto;
+  margin: auto 3rem 61rem auto;
   z-index: 10;
 }
 .scale {

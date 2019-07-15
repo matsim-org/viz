@@ -26,9 +26,9 @@ export default class ScaleBox extends Vue {
   display: flex;
   flex-direction: row;
   color: white;
-  background-color: #222222cc;
-  padding: 0.5rem 0.5rem;
-  border: solid 1px #666;
+  background-color: rgba(255, 255, 255, 0.781);
+  padding: 0rem 0.5rem;
+  border: solid 1px rgba(161, 160, 160, 0.781);
   border-radius: 2px;
 }
 
@@ -39,7 +39,7 @@ export default class ScaleBox extends Vue {
 }
 
 p.title {
-  color: #ccc;
+  color: rgba(51, 51, 51, 0.877);
   font-size: 0.9rem;
   text-transform: uppercase;
   margin-bottom: 1rem;
@@ -48,14 +48,14 @@ p.title {
   font-weight: normal;
 }
 .scale-element {
-  color: #ffffffe1;
+  color: black;
   position: relative;
   font-weight: normal;
   margin-right: 1rem;
   margin-top: 0.7rem;
 }
 .scale-scale {
-  color: #ffffffe1;
+  color: black;
   position: relative;
   font-variant: small-caps;
   font-weight: normal;
