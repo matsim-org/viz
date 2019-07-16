@@ -1,14 +1,17 @@
 import AggregateOD from '@/visualization/AggregateOD.vue'
 import Authentication from '@/auth/Authentication.vue'
-import StartPage from '@/components/StartPage.vue'
-import Project from '@/project/Project.vue'
+import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
-import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
+import OwnerPage from '@/project/OwnerPage.vue'
+import Project from '@/project/Project.vue'
+import RunPage from '@/project/RunPage.vue'
 import SankeyDiagram from '@/visualization/sankey-diagram/SankeyDiagram.vue'
+import StartPage from '@/components/StartPage.vue'
 import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
+
 import Vue from 'vue'
 import Router, { Route } from 'vue-router'
 import sharedStore from '@/SharedStore'
@@ -151,6 +154,48 @@ export default class AppRouter {
           component: Authentication,
           props: {
             authStore: authStore,
+          },
+        },
+        {
+          path: '/:owner',
+          name: 'OwnerPage',
+          component: OwnerPage,
+          props: route => {
+            return {
+              authStore: authStore,
+              fileApi: fileApi,
+              owner: route.params.owner,
+              projectStore: projectStore,
+            }
+          },
+        },
+        {
+          path: '/:owner/:run',
+          name: 'RunPage',
+          component: RunPage,
+          props: route => {
+            return {
+              authStore: authStore,
+              fileApi: fileApi,
+              owner: route.params.owner,
+              run: route.params.run,
+              projectStore: projectStore,
+            }
+          },
+        },
+        {
+          path: '/:owner/:run/:viz',
+          name: 'VizPage',
+          component: RunPage,
+          props: route => {
+            return {
+              authStore: authStore,
+              fileApi: fileApi,
+              owner: route.params.owner,
+              run: route.params.run,
+              projectStore: projectStore,
+              viz: route.params.viz,
+            }
           },
         },
       ],
