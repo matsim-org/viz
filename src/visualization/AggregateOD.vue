@@ -73,7 +73,7 @@ const vegaChart: any = {
 }
 */
 
-const SCALE = [500, 250, 100, 50, 10, 5, 1]
+const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -139,7 +139,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
-  private sliderValue: number[] = [500, 0]
+  private sliderValue: number[] = [1, 500]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
   private currentTimeBin = TOTAL_MSG
@@ -280,7 +280,7 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['*', 1, ['get', 'daily']],
+          'line-width': ['*', 1 / 500, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
@@ -318,6 +318,18 @@ export default class AggregateOD extends Vue {
     const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
 
     this.mymap.removeLayer('centroid-label-layer')
+    this.mymap.removeLayer('centroid-layer')
+    this.mymap.addLayer({
+      id: 'centroid-layer',
+      source: 'centroids',
+      type: 'circle',
+      paint: {
+        'circle-color': '#ec0',
+        'circle-radius': ['get', 'width'],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white',
+      },
+    })
     this.mymap.addLayer({
       id: 'centroid-label-layer',
       source: 'centroids',
@@ -431,7 +443,6 @@ export default class AggregateOD extends Vue {
       centroid.properties.dailyTo = dailyTo
       centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
       centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
-
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
@@ -923,7 +934,7 @@ h4 {
 .scale {
   grid-column: 1/3;
   grid-row: 1/3;
-  margin: auto 0.7rem 3.5rem auto;
+  margin: auto 7rem 1.8rem auto;
   z-index: 10;
 }
 .buttons-bar {
