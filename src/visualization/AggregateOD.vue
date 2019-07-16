@@ -150,6 +150,9 @@ export default class AggregateOD extends Vue {
   private _mapExtentXYXY!: any
   private _maximum!: number
 
+  private dailyFrom: any
+  private dailyTo: any
+
   public created() {
     this._mapExtentXYXY = [180, 90, -180, -90]
     this._maximum = 0
@@ -199,12 +202,11 @@ export default class AggregateOD extends Vue {
         animate: false,
       })
     }
-
-    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
     this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
+    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
   }
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
@@ -316,29 +318,51 @@ export default class AggregateOD extends Vue {
 
   private updateCentroidLabels() {
     const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
-
     this.mymap.removeLayer('centroid-label-layer')
     this.mymap.removeLayer('centroid-layer')
-    this.mymap.addLayer({
-      id: 'centroid-layer',
-      source: 'centroids',
-      type: 'circle',
-      paint: {
-        'circle-color': '#ec0',
-        'circle-radius': ['get', 'width'],
-        'circle-stroke-width': 3,
-        'circle-stroke-color': 'white',
-      },
-    })
-    this.mymap.addLayer({
-      id: 'centroid-label-layer',
-      source: 'centroids',
-      type: 'symbol',
-      layout: {
-        'text-field': labels,
-        'text-size': 11,
-      },
-    })
+    if (this.isOrigin) {
+      this.mymap.addLayer({
+        id: 'centroid-layer',
+        source: 'centroids',
+        type: 'circle',
+        paint: {
+          'circle-color': '#ec0',
+          'circle-radius': ['get', 'widthFrom'],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': 'white',
+        },
+      })
+      this.mymap.addLayer({
+        id: 'centroid-label-layer',
+        source: 'centroids',
+        type: 'symbol',
+        layout: {
+          'text-field': labels,
+          'text-size': 11,
+        },
+      })
+    } else {
+      this.mymap.addLayer({
+        id: 'centroid-layer',
+        source: 'centroids',
+        type: 'circle',
+        paint: {
+          'circle-color': '#ec0',
+          'circle-radius': ['get', 'widthTo'],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': 'white',
+        },
+      })
+      this.mymap.addLayer({
+        id: 'centroid-label-layer',
+        source: 'centroids',
+        type: 'symbol',
+        layout: {
+          'text-field': labels,
+          'text-size': 11,
+        },
+      })
+    }
   }
 
   private unselectAllCentroids() {
@@ -441,8 +465,10 @@ export default class AggregateOD extends Vue {
       const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
       centroid.properties.dailyFrom = dailyFrom
       centroid.properties.dailyTo = dailyTo
-      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
-      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+      this.dailyFrom = dailyFrom
+      this.dailyTo = dailyTo
+      centroid.properties.widthFrom = Math.min(40, Math.max(10, Math.sqrt(this.dailyFrom) * 1.5))
+      centroid.properties.widthTo = Math.min(40, Math.max(10, Math.sqrt(this.dailyTo) * 1.5))
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
@@ -472,7 +498,7 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': ['get', 'width'],
+        'circle-radius': ['get', 'widthFrom'],
         'circle-stroke-width': 3,
         'circle-stroke-color': 'white',
       },
