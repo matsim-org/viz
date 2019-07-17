@@ -61,6 +61,11 @@ import { Visualization, PermissionType, Project } from '@/entities/Entities'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import ListElementVue from './ListElement.vue'
 
+import * as firebase from 'firebase/app'
+import 'firebase/auth'
+import 'firebaseui/dist/firebaseui.css'
+import * as firebaseui from 'firebaseui'
+
 @Component({
   components: {
     'project-list-item': ProjectListItem,
@@ -119,9 +124,55 @@ export default class StartPage extends Vue {
 
   public mounted() {
     EventBus.$emit('set-breadcrumbs', [])
+
+    const parent = this
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        console.log({ user })
+        parent.loggedIn = true
+        // User is signed in.
+      } else {
+        // No user is signed in.
+        parent.loggedIn = false
+        parent.showLoginPanel()
+      }
+    })
   }
 
-  public async thingie() {}
+  private showLoginPanel() {
+    const ui = new firebaseui.auth.AuthUI(firebase.auth())
+
+    //    if (ui.isPendingRedirect()) {
+    ui.start('#firebaseui-auth-container', {
+      signInFlow: 'popup',
+      signInOptions: [
+        {
+          provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          signInMethod: firebase.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
+          requireDisplayName: true,
+        },
+        // firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      ],
+    })
+  }
+
+  private logout() {
+    const user = firebase.auth().currentUser
+    if (user) {
+      firebase
+        .auth()
+        .signOut()
+        .then(() => {
+          // sign out successful
+          console.log('logged out')
+          this.loggedIn = false
+        })
+        .catch(e => {
+          // failed
+          console.error(e)
+        })
+    }
+  }
 
   private onVizSelected(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })

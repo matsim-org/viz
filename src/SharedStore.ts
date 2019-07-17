@@ -1,6 +1,5 @@
 'use strict'
 
-import Vue from 'vue'
 import { VisualizationType } from './entities/Entities'
 
 interface SharedState {
