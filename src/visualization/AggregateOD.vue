@@ -87,7 +87,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
+  requiredParamKeys: ['Projection', 'Scale Multiple '],
 })
 
 @Component({
@@ -139,6 +139,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
+  private scaleFactor: any
   private sliderValue: number[] = [1, 500]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
@@ -178,13 +179,21 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
+    if (this.visualization.parameters['Scale Multiple ']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Multiple '].value)
+    }
   }
 
   private get legendRows() {
     return ['#00aa66', '#880033', '↓', '↑']
   }
   private get scaleRows() {
-    return this.currentScale / 500
+    return [
+      Math.min(
+        Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
+        1000 * this.scaleFactor
+      ),
+    ]
   }
 
   private setupMap() {
@@ -282,7 +291,7 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['*', 1 / 500, ['get', 'daily']],
+          'line-width': ['*', (1 / 500) * this.scaleFactor, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
@@ -423,11 +432,11 @@ export default class AggregateOD extends Vue {
     const props = e.features[0].properties
     console.log(props)
 
-    const trips = props.daily
+    const trips = props.daily * this.scaleFactor
     let revTrips = 0
     const reverseDir = '' + props.dest + ':' + props.orig
 
-    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily
+    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily * this.scaleFactor
 
     const totalTrips = trips + revTrips
 
@@ -463,12 +472,12 @@ export default class AggregateOD extends Vue {
       centroid.properties.id = feature.id
       const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
       const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
-      centroid.properties.dailyFrom = dailyFrom
-      centroid.properties.dailyTo = dailyTo
-      this.dailyFrom = dailyFrom
-      this.dailyTo = dailyTo
-      centroid.properties.widthFrom = Math.min(40, Math.max(10, Math.sqrt(this.dailyFrom) * 1.5))
-      centroid.properties.widthTo = Math.min(40, Math.max(10, Math.sqrt(this.dailyTo) * 1.5))
+      centroid.properties.dailyFrom = dailyFrom * this.scaleFactor
+      centroid.properties.dailyTo = dailyTo * this.scaleFactor
+      this.dailyFrom = centroid.properties.dailyFrom
+      this.dailyTo = centroid.properties.dailyTo
+      centroid.properties.widthFrom = Math.min(50, Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * 1.5))
+      centroid.properties.widthTo = Math.min(50, Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * 1.5))
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
@@ -637,7 +646,6 @@ export default class AggregateOD extends Vue {
       origCoords[0] = newCoords
     }
   }
-
   private getDailyDataSummary() {
     const rowTotals: any = []
     const colTotals: any = []
@@ -800,7 +808,7 @@ export default class AggregateOD extends Vue {
 
   private changedSlider(value: any) {
     this.currentTimeBin = value
-    const widthFactor = this.currentScale / 500
+    const widthFactor = (this.currentScale / 500) * this.scaleFactor
 
     if (!this.showTimeRange) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
