@@ -1,18 +1,21 @@
 <template lang="pug">
 #systembar
-  .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
-    i.fa.fa-lg(:class="item.icon" aria-hidden="true")
-    .icon-label {{ item.id }}
+  .centered-content
+    .matsim-logo-panel
+      img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
+    .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
+      i.fa.fa-lg(:class="item.icon" aria-hidden="true")
+      .icon-label {{ item.id }}
 
-  .gap: span &nbsp;
+    .gap: span &nbsp;
 
-  .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
-    i.fa.fa-lg(:class="item.icon" aria-hidden="true")
-    .icon-label {{ item.id }}
+    .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
+      i.fa.fa-lg(:class="item.icon" aria-hidden="true")
+      .icon-label {{ item.id }}
 
-  .nav-item.loginout(@click="onLogin()")
-    i.fa.fa-lg(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
-    .icon-label {{ loginText }}
+    .nav-item.loginout(@click="onLogin()")
+      i.fa.fa-lg(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
+      .icon-label {{ loginText }}
 </template>
 
 <script lang="ts">
@@ -21,12 +24,12 @@ import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
 @Component
-export default class SystemLeftBar extends Vue {
+export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
 
   private topItems = [
-    { id: 'Home', icon: 'fa-home', url: '/' },
+    // { id: 'Home', icon: 'fa-home', url: '/' },
     // { id: 'Map', icon: 'fa-map', url: '/' },
     // { id: 'Run Log', icon: 'fa-database', url: '/' },
   ]
@@ -61,36 +64,49 @@ export default class SystemLeftBar extends Vue {
 
 <style scoped>
 #systembar {
+  background-color: #479ccc;
+}
+
+.centered-content {
   display: flex;
-  flex-direction: column;
-  height: 100vh;
+  flex-direction: row;
+  max-width: 65rem;
+  margin: 0px auto;
+  padding: 0px 2.5rem 0px 2rem;
 }
 
 .nav-item {
-  padding: 1.2rem 0rem;
+  padding: 0rem 0.5rem;
+  margin: 0.25rem 0px;
   text-align: center;
   color: #e8e8e8;
-  border-left: 0.2rem solid #00000000;
-  border-right: 0.2rem solid #00000000;
 }
 
 .nav-item:hover {
   color: #fdfd91;
-  border-left: 0.2rem solid #fdfd91;
   cursor: pointer;
 }
 
 .gap {
-  margin: auto 0;
+  margin: 0 auto;
 }
 
 .icon-label {
-  margin-top: 0.25rem;
+  margin-top: -3px;
   font-size: 0.7rem;
 }
 
-.loginout {
-  padding-bottom: 0.6rem;
+.matsim-logo-panel {
+  margin: auto 1rem;
+}
+
+.matsim-logo {
+  float: left;
+  height: 1.8rem;
+}
+
+.matsim-logo:hover {
+  cursor: pointer;
 }
 </style>
 
