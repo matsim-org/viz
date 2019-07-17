@@ -87,7 +87,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection', 'Scale Multiple '],
+  requiredParamKeys: ['Projection', 'Scale Factor '],
 })
 
 @Component({
@@ -179,8 +179,8 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
-    if (this.visualization.parameters['Scale Multiple ']) {
-      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Multiple '].value)
+    if (this.visualization.parameters['Scale Factor ']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor '].value)
     }
   }
 
@@ -473,8 +473,14 @@ export default class AggregateOD extends Vue {
       centroid.properties.dailyTo = dailyTo * this.scaleFactor
       this.dailyFrom = centroid.properties.dailyFrom
       this.dailyTo = centroid.properties.dailyTo
-      centroid.properties.widthFrom = Math.min(50, Math.max(11, Math.sqrt(this.dailyFrom / this.scaleFactor) * 1.5))
-      centroid.properties.widthTo = Math.min(50, Math.max(11, Math.sqrt(this.dailyTo / this.scaleFactor) * 1.5))
+      centroid.properties.widthFrom = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
+      centroid.properties.widthTo = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
