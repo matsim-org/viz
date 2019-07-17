@@ -15,15 +15,15 @@
 
       h4.heading Scale:
       scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
-
       h4.heading Show totals for:
       .buttons-bar
         // {{rowName}}
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
         button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+            
+    // p#mychart.details(style="margin-top:20px") Click any link or center for more details
 
-    // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
   #mymap
   legend-box.legend(:rows="legendRows")
   scale-box.scale(:rows="scaleRows")
@@ -139,7 +139,7 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
-  private scaleFactor: any
+  private scaleFactor: any = 1
   private sliderValue: number[] = [1, 500]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
@@ -154,7 +154,7 @@ export default class AggregateOD extends Vue {
   private dailyFrom: any
   private dailyTo: any
 
-  public created() {
+  public async created() {
     this._mapExtentXYXY = [180, 90, -180, -90]
     this._maximum = 0
   }
@@ -186,14 +186,6 @@ export default class AggregateOD extends Vue {
 
   private get legendRows() {
     return ['#00aa66', '#880033', '↓', '↑']
-  }
-  private get scaleRows() {
-    return [
-      Math.min(
-        Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
-        1000 * this.scaleFactor
-      ),
-    ]
   }
 
   private setupMap() {
@@ -239,7 +231,12 @@ export default class AggregateOD extends Vue {
 
     this.loadingText = ''
   }
-
+  private get scaleRows() {
+    return Math.min(
+      Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
+      1000 * this.scaleFactor
+    )
+  }
   private buildSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
 
@@ -476,8 +473,8 @@ export default class AggregateOD extends Vue {
       centroid.properties.dailyTo = dailyTo * this.scaleFactor
       this.dailyFrom = centroid.properties.dailyFrom
       this.dailyTo = centroid.properties.dailyTo
-      centroid.properties.widthFrom = Math.min(50, Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * 1.5))
-      centroid.properties.widthTo = Math.min(50, Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * 1.5))
+      centroid.properties.widthFrom = Math.min(50, Math.max(11, Math.sqrt(this.dailyFrom / this.scaleFactor) * 1.5))
+      centroid.properties.widthTo = Math.min(50, Math.max(11, Math.sqrt(this.dailyTo / this.scaleFactor) * 1.5))
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
