@@ -438,7 +438,8 @@ export default class AggregateOD extends Vue {
     const totalTrips = trips + revTrips
 
     let html = `<h1>${totalTrips} Bidirectional Trips</h1><br/>`
-    html += `<p>${trips} trips // ${revTrips} trips</p>`
+    html += `<p> -----------------------------</p>`
+    html += `<p>${trips} trips : ${revTrips} reverse trips</p>`
 
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
@@ -1013,6 +1014,6 @@ h4 {
   margin-top: 0.25rem;
   margin-left: auto;
   margin-right: 0.5rem;
-  color: #24c;
+  color: rgba(31, 151, 199, 0.932);
 }
 </style>
