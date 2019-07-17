@@ -3,6 +3,7 @@ import Authentication from '@/auth/Authentication.vue'
 import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
+import AccountPage from '@/components/AccountPage.vue'
 import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import OwnerPage from '@/project/OwnerPage.vue'
@@ -154,6 +155,16 @@ export default class AppRouter {
           component: Authentication,
           props: {
             authStore: authStore,
+          },
+        },
+        {
+          path: '/account',
+          name: 'AccountPage',
+          component: AccountPage,
+          props: route => {
+            return {
+              authStore: authStore,
+            }
           },
         },
         {
