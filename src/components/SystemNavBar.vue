@@ -3,19 +3,24 @@
   .centered-content
     .matsim-logo-panel
       img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
+
     .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
       i.fa.fa-lg(:class="item.icon" aria-hidden="true")
       .icon-label {{ item.id }}
 
-    .gap: span &nbsp;
+    .gap
 
     .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
       i.fa.fa-lg(:class="item.icon" aria-hidden="true")
       .icon-label {{ item.id }}
 
-    .nav-item.loginout(@click="onLogin()")
+    .nav-item(@click="onLogin()")
       i.fa.fa-lg(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
       .icon-label {{ loginText }}
+
+    .nav-item.loginout(@click="showFirebaseAuth()")
+      i.fa.fa-lg.fa-user(aria-hidden="true")
+      .icon-label Account
 </template>
 
 <script lang="ts">
@@ -23,10 +28,15 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
+import * as firebase from 'firebase/app'
+import 'firebase/auth'
+
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
+
+  private isFirebaseLoggedIn: boolean = false
 
   private topItems = [
     // { id: 'Home', icon: 'fa-home', url: '/' },
@@ -35,7 +45,19 @@ export default class SystemNavBar extends Vue {
   ]
   private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
 
-  public async created() {}
+  public async mounted() {
+    const parent = this
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        console.log({ user })
+        parent.isFirebaseLoggedIn = true
+        // User is signed in.
+      } else {
+        // No user is signed in.
+        parent.isFirebaseLoggedIn = false
+      }
+    })
+  }
 
   private get loginText() {
     return this.isLoggedIn ? 'Log Out' : 'Log In'
@@ -45,8 +67,6 @@ export default class SystemNavBar extends Vue {
     return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
-  public mounted() {}
-
   private onLogin() {
     if (this.authStore.state.status === AuthenticationStatus.Authenticated) {
       this.authStore.logOut()
@@ -54,6 +74,10 @@ export default class SystemNavBar extends Vue {
     } else {
       this.$router.push({ path: '/authentication' })
     }
+  }
+
+  private showFirebaseAuth() {
+    this.$router.push({ path: '/account' })
   }
 
   private onClick(url: string) {
@@ -92,7 +116,7 @@ export default class SystemNavBar extends Vue {
 }
 
 .icon-label {
-  margin-top: -3px;
+  margin-top: -2px;
   font-size: 0.7rem;
 }
 

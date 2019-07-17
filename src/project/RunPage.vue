@@ -1,38 +1,39 @@
 <template lang="pug">
-.center-area
-  .main-area
-    h3.title.is-3
-      router-link(:to='"/"+owner') {{ owner }}&nbsp;
-      | / {{run}}
-    hr
+.project
+  .center-area
+    .main-area
+      h3.title.is-3
+        router-link(:to='"/"+owner') {{ owner }}&nbsp;
+        | / {{run}}
+      hr
 
-    h5.title.is-5 VISUALIZATIONS
-    table.model-runs
-      tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="owner+'/'+run.id") {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
-        td.right ...
+      h5.title.is-5 VISUALIZATIONS
+      table.model-runs
+        tr
+          th ID
+          th Project
+          th Notes
+          th Actions
+        tr.runz(v-for="run in myRuns")
+          td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
+          td {{run.project}}
+          td {{run.description}}
+          td.right ...
 
-    hr
+      hr
 
-    h5.title.is-5 FILES
-    table.model-runs
-      tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="owner+'/'+run.id") {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
-        td.right ...
+      h5.title.is-5 FILES
+      table.model-runs
+        tr
+          th ID
+          th Project
+          th Notes
+          th Actions
+        tr.runz(v-for="run in myRuns")
+          td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
+          td {{run.project}}
+          td {{run.description}}
+          td.right ...
 
 </template>
 
@@ -178,14 +179,14 @@ section {
   grid-template-columns: auto 1fr;
   grid-template-rows: 1fr;
   background-color: #fff;
-  height: 100vh;
+  height: 100%;
 }
 
 .summary-strip {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   width: 16rem;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -194,7 +195,7 @@ section {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
 }
 

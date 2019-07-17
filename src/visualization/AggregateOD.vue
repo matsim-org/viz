@@ -808,7 +808,7 @@ h4 {
 }
 
 #container {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -876,7 +876,7 @@ h4 {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  height: 100vh;
+  height: 100%;
   background-color: #eeeeffdd;
   margin: 0px 0px;
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
