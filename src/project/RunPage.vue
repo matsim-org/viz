@@ -1,7 +1,9 @@
 <template lang="pug">
 .center-area
   .main-area
-    h3.title.is-3 {{ owner }} / {{run}}
+    h3.title.is-3
+      router-link(:to='"/"+owner') {{ owner }}&nbsp;
+      | / {{run}}
     hr
 
     h5.title.is-5 VISUALIZATIONS
@@ -15,7 +17,7 @@
         td: router-link(:to="owner+'/'+run.id") {{run.id}}
         td {{run.project}}
         td {{run.description}}
-        td ...
+        td.right ...
 
     hr
 
@@ -30,7 +32,7 @@
         td: router-link(:to="owner+'/'+run.id") {{run.id}}
         td {{run.project}}
         td {{run.description}}
-        td ...
+        td.right ...
 
 </template>
 
@@ -435,6 +437,10 @@ active {
 .center {
   text-align: center;
   font-weight: bold;
+}
+
+.right {
+  text-align: right;
 }
 
 th,

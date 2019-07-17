@@ -1,8 +1,6 @@
 <template lang="pug">
 .page-content
   .start-page-content
-    .matsim-logo-panel
-      img.matsim-logo(src='/matsim-logo-white.png')
     .masthead
       .info-left
         h2.title.is-2 Welcome to MATSim-Viz!
@@ -79,6 +77,8 @@ export default class StartPage extends Vue {
   private authStore!: AuthenticationStore
 
   private showCreateProject = false
+
+  private loggedIn: boolean = false
 
   // this assignment is necessary to make vue watch the state. Later we switch it out with the actual
   // state of the projectStore
@@ -166,7 +166,6 @@ export default class StartPage extends Vue {
 
 .start-page-content {
   padding: 0rem 3rem 2rem 3rem;
-  overflow-y: auto;
   max-width: 65rem;
   margin: auto;
 }
@@ -234,17 +233,5 @@ a:hover {
 
 .info-right a:hover {
   color: #479ccc;
-}
-
-.matsim-logo-panel {
-  background-color: #479ccc;
-  height: 4.5rem;
-}
-
-.matsim-logo {
-  margin-right: 1rem;
-  margin-top: 1rem;
-  float: right;
-  height: 2.5rem;
 }
 </style>
