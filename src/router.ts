@@ -2,11 +2,9 @@ import AggregateOD from '@/visualization/AggregateOD.vue'
 import Authentication from '@/auth/Authentication.vue'
 import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
-import KiberaAccessibility from '@/visualization/KiberaAccessibility.vue'
-import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import Project from '@/project/Project.vue'
-import SankeyDiagram from '@/visualization/sankey-diagram/SankeyDiagram.vue'
+import SankeyDiagram from '@/visualization/SankeyDiagram.vue'
 import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 
 import AccountPage from '@/navigation/AccountPage.vue'
@@ -49,23 +47,12 @@ export default class AppRouter {
           },
         },
         {
-          path: '/Network Links/:projectId/:vizId',
-          name: 'NetworkVolumePlot',
-          component: NetworkVolumePlot,
-          props: true,
-        },
-        {
           path: '/network-volume-plot/:projectId/:vizId',
           name: 'Network Volume Plot',
           component: NetworkVolumePlot,
           props: {
             fileApi: fileApi,
           },
-        },
-        {
-          path: '/accessibility',
-          name: 'KiberaAccessibility',
-          component: KiberaAccessibility,
         },
         {
           path: '/aggregate-od/:projectId/:vizId',
@@ -92,11 +79,6 @@ export default class AppRouter {
               authStore: authStore,
             }
           },
-        },
-        {
-          path: '/flows',
-          name: 'NetworkFlows',
-          component: NetworkFlows,
         },
         {
           path: '/emissions/:projectId/:vizId',

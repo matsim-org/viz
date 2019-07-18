@@ -220,9 +220,7 @@ export default class StartPage extends Vue {
 }
 
 .start-page-content {
-  padding: 0rem 3rem 2rem 3rem;
-  max-width: 65rem;
-  margin: auto;
+  padding: 0rem 2rem 2rem 2rem;
 }
 
 .about {

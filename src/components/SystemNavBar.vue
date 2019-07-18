@@ -98,9 +98,8 @@ export default class SystemNavBar extends Vue {
 }
 
 .matsim-logo {
-  float: left;
-  height: 1.8rem;
-  margin: 0.75rem 0rem;
+  height: 1.75rem;
+  margin-top: 0.3rem;
 }
 
 .matsim-logo:hover {

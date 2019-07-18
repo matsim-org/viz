@@ -1,5 +1,5 @@
 <template lang="pug">
-#container
+#zcontainer
   #mymap
   .status-blob(v-if="loadingText"): h2 {{ loadingText }}
 </template>
@@ -72,7 +72,7 @@ function setupMap() {
     center: [13.4, 52.5], // lnglat, not latlng
     container: 'mymap',
     logoPosition: 'bottom-left',
-    style: 'mapbox://styles/mapbox/dark-v9',
+    style: 'mapbox://styles/mapbox/light-v9',
     pitch: 0,
     zoom: 11,
   })
@@ -219,43 +219,47 @@ function clickedOnTaz(e: MapElement) {
 </script>
 
 <style scoped>
-#container {
+#zcontainer {
   background-color: black;
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
-  height: 100%;
-  max-height: 100vh;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
 }
 
 #mymap {
+  position: absolute;
+  top: 3rem;
+  bottom: 0;
   width: 100%;
-  height: 100%;
-  background-color: black;
+  background-color: white;
   overflow: hidden;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  z-index: 1;
 }
 
 .status-blob {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  background-color: #222;
-  border-top: solid 1px #479ccc;
-  border-bottom: solid 1px #479ccc;
+  background-color: white;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
-  z-index: 2;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  z-index: 99;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
 }
 
-.status-blob h2 {
-  color: #ffa;
+.status-blob p,
+h2 {
+  color: #555;
   font-weight: normal;
 }
 </style>
