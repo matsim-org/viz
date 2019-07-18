@@ -2,7 +2,7 @@
 #legend-container
   p.title Legend:
   .legend-item(v-for="item in rows")
-    .legend-col(v-if ="typeof item === 'string' && item.includes('#')")(:style="{'background-color': item}")
+    .legend-col(v-if ="typeof item === 'string' && item.includes('#')" :style="{'background-color': item}")
     .legend-element1(v-if ="typeof item === 'string' && !item.includes('#') && item == ('↓')") {{item}}
     .legend-element2(v-if ="typeof item === 'string' && !item.includes('#') && item != ('↓')") {{item}}
 </template>
