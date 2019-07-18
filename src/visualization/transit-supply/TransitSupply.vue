@@ -669,7 +669,9 @@ p {
 }
 
 #container {
-  height: 100vh;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -691,8 +693,10 @@ p {
 }
 
 #mymap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
-  height: 100%;
   background-color: black;
   overflow: hidden;
   grid-column: 1 / 3;
@@ -770,7 +774,7 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  height: 100vh;
+  height: 100%;
   background-color: #363a45;
   margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);

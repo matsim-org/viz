@@ -341,12 +341,17 @@ export default class EmissionsGrid extends Vue {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr auto;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
   padding: 0px;
 }
 
 #mymap {
-  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
   grid-row: 1 / 3;
   grid-column: 1 / 4;

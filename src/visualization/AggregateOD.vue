@@ -948,7 +948,9 @@ h4 {
 }
 
 #container {
-  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -970,8 +972,10 @@ h4 {
 }
 
 #mymap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
-  height: 100%;
   background-color: #eee;
   overflow: hidden;
   grid-column: 1 / 3;
