@@ -5,7 +5,10 @@
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{this.visualization.type.toUpperCase()}}
+    .info-description
+      h3.header(style="text-align: left; padding: 0.5rem; font-size: 0.7rem; font-weight: bold; color: #3d3d3d;") DESCRIPTION:
+      h3.header(style="text-align: left; padding: 0rem 0.5rem; font-size: 0.8rem; font-weight: normal; color: #686869;") {{this.visualization.parameters.description.value}}
     .widgets
       h4.heading Time of day:
       time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
@@ -54,6 +57,8 @@ import ScaleSlider from '@/components/ScaleSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
+import SystemLeftBar from '../components/SystemLeftBar.vue'
+import ModalVue from '../components/Modal.vue'
 
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
@@ -275,12 +280,10 @@ export default class AggregateOD extends Vue {
         // some dests aren't on map: z.b. 'other'
       }
     }
-
     this.mymap.addSource('spider-source', {
       data: this.spiderLinkFeatureCollection,
       type: 'geojson',
     } as any)
-
     this.mymap.addLayer(
       {
         id: 'spider-layer',
