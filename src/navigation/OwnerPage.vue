@@ -8,7 +8,10 @@
     p.tagline: i {{ me.details ? me.details : "&nbsp;" }}
 
     h5.title.is-5 PROJECTS
-      button.button.is-rounded.is-danger.is-outlined(style="float:right" @click="clickedNewProject") +New Project
+      button.button.is-rounded.is-danger.is-outlined(
+        style="float:right"
+        v-if="canModify"
+        @click="clickedNewProject") +New Project
 
     table.project-list
       tr
@@ -71,6 +74,7 @@ export default class OwnerPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
+  private canModify = false
 
   private myProjects: any = []
   private me: any = {}
@@ -102,9 +106,14 @@ export default class OwnerPage extends vueInstance {
     }
   }
 
-  public mounted() {
-    this.fetchMe()
-    this.fetchProjects()
+  public async mounted() {
+    await this.fetchMe()
+    await this.fetchProjects()
+    this.canModify = await this.determineIfUserCanModify()
+  }
+
+  private async determineIfUserCanModify() {
+    return await CloudAPI.canUserModify(this.owner)
   }
 
   private async fetchMe() {
