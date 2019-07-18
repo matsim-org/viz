@@ -1,6 +1,5 @@
 <template lang="pug">
 #systembar
-  .centered-content
     .matsim-logo-panel
       img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
 
@@ -11,15 +10,10 @@
     .gap
 
     .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
-      i.fa.fa-lg(:class="item.icon" aria-hidden="true")
       .icon-label {{ item.id }}
-
     .nav-item(@click="onLogin()")
-      i.fa.fa-lg(:class="isLoggedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'" aria-hidden="true")
       .icon-label {{ loginText }}
-
     .nav-item.loginout(@click="showFirebaseAuth()")
-      i.fa.fa-lg.fa-user(aria-hidden="true")
       .icon-label Account
 </template>
 
@@ -28,15 +22,10 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 
-import * as firebase from 'firebase/app'
-import 'firebase/auth'
-
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-
-  private isFirebaseLoggedIn: boolean = false
 
   private topItems = [
     // { id: 'Home', icon: 'fa-home', url: '/' },
@@ -45,19 +34,7 @@ export default class SystemNavBar extends Vue {
   ]
   private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
 
-  public async mounted() {
-    const parent = this
-    firebase.auth().onAuthStateChanged(function(user) {
-      if (user) {
-        console.log({ user })
-        parent.isFirebaseLoggedIn = true
-        // User is signed in.
-      } else {
-        // No user is signed in.
-        parent.isFirebaseLoggedIn = false
-      }
-    })
-  }
+  public async mounted() {}
 
   private get loginText() {
     return this.isLoggedIn ? 'Log Out' : 'Log In'
@@ -89,19 +66,15 @@ export default class SystemNavBar extends Vue {
 <style scoped>
 #systembar {
   background-color: #479ccc;
-}
-
-.centered-content {
   display: flex;
   flex-direction: row;
-  max-width: 65rem;
-  margin: 0px auto;
-  padding: 0px 2.5rem 0px 2rem;
+  margin: 0px 0px;
+  padding: 0px 2rem 0px 2rem;
 }
 
 .nav-item {
   padding: 0rem 0.5rem;
-  margin: 0.25rem 0px;
+  margin: auto 0px;
   text-align: center;
   color: #e8e8e8;
 }
@@ -116,17 +89,18 @@ export default class SystemNavBar extends Vue {
 }
 
 .icon-label {
-  margin-top: -2px;
   font-size: 0.7rem;
+  font-weight: bold;
 }
 
 .matsim-logo-panel {
-  margin: auto 1rem;
+  margin: auto 0rem;
 }
 
 .matsim-logo {
   float: left;
   height: 1.8rem;
+  margin: 0.75rem 0rem;
 }
 
 .matsim-logo:hover {

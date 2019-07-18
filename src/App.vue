@@ -25,6 +25,24 @@ const writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
+/*  DO NOT CHECK REAL ONE INTO GITHUB:
+const firebaseConfig = {
+  apiKey: '...',
+  authDomain: 'matsim-viz.firebaseapp.com',
+  databaseURL: 'https://matsim-viz.firebaseio.com',
+  projectId: 'matsim-viz',
+  storageBucket: '',
+  messagingSenderId: '...',
+  appId: '...',
+}
+*/
+
+// Firebase API key is in this:
+import firebaseConfig from '@/firebase-config'
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig)
+
 interface BreadCrumb {
   title: string
   link: string
@@ -52,12 +70,11 @@ export default class App extends Vue {
 html,
 body {
   background-color: white;
-  height: 100vh;
-  min-height: 100vh;
-  overflow-y: auto;
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', 'Open Sans', Helvetica, Arial, sans-serif;
+  font-weight: 300;
   margin: 0px 0px;
   padding: 0px 0px;
+  overflow-y: auto;
 }
 
 h1,
@@ -66,7 +83,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', 'Open Sans', Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: #363636;
 }
@@ -80,9 +97,6 @@ h6 {
   grid-template-rows: auto 1fr;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
-  height: 100%;
-  max-height: 100vh;
-  overflow-y: auto;
 }
 
 .main-content {
