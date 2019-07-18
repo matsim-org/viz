@@ -4,10 +4,10 @@
     p
       router-link(:to='`/${owner}`') {{owner}}
       | /{{urlslug}}
-    h4.title.is-3 {{myProject.title ? myProject.title : '...'}}
+    h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
   .content-area
-    p: i {{ myProject.description }}
+    p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
 </template>
 
@@ -177,7 +177,12 @@ a:hover {
 }
 
 .title-strip {
-  padding: 2rem 2rem;
+  padding: 1.5rem 2rem 2rem 2rem;
   background-color: #f4f4f4;
+}
+
+.tagline {
+  margin-top: -1.5rem;
+  margin-bottom: 2rem;
 }
 </style>

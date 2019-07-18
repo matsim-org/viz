@@ -2,6 +2,8 @@
   modal(v-on:close-requested="cancel()")
     div(slot="header") Create New Project
     div(slot="content")
+      p Projects organize your runs, dashboards, and visualizations.
+
       .cuteBlueHeading: h1 Project Title
       input.input.is-medium(v-model="projectName" placeholder="Traffic Simulation"
                             v-focus
@@ -20,7 +22,7 @@
 
     .actions(slot="actions")
       p.pathHint Path:
-        b &nbsp;/{{owner}}/{{projectShortName.replace(/[\W_]+/g,"-").toLowerCase()}}
+        b &nbsp;/{{owner}}/{{ cleanUrlSlug }}
       button.button.negative.is-rounded(v-on:click="cancel()") Cancel
       button.button.is-rounded.accent(
         @click="handleCreateClicked()"
@@ -50,6 +52,10 @@ export default class NewProjectDialog extends vueInstance {
   private projectDescription = ''
   private errorMessage = ''
 
+  private get cleanUrlSlug() {
+    return this.projectShortName.replace(/[\W_]+/g, '-').toLowerCase()
+  }
+
   public static Close() {
     return 'close'
   }
@@ -59,7 +65,10 @@ export default class NewProjectDialog extends vueInstance {
   }
 
   private async handleCreateClicked() {
-    // first make sure project doesn't already exist
+    // clean the url-slug
+    this.projectShortName = this.cleanUrlSlug
+
+    // make sure project doesn't already exist
     const exists = await CloudAPI.getProject(this.owner, this.projectShortName)
     if (exists.length > 0) {
       this.errorMessage = `Project ${this.owner}/${this.projectShortName} already exists. Choose another short name.`
@@ -74,7 +83,6 @@ export default class NewProjectDialog extends vueInstance {
         urlslug: this.projectShortName,
         description: this.projectDescription,
       })
-
       this.close()
     } catch (error) {
       console.log({ error })
@@ -116,7 +124,7 @@ h4.title {
   font-weight: 700;
   color: #479ccc;
   min-width: max-content;
-  margin-top: 2rem;
+  margin-top: 1rem;
   margin-bottom: -1rem;
 }
 
