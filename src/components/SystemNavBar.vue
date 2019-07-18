@@ -65,7 +65,7 @@ export default class SystemNavBar extends Vue {
 
 <style scoped>
 #systembar {
-  background-color: #479ccc;
+  background-color: #5980ad;
   display: flex;
   flex-direction: row;
   margin: 0px 0px;

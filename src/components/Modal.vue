@@ -19,7 +19,6 @@
 
 .modal-content {
   max-height: 90%;
-  min-width: 45rem;
 }
 
 .modal-background {
@@ -29,7 +28,7 @@
 .modal-card-head {
   background-color: #242831;
   border-radius: 0px;
-  padding: 1rem 3rem;
+  padding: 1rem 2rem;
   border: solid 1px #777;
   color: #479ccc;
   font-size: 1.6rem;
@@ -37,11 +36,11 @@
 
 .modal-card-foot {
   border-radius: 0px;
-  padding: 1.2rem 3rem;
+  padding: 1.2rem 2rem;
 }
 
 .modal-card-body {
-  padding: 2rem 3rem;
+  padding: 0rem 2rem 2rem 2rem;
   overflow-y: auto;
 }
 </style>
