@@ -3,8 +3,12 @@
   .start-page-content
     .masthead
       .info-left
-        h2.title.is-2 Welcome to MATSim-Viz!
-        p You've found the "MATSim Visualizer", an experimental web-based visualization platform for exploring MATSim outputs.&nbsp;
+        h2.title.is-2 Welcome to&nbsp;
+          b MatHub
+        p You've found the "MATSim Hub", the MATSim data portal and results visualizer.&nbsp;
+          | This is an experimental web-based platform for exploring MATSim outputs,
+          | developed by the TU Berlin Institute of Land and Sea Transportation.
+        p
           a(href="https://matsim.org") MATSim
           |  is an open-source framework for implementing large-scale agent-based transport simulations.
       .info-right

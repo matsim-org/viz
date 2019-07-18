@@ -1,22 +1,19 @@
 <template lang="pug">
-.project
-  .center-area
-    .main-area
-      h3.title.is-3 {{ owner }}: Landing page
-      hr
+#page
+  .title-strip
+    h3.title.is-3 {{ owner }}: Landing page
 
-      h5.title.is-5 RUN LOG
-      table.model-runs
-        tr
-          th ID
-          th Project
-          th Notes
-          th Actions
-        tr.runz(v-for="run in myRuns")
-          td: router-link(:to="owner+'/'+run.id") {{run.id}}
-          td {{run.project}}
-          td {{run.description}}
-          td ...
+  .content-area
+    h5.title.is-4 PROJECTS
+      button.button.is-rounded.is-danger(style="float:right") +New Project
+
+    table.project-list
+      tr
+        th Project
+        th Public
+      tr.runz(v-for="run in myProjects")
+        td: router-link(:to='`/${run.owner}/${run.shortname}`') {{run.prettyname}}
+        td {{run.public}}
 
 </template>
 
@@ -27,6 +24,7 @@ import SharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
+import CloudAPI from '@/communication/FireBaseAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
@@ -67,11 +65,7 @@ export default class OwnerPage extends vueInstance {
   private selectedFiles: File[] = []
   private selectedRun: string = ''
 
-  private myRuns: any = [
-    { id: 'run003', project: 'NEMO', description: 'Baseline 2015 scenario' },
-    { id: 'run002', project: 'Avoev', description: 'Final results' },
-    { id: 'run001', description: 'my test run' },
-  ]
+  private myProjects: any = []
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -100,7 +94,9 @@ export default class OwnerPage extends vueInstance {
     }
   }
 
-  public mounted() {}
+  public async mounted() {
+    this.myProjects = await CloudAPI.getProjectsForUser('billyc')
+  }
 
   @Watch('$route')
   private onRouteChanged(to: any, from: any) {
@@ -152,39 +148,9 @@ export default class OwnerPage extends vueInstance {
 </script>
 
 <style scoped>
-section {
-  margin: 2rem 3rem 2rem 3rem;
-}
-
-.project {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr;
+.content-area {
+  margin: 2rem 2rem;
   background-color: #fff;
-  height: 100%;
-}
-
-.summary-strip {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  width: 16rem;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.center-area {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.main-area {
-  max-width: 60rem;
-  margin: 0px auto;
-  padding-top: 1rem;
 }
 
 .header {
@@ -193,233 +159,17 @@ section {
   justify-content: space-between;
 }
 
-.headline {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 2rem;
-}
-
-.fileInput {
-  display: none;
-}
-
-.itemTitle {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.fileList {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
-}
-
-.fileItem {
-  flex: 1;
-  background-color: transparent;
-  border: none;
-  font-family: inherit;
-  padding: 0;
-  margin: 0;
-  text-align: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  transition-duration: 0.2s;
-}
-
-.tag-container {
-  margin-top: 0.1rem;
-}
-
-.tag {
-  margin-right: 0.3rem;
-}
-
-.fileItem:hover {
-  background-color: #f0f0f0;
-}
-
-.emptyMessage {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 3rem;
-}
-
-.strip-empty-message {
-  display: flex;
-  flex-direction: row;
-  margin-top: 0.2rem;
-}
-
-.viz-table {
-  display: grid;
-  grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, 25rem);
-  list-style: none;
-  padding-left: 0px;
-  margin-top: 2rem;
-  margin-bottom: 0px;
-  overflow-y: auto;
-}
-
-.viz-item {
-  display: table-cell;
-  padding: 0 0 0 0;
-  vertical-align: top;
-  margin-right: 1rem;
-  margin-bottom: 1rem;
-}
-
-.drop {
-  padding: 1rem 3rem;
-  margin: 1rem 0rem 1.5rem 0rem;
-  text-align: center;
-  border: 0.2rem dashed #aaa;
-  border-radius: 0.25rem;
-  color: #aaa;
-  font-size: 0.8rem;
-}
-
-.drop:hover {
-  border: 0.2rem dashed #ffa;
-  color: white;
-}
-
-.drop.over {
-  border: 0.2rem dashed #097c43;
-  background-color: black;
-  margin: 1rem -0.2rem 1.5rem -0.2rem;
-}
-
-.file-area {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-}
-
-.upload-header {
-  border-bottom: 1px solid lightgray;
-  width: 100%;
-  padding-bottom: 1.5rem;
-}
-
-/*  background-color: #363a45; */
-
-.editButton {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  color: #888;
-  margin: auto 0rem auto 0.1rem;
-  border: solid 1px #888;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.3rem;
-}
-
-.editButton:hover,
-active {
-  color: #ffa;
-  border: solid 1px #ffa;
-  cursor: pointer;
-}
-
-.project-description {
-  grid-column: 1 / 3;
-  grid-row: 2 / 3;
-  justify-content: center;
-  padding: 1rem 0rem 0rem 0rem;
-  color: #aaa;
-}
-
-.add-viz {
-  padding: 2rem 1rem;
-  text-align: center;
-}
-
-.add-files {
-  padding-bottom: 1.2rem;
-  text-align: center;
-  width: 100%;
-}
-
-.accent {
-  background-color: #097c43;
-  width: 100%;
-}
-
-.accent:hover {
-  background-color: #097733; /* #096c63; */
-}
-
-.summary-category {
-  margin: 0rem 1rem 4rem 1rem;
-}
-
-.modelTab {
-  margin-right: 0px;
-}
-
-.section-head {
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  color: #479ccc;
-  font-size: 0.9rem;
-}
-
-.viz-summary {
-  display: flex;
-  flex-direction: column;
-}
-
-.modelRun {
-  padding: 0.3rem 0rem 0.3rem 1.2rem;
-  font-size: 0.9rem;
-  border-radius: 1.3rem 0rem 0rem 1.3rem;
-  color: #eee;
-}
-
-.modelRun:hover {
-  background-color: #363a45;
-  cursor: pointer;
-}
-
-.modelRun.selected {
-  background-color: #eee;
-  color: #223;
-}
-
-.dropzone {
-  margin-top: auto;
-  margin-bottom: 0rem;
-}
-
-.gettingStarted {
-  padding: 1rem 1rem 1rem 0rem;
-  font-size: 0.8rem;
-  color: #ccc;
-}
-
-.project-name {
-  font-size: 1.2rem;
-}
-
-.subtitle {
-  color: #999;
-  font-size: 0.85rem;
-}
-
-.images {
-  margin-bottom: 3rem;
-  background-color: white;
-  padding: 1rem;
-  border-radius: 3px;
-  border: solid 1px #ccc;
-}
-
 .center {
   text-align: center;
   font-weight: bold;
+}
+
+.project-list {
+  margin-top: 2rem;
+}
+
+.right {
+  text-align: right;
 }
 
 th,
@@ -429,5 +179,10 @@ td {
 
 a:hover {
   color: purple;
+}
+
+.title-strip {
+  padding: 2rem 2rem;
+  background-color: #f4f4f4;
 }
 </style>

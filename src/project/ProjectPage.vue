@@ -3,42 +3,11 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      router-link(:to='`/${owner}/${projectShortName}`') /{{projectShortName}}
-      | /{{ run }}
-
-    h4.title.is-3(v-if="myProject.prettyname") {{myProject.prettyname}} : {{run}}
-    h4.title.is-3(v-else) ...
+      | /{{projectShortName}}
+    h4.title.is-3 {{myProject.prettyname ? myProject.prettyname : '...'}}
 
   .content-area
-    h3.title.is-4 Run Dashboard
-
-    h5.title.is-5 VISUALIZATIONS
-    table.model-runs
-      tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
-        td.right ...
-
-    hr
-
-    h5.title.is-5 FILES
-    table.model-runs
-      tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
-        td.right ...
+    p heeeey
 
 </template>
 
@@ -47,8 +16,8 @@ import download from 'downloadjs'
 
 import SharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
-import CloudAPI from '@/communication/FireBaseAPI'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
+import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
@@ -82,7 +51,7 @@ const vueInstance = Vue.extend({
 })
 
 @Component
-export default class RunPage extends vueInstance {
+export default class ProjectPage extends vueInstance {
   private showCreateVisualization = false
   private showFileUpload = false
   private showSettings = false
@@ -127,7 +96,13 @@ export default class RunPage extends vueInstance {
 
   public async mounted() {
     const project = await CloudAPI.getProject(this.owner, this.projectShortName)
+
     if (project.length === 1) this.myProject = project[0]
+    else {
+      throw Error(
+        `Should have gotten exactly one project for /${this.owner}/${this.projectShortName} but found ${project.size}`
+      )
+    }
   }
 
   @Watch('$route')
@@ -185,11 +160,6 @@ export default class RunPage extends vueInstance {
   background-color: #fff;
 }
 
-.title-strip {
-  padding: 2rem 2rem;
-  background-color: #f4f4f4;
-}
-
 .header {
   display: flex;
   flex-direction: row;
@@ -212,5 +182,10 @@ td {
 
 a:hover {
   color: purple;
+}
+
+.title-strip {
+  padding: 2rem 2rem;
+  background-color: #f4f4f4;
 }
 </style>

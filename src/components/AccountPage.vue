@@ -1,53 +1,97 @@
 <template lang="pug">
-.content-area
-  .center-area
-    .main-area
-      .login-area(v-if="!loggedIn")
-        hr
-        h4.title.is-4 Sign into MATSim-Viz to access your account.
-        hr
-        #firebaseui-auth-container
-      .account-area(v-else)
-        h3.title.is-3 Account Page - {{account}}
-        hr
+#page
+  .title-strip
+    .account-area(v-if="loggedIn")
+      button.button.right.is-rounded.is-danger.is-outlined(style="float:right;" v-if="loggedIn" @click="logout()") Logout
+      h3.title.is-3(v-if="account") Account Page -&nbsp;
+          router-link(:to="'/' + account") {{account}}
+      h3.title.is-3(v-else) Almost there! Create a username.
 
-        p
-          b User:&nbsp;
-          | {{account}}
+    h4.title.is-4(v-else) Sign into MatHub to access your account.
 
-        p
-          b Member of:&nbsp;
-          | (tba)
+  .content-area
+    .login-area(v-if="!loggedIn")
+      #firebaseui-auth-container
 
-        hr
-        button.button.right.is-link(v-if="loggedIn" @click="logout()") Logout
+    .choose-username(v-if="mustChooseName")
+      h5 Next, choose a unique username.
+      p This will be shown in the URL bar for your personal page and on all of your dashboards.
+      .row
+        input.input.username-entry(v-model="nameInput")
+        button.button.is-link.is-rounded.space(:disabled="!nameInput" @click="trySavingName") Create
+
+      .row(v-if="isChecking")
+        p Checking...&nbsp;&nbsp;
+
+      .row(v-if="isAvailable")
+        p Username available. &nbsp;&nbsp;
+          i.fa.fa-lg.fa-check(v-if="isAvailable" style="color: #5c5" aria-hidden="true")
+
+      .row(v-if="isTaken")
+        p Name taken, try again...&nbsp;&nbsp;
+          i.fa.fa-lg.fa-times(v-if="isTaken" style="color: #a00" aria-hidden="true")
+
+    .account-details(v-if="loggedIn && !mustChooseName")
+      p: b User-level settings will go here.
+      br
+      p
+        b User:&nbsp;
+        | {{account}}
+
+      p
+        b Member of: ...
+
 </template>
 
 <script lang="ts">
 import sharedStore from '@/SharedStore'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
-import 'firebaseui/dist/firebaseui.css'
+import 'firebase/firestore'
 import * as firebaseui from 'firebaseui'
+import 'firebaseui/dist/firebaseui.css'
 
 @Component
 export default class AccountPage extends Vue {
   private loggedIn: boolean = false
   private account: string = ''
+  private mustChooseName: boolean = false
+  private isAvailable: boolean = false
+  private isTaken: boolean = false
+  private isChecking: boolean = false
+  private nameInput: string = ''
+  private userID: string = ''
+
+  public created() {}
 
   public mounted() {
     const parent = this
     firebase.auth().onAuthStateChanged(function(user) {
+      console.log('hi1')
       if (user) {
-        console.log({ user })
         parent.loggedIn = true
-        if (user.displayName) {
-          parent.account = user.displayName
-        } else if (user.email) {
-          parent.account = user.email
-        }
+
+        const db = firebase.firestore()
+        const userDoc = db
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then(doc => {
+            if (doc.exists) {
+              // user exists!
+              const data: any = doc.data()
+              parent.account = data.username
+              parent.userID = data.uid
+            } else {
+              // no such user yet!
+              parent.mustChooseName = true
+            }
+          })
+          .catch(e => {
+            console.log({ e })
+          })
 
         // User is signed in.
       } else {
@@ -56,6 +100,41 @@ export default class AccountPage extends Vue {
         parent.showLoginPanel()
       }
     })
+  }
+
+  private async trySavingName() {
+    console.log(this.nameInput)
+    this.isChecking = true
+    const isUnique = await this.isNameUnique(this.nameInput)
+    if (isUnique) {
+      this.isChecking = false
+      this.isAvailable = true
+      this.isTaken = false
+
+      const db = firebase.firestore()
+      db.collection('users')
+        .doc(this.nameInput)
+        .set({
+          isproject: false,
+          uid: this.userID,
+        })
+    }
+  }
+
+  private async isNameUnique(name: string) {
+    const db = firebase.firestore()
+    const userDoc = await db
+      .collection('users')
+      .doc(name)
+      .get()
+
+    if (userDoc.exists) {
+      // user exists!
+      return false
+    } else {
+      // no such user yet!
+      return true
+    }
   }
 
   private showLoginPanel() {
@@ -97,20 +176,38 @@ export default class AccountPage extends Vue {
 <style scoped>
 .content-area {
   background-color: #fff;
-}
-
-.center-area {
-  width: 100%;
-  overflow-y: auto;
-}
-
-.main-area {
-  max-width: 60rem;
-  margin: 0px auto;
-  padding-top: 1rem;
+  padding: 0rem 2rem 2rem 2rem;
 }
 
 .login-area {
   margin: auto auto;
+}
+
+.space {
+  margin-right: 1rem;
+}
+
+.username-entry {
+  margin-right: 1rem;
+  width: 20rem;
+}
+
+.account-details {
+  margin-top: 3rem;
+}
+
+.row {
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: row;
+}
+
+a:hover {
+  color: purple;
+}
+
+.title-strip {
+  padding: 2rem 2rem;
+  background-color: #f4f4f4;
 }
 </style>

@@ -8,6 +8,7 @@ import NetworkFlows from '@/visualization/NetworkFlows.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
 import OwnerPage from '@/project/OwnerPage.vue'
 import Project from '@/project/Project.vue'
+import ProjectPage from '@/project/ProjectPage.vue'
 import RunPage from '@/project/RunPage.vue'
 import SankeyDiagram from '@/visualization/sankey-diagram/SankeyDiagram.vue'
 import StartPage from '@/components/StartPage.vue'
@@ -181,30 +182,46 @@ export default class AppRouter {
           },
         },
         {
-          path: '/:owner/:run',
+          path: '/:owner/:project',
+          name: 'ProjectPage',
+          component: ProjectPage,
+          props: route => {
+            return {
+              authStore: authStore,
+              fileApi: fileApi,
+              projectStore: projectStore,
+              owner: route.params.owner,
+              projectShortName: route.params.project,
+            }
+          },
+        },
+        {
+          path: '/:owner/:project/:run',
           name: 'RunPage',
           component: RunPage,
           props: route => {
             return {
               authStore: authStore,
               fileApi: fileApi,
-              owner: route.params.owner,
-              run: route.params.run,
               projectStore: projectStore,
+              owner: route.params.owner,
+              projectShortName: route.params.project,
+              run: route.params.run,
             }
           },
         },
         {
-          path: '/:owner/:run/:viz',
+          path: '/:owner/:project/:run/:viz',
           name: 'VizPage',
           component: RunPage,
           props: route => {
             return {
               authStore: authStore,
               fileApi: fileApi,
-              owner: route.params.owner,
-              run: route.params.run,
               projectStore: projectStore,
+              owner: route.params.owner,
+              projectShortName: route.params.project,
+              run: route.params.run,
               viz: route.params.viz,
             }
           },
