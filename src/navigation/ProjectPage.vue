@@ -3,11 +3,11 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      | /{{projectShortName}}
-    h4.title.is-3 {{myProject.prettyname ? myProject.prettyname : '...'}}
+      | /{{urlslug}}
+    h4.title.is-3 {{myProject.title ? myProject.title : '...'}}
 
   .content-area
-    p heeeey
+    p: i {{ myProject.description }}
 
 </template>
 
@@ -32,7 +32,7 @@ const vueInstance = Vue.extend({
     projectStore: ProjectStore,
     owner: String,
     run: String,
-    projectShortName: String,
+    urlslug: String,
     fileApi: FileAPI,
   },
   components: {
@@ -60,12 +60,6 @@ export default class ProjectPage extends vueInstance {
   private selectedFiles: File[] = []
   private selectedRun: string = ''
   private myProject = {}
-
-  private myRuns: any = [
-    { id: 'run003', project: 'NEMO', description: 'Baseline 2015 scenario' },
-    { id: 'run002', project: 'Avoev', description: 'Final results' },
-    { id: 'run001', description: 'my test run' },
-  ]
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -95,13 +89,11 @@ export default class ProjectPage extends vueInstance {
   }
 
   public async mounted() {
-    const project = await CloudAPI.getProject(this.owner, this.projectShortName)
+    const project = await CloudAPI.getProject(this.owner, this.urlslug)
 
     if (project.length === 1) this.myProject = project[0]
     else {
-      throw Error(
-        `Should have gotten exactly one project for /${this.owner}/${this.projectShortName} but found ${project.size}`
-      )
+      throw Error(`Should have gotten exactly one project for /${this.owner}/${this.urlslug} but found ${project.size}`)
     }
   }
 

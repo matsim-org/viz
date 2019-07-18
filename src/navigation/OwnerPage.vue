@@ -4,16 +4,21 @@
     h3.title.is-3 {{ owner }}: Landing page
 
   .content-area
-    h5.title.is-4 PROJECTS
-      button.button.is-rounded.is-danger(style="float:right") +New Project
+    h5.title.is-5 PROJECTS
+      button.button.is-rounded.is-danger.is-outlined(style="float:right" @click="clickedNewProject") +New Project
 
     table.project-list
       tr
-        th Project
-        th Public
-      tr.runz(v-for="run in myProjects")
-        td: router-link(:to='`/${run.owner}/${run.shortname}`') {{run.prettyname}}
-        td {{run.public}}
+        th(style="min-width: 9rem;") Project
+        th Runs
+        th Description
+
+      tr(v-for="project in myProjects")
+        td: b: router-link(:to='`/${project.owner}/${project.urlslug}`') {{ project.title }}
+        td &nbsp;
+        td {{ project.description }}
+
+    new-project-dialog(v-if="showCreateProject" :owner="owner" @close="onCreateProjectClosed")
 
 </template>
 
@@ -25,6 +30,7 @@ import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
 import CloudAPI from '@/communication/FireBaseAPI'
+import NewProjectDialog from '@/navigation/NewProjectDialog.vue'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
@@ -41,9 +47,8 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
-    'image-file-thumbnail': ImageFileThumbnail,
-    'viz-thumbnail': VizThumbnail,
-    'project-settings': ProjectSettings,
+    ProjectSettings,
+    NewProjectDialog,
     Drag,
     Drop,
   },
@@ -59,6 +64,7 @@ const vueInstance = Vue.extend({
 export default class OwnerPage extends vueInstance {
   private showCreateVisualization = false
   private showFileUpload = false
+  private showCreateProject = false
   private showSettings = false
   private isDragOver = false
   private editVisualization?: Visualization
@@ -94,8 +100,14 @@ export default class OwnerPage extends vueInstance {
     }
   }
 
-  public async mounted() {
-    this.myProjects = await CloudAPI.getProjectsForUser(this.owner)
+  public mounted() {
+    this.fetchProjects()
+  }
+
+  private async fetchProjects() {
+    const projects = await CloudAPI.getProjectsForUser(this.owner)
+    projects.sort((a: any, b: any) => a.title.toLowerCase() > b.title.toLowerCase())
+    this.myProjects = projects
   }
 
   @Watch('$route')
@@ -113,6 +125,15 @@ export default class OwnerPage extends vueInstance {
   private async onDrop(files: any) {
     this.selectedFiles = files
     this.showFileUpload = true
+  }
+
+  private clickedNewProject() {
+    this.showCreateProject = true
+  }
+
+  private async onCreateProjectClosed() {
+    this.showCreateProject = false
+    this.fetchProjects()
   }
 
   private async onNameChanged(name: string, event: any) {
@@ -165,7 +186,8 @@ export default class OwnerPage extends vueInstance {
 }
 
 .project-list {
-  margin-top: 2rem;
+  padding-top: 0rem;
+  margin-top: 0rem;
 }
 
 .right {

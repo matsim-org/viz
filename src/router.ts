@@ -174,7 +174,7 @@ export default class AppRouter {
               fileApi: fileApi,
               projectStore: projectStore,
               owner: route.params.owner,
-              projectShortName: route.params.project,
+              urlslug: route.params.project,
             }
           },
         },
@@ -188,7 +188,7 @@ export default class AppRouter {
               fileApi: fileApi,
               projectStore: projectStore,
               owner: route.params.owner,
-              projectShortName: route.params.project,
+              urlslug: route.params.project,
               run: route.params.run,
             }
           },
@@ -203,7 +203,7 @@ export default class AppRouter {
               fileApi: fileApi,
               projectStore: projectStore,
               owner: route.params.owner,
-              projectShortName: route.params.project,
+              urlslug: route.params.project,
               run: route.params.run,
               viz: route.params.viz,
             }

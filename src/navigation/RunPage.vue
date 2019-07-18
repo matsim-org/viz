@@ -3,10 +3,10 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      router-link(:to='`/${owner}/${projectShortName}`') /{{projectShortName}}
+      router-link(:to='`/${owner}/${urlslug}`') /{{urlslug}}
       | /{{ run }}
 
-    h4.title.is-3(v-if="myProject.prettyname") {{myProject.prettyname}} : {{run}}
+    h4.title.is-3(v-if="myProject.urlslug") {{myProject.urlslug}} : {{run}}
     h4.title.is-3(v-else) ...
 
   .content-area
@@ -63,7 +63,7 @@ const vueInstance = Vue.extend({
     projectStore: ProjectStore,
     owner: String,
     run: String,
-    projectShortName: String,
+    urlslug: String,
     fileApi: FileAPI,
   },
   components: {
@@ -126,7 +126,7 @@ export default class RunPage extends vueInstance {
   }
 
   public async mounted() {
-    const project = await CloudAPI.getProject(this.owner, this.projectShortName)
+    const project = await CloudAPI.getProject(this.owner, this.urlslug)
     if (project.length === 1) this.myProject = project[0]
   }
 
