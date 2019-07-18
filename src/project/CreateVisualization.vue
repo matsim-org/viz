@@ -82,7 +82,7 @@ export default class CreateVisualizationViewModel extends Vue {
   private isVizListOpen = false
   private isRequesting = false
   private errorMessage = ''
-  private selectedVizType: VisualizationType = this.createEmtpyVisualizationType()
+  private selectedVizType: VisualizationType = this.createEmptyVisualizationType()
   private openDropdown = ''
   private fileLookup: Map<string, string> = new Map()
 
@@ -168,7 +168,9 @@ export default class CreateVisualizationViewModel extends Vue {
           description: this.description,
         },
         inputFiles: this.inputFiles,
-        inputParameters: this.parameters,
+        inputParameters: Object.assign(this.parameters, {
+          description: this.description,
+        }),
       }
       const viz = await this.fileApi.createVisualization(request)
       this.projectStore.addVisualizationToSelectedProject(viz)
@@ -208,7 +210,7 @@ export default class CreateVisualizationViewModel extends Vue {
     this.inputFiles = {}
   }
 
-  private createEmtpyVisualizationType(): VisualizationType {
+  private createEmptyVisualizationType(): VisualizationType {
     return {
       typeName: '',
       prettyName: '',

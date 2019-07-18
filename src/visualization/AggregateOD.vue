@@ -5,7 +5,10 @@
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
     .info-header
-      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{this.visualization.type.toUpperCase()}}
+    .info-description
+      h3.header(style="text-align: left; padding: 0.5rem; font-size: 0.7rem; font-weight: bold; color: #3d3d3d;") DESCRIPTION:
+      h3.header(style="text-align: left; padding: 0rem 0.5rem; font-size: 0.8rem; font-weight: normal; color: #686869;") {{this.visualization.parameters.description.value}}
     .widgets
       h4.heading Time of day:
       time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
@@ -15,7 +18,6 @@
 
       h4.heading Scale:
       scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
-
       h4.heading Show totals for:
       .buttons-bar
         // {{rowName}}
@@ -23,9 +25,11 @@
         // {{colName}}
         button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
-    // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
+    // p#mychart.details(style="margin-top:20px") Click any link or center for more details
+
   #mymap
   legend-box.legend(:rows="legendRows")
+  scale-box.scale(:rows="scaleRows")
 </template>
 
 <script lang="ts">
@@ -45,6 +49,7 @@ import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
 import LegendBox from '@/visualization/LegendBoxOD.vue'
+import ScaleBox from '@/visualization/ScaleBoxOD.vue'
 import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider2.vue'
@@ -52,6 +57,8 @@ import ScaleSlider from '@/components/ScaleSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
+import SystemLeftBar from '../components/SystemLeftBar.vue'
+import ModalVue from '../components/Modal.vue'
 
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
@@ -71,7 +78,7 @@ const vegaChart: any = {
 }
 */
 
-const SCALE = [500, 250, 100, 50, 10, 5, 1]
+const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -85,12 +92,13 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
+  requiredParamKeys: ['Projection', 'Scale Factor '],
 })
 
 @Component({
   components: {
     'legend-box': LegendBox,
+    'scale-box': ScaleBox,
     'project-summary-block': ProjectSummaryBlock,
     'time-slider': TimeSlider,
     'scale-slider': ScaleSlider,
@@ -136,7 +144,8 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
-  private sliderValue: number[] = [500, 0]
+  private scaleFactor: any = 1
+  private sliderValue: number[] = [1, 500]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
   private currentTimeBin = TOTAL_MSG
@@ -147,7 +156,10 @@ export default class AggregateOD extends Vue {
   private _mapExtentXYXY!: any
   private _maximum!: number
 
-  public created() {
+  private dailyFrom: any
+  private dailyTo: any
+
+  public async created() {
     this._mapExtentXYXY = [180, 90, -180, -90]
     this._maximum = 0
   }
@@ -172,10 +184,13 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
+    if (this.visualization.parameters['Scale Factor ']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor '].value)
+    }
   }
 
   private get legendRows() {
-    return ['#00aa66', '#880033', '⇵', this.currentScale / 500]
+    return ['#00aa66', '#880033', '↓', '↑']
   }
 
   private setupMap() {
@@ -193,12 +208,11 @@ export default class AggregateOD extends Vue {
         animate: false,
       })
     }
-
-    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
     this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
+    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
   }
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
@@ -222,7 +236,12 @@ export default class AggregateOD extends Vue {
 
     this.loadingText = ''
   }
-
+  private get scaleRows() {
+    return Math.min(
+      Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
+      1000 * this.scaleFactor
+    )
+  }
   private buildSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
 
@@ -261,12 +280,10 @@ export default class AggregateOD extends Vue {
         // some dests aren't on map: z.b. 'other'
       }
     }
-
     this.mymap.addSource('spider-source', {
       data: this.spiderLinkFeatureCollection,
       type: 'geojson',
     } as any)
-
     this.mymap.addLayer(
       {
         id: 'spider-layer',
@@ -274,7 +291,7 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['*', 1, ['get', 'daily']],
+          'line-width': ['*', (1 / 500) * this.scaleFactor, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
@@ -310,17 +327,51 @@ export default class AggregateOD extends Vue {
 
   private updateCentroidLabels() {
     const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
-
     this.mymap.removeLayer('centroid-label-layer')
-    this.mymap.addLayer({
-      id: 'centroid-label-layer',
-      source: 'centroids',
-      type: 'symbol',
-      layout: {
-        'text-field': labels,
-        'text-size': 11,
-      },
-    })
+    this.mymap.removeLayer('centroid-layer')
+    if (this.isOrigin) {
+      this.mymap.addLayer({
+        id: 'centroid-layer',
+        source: 'centroids',
+        type: 'circle',
+        paint: {
+          'circle-color': '#ec0',
+          'circle-radius': ['get', 'widthFrom'],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': 'white',
+        },
+      })
+      this.mymap.addLayer({
+        id: 'centroid-label-layer',
+        source: 'centroids',
+        type: 'symbol',
+        layout: {
+          'text-field': labels,
+          'text-size': 11,
+        },
+      })
+    } else {
+      this.mymap.addLayer({
+        id: 'centroid-layer',
+        source: 'centroids',
+        type: 'circle',
+        paint: {
+          'circle-color': '#ec0',
+          'circle-radius': ['get', 'widthTo'],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': 'white',
+        },
+      })
+      this.mymap.addLayer({
+        id: 'centroid-label-layer',
+        source: 'centroids',
+        type: 'symbol',
+        layout: {
+          'text-field': labels,
+          'text-size': 11,
+        },
+      })
+    }
   }
 
   private unselectAllCentroids() {
@@ -381,16 +432,17 @@ export default class AggregateOD extends Vue {
     const props = e.features[0].properties
     console.log(props)
 
-    const trips = props.daily
+    const trips = props.daily * this.scaleFactor
     let revTrips = 0
     const reverseDir = '' + props.dest + ':' + props.orig
 
-    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily
+    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily * this.scaleFactor
 
     const totalTrips = trips + revTrips
 
     let html = `<h1>${totalTrips} Bidirectional Trips</h1><br/>`
-    html += `<p>${trips} trips // ${revTrips} trips</p>`
+    html += `<p> -----------------------------</p>`
+    html += `<p>${trips} trips : ${revTrips} reverse trips</p>`
 
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
@@ -421,11 +473,18 @@ export default class AggregateOD extends Vue {
       centroid.properties.id = feature.id
       const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
       const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
-      centroid.properties.dailyFrom = dailyFrom
-      centroid.properties.dailyTo = dailyTo
-      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
-      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
-
+      centroid.properties.dailyFrom = dailyFrom * this.scaleFactor
+      centroid.properties.dailyTo = dailyTo * this.scaleFactor
+      this.dailyFrom = centroid.properties.dailyFrom
+      this.dailyTo = centroid.properties.dailyTo
+      centroid.properties.widthFrom = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
+      centroid.properties.widthTo = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
 
@@ -455,7 +514,7 @@ export default class AggregateOD extends Vue {
       type: 'circle',
       paint: {
         'circle-color': '#ec0',
-        'circle-radius': ['get', 'width'],
+        'circle-radius': ['get', 'widthFrom'],
         'circle-stroke-width': 3,
         'circle-stroke-color': 'white',
       },
@@ -594,7 +653,6 @@ export default class AggregateOD extends Vue {
       origCoords[0] = newCoords
     }
   }
-
   private getDailyDataSummary() {
     const rowTotals: any = []
     const colTotals: any = []
@@ -757,7 +815,7 @@ export default class AggregateOD extends Vue {
 
   private changedSlider(value: any) {
     this.currentTimeBin = value
-    const widthFactor = this.currentScale / 500
+    const widthFactor = (this.currentScale / 500) * this.scaleFactor
 
     if (!this.showTimeRange) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
@@ -909,12 +967,17 @@ h4 {
 }
 
 .legend {
-  grid-column: 1 / 3;
+  grid-column: 1/3;
   grid-row: 1 / 3;
-  margin: auto 0.5rem 4rem auto;
+  margin: auto 3rem 61rem auto;
   z-index: 10;
 }
-
+.scale {
+  grid-column: 1/3;
+  grid-row: 1/3;
+  margin: auto 7rem 1.8rem auto;
+  z-index: 10;
+}
 .buttons-bar {
   display: flex;
   flex-direction: row;
@@ -954,6 +1017,6 @@ h4 {
   margin-top: 0.25rem;
   margin-left: auto;
   margin-right: 0.5rem;
-  color: #24c;
+  color: rgba(31, 151, 199, 0.932);
 }
 </style>
