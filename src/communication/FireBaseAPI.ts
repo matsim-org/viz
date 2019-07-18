@@ -4,7 +4,7 @@ import 'firebase/firestore'
 
 export default class FireBaseAPI {
   public static async getProjectsForUser(owner: string) {
-    console.log('getProjectsForUser')
+    console.log('getProjectsForUser', owner)
     const db = firebase.firestore()
     const query = await db
       .collection('projects')
@@ -33,7 +33,6 @@ export default class FireBaseAPI {
     query.forEach(doc => {
       result.push(doc.data())
     })
-    console.log({ result })
     return result
   }
 }

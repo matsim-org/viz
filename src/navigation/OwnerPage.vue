@@ -95,7 +95,7 @@ export default class OwnerPage extends vueInstance {
   }
 
   public async mounted() {
-    this.myProjects = await CloudAPI.getProjectsForUser('billyc')
+    this.myProjects = await CloudAPI.getProjectsForUser(this.owner)
   }
 
   @Watch('$route')
