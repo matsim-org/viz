@@ -63,7 +63,7 @@ import CreateProject from '@/project/CreateProject.vue'
 import ProjectStore, { ProjectState, ProjectVisibility } from '@/project/ProjectStore'
 import { Visualization, PermissionType, Project } from '@/entities/Entities'
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import ListElementVue from './ListElement.vue'
+import ListElementVue from '@/components/ListElement.vue'
 
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
