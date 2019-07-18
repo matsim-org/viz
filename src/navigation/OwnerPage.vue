@@ -1,21 +1,22 @@
 <template lang="pug">
 #page
   .title-strip
-    h3.title.is-3 {{ owner }}: Landing page
+    p /{{owner}}
+    h3.title.is-3 {{ owner }} &bullet; Home
 
   .content-area
+    p.tagline: i {{ me.details ? me.details : "&nbsp;" }}
+
     h5.title.is-5 PROJECTS
       button.button.is-rounded.is-danger.is-outlined(style="float:right" @click="clickedNewProject") +New Project
 
     table.project-list
       tr
         th(style="min-width: 9rem;") Project
-        th Runs
         th Description
 
       tr(v-for="project in myProjects")
         td: b: router-link(:to='`/${project.owner}/${project.urlslug}`') {{ project.title }}
-        td &nbsp;
         td {{ project.description }}
 
     new-project-dialog(v-if="showCreateProject" :owner="owner" @close="onCreateProjectClosed")
@@ -72,6 +73,7 @@ export default class OwnerPage extends vueInstance {
   private selectedRun: string = ''
 
   private myProjects: any = []
+  private me: any = {}
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -101,7 +103,13 @@ export default class OwnerPage extends vueInstance {
   }
 
   public mounted() {
+    this.fetchMe()
     this.fetchProjects()
+  }
+
+  private async fetchMe() {
+    this.me = await CloudAPI.getOwner(this.owner)
+    console.log({ me: this.me })
   }
 
   private async fetchProjects() {
@@ -204,7 +212,12 @@ a:hover {
 }
 
 .title-strip {
-  padding: 2rem 2rem;
+  padding: 1.5rem 2rem 2rem 2rem;
   background-color: #f4f4f4;
+}
+
+.tagline {
+  margin-top: -1.5rem;
+  margin-bottom: 2rem;
 }
 </style>

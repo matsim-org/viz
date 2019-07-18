@@ -11,6 +11,17 @@ interface ProjectAttributes {
 }
 
 export default class FireBaseAPI {
+  public static async getOwner(owner: string) {
+    console.log('getOwner', owner)
+    const db = firebase.firestore()
+    const user = await db
+      .collection('users')
+      .doc(owner)
+      .get()
+
+    return user.data()
+  }
+
   public static async getProjectsForUser(owner: string) {
     console.log('getProjectsForUser', owner)
     const db = firebase.firestore()

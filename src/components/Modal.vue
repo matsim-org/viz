@@ -40,7 +40,7 @@
 }
 
 .modal-card-body {
-  padding: 0rem 2rem 2rem 2rem;
+  padding: 1rem 2rem 2rem 2rem;
   overflow-y: auto;
 }
 </style>

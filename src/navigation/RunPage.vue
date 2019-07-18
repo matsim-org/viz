@@ -6,8 +6,8 @@
       router-link(:to='`/${owner}/${urlslug}`') /{{urlslug}}
       | /{{ run }}
 
-    h4.title.is-3(v-if="myProject.urlslug") {{myProject.urlslug}} : {{run}}
-    h4.title.is-3(v-else) ...
+    h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
+    h4.title.is-3(v-else) &nbsp;
 
   .content-area
     h3.title.is-4 Run Dashboard
@@ -186,7 +186,7 @@ export default class RunPage extends vueInstance {
 }
 
 .title-strip {
-  padding: 2rem 2rem;
+  padding: 1.5rem 2rem 2rem 2rem;
   background-color: #f4f4f4;
 }
 
