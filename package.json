@@ -1,6 +1,6 @@
 {
-  "name": "matsim-viz",
-  "version": "0.11.0",
+  "name": "matsim-hub",
+  "version": "0.12.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --https --mode local-frontend",
