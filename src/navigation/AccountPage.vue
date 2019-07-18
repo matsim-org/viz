@@ -52,6 +52,7 @@ import 'firebase/auth'
 import 'firebase/firestore'
 import * as firebaseui from 'firebaseui'
 import 'firebaseui/dist/firebaseui.css'
+import FireBaseAPI from '../communication/FireBaseAPI'
 
 @Component
 export default class AccountPage extends Vue {
@@ -63,30 +64,39 @@ export default class AccountPage extends Vue {
   private isChecking: boolean = false
   private nameInput: string = ''
   private userID: string = ''
+  private details: string = ''
 
   public created() {}
 
-  public mounted() {
+  public async mounted() {
     const parent = this
     firebase.auth().onAuthStateChanged(function(user) {
-      console.log('hi1')
       if (user) {
         parent.loggedIn = true
 
+        console.log('auth changed!')
+        console.log({ user, userID: parent.userID })
+
         const db = firebase.firestore()
-        const userDoc = db
+        const query = db
           .collection('users')
-          .doc(user.uid)
+          .where('uid', '==', user.uid)
           .get()
-          .then(doc => {
-            if (doc.exists) {
-              // user exists!
-              const data: any = doc.data()
-              parent.account = data.username
-              parent.userID = data.uid
+          .then(results => {
+            if (results.size) {
+              results.forEach(doc => {
+                // user exists!
+                console.log({ doc })
+                const foundUser = doc.data()
+                console.log({ foundUser })
+                parent.userID = foundUser.uid
+                parent.account = foundUser.urlslug
+              })
             } else {
               // no such user yet!
               parent.mustChooseName = true
+              parent.userID = user.uid
+              if (user.displayName) parent.details = user.displayName
             }
           })
           .catch(e => {
@@ -112,12 +122,19 @@ export default class AccountPage extends Vue {
       this.isTaken = false
 
       const db = firebase.firestore()
-      db.collection('users')
+      await db
+        .collection('users')
         .doc(this.nameInput)
         .set({
-          isproject: false,
+          isgroup: false,
           uid: this.userID,
+          details: this.details,
+          urlslug: this.nameInput,
         })
+
+      this.mustChooseName = false
+      this.loggedIn = true
+      this.account = this.nameInput
     }
   }
 
@@ -153,22 +170,8 @@ export default class AccountPage extends Vue {
     })
   }
 
-  private logout() {
-    const user = firebase.auth().currentUser
-    if (user) {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          // sign out successful
-          console.log('logged out')
-          this.loggedIn = false
-        })
-        .catch(e => {
-          // failed
-          console.error(e)
-        })
-    }
+  private async logout() {
+    this.loggedIn = !(await FireBaseAPI.logout())
   }
 }
 </script>
@@ -204,6 +207,10 @@ export default class AccountPage extends Vue {
 
 a:hover {
   color: purple;
+}
+
+.choose-username {
+  margin-top: 2rem;
 }
 
 .title-strip {

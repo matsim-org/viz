@@ -11,6 +11,79 @@ interface ProjectAttributes {
 }
 
 export default class FireBaseAPI {
+  private static theCurrentUser: string = ''
+
+  public static async getCurrentUser() {
+    if (FireBaseAPI.theCurrentUser) return this.theCurrentUser
+
+    const currentUser = firebase.auth().currentUser
+    console.log({ currentUser })
+    if (!currentUser) return ''
+
+    const db = firebase.firestore()
+    const results = await db
+      .collection('users')
+      .where('uid', '==', currentUser.uid)
+      .get()
+
+    console.log(results.size)
+    if (results.size) {
+      results.forEach(doc => {
+        // user exists!
+        const foundUser = doc.data()
+        console.log({ foundUser })
+        FireBaseAPI.theCurrentUser = foundUser.urlslug
+      })
+      return FireBaseAPI.theCurrentUser
+    } else {
+      // no such user yet!
+    }
+    return ''
+  }
+
+  public static async logout() {
+    const user = firebase.auth().currentUser
+    if (user) {
+      firebase
+        .auth()
+        .signOut()
+        .then(() => {
+          // sign out successful
+          console.log('logged out')
+          FireBaseAPI.theCurrentUser = ''
+          return true
+        })
+        .catch(e => {
+          // failed
+          console.error(e)
+          return false
+        })
+    }
+    return false
+  }
+
+  public static async canUserModify(ownerId: string) {
+    console.log('canUserModify', ownerId)
+
+    const currentUser = await FireBaseAPI.getCurrentUser()
+    console.log({ currentUser })
+
+    // not logged in?
+    if (!currentUser) return false
+
+    // is it me?
+    if (currentUser === ownerId) return true
+
+    // not a team?
+    const ownerDetails: any = await FireBaseAPI.getOwner(ownerId)
+    if (!ownerDetails.isgroup) return false
+
+    // am I on the team list?
+    if (ownerDetails.members && ownerDetails.members.indexOf(currentUser) > -1) return true
+
+    return false
+  }
+
   public static async getOwner(owner: string) {
     console.log('getOwner', owner)
     const db = firebase.firestore()
