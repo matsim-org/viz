@@ -71,7 +71,6 @@ export default class TimeSlider extends Vue {
 
   @Watch('sliderValue')
   private sliderChangedEvent(result: any) {
-    console.log(result)
     this.$emit('change', result)
   }
 
