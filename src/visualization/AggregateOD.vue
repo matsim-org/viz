@@ -237,10 +237,12 @@ export default class AggregateOD extends Vue {
     this.loadingText = ''
   }
   private get scaleRows() {
-    return Math.min(
-      Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
-      1000 * this.scaleFactor
-    )
+    return [
+      Math.min(
+        Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
+        1000 * this.scaleFactor
+      ),
+    ]
   }
   private buildSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
