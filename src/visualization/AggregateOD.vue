@@ -12,17 +12,16 @@
         | {{this.visualization.title ? this.visualization.title : this.visualization.type.toUpperCase()}}
 
     .info-description(style="padding: 0px 0.5rem;" v-if="this.visualization.parameters.description")
-      h4.heading(style="margin-top: 0rem;") Description:
-      p(style="padding: 0rem 0.25rem; font-size: 0.8rem; color: #686869;") {{ this.visualization.parameters.description.value }}
+      p.description {{ this.visualization.parameters.description.value }}
 
     .widgets
       h4.heading Time of day:
-      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
+      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedTimeSlider')
       span.checkbox
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
-      h4.heading Scale:
+      h4.heading Line scale:
       scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
       h4.heading Show totals for:
       .buttons-bar
@@ -137,6 +136,8 @@ export default class AggregateOD extends Vue {
   private colName: string = ''
   private headers: string[] = []
 
+  private geojson: any = {}
+
   private showTimeRange = false
 
   private isOrigin: boolean = true
@@ -212,6 +213,7 @@ export default class AggregateOD extends Vue {
         animate: false,
       })
     }
+
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
@@ -227,12 +229,12 @@ export default class AggregateOD extends Vue {
     const files = await this.loadFiles()
     if (files) {
       this.setMapExtent()
-      const geojson = await this.processInputs(files)
+      this.geojson = await this.processInputs(files)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
-      this.addCentroids(geojson)
-      this.convertRegionColors(geojson)
-      this.addGeojsonToMap(geojson)
+      this.addCentroids(this.geojson)
+      this.convertRegionColors(this.geojson)
+      this.addGeojsonToMap(this.geojson)
       this.setMapExtent()
       this.buildSpiderLinks()
       this.setupKeyListeners()
@@ -240,6 +242,7 @@ export default class AggregateOD extends Vue {
 
     this.loadingText = ''
   }
+
   private get scaleRows() {
     return [
       Math.min(
@@ -248,6 +251,7 @@ export default class AggregateOD extends Vue {
       ),
     ]
   }
+
   private buildSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
 
@@ -290,6 +294,7 @@ export default class AggregateOD extends Vue {
       data: this.spiderLinkFeatureCollection,
       type: 'geojson',
     } as any)
+
     this.mymap.addLayer(
       {
         id: 'spider-layer',
@@ -304,6 +309,8 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
+
+    this.changedScale(this.currentScale)
 
     const parent = this
     this.mymap.on('click', 'spider-layer', function(e: mapboxgl.MapMouseEvent) {
@@ -324,11 +331,23 @@ export default class AggregateOD extends Vue {
   private clickedOrigins() {
     this.isOrigin = true
     this.updateCentroidLabels()
+
+    this.convertRegionColors(this.geojson)
+
+    // avoiding mapbox typescript bug:
+    const tsMap = this.mymap as any
+    tsMap.getSource('shpsource').setData(this.geojson)
   }
 
   private clickedDestinations() {
     this.isOrigin = false
     this.updateCentroidLabels()
+
+    this.convertRegionColors(this.geojson)
+
+    // avoiding mapbox typescript bug:
+    const tsMap = this.mymap as any
+    tsMap.getSource('shpsource').setData(this.geojson)
   }
 
   private updateCentroidLabels() {
@@ -744,6 +763,11 @@ export default class AggregateOD extends Vue {
   }
 
   private addGeojsonToMap(geojson: any) {
+    this.addGeojsonLayers(geojson)
+    this.addNeighborhoodHoverEffects()
+  }
+
+  private addGeojsonLayers(geojson: any) {
     this.mymap.addSource('shpsource', {
       data: geojson,
       type: 'geojson',
@@ -775,10 +799,10 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
+  }
 
-    // HOVER effects
+  private addNeighborhoodHoverEffects() {
     const parent = this
-
     this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
       // typescript definitions and mapbox-gl are out of sync at the moment :-(
       // so setFeatureState is missing
@@ -819,7 +843,7 @@ export default class AggregateOD extends Vue {
 
   private pressedArrowKey(delta: number) {}
 
-  private changedSlider(value: any) {
+  private changedTimeSlider(value: any) {
     this.currentTimeBin = value
     const widthFactor = (this.currentScale / 500) * this.scaleFactor
 
@@ -850,7 +874,7 @@ export default class AggregateOD extends Vue {
   private changedScale(value: any) {
     console.log({ slider: value, timebin: this.currentTimeBin })
     this.currentScale = value
-    this.changedSlider(this.currentTimeBin)
+    this.changedTimeSlider(this.currentTimeBin)
   }
 }
 </script>
@@ -925,7 +949,7 @@ h4 {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .project-summary-block {
@@ -1024,5 +1048,13 @@ h4 {
   margin-left: auto;
   margin-right: 0.5rem;
   color: rgba(31, 151, 199, 0.932);
+}
+
+.description {
+  text-align: center;
+  margin-top: 0rem;
+  padding: 0rem 0.25rem;
+  font-size: 0.8rem;
+  color: #555;
 }
 </style>
