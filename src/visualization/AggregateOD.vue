@@ -1,14 +1,20 @@
 <template lang="pug">
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
+
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+
   .info-blob(v-if="!loadingText")
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+
     .info-header
-      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{this.visualization.type.toUpperCase()}}
-    .info-description
-      h3.header(style="text-align: left; padding: 0.5rem; font-size: 0.7rem; font-weight: bold; color: #3d3d3d;") DESCRIPTION:
-      h3.header(style="text-align: left; padding: 0rem 0.5rem; font-size: 0.8rem; font-weight: normal; color: #686869;") {{this.visualization.parameters.description.value}}
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;")
+        | {{this.visualization.title ? this.visualization.title : this.visualization.type.toUpperCase()}}
+
+    .info-description(style="padding: 0px 0.5rem;" v-if="this.visualization.parameters.description")
+      h4.heading(style="margin-top: 0rem;") Description:
+      p(style="padding: 0rem 0.25rem; font-size: 0.8rem; color: #686869;") {{ this.visualization.parameters.description.value }}
+
     .widgets
       h4.heading Time of day:
       time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
@@ -24,8 +30,6 @@
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
         button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
-
-    // p#mychart.details(style="margin-top:20px") Click any link or center for more details
 
   #mymap
   legend-box.legend(:rows="legendRows")
@@ -92,7 +96,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection', 'Scale Factor '],
+  requiredParamKeys: ['Projection', 'Scale Factor'],
 })
 
 @Component({
@@ -184,8 +188,8 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
-    if (this.visualization.parameters['Scale Factor ']) {
-      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor '].value)
+    if (this.visualization.parameters['Scale Factor']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor'].value)
     }
   }
 
@@ -971,14 +975,14 @@ h4 {
 .legend {
   grid-column: 1/3;
   grid-row: 1 / 3;
-  margin: auto 3rem 61rem auto;
-  z-index: 10;
+  margin: 2.3rem 3rem auto auto;
+  z-index: 4;
 }
 .scale {
   grid-column: 1/3;
   grid-row: 1/3;
   margin: auto 7rem 1.8rem auto;
-  z-index: 10;
+  z-index: 4;
 }
 .buttons-bar {
   display: flex;
