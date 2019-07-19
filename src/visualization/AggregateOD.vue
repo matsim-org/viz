@@ -4,7 +4,7 @@
 
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
 
-  .info-blob(v-if="!loadingText")
+  .info-blob(v-if="!loadingText"  :class='{"my-hidden": isHidden, "bye": isLeaving}')
     project-summary-block.project-summary-block(:project="project" :projectId="projectId")
 
     .info-header
@@ -28,11 +28,19 @@
         // {{rowName}}
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
-        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+        button.button(hint="hide" @click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
   #mymap
+
   legend-box.legend(:rows="legendRows")
   scale-box.scale(:rows="scaleRows")
+
+  button.hide-button.button.is-grey(v-if="!loadingText"
+    @click='clickedLegend'
+    :class='{"hide-toggle-button": isHidden}')
+      i.fa.fa-arrow-left(v-if="!isHidden")
+      i.fa.fa-arrow-right(v-else)
+
 </template>
 
 <script lang="ts">
@@ -122,6 +130,9 @@ export default class AggregateOD extends Vue {
   private authStore!: AuthenticationStore
 
   // -------------------------- //
+
+  private isHidden = false
+  private isLeaving = false
 
   private centroids: any = {}
   private centroidSource: any = {}
@@ -227,6 +238,7 @@ export default class AggregateOD extends Vue {
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
     this.fadeUnselectedLinks(-1)
+    if (this.isMobile()) this.isHidden = true
   }
 
   private async mapIsReady() {
@@ -245,6 +257,17 @@ export default class AggregateOD extends Vue {
     }
 
     this.loadingText = ''
+  }
+
+  private isMobile() {
+    const w = window
+    const d = document
+    const e = d.documentElement
+    const g = d.getElementsByTagName('body')[0]
+    const x = w.innerWidth || e.clientWidth || g.clientWidth
+    const y = w.innerHeight || e.clientHeight || g.clientHeight
+
+    return x < 640
   }
 
   private get scaleRows() {
@@ -891,6 +914,17 @@ export default class AggregateOD extends Vue {
     this.unselectAllCentroids()
   }
 
+  private clickedLegend() {
+    console.log('clicked')
+    if (this.isHidden) this.isHidden = !this.isHidden
+    else {
+      this.isLeaving = true
+      setTimeout(() => {
+        this.isHidden = true
+        this.isLeaving = false
+      }, 300)
+    }
+  }
   private pressedArrowKey(delta: number) {}
 
   private changedTimeSlider(value: any) {
@@ -1040,12 +1074,25 @@ h4 {
   }
 }
 
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.bye {
+  animation: 0.3s ease 0s 1 slideOutToLeft;
+}
+
 .widgets {
   display: flex;
   flex-direction: column;
   padding: 0px 0.5rem;
   margin-top: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .status-blob p {
@@ -1112,5 +1159,23 @@ h4 {
   padding: 0rem 0.25rem;
   font-size: 0.8rem;
   color: #555;
+}
+
+.hide-button {
+  grid-column: 1/2;
+  grid-row: 2/3;
+  margin: auto auto 0.5rem 16.5rem;
+  z-index: 20;
+}
+
+.hide-toggle-button {
+  margin-left: 0.25rem;
+}
+
+.my-hidden {
+  display: none;
+}
+
+@media only screen and (max-width: 640px) {
 }
 </style>
