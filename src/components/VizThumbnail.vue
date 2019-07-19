@@ -134,4 +134,15 @@ export default class VizThumbnail extends Vue {
 .thumbnail-pic {
   background-size: cover;
 }
+
+@media only screen and (max-width: 640px) {
+  .card {
+    display: grid;
+    grid-template-columns: 3rem 1fr 2rem;
+    grid-template-rows: 1fr auto;
+    border-top: solid 2px #479ccc;
+    background-color: #f4f4f4;
+    min-height: 8rem;
+  }
+}
 </style>

@@ -1,17 +1,18 @@
 <template lang="pug">
 .page-content
-  .start-page-content
     .masthead
+      .mobile-logo
+        a(href="https://www.vsp.tu-berlin.de"): img.mobile-logo(src='/vsp-logo.png')
+
       .info-left
         h2.title.is-2 Welcome to&nbsp;
           b MatHub
-        p You've found the "MATSim Hub", the MATSim data portal and results visualizer.&nbsp;
-          | This is an experimental web-based platform for exploring MATSim outputs,
-          | developed by the TU Berlin Institute of Land and Sea Transportation.
-        p
+        p You've found the "MATSim Hub", the MATSim data portal and results visualizer.
+        p.hide-mobile This is an experimental web-based platform for exploring MATSim outputs, developed by the TU Berlin Institute of Land and Sea Transportation.
+        p.hide-mobile
           a(href="https://matsim.org") MATSim
           |  is an open-source framework for implementing large-scale agent-based transport simulations.
-      .info-right
+      .info-right.hide-mobile
         img.vsp-logo(src='/vsp-logo.png')
         p Transport Systems Planning<br/>and Transport Telematics
         p Technische Universität<br/>Berlin, Germany
@@ -48,8 +49,6 @@
       h4.title.is-4 About MATSim
       p.info You can find out more about MATSim at&nbsp;
         a(href="https://matsim.org" target="_blank") https://matsim.org
-
-  create-project(v-if="showCreateProject" v-on:close="onCreateProjectClosed" v-bind:project-store="projectStore")
 </template>
 
 <script lang="ts">
@@ -84,8 +83,6 @@ export default class StartPage extends Vue {
 
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-
-  private showCreateProject = false
 
   private loggedIn: boolean = false
 
@@ -186,14 +183,6 @@ export default class StartPage extends Vue {
     this.$router.push({ path: `/project/${project.id}` })
   }
 
-  private onCreateClicked() {
-    this.showCreateProject = true
-  }
-
-  private onCreateProjectClosed() {
-    this.showCreateProject = false
-  }
-
   private async onDeleteProject(project: Project) {
     try {
       await this.projectStore.deleteProject(project)
@@ -217,10 +206,8 @@ export default class StartPage extends Vue {
 <style scoped>
 .page-content {
   background-color: white;
-}
-
-.start-page-content {
   padding: 0rem 2rem 2rem 2rem;
+  margin-bottom: 5rem;
 }
 
 .about {
@@ -249,7 +236,8 @@ export default class StartPage extends Vue {
 
 .vsp-logo {
   margin-left: auto;
-  width: 300px;
+  width: 200px;
+  max-width: 200px;
 }
 
 .info-right {
@@ -269,7 +257,8 @@ p {
 .info-right p {
   margin-top: 8px;
   line-height: 1.1;
-  width: 200px;
+  margin-left: auto;
+  width: 260px;
 }
 
 a {
@@ -286,5 +275,33 @@ a:hover {
 
 .info-right a:hover {
   color: #479ccc;
+}
+
+.mobile-logo {
+  display: none;
+}
+
+@media only screen and (max-width: 640px) {
+  .page-content {
+    padding: 0rem 0rem;
+    margin: 3rem 1rem;
+  }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+  }
+
+  .mobile-logo {
+    display: inherit;
+    text-align: right;
+    width: 150px;
+    margin: 0rem 1rem 0rem auto;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
 }
 </style>
