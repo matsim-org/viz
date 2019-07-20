@@ -105,6 +105,13 @@ export default class SystemNavBar extends Vue {
 .matsim-logo:hover {
   cursor: pointer;
 }
+
+@media only screen and (max-width: 640px) {
+  #systembar {
+    margin: 0px 0px;
+    padding: 0rem 1rem 0px;
+  }
+}
 </style>
 
 

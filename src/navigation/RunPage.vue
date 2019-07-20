@@ -213,4 +213,14 @@ td {
 a:hover {
   color: purple;
 }
+
+@media only screen and (max-width: 640px) {
+  .title-strip {
+    padding: 1.5rem 1rem;
+  }
+
+  .content-area {
+    margin: 2rem 1rem;
+  }
+}
 </style>

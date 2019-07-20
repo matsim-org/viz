@@ -229,4 +229,14 @@ a:hover {
   margin-top: -1.5rem;
   margin-bottom: 2rem;
 }
+
+@media only screen and (max-width: 640px) {
+  .title-strip {
+    padding: 1.5rem 1rem;
+  }
+
+  .content-area {
+    margin: 2rem 1rem;
+  }
+}
 </style>
