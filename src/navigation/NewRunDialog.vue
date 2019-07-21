@@ -1,33 +1,28 @@
 <template lang="pug">
   modal(v-on:close-requested="cancel()")
-    div(slot="header") Create New Project
+    div(slot="header") New Run
     div(slot="content")
-      p Projects organize your runs, dashboards, and visualizations.
+      p Runs organize your files and visualizations
 
-      .cuteBlueHeading: h1 Short name
-      input.input.is-medium(v-model="projectShortName" placeholder="trafficsim"
+      .cuteBlueHeading: h1 Run id/name/number
+      input.input.is-medium(v-model="runId" placeholder="run001"
                             v-focus
                             @keyup.esc="cancel")
       p used in URLs: no ödd characters!
 
-      .cuteBlueHeading: h1 Project Title
-      input.input.is-medium(v-model="projectName" placeholder="Traffic Simulation"
-                            @keyup.esc="cancel")
-      p e.g., study name, city, sponsor, etc.
-
       .cuteBlueHeading: h1 Description
-      input.input.is-medium(v-model="projectDescription" placeholder="Description"
+      input.input.is-medium(v-model="runDescription" placeholder="Description"
                             @keyup.esc="cancel")
       error(v-if="isError" v-bind:message="errorMessage")
 
     .actions(slot="actions")
       p.pathHint Path:
-        b &nbsp;/{{owner}}/{{ cleanUrlSlug }}
+        b &nbsp;/{{ owner }}/{{ projectId }}/{{ cleanUrlSlug }}
       button.button.negative.is-rounded(v-on:click="cancel()") Cancel
       button.button.is-rounded.accent(
         @click="handleCreateClicked()"
-        :disabled="!projectName || !projectShortName"
-        :class="{'is-success': projectName && projectShortName}"
+        :disabled="!runId"
+        :class="{'is-success': runId}"
         ) Create
 </template>
 
@@ -42,18 +37,17 @@ const vueInstance = Vue.extend({
     error: Error,
     modal: Modal,
   },
-  props: { owner: String },
+  props: { owner: String, projectId: String },
 })
 
 @Component
-export default class NewProjectDialog extends vueInstance {
-  private projectName = ''
-  private projectShortName = ''
-  private projectDescription = ''
+export default class NewRunDialog extends vueInstance {
+  private runId = ''
+  private runDescription = ''
   private errorMessage = ''
 
   private get cleanUrlSlug() {
-    return this.projectShortName.replace(/[\W_]+/g, '-').toLowerCase()
+    return this.runId.replace(/[\W_]+/g, '-').toLowerCase()
   }
 
   public static Close() {
@@ -66,22 +60,22 @@ export default class NewProjectDialog extends vueInstance {
 
   private async handleCreateClicked() {
     // clean the url-slug
-    this.projectShortName = this.cleanUrlSlug
+    this.runId = this.cleanUrlSlug
 
-    // make sure project doesn't already exist
-    const exists = await CloudAPI.getProject(this.owner, this.projectShortName)
+    // make sure run doesn't already exist
+    const exists = await CloudAPI.getRun(this.owner, this.projectId, this.runId)
     if (exists) {
-      this.errorMessage = `Project ${this.owner}/${this.projectShortName} already exists. Choose a different short name.`
+      this.errorMessage = `Run ${this.owner}/${this.projectId}/${this.runId} already exists. Try a different name.`
       return
     }
 
     // then create it
     try {
-      CloudAPI.createProject({
+      CloudAPI.createRun({
         owner: this.owner,
-        title: this.projectName,
-        urlslug: this.projectShortName,
-        description: this.projectDescription,
+        project: this.projectId,
+        runId: this.runId,
+        description: this.runDescription,
       })
       this.close()
     } catch (error) {

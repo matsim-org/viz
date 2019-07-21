@@ -1,13 +1,30 @@
 <template lang="pug">
 #page
   .title-strip
-    p
+    p /
       router-link(:to='`/${owner}`') {{owner}}
       | /{{urlslug}}
     h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
   .content-area
     p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
+
+    h5.title.is-5 RUNS
+      button.button.is-rounded.is-danger.is-outlined(
+        style="float:right"
+        v-if="canModify"
+        @click="clickedNewRun") +New Run
+
+    table.project-list
+      tr
+        th(style="min-width: 9rem;") Run ID
+        th Description
+
+      tr(v-for="run in myRuns")
+        td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
+        td {{ run.description }}
+
+    new-run-dialog(v-if="showCreateRun" :projectId="urlslug" :owner="owner" @close="onCreateRunClosed")
 
 </template>
 
@@ -19,13 +36,15 @@ import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
+import ProjectStore from '@/project/ProjectStore'
+import NewRunDialog from '@/navigation/NewRunDialog.vue'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
-import ProjectStore from '@/project/ProjectStore'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
 import ProjectSettings from '@/project/ProjectSettings.vue'
+import { falsy } from 'vega'
 
 const vueInstance = Vue.extend({
   props: {
@@ -36,9 +55,10 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
-    'image-file-thumbnail': ImageFileThumbnail,
-    'viz-thumbnail': VizThumbnail,
-    'project-settings': ProjectSettings,
+    ImageFileThumbnail,
+    NewRunDialog,
+    ProjectSettings,
+    VizThumbnail,
     Drag,
     Drop,
   },
@@ -60,6 +80,9 @@ export default class ProjectPage extends vueInstance {
   private selectedFiles: File[] = []
   private selectedRun: string = ''
   private myProject = {}
+  private canModify = false
+  private showCreateRun = false
+  private myRuns = []
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -90,16 +113,31 @@ export default class ProjectPage extends vueInstance {
 
   public async mounted() {
     const project = await CloudAPI.getProject(this.owner, this.urlslug)
-
-    if (project.length === 1) this.myProject = project[0]
+    if (project) this.myProject = project
     else {
-      throw Error(`Should have gotten exactly one project for /${this.owner}/${this.urlslug} but found ${project.size}`)
+      throw Error(`Should have gotten exactly one project for /${this.owner}/${this.urlslug}`)
     }
+
+    this.fetchRuns()
+    this.canModify = await this.determineIfUserCanModify()
+  }
+
+  private async determineIfUserCanModify() {
+    return await CloudAPI.canUserModify(this.owner)
   }
 
   @Watch('$route')
   private onRouteChanged(to: any, from: any) {
     console.log({ to, from })
+  }
+
+  private clickedNewRun() {
+    this.showCreateRun = true
+  }
+
+  private async onCreateRunClosed() {
+    this.showCreateRun = false
+    this.fetchRuns()
   }
 
   private async onSelectModelRun(modelRun: any) {
@@ -112,6 +150,12 @@ export default class ProjectPage extends vueInstance {
   private async onDrop(files: any) {
     this.selectedFiles = files
     this.showFileUpload = true
+  }
+
+  private async fetchRuns() {
+    const runs: any = await CloudAPI.getRuns(this.owner, this.urlslug)
+    runs.sort((a: any, b: any) => (a.runId.toLowerCase() < b.runId.toLowerCase() ? -1 : 1))
+    this.myRuns = runs
   }
 
   private async onNameChanged(name: string, event: any) {

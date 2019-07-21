@@ -1,4 +1,4 @@
-import * as firebase from 'firebase/app'
+import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/firestore'
 
@@ -6,6 +6,14 @@ interface ProjectAttributes {
   owner: string
   title: string
   urlslug: string
+  description: string
+  public?: boolean
+}
+
+interface RunAttributes {
+  owner: string
+  project: string
+  runId: string
   description: string
   public?: boolean
 }
@@ -97,35 +105,30 @@ export default class FireBaseAPI {
 
   public static async getProjectsForUser(owner: string) {
     console.log('getProjectsForUser', owner)
+
     const db = firebase.firestore()
-    const query = await db
+    const docs = await db
+      .collection('users')
+      .doc(owner)
       .collection('projects')
-      .where('owner', '==', owner)
       .get()
 
-    const result: any = []
-    query.forEach(doc => {
-      result.push(doc.data())
+    const projects: any[] = []
+    docs.forEach(project => {
+      projects.push(project.data())
     })
 
-    return result
+    return projects
   }
 
-  public static async getProject(owner: string, urlslug: string) {
-    console.log('getProject', owner, urlslug)
+  public static async getProject(owner: string, projectId: string) {
+    console.log('getProject', owner, projectId)
 
     const db = firebase.firestore()
-    const query = await db
-      .collection('projects')
-      .where('owner', '==', owner)
-      .where('urlslug', '==', urlslug)
-      .get()
+    const project = await db.doc(`users/${owner}/projects/${projectId}`).get()
 
-    const result: any = []
-    query.forEach(doc => {
-      result.push(doc.data())
-    })
-    return result
+    console.log({ getproject: project.data() })
+    return project.data()
   }
 
   public static async createProject(props: ProjectAttributes) {
@@ -134,9 +137,44 @@ export default class FireBaseAPI {
     if (!props.public) props.public = false
 
     const db = firebase.firestore()
-    await db
+    await db.doc(`users/${props.owner}/projects/${props.urlslug}`).set(props)
+  }
+
+  public static async getRun(owner: string, projectId: string, runId: string) {
+    console.log('getRun', owner, projectId, runId)
+
+    const db = firebase.firestore()
+    const run = await db.doc(`users/${owner}/projects/${projectId}/runs/${runId}`).get()
+
+    return run.data()
+  }
+
+  public static async getRuns(owner: string, projectId: string) {
+    console.log('getRuns', owner, projectId)
+
+    const db = firebase.firestore()
+    const docs = await db
+      .collection('users')
+      .doc(owner)
       .collection('projects')
-      .doc()
-      .set(props)
+      .doc(projectId)
+      .collection('runs')
+      .get()
+
+    const runs: any[] = []
+    docs.forEach(doc => {
+      runs.push(doc.data())
+    })
+
+    return runs
+  }
+
+  public static async createRun(props: RunAttributes) {
+    console.log({ createRun: props })
+
+    if (!props.public) props.public = false
+
+    const db = firebase.firestore()
+    await db.doc(`users/${props.owner}/projects/${props.project}/runs/${props.runId}`).set(props)
   }
 }

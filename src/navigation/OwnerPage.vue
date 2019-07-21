@@ -123,7 +123,7 @@ export default class OwnerPage extends vueInstance {
 
   private async fetchProjects() {
     const projects = await CloudAPI.getProjectsForUser(this.owner)
-    projects.sort((a: any, b: any) => a.title.toLowerCase() > b.title.toLowerCase())
+    projects.sort((a: any, b: any) => (a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1))
     this.myProjects = projects
   }
 

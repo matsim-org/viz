@@ -20,7 +20,8 @@
         th Notes
         th Actions
       tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
+        td: router-link(:to="'/'+owner+'/'+run.id")
+          b {{run.id}}
         td {{run.project}}
         td {{run.description}}
         td.right ...
@@ -35,7 +36,8 @@
         th Notes
         th Actions
       tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id") {{run.id}}
+        td: router-link(:to="'/'+owner+'/'+run.id")
+          b {{run.id}}
         td {{run.project}}
         td {{run.description}}
         td.right ...
@@ -127,7 +129,7 @@ export default class RunPage extends vueInstance {
 
   public async mounted() {
     const project = await CloudAPI.getProject(this.owner, this.urlslug)
-    if (project.length === 1) this.myProject = project[0]
+    if (project) this.myProject = project
   }
 
   @Watch('$route')
