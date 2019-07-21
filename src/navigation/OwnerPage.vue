@@ -232,7 +232,7 @@ a:hover {
 
 @media only screen and (max-width: 640px) {
   .title-strip {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 2rem 1rem;
   }
 
   .content-area {

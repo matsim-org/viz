@@ -7,10 +7,10 @@
     "serve-http": "vue-cli-service serve --mode local-frontend",
     "serve-local-backend": "vue-cli-service serve --https --mode local-frontend-and-backend",
     "lint": "vue-cli-service lint",
-    "build": "vue-cli-service build --mode vsp-production-deploy",
-    "build-dev": "vue-cli-service build --mode vsp-dev-deploy",
-    "deploy-surge": "vue-cli-service build --mode vsp-dev-deploy && cp dist/index.html dist/200.html && surge -d https://mathub.surge.sh dist/",
-    "build-staging": "vue-cli-service build --mode vsp-staging-deploy",
+    "build": "NODE_ENV=production vue-cli-service build --mode vsp-production-deploy",
+    "build-dev": "NODE_ENV=production vue-cli-service build --mode vsp-dev-deploy",
+    "deploy-surge": "NODE_ENV=production vue-cli-service build --mode vsp-dev-deploy && cp dist/index.html dist/200.html && surge -d https://mathub.surge.sh dist/",
+    "build-staging": "NODE_ENV=production vue-cli-service build --mode vsp-staging-deploy",
     "unit": "vue-cli-service test:unit"
   },
   "dependencies": {
