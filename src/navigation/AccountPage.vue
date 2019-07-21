@@ -5,7 +5,7 @@
       button.button.right.is-rounded.is-danger.is-outlined(style="float:right;" v-if="loggedIn" @click="logout()") Logout
       h3.title.is-3(v-if="account") Account Page -&nbsp;
           router-link(:to="'/' + account") {{account}}
-      h3.title.is-3(v-else) Almost there! Create a username.
+      h3.title.is-3(v-if="mustChooseName") Almost there! Create a username.
 
     h4.title.is-4(v-else) Sign into MatHub to access your account.
 
@@ -66,10 +66,15 @@ export default class AccountPage extends Vue {
   private userID: string = ''
   private details: string = ''
 
-  public created() {}
+  private firebaseUI!: any
+
+  public async created() {
+    this.firebaseUI = new firebaseui.auth.AuthUI(firebase.auth())
+  }
 
   public async mounted() {
     const parent = this
+
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
         parent.loggedIn = true
@@ -155,10 +160,10 @@ export default class AccountPage extends Vue {
   }
 
   private showLoginPanel() {
-    const ui = new firebaseui.auth.AuthUI(firebase.auth())
+    if (!this.firebaseUI) this.firebaseUI = new firebaseui.auth.AuthUI(firebase.auth())
 
     //    if (ui.isPendingRedirect()) {
-    ui.start('#firebaseui-auth-container', {
+    this.firebaseUI.start('#firebaseui-auth-container', {
       signInOptions: [
         {
           provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
@@ -172,6 +177,7 @@ export default class AccountPage extends Vue {
 
   private async logout() {
     this.loggedIn = !(await FireBaseAPI.logout())
+    window.location.href = '/'
   }
 }
 </script>
@@ -220,7 +226,7 @@ a:hover {
 
 @media only screen and (max-width: 640px) {
   .title-strip {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 2rem 1rem;
   }
 
   .content-area {
