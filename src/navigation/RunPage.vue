@@ -12,35 +12,23 @@
   .content-area
     h3.title.is-4 Run Dashboard
 
-    h5.title.is-5 VISUALIZATIONS
-    table.model-runs
-      tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id")
-          b {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
-        td.right ...
+    // h5.title.is-5 VISUALIZATIONS
+    // hr
 
     hr
 
     h5.title.is-5 FILES
+
     table.model-runs
       tr
-        th ID
-        th Project
-        th Notes
-        th Actions
-      tr.runz(v-for="run in myRuns")
-        td: router-link(:to="'/'+owner+'/'+run.id")
-          b {{run.id}}
-        td {{run.project}}
-        td {{run.description}}
+        th File
+        th.right Size
+        th.right Actions
+      tr(v-for="file in myFiles" :key="file.filename" @click="clickedFile(file)")
+        td: b {{ file.filename }}
+        td.right {{ readableFileSize(file.sizeinbytes) }}
         td.right ...
+        // button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
 </template>
 
@@ -69,9 +57,9 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
-    'image-file-thumbnail': ImageFileThumbnail,
-    'viz-thumbnail': VizThumbnail,
-    'project-settings': ProjectSettings,
+    ImageFileThumbnail,
+    VizThumbnail,
+    ProjectSettings,
     Drag,
     Drop,
   },
@@ -92,13 +80,9 @@ export default class RunPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
-  private myProject = {}
-
-  private myRuns: any = [
-    { id: 'run003', project: 'NEMO', description: 'Baseline 2015 scenario' },
-    { id: 'run002', project: 'Avoev', description: 'Final results' },
-    { id: 'run001', description: 'my test run' },
-  ]
+  private myProject: any = {}
+  private myRun: any = {}
+  private myFiles: any[] = []
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -108,40 +92,24 @@ export default class RunPage extends vueInstance {
     return this.projectState.selectedProject
   }
 
-  private get modelRuns() {
-    if (!this.project.tags) return []
-    return this.project.tags
-      .filter(a => a.type === 'run')
-      .sort((a, b) => {
-        // reverse sort! newest at top
-        return a.name < b.name ? 1 : -1
-      })
-  }
-
-  public async created() {
-    try {
-      // await this.projectStore.selectProject(this.projectId)
-    } catch (error) {
-      console.error(error)
-      // do some error handling
-    }
-  }
+  public async created() {}
 
   public async mounted() {
     const project = await CloudAPI.getProject(this.owner, this.urlslug)
     if (project) this.myProject = project
+
+    const run = await CloudAPI.getRun(this.owner, this.urlslug, this.run)
+    if (run) this.myRun = run
+
+    const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
+    if (files) this.myFiles = files
+
+    console.log({ files })
   }
 
   @Watch('$route')
   private onRouteChanged(to: any, from: any) {
     console.log({ to, from })
-  }
-
-  private async onSelectModelRun(modelRun: any) {
-    console.log('boop', modelRun)
-    // toggle, if it's already selected
-    if (this.selectedRun === modelRun.name) this.selectedRun = ''
-    else this.selectedRun = modelRun.name
   }
 
   private async onDrop(files: any) {
@@ -155,6 +123,10 @@ export default class RunPage extends vueInstance {
     } catch (error) {
       console.log(error)
     }
+  }
+
+  private readableFileSize(bytes: number): string {
+    return filesize(bytes)
   }
 
   private onSelectVisualization(viz: Visualization) {

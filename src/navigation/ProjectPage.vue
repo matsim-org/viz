@@ -30,7 +30,12 @@
 
 <script lang="ts">
 import download from 'downloadjs'
+import { File } from 'babel-types'
+import filesize from 'filesize'
+import { Drag, Drop } from 'vue-drag-drop'
+import { falsy } from 'vega'
 
+import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
 import SharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
@@ -38,19 +43,14 @@ import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore from '@/project/ProjectStore'
 import NewRunDialog from '@/navigation/NewRunDialog.vue'
-import { File } from 'babel-types'
-import filesize from 'filesize'
-import { Drag, Drop } from 'vue-drag-drop'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
 import ProjectSettings from '@/project/ProjectSettings.vue'
-import { falsy } from 'vega'
 
 const vueInstance = Vue.extend({
   props: {
     projectStore: ProjectStore,
     owner: String,
-    run: String,
     urlslug: String,
     fileApi: FileAPI,
   },
@@ -79,10 +79,10 @@ export default class ProjectPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
-  private myProject = {}
+  private myProject: ProjectAttributes = { owner: this.owner, title: '', urlslug: this.urlslug, description: '' }
   private canModify = false
   private showCreateRun = false
-  private myRuns = []
+  private myRuns: any[] = []
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -102,24 +102,74 @@ export default class ProjectPage extends vueInstance {
       })
   }
 
-  public async created() {
-    try {
-      // await this.projectStore.selectProject(this.projectId)
-    } catch (error) {
-      console.error(error)
-      // do some error handling
-    }
-  }
+  public async created() {}
 
   public async mounted() {
-    const project = await CloudAPI.getProject(this.owner, this.urlslug)
+    const project: any = await CloudAPI.getProject(this.owner, this.urlslug)
     if (project) this.myProject = project
     else {
-      throw Error(`Should have gotten exactly one project for /${this.owner}/${this.urlslug}`)
+      throw Error(`Did not find exactly one project for /${this.owner}/${this.urlslug}`)
+    }
+
+    // handle MATSim-Viz FileServer projects
+    if (this.myProject.mvizkey) {
+      await this.projectStore.selectProject(this.myProject.mvizkey)
+
+      // upgrade from old server?
+      if (!this.myProject.imported) {
+        await this.importMVizProject()
+        await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}`, { imported: true })
+      }
     }
 
     this.fetchRuns()
     this.canModify = await this.determineIfUserCanModify()
+  }
+
+  private async importMVizProject() {
+    console.log('--- importing old project!')
+
+    const defaultRun = 'default'
+    const fileSet: any = {}
+
+    // build lookup of runs & files
+    for (const item of this.project.files) {
+      let run = defaultRun
+      for (const tag of item.tags) {
+        if (tag.type === 'run') run = tag.name
+      }
+
+      if (!fileSet[run]) fileSet[run] = []
+      fileSet[run].push(item)
+    }
+
+    // Create the runs
+    for (const run of Object.keys(fileSet)) {
+      console.log('-- creating', run)
+
+      await CloudAPI.createRun({
+        owner: this.owner,
+        project: this.urlslug,
+        runId: run,
+        description: run === defaultRun ? 'Uncategorized files were moved here.' : '',
+      })
+
+      // Add all the files to the runs
+      const fileDetails = fileSet[run].map((f: any) => {
+        return {
+          owner: this.owner,
+          project: this.urlslug,
+          runId: run,
+          filename: f.userFileName,
+          sizeinbytes: f.sizeInBytes,
+          mvizkey: f.id,
+        }
+      })
+
+      try {
+        await CloudAPI.addFiles(fileDetails)
+      } catch (e) {}
+    }
   }
 
   private async determineIfUserCanModify() {
@@ -141,7 +191,6 @@ export default class ProjectPage extends vueInstance {
   }
 
   private async onSelectModelRun(modelRun: any) {
-    console.log('boop', modelRun)
     // toggle, if it's already selected
     if (this.selectedRun === modelRun.name) this.selectedRun = ''
     else this.selectedRun = modelRun.name
@@ -153,7 +202,7 @@ export default class ProjectPage extends vueInstance {
   }
 
   private async fetchRuns() {
-    const runs: any = await CloudAPI.getRuns(this.owner, this.urlslug)
+    const runs: any[] = await CloudAPI.getRuns(this.owner, this.urlslug)
     runs.sort((a: any, b: any) => (a.runId.toLowerCase() < b.runId.toLowerCase() ? -1 : 1))
     this.myRuns = runs
   }

@@ -97,19 +97,13 @@ export default class OwnerPage extends vueInstance {
       })
   }
 
-  public async created() {
-    try {
-      // await this.projectStore.selectProject(this.projectId)
-    } catch (error) {
-      console.error(error)
-      // do some error handling
-    }
-  }
+  public async created() {}
 
   public async mounted() {
     await this.fetchMe()
     await this.fetchProjects()
     this.canModify = await this.determineIfUserCanModify()
+    await this.projectStore.fetchPersonalProjects()
   }
 
   private async determineIfUserCanModify() {
@@ -125,6 +119,8 @@ export default class OwnerPage extends vueInstance {
     const projects = await CloudAPI.getProjectsForUser(this.owner)
     projects.sort((a: any, b: any) => (a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1))
     this.myProjects = projects
+
+    console.log({ mvizProjects: this.projectStore })
   }
 
   @Watch('$route')

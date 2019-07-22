@@ -2,20 +2,31 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/firestore'
 
-interface ProjectAttributes {
+export interface ProjectAttributes {
   owner: string
   title: string
   urlslug: string
   description: string
   public?: boolean
+  mvizkey?: string
+  imported?: boolean
 }
 
-interface RunAttributes {
+export interface RunAttributes {
   owner: string
   project: string
   runId: string
   description: string
   public?: boolean
+}
+
+export interface FileAttributes {
+  owner: string
+  project: string
+  runId: string
+  filename: string
+  sizeinbytes?: number
+  mvizkey?: string
 }
 
 export default class FireBaseAPI {
@@ -34,7 +45,6 @@ export default class FireBaseAPI {
       .where('uid', '==', currentUser.uid)
       .get()
 
-    console.log(results.size)
     if (results.size) {
       results.forEach(doc => {
         // user exists!
@@ -169,6 +179,28 @@ export default class FireBaseAPI {
     return runs
   }
 
+  public static async getFiles(owner: string, projectId: string, run: string) {
+    console.log('getFiles', owner, projectId, run)
+
+    const db = firebase.firestore()
+    const docs = await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(projectId)
+      .collection('runs')
+      .doc(run)
+      .collection('files')
+      .get()
+
+    const files: any[] = []
+    docs.forEach(doc => {
+      files.push(doc.data())
+    })
+
+    return files
+  }
+
   public static async createRun(props: RunAttributes) {
     console.log({ createRun: props })
 
@@ -176,5 +208,24 @@ export default class FireBaseAPI {
 
     const db = firebase.firestore()
     await db.doc(`users/${props.owner}/projects/${props.project}/runs/${props.runId}`).set(props)
+  }
+
+  public static async addFiles(files: FileAttributes[]) {
+    const db = firebase.firestore()
+
+    const batch = db.batch()
+    for (const props of files) {
+      const location = `users/${props.owner}/projects/${props.project}/runs/${props.runId}/files/${props.filename}`
+      console.log({ location })
+      const doc = db.doc(location)
+      batch.set(doc, props)
+    }
+    await batch.commit()
+  }
+
+  public static async updateDoc(location: string, attributes: any) {
+    const db = firebase.firestore()
+    const doc = db.doc(location)
+    await doc.update(attributes)
   }
 }
