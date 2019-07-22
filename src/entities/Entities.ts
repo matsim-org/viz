@@ -62,6 +62,8 @@ export interface InputFile extends Entity {
 export interface Visualization extends Entity {
   type: string
   title: string
+  createdAt: number
+  updatedAt: number
   thumbnail: string // supposed to be a base64 encoded image
   properties: { [id: string]: string }
   inputFiles: { [id: string]: InputFile }

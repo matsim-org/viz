@@ -1,9 +1,9 @@
 <template lang="pug">
 #page
   .title-strip
-    p /
+    p
       router-link(:to='`/${owner}`') {{owner}}
-      | /{{urlslug}}
+      | &nbsp;&raquo; {{urlslug}}
     h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
   .content-area
@@ -168,7 +168,34 @@ export default class ProjectPage extends vueInstance {
 
       try {
         await CloudAPI.addFiles(fileDetails)
-      } catch (e) {}
+      } catch (e) {
+        console.log({ e })
+      }
+
+      // Now import orphaned visualizations
+      const visualizations: any = this.project.visualizations.map(viz => {
+        console.log({ PARAMETERS: '' + viz.parameters })
+
+        const parameters: any = {}
+        for (const p of Object.keys(viz.parameters)) {
+          parameters[p] = viz.parameters[p].value
+        }
+
+        return {
+          owner: this.owner,
+          project: this.urlslug,
+          runId: 'default',
+          id: viz.id,
+          properties: viz.properties,
+          projectId: viz.project.id,
+          parameters,
+          type: viz.type,
+          title: viz.title,
+          createdAt: viz.createdAt,
+          updatedAt: viz.updatedAt,
+        }
+      })
+      await CloudAPI.addVisualizations(visualizations)
     }
   }
 

@@ -5,7 +5,7 @@
       button.button.right.is-rounded.is-danger.is-outlined(style="float:right;" v-if="loggedIn" @click="logout()") Logout
       h3.title.is-3(v-if="account")
           router-link(:to="'/' + account") {{account}}
-          | &nbsp;&bullet; Account settings
+          | &nbsp;&bullet; Settings
       h3.title.is-3(v-if="mustChooseName") Almost there! Create a username.
 
     h4.title.is-4(v-else) Sign into MatHub to access your account.

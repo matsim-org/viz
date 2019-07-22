@@ -1,7 +1,7 @@
 <template lang="pug">
 #page
   .title-strip
-    p /{{owner}}
+    p {{owner}} &raquo;
     h3.title.is-3 {{ owner }} &bullet; Home
 
   .content-area

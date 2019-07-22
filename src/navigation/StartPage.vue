@@ -18,7 +18,7 @@
         p Technische Universität<br/>Berlin, Germany
         p: a(href="https://vsp.tu-berlin.de") vsp.tu-berlin.de
 
-    .about(v-if="isAuthenticated")
+    .about(v-if="currentUser")
       h4.title.is-4 My Projects
       list-header(v-on:btnClicked="onCreateClicked" title="" btnTitle="New Project")
 
@@ -26,10 +26,10 @@
         p.info You don't have any projects yet. Create one!
       .projectList(v-else)
         list-element(v-for="project in personalProjects"
-                  v-bind:key="project.id"
-                  v-on:itemClicked="onProjectSelected(project)")
-          span(slot="title") {{project.name}}
-          span(slot="content") {{project.id}}
+                     :key="project.owner + project.urlslug"
+                     @itemClicked="onProjectSelected(project)")
+          span(slot="title") {{project.title}}
+          span(slot="content") {{ project.description ? project.description : '&nbsp;'}}
           button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
 
     .about
@@ -43,7 +43,7 @@
                         :project-store="projectStore"
                         @viz-selected="onVizSelected") {{ project.name }}
 
-      p.info If you have a MATSim-Viz login, you may have access to additional projects and visualizations.
+      p.info If you have a MatHub login, you may have access to additional projects and visualizations.
 
     .about
       h4.title.is-4 About MATSim
@@ -55,6 +55,7 @@
 import sharedStore from '@/SharedStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
+import CloudAPI, { ProjectAttributes } from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -84,6 +85,10 @@ export default class StartPage extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
 
+  private currentUser: string = ''
+
+  private personalProjects: ProjectAttributes[] = []
+
   // this assignment is necessary to make vue watch the state. Later we switch it out with the actual
   // state of the projectStore
   private projectState: ProjectState = {
@@ -99,10 +104,6 @@ export default class StartPage extends Vue {
 
   private get publicProjects() {
     return this.projectState.projects.filter(project => this.isPublicProject(project))
-  }
-
-  private get personalProjects() {
-    return this.projectState.projects.filter(project => this.isPersonalProject(project))
   }
 
   public async created() {
@@ -121,16 +122,24 @@ export default class StartPage extends Vue {
     }
   }
 
-  public mounted() {
-    EventBus.$emit('set-breadcrumbs', [])
+  public async mounted() {
+    this.currentUser = await CloudAPI.getCurrentUser()
+    if (!this.currentUser) return
+
+    this.fetchPersonalProjects()
+  }
+
+  private async fetchPersonalProjects() {
+    // return this.projectState.projects.filter(project => this.isPersonalProject(project))
+    this.personalProjects = await CloudAPI.getProjectsForUser(this.currentUser)
   }
 
   private onVizSelected(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })
   }
 
-  private onProjectSelected(project: Project) {
-    this.$router.push({ path: `/project/${project.id}` })
+  private onProjectSelected(project: ProjectAttributes) {
+    this.$router.push({ path: `/${project.owner}/${project.urlslug}` })
   }
 
   private async onDeleteProject(project: Project) {

@@ -29,6 +29,14 @@ export interface FileAttributes {
   mvizkey?: string
 }
 
+export interface VizAttributes {
+  id: string
+  title: string
+  owner: string
+  project: string
+  runId: string
+}
+
 export default class FireBaseAPI {
   private static theCurrentUser: string = ''
 
@@ -227,5 +235,40 @@ export default class FireBaseAPI {
     const db = firebase.firestore()
     const doc = db.doc(location)
     await doc.update(attributes)
+  }
+
+  public static async addVisualizations(visualizations: VizAttributes[]) {
+    const db = firebase.firestore()
+
+    const batch = db.batch()
+    for (const props of visualizations) {
+      const location = `users/${props.owner}/projects/${props.project}/runs/${props.runId}/visualizations/${props.id}`
+      console.log({ location })
+      const doc = db.doc(location)
+      batch.set(doc, props)
+    }
+    await batch.commit()
+  }
+
+  public static async getVisualizations(owner: string, projectId: string, run: string) {
+    console.log('getVisualizations', owner, projectId, run)
+
+    const db = firebase.firestore()
+    const docs = await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(projectId)
+      .collection('runs')
+      .doc(run)
+      .collection('visualizations')
+      .get()
+
+    const data: any[] = []
+    docs.forEach(doc => {
+      data.push(doc.data())
+    })
+
+    return data
   }
 }

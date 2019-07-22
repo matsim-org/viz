@@ -3,17 +3,23 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      router-link(:to='`/${owner}/${urlslug}`') /{{urlslug}}
-      | /{{ run }}
+      router-link(:to='`/${owner}/${urlslug}`') &nbsp;&raquo; {{urlslug}}
+      | &nbsp;&raquo; {{ run }}
 
     h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
     h4.title.is-3(v-else) &nbsp;
 
   .content-area
-    h3.title.is-4 Run Dashboard
+    h5.title.is-5 VISUALIZATIONS
 
-    // h5.title.is-5 VISUALIZATIONS
-    // hr
+    .viz-table
+      .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
+        viz-thumbnail(:viz="viz"
+                      :showActionButtons="true"
+                      @edit="onEditViz(viz)"
+                      @remove="onRemoveViz(viz)"
+                      @share="onShareViz(viz)"
+        )
 
     hr
 
@@ -83,6 +89,7 @@ export default class RunPage extends vueInstance {
   private myProject: any = {}
   private myRun: any = {}
   private myFiles: any[] = []
+  private myVisualizations: any[] = []
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -104,7 +111,10 @@ export default class RunPage extends vueInstance {
     const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
     if (files) this.myFiles = files
 
-    console.log({ files })
+    const viz: any[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
+    if (viz) this.myVisualizations = viz
+
+    console.log({ viz, files })
   }
 
   @Watch('$route')
@@ -129,8 +139,8 @@ export default class RunPage extends vueInstance {
     return filesize(bytes)
   }
 
-  private onSelectVisualization(viz: Visualization) {
-    this.$router.push({ path: `/${viz.type}/${this.project.id}/${viz.id}` })
+  private onSelectVisualization(viz: any) {
+    this.$router.push({ path: `/${viz.type}/${viz.projectId}/${viz.id}` })
   }
 
   private async onRemoveViz(viz: Visualization) {
@@ -177,6 +187,25 @@ export default class RunPage extends vueInstance {
 
 .right {
   text-align: right;
+}
+
+.viz-table {
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: repeat(auto-fill, 25rem);
+  list-style: none;
+  padding-left: 0px;
+  margin-top: 2rem;
+  margin-bottom: 0px;
+  overflow-y: auto;
+}
+
+.viz-item {
+  display: table-cell;
+  padding: 0 0 0 0;
+  vertical-align: top;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
 }
 
 th,
