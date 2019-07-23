@@ -50,9 +50,9 @@ import {
   TransitLine,
   RouteDetails,
 } from '@/visualization/transit-supply/Interfaces'
-// import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
-// import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
-// import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
+import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
+import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
+import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
@@ -94,28 +94,7 @@ export default class TransitSupply extends Vue {
   private mymap!: mapboxgl.Map
   private project: any = {}
   private projection: string = DEFAULT_PROJECTION
-  private routesOnLink: any = [
-    { uniqueRouteID: '12', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '132', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '1332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'a', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'b', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'b', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'as', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'asd', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'asdf', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'asdfasdf', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'asdfasdff', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'ww', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'www', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: 'wwww', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '13wwwww332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '55', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-    { uniqueRouteID: '133za32', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
-  ]
+  private routesOnLink: any = []
   private selectedRoute: any = {}
   private visualization!: Visualization
   private stopMarkers: any[] = []
@@ -129,9 +108,9 @@ export default class TransitSupply extends Vue {
   private _routeData!: { [index: string]: RouteDetails }
   private _stopFacilities!: { [index: string]: NetworkNode }
   private _transitLines!: { [index: string]: TransitLine }
-  // private _roadFetcher!: XmlFetcher
-  // private _transitFetcher!: XmlFetcher
-  // private _transitHelper!: TransitSupplyHelper
+  private _roadFetcher!: XmlFetcher
+  private _transitFetcher!: XmlFetcher
+  private _transitHelper!: TransitSupplyHelper
 
   public created() {
     this._attachedRouteLayers = []
@@ -146,9 +125,9 @@ export default class TransitSupply extends Vue {
   }
 
   public beforeDestroy() {
-    // if (this._roadFetcher) this._roadFetcher.destroy()
-    // if (this._transitFetcher) this._transitFetcher.destroy()
-    // if (this._transitHelper) this._transitHelper.destroy()
+    if (this._roadFetcher) this._roadFetcher.destroy()
+    if (this._transitFetcher) this._transitFetcher.destroy()
+    if (this._transitHelper) this._transitHelper.destroy()
   }
 
   public async mounted() {
@@ -186,7 +165,7 @@ export default class TransitSupply extends Vue {
       // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
       logoPosition: 'bottom-right',
-      style: 'mapbox://styles/mapbox/dark-v9',
+      style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
       // zoom: 9,
     })
@@ -234,7 +213,7 @@ export default class TransitSupply extends Vue {
 
   private async mapIsReady() {
     const networks = await this.loadNetworks()
-    // if (networks) this.processInputs(networks)
+    if (networks) this.processInputs(networks)
 
     this.setupKeyListeners()
   }
@@ -260,7 +239,6 @@ export default class TransitSupply extends Vue {
   }
 
   private async loadNetworks() {
-    /*
     try {
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
 
@@ -298,12 +276,10 @@ export default class TransitSupply extends Vue {
       this.loadingText = '' + e
       return null
     }
-   */
   }
 
   private async processInputs(networks: NetworkInputs) {
     this.loadingText = 'Preparing...'
-    /*
     // spawn transit helper web worker
     this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
 
@@ -337,7 +313,6 @@ export default class TransitSupply extends Vue {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
       animate: false,
     })
-    */
     this.loadingText = ''
   }
 
@@ -703,7 +678,7 @@ p {
 }
 
 .status-blob {
-  background-color: #222;
+  background-color: #fff;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.97;
   margin: auto 0px auto -10px;
@@ -721,22 +696,24 @@ p {
   top: 0;
   bottom: 0;
   width: 100%;
-  background-color: black;
+  background-color: white;
   overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
 }
 
 .route {
-  background-color: #363a45;
+  background-color: #eee;
   margin: 0px 0px;
-  padding: 5px 5px;
+  padding: 5px 0px;
   text-align: left;
-  color: #bbb;
+  color: #444;
+  border-left: solid 5px #00000000;
+  border-right: solid 5px #00000000;
 }
 
 .route:hover {
-  background-color: #445;
+  background-color: white;
   cursor: pointer;
 }
 
@@ -747,7 +724,7 @@ h3 {
 
 .mytitle {
   margin-left: 10px;
-  color: white;
+  color: rgb(39, 117, 148);
 }
 
 .details {
@@ -768,8 +745,8 @@ h3 {
 }
 
 .highlightedRoute {
-  background-color: #556;
-  border-right: solid 5px #ff8;
+  background-color: white;
+  border-left: solid 5px #606aff;
 }
 
 .bigtitle {
@@ -833,7 +810,7 @@ h3 {
 }
 
 .status-blob p {
-  color: #ffa;
+  color: #224;
 }
 
 .legend {

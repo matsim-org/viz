@@ -25,7 +25,7 @@ export default class LegendBox extends Vue {
   display: flex;
   flex-direction: column;
   color: white;
-  background-color: #222222cc;
+  background-color: #ffffffcc;
   padding: 0.5rem 0.5rem;
   border: solid 1px #666;
   border-radius: 2px;
@@ -36,6 +36,7 @@ export default class LegendBox extends Vue {
   flex-direction: row;
   margin-bottom: 0.25rem;
   font-size: 0.8rem;
+  color: black;
 }
 
 .legend-col-1 {
@@ -47,7 +48,7 @@ export default class LegendBox extends Vue {
 }
 
 p.title {
-  color: #ccc;
+  color: #444;
   font-size: 0.9rem;
   text-transform: uppercase;
   margin-bottom: 1rem;

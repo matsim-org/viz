@@ -53,7 +53,6 @@ export default class LeftDataPanel extends Vue {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #eeeeffee;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.1);
   animation: 0.3s ease 0s 1 slideInFromLeft;
 }
@@ -71,6 +70,7 @@ export default class LeftDataPanel extends Vue {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  background-color: #eeeefff4;
 }
 
 .lower-area {
@@ -80,8 +80,9 @@ export default class LeftDataPanel extends Vue {
 .bottom-nav-bar {
   padding: 0.2rem 0rem;
   background-color: white;
-  margin-top: 0.25rem;
   text-align: center;
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
 }
 
 .restore-button {
@@ -92,6 +93,8 @@ export default class LeftDataPanel extends Vue {
   text-align: center;
   background-color: #097c43;
   padding: 0.5rem 0rem;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
 }
@@ -111,6 +114,23 @@ export default class LeftDataPanel extends Vue {
   }
   to {
     transform: translateX(-100%);
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  #datapanel {
+    margin: 0rem 0rem 0rem 0rem;
+  }
+
+  .info-header {
+    border-top-left-radius: 0rem;
+    border-top-right-radius: 0rem;
+    border-top: none;
+  }
+
+  .bottom-nav-bar {
+    border-bottom-left-radius: 0rem;
+    border-bottom-right-radius: 0rem;
   }
 }
 </style>

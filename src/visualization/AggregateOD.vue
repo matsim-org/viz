@@ -31,8 +31,8 @@
 
   #mymap
 
-  legend-box.legend(:rows="legendRows")
-  scale-box.scale(:rows="scaleRows")
+  legend-box.legend(v-if="!isMobile()" :rows="legendRows")
+  scale-box.scale(v-if="!isMobile()" :rows="scaleRows")
 
 </template>
 
@@ -124,9 +124,6 @@ export default class AggregateOD extends Vue {
 
   // -------------------------- //
 
-  private isHidden = false
-  private isLeaving = false
-
   private centroids: any = {}
   private centroidSource: any = {}
   private linkData: any = {}
@@ -216,8 +213,12 @@ export default class AggregateOD extends Vue {
     const extent = localStorage.getItem(this.vizId + '-bounds')
     if (extent) {
       const lnglat = JSON.parse(extent)
+
+      const mFac = this.isMobile ? 0 : 1
+      const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
+
       this.mymap.fitBounds(lnglat, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
+        padding,
         animate: false,
       })
     }
@@ -231,7 +232,9 @@ export default class AggregateOD extends Vue {
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
     this.fadeUnselectedLinks(-1)
-    if (this.isMobile()) this.isHidden = true
+    if (this.isMobile()) {
+      // do something
+    }
   }
 
   private async mapIsReady() {
@@ -907,17 +910,6 @@ export default class AggregateOD extends Vue {
     this.unselectAllCentroids()
   }
 
-  private clickedLegend() {
-    console.log('clicked')
-    if (this.isHidden) this.isHidden = !this.isHidden
-    else {
-      this.isLeaving = true
-      setTimeout(() => {
-        this.isHidden = true
-        this.isLeaving = false
-      }, 300)
-    }
-  }
   private pressedArrowKey(delta: number) {}
 
   private changedTimeSlider(value: any) {
@@ -1146,11 +1138,5 @@ h4 {
 }
 
 @media only screen and (max-width: 640px) {
-  .legend {
-    display: none;
-  }
-  .scale {
-    display: none;
-  }
 }
 </style>
