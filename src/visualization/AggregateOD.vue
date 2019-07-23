@@ -96,7 +96,7 @@ SharedStore.addVisualizationType({
   prettyName: 'Origin/Destination Patterns',
   description: 'Depicts aggregate O/D flows between areas.',
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection', 'Scale Factor'],
+  requiredParamKeys: ['Projection', 'Scale Factor '],
 })
 
 @Component({
@@ -155,6 +155,7 @@ export default class AggregateOD extends Vue {
   private scaleValues = SCALE
   private currentScale = SCALE[0]
   private currentTimeBin = TOTAL_MSG
+  private values!: number[]
 
   private projection!: string
   private hoverId: any
@@ -193,8 +194,8 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
-    if (this.visualization.parameters['Scale Factor']) {
-      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor'].value)
+    if (this.visualization.parameters['Scale Factor ']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor '].value)
     }
   }
 
@@ -445,19 +446,34 @@ export default class AggregateOD extends Vue {
 
     const props = e.features[0].properties
     console.log(props)
+    let html: any
 
-    const trips = props.daily * this.scaleFactor
-    let revTrips = 0
-    const reverseDir = '' + props.dest + ':' + props.orig
+    if (this.currentTimeBin === TOTAL_MSG) {
+      const trips = props.daily * this.scaleFactor
+      let revTrips = 0
+      const reverseDir = '' + props.dest + ':' + props.orig
 
-    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily * this.scaleFactor
+      if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily * this.scaleFactor
+      const totalTrips = trips + revTrips
 
-    const totalTrips = trips + revTrips
+      html = `<h1>${totalTrips} Daily Bidirectional Trips</h1><br/>`
+      html += `<p>-------------------------------------------------</p>`
+      html += `<p>${trips} total trips daily : ${revTrips} reverse trips daily</p>`
+    } else if (+this.currentTimeBin) {
+      const trips = this.linkData['' + props.orig + ':' + props.dest].values[this.currentTimeBin] * this.scaleFactor
+      let revTrips = 0
+      const reverseDir = '' + props.dest + ':' + props.orig
 
-    let html = `<h1>${totalTrips} Bidirectional Trips</h1><br/>`
-    html += `<p> -----------------------------</p>`
-    html += `<p>${trips} trips : ${revTrips} reverse trips</p>`
-
+      if (this.linkData[reverseDir]) {
+        revTrips = this.linkData[reverseDir].values[this.currentTimeBin] * this.scaleFactor
+      }
+      const totalTrips = trips + revTrips
+      html = `<h1>${totalTrips} Bidirectional Trips at ${this.currentTimeBin}:00 </h1><br/>`
+      html += `<p> ------------------------------------------------</p>`
+      html += `<p>${trips} trips : ${revTrips} reverse trips </p>`
+    } else {
+      html = `<h1> Hello </h1>`
+    }
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
       .setHTML(html)
@@ -783,12 +799,13 @@ export default class AggregateOD extends Vue {
     for (const row of lines.slice(1)) {
       const columns = row.split(separator)
       const values = columns.slice(2).map(a => parseFloat(a))
+      this.values = values
 
       // build zone matrix
       const i = columns[0]
       const j = columns[1]
       if (!this.zoneData[i]) this.zoneData[i] = {}
-      this.zoneData[i][j] = values
+      this.zoneData[i][j] = this.values = values
 
       // calculate daily/total values
       const daily = values.reduce((a, b) => a + b, 0)
