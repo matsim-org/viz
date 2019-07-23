@@ -2,29 +2,26 @@
 .main-content
   #mymap
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-  project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  .info-blob(v-if="!loadingText")
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-    .info-header
-      h3(style="padding: 0rem 3rem 0.5rem 3rem; font-weight: normal;color: white;") Emissions Grid
-    .buttons-bar
-      h4.heading Pollutant
-      .pollutants
-        .hey(v-for="p in pollutants")
-          button.button.pollutant(
-            :class="{'is-warning': p===pollutant, 'is-gray': p!==pollutant}"
-            @click="clickedPollutant(p)") {{p}}
-      h4.heading Time of Day
-      .slider-box
-        time-slider.time-slider(:bind="currentTime"
-                                :initialTime="currentTime"
-                                @change="changedSlider")
 
-    .theme-choices
-      img.theme-button(v-for="theme in themes"
-                       :class="{'selected-theme': theme.name === chosenTheme.name}"
-                       :src="theme.icon"
-                       @click="clickedTheme(theme)")
+  left-data-panel.left-panel(v-if="!loadingText" title="Emissions Grid")
+    .dashboard-panel
+      .pollution-settings
+        h4.heading Pollutant
+        .pollutants
+          .hey(v-for="p in pollutants")
+            button.button.pollutant(
+              :class="{'is-warning': p===pollutant, 'is-gray': p!==pollutant}"
+              @click="clickedPollutant(p)") {{p}}
+        h4.heading Time of Day
+        .slider-box
+          time-slider.time-slider(:bind="currentTime"
+                                  :initialTime="currentTime"
+                                  @change="changedSlider")
+      .theme-choices
+        img.theme-button(v-for="theme in themes"
+                        :class="{'selected-theme': theme.name === chosenTheme.name}"
+                        :src="theme.icon"
+                        @click="clickedTheme(theme)")
 </template>
 
 <script lang="ts">
@@ -41,7 +38,7 @@ import Config from '@/config/Config'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore from '@/project/ProjectStore'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import sharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
@@ -76,8 +73,8 @@ interface Point {
 
 @Component({
   components: {
-    'time-slider': TimeSlider,
-    'project-summary-block': ProjectSummaryBlock,
+    TimeSlider,
+    LeftDataPanel,
   },
 })
 export default class EmissionsGrid extends Vue {
@@ -413,7 +410,7 @@ a:focus {
   text-align: center;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  z-index: 2;
+  z-index: 8;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
 }
@@ -422,28 +419,11 @@ a:focus {
   color: #0066a2; /* #ffa; /* #0066a1; */
 }
 
-.project-summary-block {
-  width: 16rem;
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  margin: 0px auto auto 0px;
-  z-index: 10;
-}
-
-.info-blob {
+.left-panel {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  height: 100%;
-  background-color: #eeeeffee;
-  margin: 0px 0px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  text-align: center;
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  opacity: 1;
-  z-index: 5;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
+  overflow-y: auto;
 }
 
 .info-header {
@@ -451,12 +431,13 @@ a:focus {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
+  text-align: center;
 }
 
-.buttons-bar {
-  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+.pollution-settings {
+  margin: 0rem 0.5rem 0.5rem 0.5rem;
   padding: 0rem 0.25rem;
-  height: 100%;
+  flex-grow: 1;
 }
 
 .pollutant {
@@ -468,15 +449,6 @@ a:focus {
   text-align: left;
   color: black;
   margin-top: 2rem;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
 }
 
 .theme-choices {
@@ -499,6 +471,12 @@ a:focus {
 
 .selected-theme {
   background-color: #6f6;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .selected-theme:hover {

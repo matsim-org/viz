@@ -13,12 +13,13 @@
       .cuteBlueHeading: h1 Description
       input.input.is-medium(v-model="runDescription" placeholder="Description"
                             @keyup.esc="cancel")
+
       error(v-if="isError" v-bind:message="errorMessage")
 
     .actions(slot="actions")
       p.pathHint Path:
         b &nbsp;/{{ owner }}/{{ projectId }}/{{ cleanUrlSlug }}
-      button.button.negative.is-rounded(v-on:click="cancel()") Cancel
+      button.button.negative.is-rounded(v-on:click="cancel") Cancel
       button.button.is-rounded.accent(
         @click="handleCreateClicked()"
         :disabled="!runId"

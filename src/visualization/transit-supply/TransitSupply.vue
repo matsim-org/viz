@@ -1,12 +1,11 @@
 <template lang="pug">
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-  project-summary-block.project-summary-block(
-    :project="project" :projectId="projectId")
-  .info-blob(v-if="routesOnLink.length > 0" )
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-    .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Transit routes on selected link:
+
+  left-data-panel.left-panel(v-if="routesOnLink.length > 0"
+    title="Transit routes on selected link:")
+   .dashboard-panel
+
     p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
     .routeList
@@ -18,6 +17,7 @@
         p.details: b {{route.departures}} departures
         p.details First: {{route.firstDeparture}}
         p.details Last: {{route.lastDeparture}}
+
   #mymap
     .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
       v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
@@ -39,6 +39,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 
@@ -49,11 +50,10 @@ import {
   TransitLine,
   RouteDetails,
 } from '@/visualization/transit-supply/Interfaces'
-import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
-import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
-import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
+// import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
+// import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
+// import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -74,7 +74,7 @@ SharedStore.addVisualizationType({
   requiredParamKeys: ['Projection'],
 })
 
-@Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
+@Component({ components: { LeftDataPanel, LegendBox } })
 export default class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
@@ -94,7 +94,28 @@ export default class TransitSupply extends Vue {
   private mymap!: mapboxgl.Map
   private project: any = {}
   private projection: string = DEFAULT_PROJECTION
-  private routesOnLink: any = []
+  private routesOnLink: any = [
+    { uniqueRouteID: '12', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '132', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '1332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '13332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'a', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'b', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'b', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'as', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'asd', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'asdf', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'asdfasdf', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'asdfasdff', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'ww', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'www', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: 'wwww', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '13wwwww332', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '55', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+    { uniqueRouteID: '133za32', id: 'billy', departures: 111, firstDeparture: 'asf', lastDeparture: 'asdf' },
+  ]
   private selectedRoute: any = {}
   private visualization!: Visualization
   private stopMarkers: any[] = []
@@ -108,9 +129,9 @@ export default class TransitSupply extends Vue {
   private _routeData!: { [index: string]: RouteDetails }
   private _stopFacilities!: { [index: string]: NetworkNode }
   private _transitLines!: { [index: string]: TransitLine }
-  private _roadFetcher!: XmlFetcher
-  private _transitFetcher!: XmlFetcher
-  private _transitHelper!: TransitSupplyHelper
+  // private _roadFetcher!: XmlFetcher
+  // private _transitFetcher!: XmlFetcher
+  // private _transitHelper!: TransitSupplyHelper
 
   public created() {
     this._attachedRouteLayers = []
@@ -125,9 +146,9 @@ export default class TransitSupply extends Vue {
   }
 
   public beforeDestroy() {
-    if (this._roadFetcher) this._roadFetcher.destroy()
-    if (this._transitFetcher) this._transitFetcher.destroy()
-    if (this._transitHelper) this._transitHelper.destroy()
+    // if (this._roadFetcher) this._roadFetcher.destroy()
+    // if (this._transitFetcher) this._transitFetcher.destroy()
+    // if (this._transitHelper) this._transitHelper.destroy()
   }
 
   public async mounted() {
@@ -164,7 +185,7 @@ export default class TransitSupply extends Vue {
       bearing: 0,
       // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-left',
+      logoPosition: 'bottom-right',
       style: 'mapbox://styles/mapbox/dark-v9',
       pitch: 0,
       // zoom: 9,
@@ -213,7 +234,7 @@ export default class TransitSupply extends Vue {
 
   private async mapIsReady() {
     const networks = await this.loadNetworks()
-    if (networks) this.processInputs(networks)
+    // if (networks) this.processInputs(networks)
 
     this.setupKeyListeners()
   }
@@ -239,6 +260,7 @@ export default class TransitSupply extends Vue {
   }
 
   private async loadNetworks() {
+    /*
     try {
       if (SharedStore.debug) console.log(this.visualization.inputFiles)
 
@@ -276,11 +298,12 @@ export default class TransitSupply extends Vue {
       this.loadingText = '' + e
       return null
     }
+   */
   }
 
   private async processInputs(networks: NetworkInputs) {
     this.loadingText = 'Preparing...'
-
+    /*
     // spawn transit helper web worker
     this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
 
@@ -314,6 +337,7 @@ export default class TransitSupply extends Vue {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
       animate: false,
     })
+    */
     this.loadingText = ''
   }
 
@@ -681,7 +705,7 @@ p {
 .status-blob {
   background-color: #222;
   box-shadow: 0 0 8px #00000040;
-  opacity: 0.9;
+  opacity: 0.97;
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
@@ -756,6 +780,7 @@ h3 {
 }
 
 .info-header {
+  text-align: center;
   background-color: #097c43;
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
@@ -779,8 +804,6 @@ h3 {
   margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
   opacity: 0.95;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
@@ -795,12 +818,6 @@ h3 {
   }
 }
 
-.routeList {
-  width: 16rem;
-  height: 100%;
-  overflow-y: auto;
-}
-
 .stop-marker {
   position: absolute;
   width: 12px;
@@ -810,6 +827,7 @@ h3 {
   background-size: 100%;
   cursor: pointer;
 }
+
 .help-text {
   color: #ccc;
 }
@@ -821,7 +839,21 @@ h3 {
 .legend {
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  margin: auto 0.5rem 2rem auto;
+  margin: auto 0.5rem 3.3rem auto;
   z-index: 10;
+}
+
+.left-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+  padding-bottom: 0.5rem;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
 }
 </style>

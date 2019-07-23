@@ -95,20 +95,6 @@ export default class AppRouter {
           },
         },
         {
-          path: '/project/:projectId',
-          component: Project,
-          name: 'Project',
-          meta: { authRequired: true },
-          props: route => {
-            return {
-              projectId: route.params.projectId,
-              projectStore: projectStore,
-              uploadStore: uploadStore,
-              fileApi: fileApi,
-            }
-          },
-        },
-        {
           path: '/transit-supply/:projectId/:vizId',
           name: 'Transit Supply',
           component: TransitSupply,

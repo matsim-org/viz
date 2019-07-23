@@ -2,11 +2,8 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
-  project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-
-  .info-blob(v-if="!loadingText"  :class='{"my-hidden": isHidden, "bye": isLeaving}')
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-
+  left-data-panel.left-panel(v-if="!loadingText")
+   .dashboard-panel
     .info-header
       h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;")
         | {{this.visualization.title ? this.visualization.title : this.visualization.type.toUpperCase()}}
@@ -22,7 +19,9 @@
          | &nbsp;Show range
 
       h4.heading Line scale:
+
       scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='bounceScaleSlider')
+
       h4.heading Show totals for:
       .buttons-bar
         // {{rowName}}
@@ -34,12 +33,6 @@
 
   legend-box.legend(:rows="legendRows")
   scale-box.scale(:rows="scaleRows")
-
-  button.hide-button.button.is-grey(v-if="!loadingText"
-    @click='clickedLegend'
-    :class='{"hide-toggle-button": isHidden}')
-      i.fa.fa-arrow-left(v-if="!isHidden")
-      i.fa.fa-arrow-right(v-else)
 
 </template>
 
@@ -60,9 +53,9 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import LegendBox from '@/visualization/LegendBoxOD.vue'
 import ScaleBox from '@/visualization/ScaleBoxOD.vue'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 import SharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider2.vue'
 import ScaleSlider from '@/components/ScaleSlider.vue'
@@ -109,11 +102,11 @@ SharedStore.addVisualizationType({
 
 @Component({
   components: {
-    'legend-box': LegendBox,
-    'scale-box': ScaleBox,
-    'project-summary-block': ProjectSummaryBlock,
-    'time-slider': TimeSlider,
-    'scale-slider': ScaleSlider,
+    LeftDataPanel,
+    LegendBox,
+    ScaleBox,
+    ScaleSlider,
+    TimeSlider,
   },
 })
 export default class AggregateOD extends Vue {
@@ -994,7 +987,6 @@ h4 {
 .status-blob {
   background-color: white;
   box-shadow: 0 0 8px #00000040;
-  opacity: 0.9;
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
@@ -1048,43 +1040,6 @@ h4 {
   grid-row: 1 / 2;
   margin: 0px auto 0px 0px;
   z-index: 10;
-}
-
-.info-blob {
-  display: flex;
-  flex-direction: column;
-  width: 16rem;
-  height: 100%;
-  background-color: #eeeeffdd;
-  margin: 0px 0px;
-  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  opacity: 1;
-  z-index: 5;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideOutToLeft {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.bye {
-  animation: 0.3s ease 0s 1 slideOutToLeft;
 }
 
 .widgets {
@@ -1172,10 +1127,30 @@ h4 {
   margin-left: 0.25rem;
 }
 
+.left-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .my-hidden {
   display: none;
 }
 
 @media only screen and (max-width: 640px) {
+  .legend {
+    display: none;
+  }
+  .scale {
+    display: none;
+  }
 }
 </style>
