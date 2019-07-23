@@ -459,7 +459,7 @@ export default class AggregateOD extends Vue {
       html = `<h1>${totalTrips} Daily Bidirectional Trips</h1><br/>`
       html += `<p>-------------------------------------------------</p>`
       html += `<p>${trips} total trips daily : ${revTrips} reverse trips daily</p>`
-    } else if (+this.currentTimeBin) {
+    } else if (+this.currentTimeBin && this.currentTimeBin !== TOTAL_MSG) {
       const trips = this.linkData['' + props.orig + ':' + props.dest].values[this.currentTimeBin] * this.scaleFactor
       let revTrips = 0
       const reverseDir = '' + props.dest + ':' + props.orig
@@ -469,10 +469,24 @@ export default class AggregateOD extends Vue {
       }
       const totalTrips = trips + revTrips
       html = `<h1>${totalTrips} Bidirectional Trips at ${this.currentTimeBin}:00 </h1><br/>`
-      html += `<p> ------------------------------------------------</p>`
+      html += `<p> -------------------------------------------------</p>`
       html += `<p>${trips} trips : ${revTrips} reverse trips </p>`
     } else {
-      html = `<h1> Hello </h1>`
+      let i: any
+      let trips = 0
+      let revTrips = 0
+      const reverseDir = '' + props.dest + ':' + props.orig
+      for (i = this.currentTimeBin[0]; i < this.currentTimeBin[1]; i++) {
+        trips = trips + this.linkData['' + props.orig + ':' + props.dest].values[i] * this.scaleFactor
+        if (this.linkData[reverseDir]) {
+          revTrips = revTrips + this.linkData[reverseDir].values[i] * this.scaleFactor
+        }
+      }
+
+      const totalTrips = trips + revTrips
+      html = `<h1>${totalTrips} Bidirectional Trips Between ${this.currentTimeBin[0]}:00 and ${this.currentTimeBin[1]}:00</h1><br/>`
+      html += `<p> -------------------------------------------------------------------</p>`
+      html += `<p>${trips} trips : ${revTrips} reverse trips </p>`
     }
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
