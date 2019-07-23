@@ -174,7 +174,7 @@ export default class TransitSupply extends Vue {
 
     if (extent) {
       this.mymap.fitBounds(extent, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
+        padding: { top: 5, bottom: 5, right: 5, left: 50 },
         animate: false,
       })
     }

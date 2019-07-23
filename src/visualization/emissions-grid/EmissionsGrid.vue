@@ -196,8 +196,12 @@ export default class EmissionsGrid extends Vue {
       this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
       if (this.initialMapExtent) {
         const lnglat = JSON.parse(this.initialMapExtent)
+
+        const mFac = this.isMobile ? 0 : 1
+        const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
+
         this.mymap.fitBounds(lnglat, {
-          padding: { top: 50, bottom: 100, right: 100, left: 300 },
+          padding,
           animate: false,
         })
       }
@@ -205,6 +209,17 @@ export default class EmissionsGrid extends Vue {
       console.log(e)
     }
     this.mymap.on('style.load', this.mapIsReady)
+  }
+
+  private isMobile() {
+    const w = window
+    const d = document
+    const e = d.documentElement
+    const g = d.getElementsByTagName('body')[0]
+    const x = w.innerWidth || e.clientWidth || g.clientWidth
+    const y = w.innerHeight || e.clientHeight || g.clientHeight
+
+    return x < 640
   }
 
   private clickedTheme(theme: any) {
