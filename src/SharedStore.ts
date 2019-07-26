@@ -2,7 +2,13 @@
 
 import { VisualizationType } from './entities/Entities'
 
+interface BreadCrumb {
+  label: string
+  url: string
+}
+
 interface SharedState {
+  breadCrumbs: BreadCrumb[]
   lastNavigation: string
   visualizationTypes: Map<string, VisualizationType>
 }
@@ -13,6 +19,10 @@ class SharedStore {
 
   constructor() {
     this._state = this.initializeState()
+  }
+
+  public setBreadCrumbs(breadcrumbs: BreadCrumb[]) {
+    this._state.breadCrumbs = breadcrumbs
   }
 
   public setLastNavigation(path: string): void {
@@ -42,6 +52,7 @@ class SharedStore {
 
   private defaultState(): SharedState {
     return {
+      breadCrumbs: [],
       lastNavigation: '',
       visualizationTypes: new Map(),
     }
@@ -61,6 +72,7 @@ class SharedStore {
     if (persistedStateString) {
       const persistedState = JSON.parse(persistedStateString as string)
       return {
+        breadCrumbs: [],
         lastNavigation: persistedState.lastNavigation,
         visualizationTypes: new Map(),
       }

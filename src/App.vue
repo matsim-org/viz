@@ -43,11 +43,6 @@ import firebaseConfig from '@/firebase-config'
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
 
-interface BreadCrumb {
-  title: string
-  link: string
-}
-
 // Register a global custom directive called `v-focus`
 Vue.directive('focus', {
   // When the bound element is inserted into the DOM...
@@ -59,7 +54,6 @@ Vue.directive('focus', {
 
 @Component({ components: { LoginPanel, SystemNavBar } })
 export default class App extends Vue {
-  private breadcrumbs: BreadCrumb[] = []
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
@@ -133,23 +127,6 @@ a:focus {
   display: flex;
 }
 
-.breadcrumb-row {
-  grid-row: 1 / 2;
-  grid-column: 2 / 3;
-  display: flex;
-  flex-direction: row;
-  vertical-align: center;
-}
-
-.nav-breadcrumb {
-  color: #ccc;
-  margin: auto 0.25rem auto 0rem;
-  font-size: 0.8rem;
-}
-
-.nav-bread-link {
-  margin-left: 0.5rem;
-}
 a:hover {
   color: #fff;
 }

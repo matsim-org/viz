@@ -3,14 +3,11 @@
     .matsim-logo-panel
       img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
 
-    .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
-      i.fa.fa-lg(:class="item.icon" aria-hidden="true")
-      .icon-label {{ item.id }}
+    .nav-item(v-for="item in leftItems" :key="item.id" @click="onClick(item.url)")
+      .icon-label {{ item.label }}
 
     .gap
 
-    .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
-      .icon-label {{ item.id }}
     .nav-item(@click="onLogin()")
       .icon-label {{ loginText }}
     .nav-item.loginout(@click="showFirebaseAuth()")
@@ -21,18 +18,18 @@
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import SharedStore from '@/SharedStore'
 
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
 
-  private topItems = [
-    // { id: 'Home', icon: 'fa-home', url: '/' },
-    // { id: 'Map', icon: 'fa-map', url: '/' },
-    // { id: 'Run Log', icon: 'fa-database', url: '/' },
-  ]
-  private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
+  private sharedStore = SharedStore
+
+  private get leftItems() {
+    return SharedStore.state.breadCrumbs
+  }
 
   public async mounted() {}
 
@@ -89,8 +86,8 @@ export default class SystemNavBar extends Vue {
 }
 
 .icon-label {
-  font-size: 0.7rem;
-  font-weight: bold;
+  font-size: 0.8rem;
+  font-weight: normal;
 }
 
 .matsim-logo-panel {

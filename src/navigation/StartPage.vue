@@ -29,7 +29,7 @@
                      :key="project.owner + project.urlslug"
                      @itemClicked="onProjectSelected(project)")
           span(slot="title") {{project.title}}
-          span(slot="content") {{ project.description ? project.description : "&nbsp;" }}
+          span(slot="content") {{ project.description ? project.description : '&nbsp;' }}
           button.button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
 
     .about

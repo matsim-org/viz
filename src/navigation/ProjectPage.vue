@@ -36,7 +36,7 @@ import { Drag, Drop } from 'vue-drag-drop'
 import { falsy } from 'vega'
 
 import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
-import SharedStore, { SharedState } from '@/SharedStore'
+import sharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
@@ -65,7 +65,7 @@ const vueInstance = Vue.extend({
   data() {
     return {
       projectState: this.projectStore.State,
-      sharedState: SharedStore.state,
+      sharedState: sharedStore.state,
     }
   },
 })
