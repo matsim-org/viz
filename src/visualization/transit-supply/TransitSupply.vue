@@ -65,17 +65,8 @@ class Departure {
   public routes: Set<string> = new Set()
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'transit-supply',
-  prettyName: 'Transit Supply',
-  description: 'Depicts the scheduled transit routes on a network.',
-  requiredFileKeys: ['Transit Schedule', 'Network'],
-  requiredParamKeys: ['Projection'],
-})
-
 @Component({ components: { LeftDataPanel, LegendBox } })
-export default class TransitSupply extends Vue {
+class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -135,7 +126,6 @@ export default class TransitSupply extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
-    this.setBreadcrumb()
     this.setupMap()
   }
 
@@ -151,12 +141,6 @@ export default class TransitSupply extends Vue {
 
   private get legendRows() {
     return [['#a03919', 'Rail'], ['#448', 'Bus']]
-  }
-  private setBreadcrumb() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: this.project.name, link: '/project/' + this.projectId },
-      { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
-    ])
   }
 
   private setupMap() {
@@ -634,6 +618,18 @@ export default class TransitSupply extends Vue {
     this.showRouteDetails(this.routesOnLink[i].id)
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: TransitSupply,
+  typeName: 'transit-supply',
+  prettyName: 'Transit Supply',
+  description: 'Depicts the scheduled transit routes on a network.',
+  requiredFileKeys: ['Transit Schedule', 'Network'],
+  requiredParamKeys: ['Projection'],
+})
+
+export default TransitSupply
 
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 

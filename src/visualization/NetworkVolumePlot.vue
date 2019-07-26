@@ -10,20 +10,10 @@
 import mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
 import Vue from 'vue'
-
-// register component with the shared store
-SharedStore.addVisualizationType({
-  typeName: 'network-volume-plot',
-  prettyName: 'Network Volume Plot',
-  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
-  requiredFileKeys: ['geoJson'],
-  requiredParamKeys: [],
-})
 
 // store is the component data store -- the state of the component.
 const store: any = {
@@ -33,8 +23,7 @@ const store: any = {
   api: FileAPI,
 }
 
-// this export is the Vue Component itself
-export default Vue.extend({
+const networkVolumePlot = Vue.extend({
   name: 'NetworkViz',
   props: ['fileApi'],
   components: {},
@@ -53,17 +42,23 @@ export default Vue.extend({
   watch: {},
 })
 
+// register component with the shared store
+SharedStore.addVisualizationType({
+  component: networkVolumePlot,
+  typeName: 'network-volume-plot',
+  prettyName: 'Network Volume Plot',
+  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
+  requiredFileKeys: ['geoJson'],
+  requiredParamKeys: [],
+})
+
+export default networkVolumePlot
+
 async function mounted() {
   await getVizDetails()
-  setBreadcrumb()
-  setupMap()
-}
+  // sharedStore.setBreadCrumbs([{ label: '< Back', url: '/hi' }, { label: store.visualization.title, url: '.' }])
 
-function setBreadcrumb() {
-  EventBus.$emit('set-breadcrumbs', [
-    { title: store.project.name, link: '/project/' + store.projectId },
-    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
-  ])
+  setupMap()
 }
 
 function setupMap() {
@@ -84,7 +79,6 @@ function setupMap() {
 async function getVizDetails() {
   store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
   store.project = await store.api.fetchProject(store.projectId)
-  console.log(Object.assign({}, store.visualization))
 }
 
 let map: mapboxgl.Map

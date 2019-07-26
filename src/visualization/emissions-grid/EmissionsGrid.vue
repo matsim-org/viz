@@ -45,14 +45,6 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
 
-sharedStore.addVisualizationType({
-  typeName: 'emissions',
-  prettyName: 'Emissions Grid',
-  description: 'Show emissions at gridpoints',
-  requiredFileKeys: ['Events', 'Network'],
-  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
-})
-
 interface MapElement {
   lngLat: LngLat
   features: any[]
@@ -77,7 +69,7 @@ interface Point {
     LeftDataPanel,
   },
 })
-export default class EmissionsGrid extends Vue {
+class EmissionsGrid extends Vue {
   @Prop({ type: String, required: true })
   private projectId!: string
 
@@ -345,6 +337,17 @@ export default class EmissionsGrid extends Vue {
     this.loadingText = ''
   }
 }
+
+sharedStore.addVisualizationType({
+  component: EmissionsGrid,
+  typeName: 'emissions',
+  prettyName: 'Emissions Grid',
+  description: 'Show emissions at gridpoints',
+  requiredFileKeys: ['Events', 'Network'],
+  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
+})
+
+export default EmissionsGrid
 </script>
 
 <style scoped>

@@ -57,21 +57,12 @@ import ProjectStore from '@/project/ProjectStore'
 import Spinner from '@/components/Spinner.vue'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 
-// register frame animation with shared store
-SharedStore.addVisualizationType({
-  typeName: 'frame-animation',
-  prettyName: 'Traffic Animation',
-  description: 'Depict vehicles traveling in real time on the network.',
-  requiredFileKeys: ['events', 'network', 'plans'],
-  requiredParamKeys: ['snapshotInterval'],
-})
-
 @Component({
   components: {
     spinner: Spinner,
   },
 })
-export default class FrameAnimation extends Vue {
+class FrameAnimation extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
   @Prop({ type: ProjectStore, required: true })
@@ -180,6 +171,17 @@ export default class FrameAnimation extends Vue {
     this.isFetchingData = value
   }
 }
+// register frame animation with shared store
+SharedStore.addVisualizationType({
+  component: FrameAnimation,
+  typeName: 'frame-animation',
+  prettyName: 'Traffic Animation',
+  description: 'Depict vehicles traveling in real time on the network.',
+  requiredFileKeys: ['events', 'network', 'plans'],
+  requiredParamKeys: ['snapshotInterval'],
+})
+
+export default FrameAnimation
 </script>
 
 <style scoped>

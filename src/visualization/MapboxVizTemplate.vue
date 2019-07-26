@@ -35,6 +35,7 @@ const INPUTS = {
 }
 
 // register component with the SharedStore
+/*
 SharedStore.addVisualizationType({
   typeName: 'aggregate-od',
   prettyName: 'Origin/Destination Patterns',
@@ -42,9 +43,10 @@ SharedStore.addVisualizationType({
   requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHPFILE],
   requiredParamKeys: [],
 })
+*/
 
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
-export default class MyVizTemplate extends Vue {
+class MyVizTemplate extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -197,6 +199,8 @@ export default class MyVizTemplate extends Vue {
 }
 
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
+
+export default MyVizTemplate
 </script>
 
 <style scoped>

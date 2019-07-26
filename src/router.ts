@@ -1,12 +1,11 @@
 import AggregateOD from '@/visualization/AggregateOD.vue'
-import Authentication from '@/auth/Authentication.vue'
 import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
-import Project from '@/project/Project.vue'
 import SankeyDiagram from '@/visualization/SankeyDiagram.vue'
 import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 
+import Authentication from '@/auth/Authentication.vue'
 import AccountPage from '@/navigation/AccountPage.vue'
 import OwnerPage from '@/navigation/OwnerPage.vue'
 import ProjectPage from '@/navigation/ProjectPage.vue'
@@ -14,191 +13,160 @@ import StartPage from '@/navigation/StartPage.vue'
 import RunPage from '@/navigation/RunPage.vue'
 
 import Vue from 'vue'
-import Router, { Route } from 'vue-router'
+import Router, { Route, RouteConfig } from 'vue-router'
 import sharedStore from '@/SharedStore'
 import ProjectStore from './project/ProjectStore'
 import UploadStore from './project/UploadStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import FileAPI from './communication/FileAPI'
 
-Vue.use(Router)
+// Add every viz type here to register the viz url in the router
+const VIZ_PLUGINS = [AggregateOD, EmissionsGrid, FrameAnimation, NetworkVolumePlot, SankeyDiagram, TransitSupply]
 
 const AUTHENTICATION = '/authentication'
 
+Vue.use(Router)
+
 export default class AppRouter {
   private vueRouter: Router
+
+  private authStore: AuthenticationStore
+  private projectStore: ProjectStore
+  private fileApi: FileAPI
 
   public get VueRouter() {
     return this.vueRouter
   }
 
   constructor(authStore: AuthenticationStore, uploadStore: UploadStore, projectStore: ProjectStore, fileApi: FileAPI) {
+    this.authStore = authStore
+    this.projectStore = projectStore
+    this.fileApi = fileApi
+
     this.vueRouter = new Router({
       mode: 'history', // 'history' mode produces clean, normal URLs
-      routes: [
-        {
-          path: '/',
-          name: 'StartPage',
-          component: StartPage,
-          props: {
-            authStore: authStore,
-            projectStore: projectStore,
-            fileApi: fileApi,
-          },
-        },
-        {
-          path: '/network-volume-plot/:projectId/:vizId',
-          name: 'Network Volume Plot',
-          component: NetworkVolumePlot,
-          props: {
-            fileApi: fileApi,
-          },
-        },
-        {
-          path: '/aggregate-od/:projectId/:vizId',
-          name: 'AggregateOD',
-          component: AggregateOD,
-          props: route => {
-            return {
-              vizId: route.params.vizId,
-              projectId: route.params.projectId,
-              fileApi: fileApi,
-              authStore: authStore,
-            }
-          },
-        },
-        {
-          path: '/sankey/:projectId/:vizId',
-          name: 'SankeyDiagram',
-          component: SankeyDiagram,
-          props: route => {
-            return {
-              vizId: route.params.vizId,
-              projectId: route.params.projectId,
-              fileApi: fileApi,
-              authStore: authStore,
-            }
-          },
-        },
-        {
-          path: '/emissions/:projectId/:vizId',
-          name: 'EmissionsGrid',
-          component: EmissionsGrid,
-          props: route => {
-            return {
-              authStore: authStore,
-              fileApi: fileApi,
-              projectId: route.params.projectId,
-              projectStore: projectStore,
-              vizId: route.params.vizId,
-            }
-          },
-        },
-        {
-          path: '/transit-supply/:projectId/:vizId',
-          name: 'Transit Supply',
-          component: TransitSupply,
-          props: route => {
-            return {
-              vizId: route.params.vizId,
-              projectId: route.params.projectId,
-              fileApi: fileApi,
-              authStore: authStore,
-            }
-          },
-        },
-        {
-          path: '/frame-animation/:projectId/:vizId',
-          component: FrameAnimation,
-          name: 'FrameAnimation',
-          props: route => {
-            return {
-              vizId: route.params.vizId,
-              projectStore: projectStore,
-              authStore: authStore,
-            }
-          },
-        },
-        {
-          path: AUTHENTICATION,
-          name: 'Authentication',
-          component: Authentication,
-          props: {
-            authStore: authStore,
-          },
-        },
-        {
-          path: '/account',
-          name: 'AccountPage',
-          component: AccountPage,
-          props: route => {
-            return {
-              authStore: authStore,
-            }
-          },
-        },
-        {
-          path: '/:owner',
-          name: 'OwnerPage',
-          component: OwnerPage,
-          props: route => {
-            return {
-              authStore: authStore,
-              fileApi: fileApi,
-              owner: route.params.owner,
-              projectStore: projectStore,
-            }
-          },
-        },
-        {
-          path: '/:owner/:project',
-          name: 'ProjectPage',
-          component: ProjectPage,
-          props: route => {
-            return {
-              authStore: authStore,
-              fileApi: fileApi,
-              projectStore: projectStore,
-              owner: route.params.owner,
-              urlslug: route.params.project,
-            }
-          },
-        },
-        {
-          path: '/:owner/:project/:run',
-          name: 'RunPage',
-          component: RunPage,
-          props: route => {
-            return {
-              authStore: authStore,
-              fileApi: fileApi,
-              projectStore: projectStore,
-              owner: route.params.owner,
-              urlslug: route.params.project,
-              run: route.params.run,
-            }
-          },
-        },
-        {
-          path: '/:owner/:project/:run/:viz',
-          name: 'VizPage',
-          component: RunPage,
-          props: route => {
-            return {
-              authStore: authStore,
-              fileApi: fileApi,
-              projectStore: projectStore,
-              owner: route.params.owner,
-              urlslug: route.params.project,
-              run: route.params.run,
-              viz: route.params.viz,
-            }
-          },
-        },
-      ],
     })
 
+    const newRoutes: RouteConfig[] = []
+    for (const viz of sharedStore.state.visualizationTypes) {
+      const name = viz[0]
+      const component = viz[1].component
+
+      console.log('REGISTERING VIZ:', name)
+
+      const newRoute = {
+        path: `/${name}/:projectId/:vizId`,
+        name: name,
+        component: component,
+        props: (route: Route) => {
+          return {
+            authStore: this.authStore,
+            fileApi: this.fileApi,
+            projectStore: this.projectStore,
+            projectId: route.params.projectId,
+            vizId: route.params.vizId,
+          }
+        },
+      }
+      newRoutes.push(newRoute)
+    }
+    this.vueRouter.addRoutes(newRoutes)
+
+    const staticRoutes = [
+      {
+        path: '/',
+        name: 'StartPage',
+        component: StartPage,
+        props: {
+          authStore: authStore,
+          projectStore: projectStore,
+          fileApi: fileApi,
+        },
+      },
+      {
+        path: AUTHENTICATION,
+        name: 'Authentication',
+        component: Authentication,
+        props: {
+          authStore: authStore,
+        },
+      },
+      {
+        path: '/account',
+        name: 'AccountPage',
+        component: AccountPage,
+        props: (route: Route) => {
+          return {
+            authStore: authStore,
+          }
+        },
+      },
+      {
+        path: '/:owner',
+        name: 'OwnerPage',
+        component: OwnerPage,
+        props: (route: Route) => {
+          return {
+            authStore: authStore,
+            fileApi: fileApi,
+            owner: route.params.owner,
+            projectStore: projectStore,
+          }
+        },
+      },
+      {
+        path: '/:owner/:project',
+        name: 'ProjectPage',
+        component: ProjectPage,
+        props: (route: Route) => {
+          return {
+            authStore: authStore,
+            fileApi: fileApi,
+            projectStore: projectStore,
+            owner: route.params.owner,
+            urlslug: route.params.project,
+          }
+        },
+      },
+      {
+        path: '/:owner/:project/:run',
+        name: 'RunPage',
+        component: RunPage,
+        props: (route: Route) => {
+          return {
+            authStore: authStore,
+            fileApi: fileApi,
+            projectStore: projectStore,
+            owner: route.params.owner,
+            urlslug: route.params.project,
+            run: route.params.run,
+          }
+        },
+      },
+      {
+        path: '/:owner/:project/:run/:viz',
+        name: 'VizPage',
+        component: RunPage,
+        props: (route: Route) => {
+          return {
+            authStore: authStore,
+            fileApi: fileApi,
+            projectStore: projectStore,
+            owner: route.params.owner,
+            urlslug: route.params.project,
+            run: route.params.run,
+            viz: route.params.viz,
+          }
+        },
+      },
+    ]
+
+    this.vueRouter.addRoutes(staticRoutes)
+
     this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
+      // always clear breadcrumbs, so that we never show wrong breadcrumbs
+      sharedStore.setBreadCrumbs([])
+
       if (!this.isAuthenticationComponent(to)) {
         sharedStore.setLastNavigation(to.fullPath)
       }

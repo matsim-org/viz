@@ -91,15 +91,6 @@ const INPUTS = {
   DBF_FILE: 'Shapefile .DBF',
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'aggregate-od',
-  prettyName: 'Origin/Destination Patterns',
-  description: 'Depicts aggregate O/D flows between areas.',
-  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection', 'Scale Factor'],
-})
-
 @Component({
   components: {
     LeftDataPanel,
@@ -109,7 +100,7 @@ SharedStore.addVisualizationType({
     TimeSlider,
   },
 })
-export default class AggregateOD extends Vue {
+class AggregateOD extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -124,6 +115,7 @@ export default class AggregateOD extends Vue {
 
   // -------------------------- //
 
+  private mySharedState = SharedStore
   private centroids: any = {}
   private centroidSource: any = {}
   private linkData: any = {}
@@ -179,6 +171,7 @@ export default class AggregateOD extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
+    // SharedStore.setBreadCrumbs([{ label: 'I am here', url: '/' }])
     this.setupMap()
   }
 
@@ -948,6 +941,18 @@ export default class AggregateOD extends Vue {
     this.changedTimeSlider(this.currentTimeBin)
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: AggregateOD,
+  typeName: 'aggregate-od',
+  prettyName: 'Origin/Destination Patterns',
+  description: 'Depicts aggregate O/D flows between areas.',
+  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
+  requiredParamKeys: ['Projection', 'Scale Factor'],
+})
+
+export default AggregateOD
 </script>
 
 <style scoped>

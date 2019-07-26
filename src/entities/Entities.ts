@@ -1,3 +1,5 @@
+import { VueConfiguration } from 'vue/types/vue'
+
 export interface Entity {
   id: string
 }
@@ -46,6 +48,7 @@ export interface Tag extends Entity {
 }
 
 export interface VisualizationType {
+  component?: Vue.VueConstructor
   typeName: string
   prettyName: string
   description?: string
