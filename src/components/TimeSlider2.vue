@@ -56,9 +56,9 @@ export default class TimeSlider extends Vue {
   @Watch('useRange')
   private changeUseRange(useIt: boolean) {
     if (useIt) {
-      this.sliderValue = [this.stops[0], this.stops[this.stops.length - 1]]
+      this.sliderValue = [this.stops[1], this.stops[this.stops.length - 1]]
     } else {
-      this.sliderValue = [this.stops[0]]
+      this.sliderValue = this.stops[0]
     }
     console.log('changed to: ' + this.sliderValue)
   }

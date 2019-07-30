@@ -448,7 +448,7 @@ export default class AggregateOD extends Vue {
     console.log(props)
     let html: any
 
-    if (this.currentTimeBin === TOTAL_MSG) {
+    if (this.currentTimeBin === TOTAL_MSG || this.currentTimeBin[0] === TOTAL_MSG) {
       const trips = props.daily * this.scaleFactor
       let revTrips = 0
       const reverseDir = '' + props.dest + ':' + props.orig
