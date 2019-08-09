@@ -1,6 +1,8 @@
 <template lang="pug">
-.main-content
-  #mymap
+#container
+  .map-container
+    #mymap
+
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
   left-data-panel.left-panel(v-if="!loadingText" title="Emissions Grid")
@@ -144,8 +146,13 @@ class EmissionsGrid extends Vue {
     if (this._myWorker) this._myWorker.destroy()
   }
 
-  public created() {}
+  public created() {
+    sharedStore.setFullPage(true)
+  }
 
+  public destroyed() {
+    sharedStore.setFullPage(false)
+  }
   public async fetchEmissionsBins(): Promise<any> {
     const result = await fetch(`${Config.emissionsServer}/${this.vizId}/startTimes`, {
       mode: 'cors',
@@ -351,27 +358,24 @@ export default EmissionsGrid
 </script>
 
 <style scoped>
-/* this is the initial start page layout */
-.main-content {
+#container {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr auto;
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 100%;
-  padding: 0px;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 4;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 100%;
   width: 100%;
-  grid-row: 1 / 3;
-  grid-column: 1 / 4;
-  overflow: hidden;
-  background: #fff;
 }
 
 .loading-message {
@@ -379,13 +383,6 @@ export default EmissionsGrid
   grid-column: 1 / 4;
   overflow: hidden;
   opacity: 0.8;
-}
-
-.left-overlay {
-  grid-row: 1 / 3;
-  grid-column: 1 / 2;
-  z-index: 5000;
-  pointer-events: none;
 }
 
 .slider-box {
@@ -438,6 +435,8 @@ a:focus {
 }
 
 .left-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
   width: 16rem;

@@ -18,10 +18,12 @@
         p.details First: {{route.firstDeparture}}
         p.details Last: {{route.lastDeparture}}
 
-  #mymap
-    .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
-      v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
-    )
+  .map-container
+    #mymap
+      .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
+        v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
+      )
+
   legend-box.legend(:rows="legendRows")
 </template>
 
@@ -104,6 +106,8 @@ class TransitSupply extends Vue {
   private _transitHelper!: TransitSupplyHelper
 
   public created() {
+    SharedStore.setFullPage(true)
+
     this._attachedRouteLayers = []
     this._departures = {}
     this._mapExtentXYXY = [180, 90, -180, -90]
@@ -113,6 +117,10 @@ class TransitSupply extends Vue {
     this._stopFacilities = {}
     this._transitLines = {}
     this.selectedRoute = null
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
   }
 
   public beforeDestroy() {
@@ -157,7 +165,7 @@ class TransitSupply extends Vue {
 
       if (extent) {
         this.mymap.fitBounds(extent, {
-          padding: { top: 5, bottom: 5, right: 5, left: 50 },
+          padding: { top: 2, bottom: 2, right: 2, left: 2 },
           animate: false,
         })
       }
@@ -295,7 +303,7 @@ class TransitSupply extends Vue {
     cookie.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 365 })
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
-      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      padding: { top: 2, bottom: 2, right: 2, left: 2 },
       animate: false,
     })
     this.loadingText = ''
@@ -665,13 +673,23 @@ p {
 }
 
 #container {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr;
+  width: 100%;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
+#mymap {
+  height: 100%;
+  width: 100%;
 }
 
 .status-blob {
@@ -686,17 +704,6 @@ p {
   z-index: 2;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
-}
-
-#mymap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  background-color: white;
-  overflow: hidden;
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
 }
 
 .route {
@@ -811,9 +818,9 @@ h3 {
 }
 
 .legend {
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-  margin: auto 0.5rem 1.3rem auto;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  margin: auto 0.5rem 2rem auto;
   z-index: 10;
 }
 

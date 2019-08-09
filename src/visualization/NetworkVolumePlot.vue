@@ -1,6 +1,8 @@
 <template lang="pug">
-#zcontainer
-  #mymap
+#container
+  .map-container
+    #mymap
+
   .status-blob(v-if="loadingText"): h2 {{ loadingText }}
 </template>
 
@@ -32,6 +34,10 @@ const networkVolumePlot = Vue.extend({
   },
   created() {
     store.api = (this as any).fileApi
+    SharedStore.setFullPage(true)
+  },
+  destroyed() {
+    SharedStore.setFullPage(false)
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -213,28 +219,24 @@ function clickedOnTaz(e: MapElement) {
 </script>
 
 <style scoped>
-#zcontainer {
-  background-color: black;
+#container {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
-  position: absolute;
-  top: 3rem;
-  bottom: 0;
+  height: 100%;
   width: 100%;
-  background-color: white;
-  overflow: hidden;
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
 }
 
 .status-blob {
