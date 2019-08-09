@@ -10,6 +10,7 @@ interface BreadCrumb {
 interface SharedState {
   breadCrumbs: BreadCrumb[]
   lastNavigation: string
+  isFullPageMap: boolean
   visualizationTypes: Map<string, VisualizationType>
 }
 
@@ -23,6 +24,10 @@ class SharedStore {
 
   public setBreadCrumbs(breadcrumbs: BreadCrumb[]) {
     this._state.breadCrumbs = breadcrumbs
+  }
+
+  public setFullPage(isFullPage: boolean) {
+    this._state.isFullPageMap = isFullPage
   }
 
   public setLastNavigation(path: string): void {
@@ -53,6 +58,7 @@ class SharedStore {
   private defaultState(): SharedState {
     return {
       breadCrumbs: [],
+      isFullPageMap: false,
       lastNavigation: '',
       visualizationTypes: new Map(),
     }
@@ -73,6 +79,7 @@ class SharedStore {
       const persistedState = JSON.parse(persistedStateString as string)
       return {
         breadCrumbs: [],
+        isFullPageMap: false,
         lastNavigation: persistedState.lastNavigation,
         visualizationTypes: new Map(),
       }

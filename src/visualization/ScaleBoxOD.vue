@@ -1,8 +1,8 @@
 <template lang="pug">
 #scale-container
   p.title Scale:
-    .scale-element() {{"|↔︎|"}} 
-    .scale-scale() {{"~ " + this.rows[0] + " trips"}}
+    .scale-element {{ "|↔︎|" }}
+    .scale-scale {{ "~ " + this.rows[0] + " trips" }}
 
 </template>
 
@@ -26,10 +26,10 @@ export default class ScaleBox extends Vue {
   display: flex;
   flex-direction: row;
   color: white;
-  background-color: rgba(255, 255, 255, 0.781);
+  background-color: rgba(255, 255, 255, 0.9);
   padding: 0rem 0.5rem;
-  border: solid 1px rgba(161, 160, 160, 0.781);
-  border-radius: 2px;
+  border: solid 1px rgba(161, 160, 160, 0.7);
+  border-radius: 4px;
 }
 
 .scale-item {
@@ -47,6 +47,7 @@ p.title {
   margin-right: 1rem;
   font-weight: normal;
 }
+
 .scale-element {
   color: black;
   position: relative;
@@ -54,6 +55,7 @@ p.title {
   margin-right: 1rem;
   margin-top: 0.7rem;
 }
+
 .scale-scale {
   color: black;
   position: relative;

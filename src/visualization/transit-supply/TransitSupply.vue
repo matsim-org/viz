@@ -146,23 +146,24 @@ class TransitSupply extends Vue {
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'top-left',
       style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
-      // zoom: 9,
     })
 
-    const extent = cookie.getJSON(this.vizId + '-bounds')
+    try {
+      const extent = cookie.getJSON(this.vizId + '-bounds')
 
-    if (extent) {
-      this.mymap.fitBounds(extent, {
-        padding: { top: 5, bottom: 5, right: 5, left: 50 },
-        animate: false,
-      })
+      if (extent) {
+        this.mymap.fitBounds(extent, {
+          padding: { top: 5, bottom: 5, right: 5, left: 50 },
+          animate: false,
+        })
+      }
+    } catch (E) {
+      // no worries
     }
-
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
 
@@ -812,7 +813,7 @@ h3 {
 .legend {
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  margin: auto 0.5rem 3.3rem auto;
+  margin: auto 0.5rem 1.3rem auto;
   z-index: 10;
 }
 
@@ -822,7 +823,6 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  padding-bottom: 0.5rem;
 }
 
 .dashboard-panel {

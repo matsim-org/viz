@@ -178,7 +178,7 @@ class EmissionsGrid extends Vue {
       bearing: 0,
       // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'top-left',
       style: this.chosenTheme.style,
       pitch: 0,
       zoom: 14,
