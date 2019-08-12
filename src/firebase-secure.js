@@ -1,7 +1,5 @@
-// DO NOT CHECK THIS FILE INTO GITHUB
-
 const firebaseConfig = {
-  apiKey: '{{FIREBASE_KEY}}',
+  apiKey: '{{FIREBASEKEY}}',
   authDomain: 'matsim-viz.firebaseapp.com',
   databaseURL: 'https://matsim-viz.firebaseio.com',
   projectId: 'matsim-viz',

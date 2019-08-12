@@ -17,7 +17,7 @@ branches:
 # travis doesn't have the option to run different builds for different branches, so we have to
 # it with ugly bash if statements
 script:
-  - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASE_KEY}}/$FIREBASE_KEY/" src/firebase-secure.js; fi
+  - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASEKEY}}/$FIREBASEKEY/" src/firebase-secure.js; fi
   - cat src/firebase-secure.js
   - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "staging" ]; then npm run build-staging && npm run unit; fi
@@ -43,4 +43,4 @@ deploy:
     skip_cleanup: true
 env:
   global:
-    secure: AFkZCl5WVx+RZA29X+BMjsujXyx9URisWAVd+Muwll52+XcwkWFY1dR0hkVXNXUktCmqezv2wvjOS1d1rdmYUc02R95eHricVXJNJj2XIVP6u61qHTLAX6aJrIE486cuYT8rf/5F2JsElwhY7kCon27MIyQPoqIWF+5a2bY2tMNyd2PQqwT/V5aBu+m35g0YqOgXKiO3kBPPi8S8ZkQJhvAHYaV91MI0RiL3t62K+SHSFHhajSNuWO5i4dQzEgMsTZqQK1LAcNQJwIt7WOI7r7+j1az9QxJalI15xhIw3VxX21pfYKgpBqtF1IcPC4vjYpfdchwQQAXchs93ZJHz+fmsLHWhy/lJKbaVevKHF7klZmycY0iWonp2kVSH6UpIFFl70LkmTJZjPb17LgHv4BZBc/05l0nnrorgPWviWlAPYCAH1O5UQq9bA8w7pInrs/3KOBkwgcmMdRTZEkhCtV0A0o5mxKZcF9lHnXzhdGBqr2BKE/DyUGzklGQm6SBhpDQtWefgDVM+UP9HCED0Ov/vGrhMbK8dxs8my8wDrbVU7tGnCQYF/kzLcVa9Oi+2gEi4qz7gNknMppv92Y6ta4CUQ8zs6U16knn7DBA6oKvOY/bgKZg/QfbUmwRt1q+0XSP4Q2hrJSoVKMs+Smk2+nAeS0CKLIALn2p8ckbnjKw=
+    - secure: pPDFqFLdehjZVvKBin6eMif04EPv7yRMbpd6xcB5ygLAZImMkLMTrACmVhpT6BR//i2GL7RlmuM6zezMWb/c64WklBHBB+nnjkAY9d93C5345hNr72lhFfZmVP8MDgwzD6nBNyUH9lq+SG3QJBizCg8zyJVPXSVzy1GUzTqb1BgRsvn0nzNoXYr9E9ov/bOaw1xWQifjMCu3a95GcG6GHW6dYsdqVEx/XZMfnogY0s6ANgfP+jU9vro1alnAfB8llG7HRUdy1orZwPeBpNd2jUTxdBbHB9KtdtYBe8hQ2IQ8rhZ3Fo8fDxqc+en9MbINdstmwLg7cawwVje6VBesBufnhgOjB3cA0Zjg5nOt6vir0rsfPP2omiKd6lJlLfmj41nB1S1+plH1/paimmJK5Pa+P0hsMEJcn2cvO6xLMhHIVnELC0z8NTOM+BfUtfvW1zjYZPdStGGt7+Am576+ThOkvAJiSC7CP8uct7wN2lb7zlPyQgYg3c8Zd7LwdsglWhDJd/emDmSkMsNBuJ+MFzveugBrPnC13KwCJ0E4funE7QANPAWx76PqLaoqplLhy+c+HqbpddcrMvJqVkxQxwyni4q5haMhksJLTEJ9dlROLd7JVtb4Q+fMG1Sw3uZunD6ePTS4L2DxYnbMZfEbs03se0P5l+A+2S2vJqgDyPA=
