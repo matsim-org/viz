@@ -178,6 +178,12 @@ class EmissionsGrid extends Vue {
   public async mounted() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
+
+    sharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
 
     // do things that can only be done after MapBox is fully initialized

@@ -134,6 +134,12 @@ class TransitSupply extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     this.setupMap()
   }
 

@@ -3,8 +3,8 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      router-link(:to='`/${owner}/${urlslug}`') &nbsp;&raquo; {{urlslug}}
-      | &nbsp;&raquo; {{ run }}
+      router-link(:to='`/${owner}/${urlslug}`') &nbsp;/ {{urlslug}}
+      | &nbsp;/ {{ run }}
 
     h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
     h4.title.is-3(v-else) &nbsp;

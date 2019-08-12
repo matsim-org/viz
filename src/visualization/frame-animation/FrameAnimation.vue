@@ -98,6 +98,14 @@ class FrameAnimation extends Vue {
     return this.progress === Progress.Failed
   }
 
+  public created() {
+    SharedStore.setFullPage(true)
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
+  }
+
   public mounted() {
     const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({
@@ -195,6 +203,7 @@ export default FrameAnimation
 }
 
 .mainContainer {
+  height: 100%;
   flex: 1;
   display: grid;
   grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;

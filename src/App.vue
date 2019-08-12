@@ -125,14 +125,14 @@ h6 {
   box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
   z-index: 10;
   width: 100%;
-  height: 3rem;
+  height: 4rem;
 }
 
 .main-content {
   grid-column: 1 / 2;
   grid-row: 1 / 3;
   z-index: 1;
-  margin-top: 3rem;
+  margin-top: 4rem;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */

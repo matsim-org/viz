@@ -6,7 +6,9 @@
     .nav-item(v-for="item in leftItems" :key="item.id" @click="onClick(item.url)")
       .icon-label {{ item.label }}
 
-    .gap
+    .center-area
+      .row1(v-if="centerItems.length>0") {{centerItems[0].label}}
+      .row2(v-if="centerItems.length>1") {{centerItems[1].label}}
 
     .nav-item(@click="onLogin()")
       .icon-label {{ loginText }}
@@ -27,7 +29,7 @@ export default class SystemNavBar extends Vue {
 
   private sharedStore = SharedStore
 
-  private get leftItems() {
+  private get centerItems() {
     return SharedStore.state.breadCrumbs
   }
 
@@ -70,7 +72,7 @@ export default class SystemNavBar extends Vue {
 }
 
 .nav-item {
-  padding: 0rem 0.5rem;
+  padding: 0rem 0rem 0rem 1rem;
   margin: auto 0px;
   text-align: center;
   color: #e8e8e8;
@@ -81,8 +83,20 @@ export default class SystemNavBar extends Vue {
   cursor: pointer;
 }
 
-.gap {
-  margin: 0 auto;
+.center-area {
+  display: flex;
+  flex-direction: column;
+  margin: auto auto auto 2rem;
+}
+
+.row1 {
+  color: white;
+  font-weight: bold;
+}
+
+.row2 {
+  font-size: 0.75rem;
+  color: white;
 }
 
 .icon-label {
@@ -91,12 +105,15 @@ export default class SystemNavBar extends Vue {
 }
 
 .matsim-logo-panel {
+  display: flex;
+  flex-direction: column;
   margin: auto 0rem;
+  vertical-align: center;
 }
 
 .matsim-logo {
-  height: 1.75rem;
-  margin-top: 0.3rem;
+  flex: 1;
+  height: 2.1rem;
 }
 
 .matsim-logo:hover {

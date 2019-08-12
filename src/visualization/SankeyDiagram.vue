@@ -67,6 +67,11 @@ class SankeyDiagram extends Vue {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
     if (SharedStore.debug) console.log(this.visualization)
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
   }
 
   private get legendRows() {

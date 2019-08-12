@@ -3,7 +3,7 @@
   .title-strip
     p
       router-link(:to='`/${owner}`') {{owner}}
-      | &nbsp;&raquo; {{urlslug}}
+      | &nbsp;/ {{urlslug}}
     h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
   .content-area

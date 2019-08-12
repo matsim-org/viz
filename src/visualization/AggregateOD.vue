@@ -179,7 +179,10 @@ class AggregateOD extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
-    // SharedStore.setBreadCrumbs([{ label: 'I am here', url: '/' }])
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
     this.setupMap()
   }
 

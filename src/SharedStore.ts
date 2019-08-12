@@ -4,7 +4,7 @@ import { VisualizationType } from './entities/Entities'
 
 interface BreadCrumb {
   label: string
-  url: string
+  url?: string
 }
 
 interface SharedState {

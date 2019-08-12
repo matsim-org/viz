@@ -62,7 +62,11 @@ export default networkVolumePlot
 
 async function mounted() {
   await getVizDetails()
-  // sharedStore.setBreadCrumbs([{ label: '< Back', url: '/hi' }, { label: store.visualization.title, url: '.' }])
+
+  SharedStore.setBreadCrumbs([
+    { label: store.visualization.title, url: '/' },
+    { label: store.visualization.project.name, url: '/' },
+  ])
 
   setupMap()
 }
