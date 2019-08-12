@@ -37,8 +37,8 @@ const firebaseConfig = {
 }
 */
 
-// Firebase API key is in this:
-import firebaseConfig from '@/firebase-config'
+// Firebase API key is in this: (securely)
+import firebaseConfig from '@/firebase-secure'
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
