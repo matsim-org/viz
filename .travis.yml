@@ -18,6 +18,7 @@ branches:
 # it with ugly bash if statements
 script:
   - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASE_KEY}}/$FIREBASE_KEY/" src/firebase-secure.js; fi
+  - cat src/firebase-secure.js
   - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "staging" ]; then npm run build-staging && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-dev && npm run unit; fi
