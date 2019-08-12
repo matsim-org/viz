@@ -11,8 +11,8 @@
       button.button.is-small.is-rounded.is-outlined(@click="toggleHidePanel")
         i.fa.fa-arrow-left
 
-  .restore-button
-    button.button.is-small.is-rounded.is-link(:class="{'is-hidden': !isHidden}" @click="toggleHidePanel")
+  .restore-button(v-if="isHidden")
+    button.button.is-small.is-rounded.is-link(@click="toggleHidePanel")
         i.fa.fa-arrow-right
 
 </template>
@@ -45,8 +45,9 @@ export default class LeftDataPanel extends Vue {
 #datapanel {
   display: flex;
   flex-direction: column;
-  z-index: 2;
-  margin: 0.5rem 0rem 0rem 0.5rem;
+  z-index: 7;
+  margin: 0.5rem 0rem 0.5rem 0.5rem;
+  pointer-events: none;
 }
 
 .content-area {
@@ -55,6 +56,7 @@ export default class LeftDataPanel extends Vue {
   height: 100%;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.1);
   animation: 0.3s ease 0s 1 slideInFromLeft;
+  pointer-events: auto;
 }
 
 .is-hidden {
@@ -86,7 +88,8 @@ export default class LeftDataPanel extends Vue {
 }
 
 .restore-button {
-  margin: auto 0rem 0.5rem 0rem;
+  margin: auto 0rem 0rem 0rem;
+  pointer-events: auto;
 }
 
 .info-header {
@@ -122,6 +125,10 @@ export default class LeftDataPanel extends Vue {
     margin: 0rem 0rem 0rem 0rem;
   }
 
+  .content-area {
+    margin-bottom: 0rem;
+  }
+
   .info-header {
     border-top-left-radius: 0rem;
     border-top-right-radius: 0rem;
@@ -131,6 +138,11 @@ export default class LeftDataPanel extends Vue {
   .bottom-nav-bar {
     border-bottom-left-radius: 0rem;
     border-bottom-right-radius: 0rem;
+  }
+
+  .restore-button {
+    margin-left: 0.5rem;
+    margin-bottom: 0.5rem;
   }
 }
 </style>

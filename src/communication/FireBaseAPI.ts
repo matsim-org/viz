@@ -1,5 +1,4 @@
 import firebase from 'firebase/app'
-import 'firebase/auth'
 import 'firebase/firestore'
 
 export interface ProjectAttributes {
@@ -40,52 +39,14 @@ export interface VizAttributes {
 export default class FireBaseAPI {
   private static theCurrentUser: string = ''
 
-  public static async getCurrentUser() {
-    if (FireBaseAPI.theCurrentUser) return this.theCurrentUser
-
-    const currentUser = firebase.auth().currentUser
-    console.log({ currentUser })
-    if (!currentUser) return ''
-
-    const db = firebase.firestore()
-    const results = await db
-      .collection('users')
-      .where('uid', '==', currentUser.uid)
-      .get()
-
-    if (results.size) {
-      results.forEach(doc => {
-        // user exists!
-        const foundUser = doc.data()
-        console.log({ foundUser })
-        FireBaseAPI.theCurrentUser = foundUser.urlslug
-      })
-      return FireBaseAPI.theCurrentUser
-    } else {
-      // no such user yet!
-    }
-    return ''
+  public static setCurrentUser(userId: string) {
+    console.log('--> setting current user to:', userId)
+    FireBaseAPI.theCurrentUser = userId
   }
 
-  public static async logout() {
-    const user = firebase.auth().currentUser
-    if (user) {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          // sign out successful
-          console.log('logged out')
-          FireBaseAPI.theCurrentUser = ''
-          return true
-        })
-        .catch(e => {
-          // failed
-          console.error(e)
-          return false
-        })
-    }
-    return false
+  public static async getCurrentUser() {
+    if (FireBaseAPI.theCurrentUser) return this.theCurrentUser
+    return ''
   }
 
   public static async canUserModify(ownerId: string) {

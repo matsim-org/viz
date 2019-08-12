@@ -101,7 +101,7 @@ export default class TimeSlider extends Vue {
 </script>
 
 <style scoped>
-@import '../../node_modules/vue-slider-component/theme/default.css';
+@import '../../../node_modules/vue-slider-component/theme/default.css';
 
 .time-slider-main-content {
   padding: 0.5rem 0.8rem 2rem 0.5rem;

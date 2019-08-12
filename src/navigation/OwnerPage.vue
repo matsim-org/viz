@@ -1,16 +1,16 @@
 <template lang="pug">
 #page
   .title-strip
-    p {{owner}} &raquo;
+    p {{owner}} /
     h3.title.is-3 {{ owner }} &bullet; Home
 
   .content-area
-    p.tagline: i {{ me.details ? me.details : "&nbsp;" }}
+    p.tagline: i {{ ownerDetails.details ? ownerDetails.details : "&nbsp;" }}
 
     h5.title.is-5 PROJECTS
       button.button.is-rounded.is-danger.is-outlined(
-        style="float:right"
         v-if="canModify"
+        style="float:right"
         @click="clickedNewProject") +New Project
 
     table.project-list
@@ -77,7 +77,7 @@ export default class OwnerPage extends vueInstance {
   private canModify = false
 
   private myProjects: any = []
-  private me: any = {}
+  private ownerDetails: any = {}
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -100,7 +100,7 @@ export default class OwnerPage extends vueInstance {
   public async created() {}
 
   public async mounted() {
-    await this.fetchMe()
+    await this.fetchOwnerDetails()
     await this.fetchProjects()
     this.canModify = await this.determineIfUserCanModify()
     await this.projectStore.fetchPersonalProjects()
@@ -110,9 +110,9 @@ export default class OwnerPage extends vueInstance {
     return await CloudAPI.canUserModify(this.owner)
   }
 
-  private async fetchMe() {
-    this.me = await CloudAPI.getOwner(this.owner)
-    console.log({ me: this.me })
+  private async fetchOwnerDetails() {
+    const details = await CloudAPI.getOwner(this.owner)
+    if (details) this.ownerDetails = details
   }
 
   private async fetchProjects() {

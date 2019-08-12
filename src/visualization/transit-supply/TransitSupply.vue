@@ -18,10 +18,12 @@
         p.details First: {{route.firstDeparture}}
         p.details Last: {{route.lastDeparture}}
 
-  #mymap
-    .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
-      v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
-    )
+  .map-container
+    #mymap
+      .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
+        v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
+      )
+
   legend-box.legend(:rows="legendRows")
 </template>
 
@@ -65,17 +67,8 @@ class Departure {
   public routes: Set<string> = new Set()
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'transit-supply',
-  prettyName: 'Transit Supply',
-  description: 'Depicts the scheduled transit routes on a network.',
-  requiredFileKeys: ['Transit Schedule', 'Network'],
-  requiredParamKeys: ['Projection'],
-})
-
 @Component({ components: { LeftDataPanel, LegendBox } })
-export default class TransitSupply extends Vue {
+class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -113,6 +106,8 @@ export default class TransitSupply extends Vue {
   private _transitHelper!: TransitSupplyHelper
 
   public created() {
+    SharedStore.setFullPage(true)
+
     this._attachedRouteLayers = []
     this._departures = {}
     this._mapExtentXYXY = [180, 90, -180, -90]
@@ -122,6 +117,10 @@ export default class TransitSupply extends Vue {
     this._stopFacilities = {}
     this._transitLines = {}
     this.selectedRoute = null
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
   }
 
   public beforeDestroy() {
@@ -135,7 +134,12 @@ export default class TransitSupply extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
-    this.setBreadcrumb()
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     this.setupMap()
   }
 
@@ -152,33 +156,28 @@ export default class TransitSupply extends Vue {
   private get legendRows() {
     return [['#a03919', 'Rail'], ['#448', 'Bus']]
   }
-  private setBreadcrumb() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: this.project.name, link: '/project/' + this.projectId },
-      { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
-    ])
-  }
 
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'top-left',
       style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
-      // zoom: 9,
     })
 
-    const extent = cookie.getJSON(this.vizId + '-bounds')
+    try {
+      const extent = cookie.getJSON(this.vizId + '-bounds')
 
-    if (extent) {
-      this.mymap.fitBounds(extent, {
-        padding: { top: 5, bottom: 5, right: 5, left: 50 },
-        animate: false,
-      })
+      if (extent) {
+        this.mymap.fitBounds(extent, {
+          padding: { top: 2, bottom: 2, right: 2, left: 2 },
+          animate: false,
+        })
+      }
+    } catch (E) {
+      // no worries
     }
-
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
 
@@ -310,7 +309,7 @@ export default class TransitSupply extends Vue {
     cookie.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 365 })
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
-      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      padding: { top: 2, bottom: 2, right: 2, left: 2 },
       animate: false,
     })
     this.loadingText = ''
@@ -635,6 +634,18 @@ export default class TransitSupply extends Vue {
   }
 }
 
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: TransitSupply,
+  typeName: 'transit-supply',
+  prettyName: 'Transit Supply',
+  description: 'Depicts the scheduled transit routes on a network.',
+  requiredFileKeys: ['Transit Schedule', 'Network'],
+  requiredParamKeys: ['Projection'],
+})
+
+export default TransitSupply
+
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 
 const nodeReadAsync = function(filename: string) {
@@ -668,13 +679,23 @@ p {
 }
 
 #container {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr;
+  width: 100%;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
+#mymap {
+  height: 100%;
+  width: 100%;
 }
 
 .status-blob {
@@ -689,17 +710,6 @@ p {
   z-index: 2;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
-}
-
-#mymap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  background-color: white;
-  overflow: hidden;
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
 }
 
 .route {
@@ -814,9 +824,9 @@ h3 {
 }
 
 .legend {
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-  margin: auto 0.5rem 3.3rem auto;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  margin: auto 0.5rem 2rem auto;
   z-index: 10;
 }
 
@@ -826,7 +836,6 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  padding-bottom: 0.5rem;
 }
 
 .dashboard-panel {

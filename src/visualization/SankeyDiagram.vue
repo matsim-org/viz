@@ -32,17 +32,8 @@ const INPUTS = {
   FLOWS: 'Flows (.csv)',
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'sankey',
-  prettyName: 'Sankey Flow Diagram',
-  description: 'Depicts flows between choices',
-  requiredFileKeys: [INPUTS.FLOWS],
-  requiredParamKeys: [],
-})
-
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
-export default class SankeyDiagram extends Vue {
+class SankeyDiagram extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -76,6 +67,11 @@ export default class SankeyDiagram extends Vue {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
     if (SharedStore.debug) console.log(this.visualization)
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
   }
 
   private get legendRows() {
@@ -181,6 +177,18 @@ export default class SankeyDiagram extends Vue {
       .attr('viewBox', '0 0 800 800')
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: SankeyDiagram,
+  typeName: 'sankey',
+  prettyName: 'Sankey Flow Diagram',
+  description: 'Depicts flows between choices',
+  requiredFileKeys: [INPUTS.FLOWS],
+  requiredParamKeys: [],
+})
+
+export default SankeyDiagram
 </script>
 
 <style scoped>

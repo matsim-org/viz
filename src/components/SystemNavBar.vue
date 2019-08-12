@@ -1,38 +1,35 @@
 <template lang="pug">
 #systembar
     .matsim-logo-panel
-      img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
+      img.matsim-logo(src='@/assets/matsim-logo-white.png' @click="onClick('/')")
 
-    .nav-item(v-for="item in topItems" :key="item.id" @click="onClick(item.url)")
-      i.fa.fa-lg(:class="item.icon" aria-hidden="true")
-      .icon-label {{ item.id }}
+    .center-area
+      .row1(v-if="centerItems.length>0") {{ centerItems[0].label }}
+      .row2(v-if="centerItems.length>1")
+        .bbreadcrumb(v-for="crumb in subtitles") {{ crumb.label }}
+          // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
+          // span(v-else) {{ crumb.label }}
 
-    .gap
-
-    .nav-item(v-for="item in bottomItems" :key="item.id" @click="onClick(item.url)")
-      .icon-label {{ item.id }}
-    .nav-item(@click="onLogin()")
+    .nav-item(@click="toggleLogin()")
       .icon-label {{ loginText }}
-    .nav-item.loginout(@click="showFirebaseAuth()")
-      .icon-label Account
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import SharedStore from '@/SharedStore'
 
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
 
-  private topItems = [
-    // { id: 'Home', icon: 'fa-home', url: '/' },
-    // { id: 'Map', icon: 'fa-map', url: '/' },
-    // { id: 'Run Log', icon: 'fa-database', url: '/' },
-  ]
-  private bottomItems = [] // [{ id: 'Settings', icon: 'fa-cog', url: '/' }]
+  private sharedStore = SharedStore
+
+  private get centerItems() {
+    return SharedStore.state.breadCrumbs
+  }
 
   public async mounted() {}
 
@@ -40,11 +37,24 @@ export default class SystemNavBar extends Vue {
     return this.isLoggedIn ? 'Log Out' : 'Log In'
   }
 
+  private get subtitles() {
+    const crumbs: any = SharedStore.state.breadCrumbs
+    if (crumbs.length < 1) return []
+
+    // add cute bullets between subtitle elements
+    const elements = crumbs.slice(1)
+    const result = elements.flatMap((value: any, index: any, array: any) =>
+      array.length - 1 !== index ? [value, { label: ' \u2022 ' }] : value
+    )
+
+    return result
+  }
+
   private get isLoggedIn() {
     return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
-  private onLogin() {
+  private toggleLogin() {
     if (this.authStore.state.status === AuthenticationStatus.Authenticated) {
       this.authStore.logOut()
       this.$router.push({ path: '/' })
@@ -73,8 +83,8 @@ export default class SystemNavBar extends Vue {
 }
 
 .nav-item {
-  padding: 0rem 0.5rem;
-  margin: auto 0px;
+  padding: 0rem 0rem 0rem 1rem;
+  margin: auto 0px auto auto;
   text-align: center;
   color: #e8e8e8;
 }
@@ -84,22 +94,44 @@ export default class SystemNavBar extends Vue {
   cursor: pointer;
 }
 
-.gap {
-  margin: 0 auto;
+.center-area {
+  display: flex;
+  flex-direction: column;
+  margin: auto 1rem auto 2rem;
+}
+
+.row1 {
+  color: white;
+  font-weight: bold;
+  margin-top: -0.1rem;
+}
+
+.row2 {
+  display: flex;
+  flex-direction: row;
+}
+
+.bbreadcrumb {
+  font-size: 0.75rem;
+  color: white;
+  margin: 0rem 0.5rem 0rem 0rem;
 }
 
 .icon-label {
-  font-size: 0.7rem;
-  font-weight: bold;
+  font-size: 0.8rem;
+  font-weight: normal;
 }
 
 .matsim-logo-panel {
+  display: flex;
+  flex-direction: column;
   margin: auto 0rem;
+  vertical-align: center;
 }
 
 .matsim-logo {
-  height: 1.75rem;
-  margin-top: 0.3rem;
+  flex: 1;
+  height: 2.1rem;
 }
 
 .matsim-logo:hover {

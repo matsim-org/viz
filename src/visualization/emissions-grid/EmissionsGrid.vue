@@ -1,6 +1,8 @@
 <template lang="pug">
-.main-content
-  #mymap
+#container
+  .map-container
+    #mymap
+
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
   left-data-panel.left-panel(v-if="!loadingText" title="Emissions Grid")
@@ -45,14 +47,6 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
 
-sharedStore.addVisualizationType({
-  typeName: 'emissions',
-  prettyName: 'Emissions Grid',
-  description: 'Show emissions at gridpoints',
-  requiredFileKeys: ['Events', 'Network'],
-  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
-})
-
 interface MapElement {
   lngLat: LngLat
   features: any[]
@@ -77,7 +71,7 @@ interface Point {
     LeftDataPanel,
   },
 })
-export default class EmissionsGrid extends Vue {
+class EmissionsGrid extends Vue {
   @Prop({ type: String, required: true })
   private projectId!: string
 
@@ -152,8 +146,13 @@ export default class EmissionsGrid extends Vue {
     if (this._myWorker) this._myWorker.destroy()
   }
 
-  public created() {}
+  public created() {
+    sharedStore.setFullPage(true)
+  }
 
+  public destroyed() {
+    sharedStore.setFullPage(false)
+  }
   public async fetchEmissionsBins(): Promise<any> {
     const result = await fetch(`${Config.emissionsServer}/${this.vizId}/startTimes`, {
       mode: 'cors',
@@ -179,6 +178,12 @@ export default class EmissionsGrid extends Vue {
   public async mounted() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
+
+    sharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
 
     // do things that can only be done after MapBox is fully initialized
@@ -186,7 +191,7 @@ export default class EmissionsGrid extends Vue {
       bearing: 0,
       // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'top-left',
       style: this.chosenTheme.style,
       pitch: 0,
       zoom: 14,
@@ -345,30 +350,38 @@ export default class EmissionsGrid extends Vue {
     this.loadingText = ''
   }
 }
+
+sharedStore.addVisualizationType({
+  component: EmissionsGrid,
+  typeName: 'emissions',
+  prettyName: 'Emissions Grid',
+  description: 'Show emissions at gridpoints',
+  requiredFileKeys: ['Events', 'Network'],
+  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
+})
+
+export default EmissionsGrid
 </script>
 
 <style scoped>
-/* this is the initial start page layout */
-.main-content {
+#container {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr auto;
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 100%;
-  padding: 0px;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 4;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  height: 100%;
   width: 100%;
-  grid-row: 1 / 3;
-  grid-column: 1 / 4;
-  overflow: hidden;
-  background: #fff;
 }
 
 .loading-message {
@@ -376,13 +389,6 @@ export default class EmissionsGrid extends Vue {
   grid-column: 1 / 4;
   overflow: hidden;
   opacity: 0.8;
-}
-
-.left-overlay {
-  grid-row: 1 / 3;
-  grid-column: 1 / 2;
-  z-index: 5000;
-  pointer-events: none;
 }
 
 .slider-box {
@@ -435,6 +441,8 @@ a:focus {
 }
 
 .left-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
   width: 16rem;

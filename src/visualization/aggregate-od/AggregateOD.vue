@@ -2,6 +2,9 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
+  .map-container
+    #mymap
+
   left-data-panel.left-panel(v-if="!loadingText")
    .dashboard-panel
     .info-header
@@ -29,10 +32,10 @@
         // {{colName}}
         button.button(hint="hide" @click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
-  #mymap
+  .map-complications(v-if="!isMobile()")
+    legend-box.complication(:rows="legendRows")
+    scale-box.complication(:rows="scaleRows")
 
-  legend-box.legend(v-if="!isMobile()" :rows="legendRows")
-  scale-box.scale(v-if="!isMobile()" :rows="scaleRows")
 
 </template>
 
@@ -54,10 +57,10 @@ import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
 import LeftDataPanel from '@/components/LeftDataPanel.vue'
-import LegendBox from '@/visualization/LegendBoxOD.vue'
-import ScaleBox from '@/visualization/ScaleBoxOD.vue'
+import LegendBox from '@/visualization/aggregate-od/LegendBoxOD.vue'
+import ScaleBox from '@/visualization/aggregate-od/ScaleBoxOD.vue'
+import TimeSlider from '@/visualization/aggregate-od/TimeSlider2.vue'
 import SharedStore from '@/SharedStore'
-import TimeSlider from '@/components/TimeSlider2.vue'
 import ScaleSlider from '@/components/ScaleSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
@@ -91,15 +94,6 @@ const INPUTS = {
   DBF_FILE: 'Shapefile .DBF',
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'aggregate-od',
-  prettyName: 'Origin/Destination Patterns',
-  description: 'Depicts aggregate O/D flows between areas.',
-  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection', 'Scale Factor'],
-})
-
 @Component({
   components: {
     LeftDataPanel,
@@ -109,7 +103,7 @@ SharedStore.addVisualizationType({
     TimeSlider,
   },
 })
-export default class AggregateOD extends Vue {
+class AggregateOD extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -124,6 +118,7 @@ export default class AggregateOD extends Vue {
 
   // -------------------------- //
 
+  private mySharedState = SharedStore
   private centroids: any = {}
   private centroidSource: any = {}
   private linkData: any = {}
@@ -170,8 +165,13 @@ export default class AggregateOD extends Vue {
   private bounceScaleSlider = debounce(this.changedScale, 50)
 
   public async created() {
+    SharedStore.setFullPage(true)
     this._mapExtentXYXY = [180, 90, -180, -90]
     this._maximum = 0
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
   }
 
   public async mounted() {
@@ -179,6 +179,10 @@ export default class AggregateOD extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
     this.setupMap()
   }
 
@@ -206,27 +210,31 @@ export default class AggregateOD extends Vue {
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       container: 'mymap',
-      logoPosition: 'top-right',
+      logoPosition: 'top-left',
       style: 'mapbox://styles/mapbox/outdoors-v9',
     })
 
-    const extent = localStorage.getItem(this.vizId + '-bounds')
-    if (extent) {
-      const lnglat = JSON.parse(extent)
+    try {
+      const extent = localStorage.getItem(this.vizId + '-bounds')
+      if (extent) {
+        const lnglat = JSON.parse(extent)
 
-      const mFac = this.isMobile ? 0 : 1
-      const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
+        const mFac = this.isMobile ? 0 : 1
+        const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
 
-      this.mymap.fitBounds(lnglat, {
-        padding,
-        animate: false,
-      })
+        this.mymap.fitBounds(lnglat, {
+          padding,
+          animate: false,
+        })
+      }
+    } catch (e) {
+      // no consequence if json was weird, just drop it
     }
 
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
-    this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
+    // this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
     this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
   }
 
@@ -948,15 +956,21 @@ export default class AggregateOD extends Vue {
     this.changedTimeSlider(this.currentTimeBin)
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: AggregateOD,
+  typeName: 'aggregate-od',
+  prettyName: 'Origin/Destination Patterns',
+  description: 'Depicts aggregate O/D flows between areas.',
+  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
+  requiredParamKeys: ['Projection', 'Scale Factor'],
+})
+
+export default AggregateOD
 </script>
 
 <style scoped>
-.mapboxgl-popup-content {
-  padding: 0px 20px 0px 0px;
-  opacity: 0.95;
-  box-shadow: 0 0 3px #00000080;
-}
-
 h3 {
   margin: 0px 0px;
   font-size: 16px;
@@ -967,9 +981,6 @@ h4 {
 }
 
 #container {
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -989,15 +1000,17 @@ h4 {
   border-bottom: solid 1px #479ccc;
 }
 
-#mymap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
+.map-container {
   background-color: #eee;
-  overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
+#mymap {
+  height: 100%;
+  width: 100%;
 }
 
 .mytitle {
@@ -1046,18 +1059,18 @@ h4 {
   color: #555;
 }
 
-.legend {
-  grid-column: 1/3;
-  grid-row: 1 / 3;
-  margin: 2.3rem 3rem auto auto;
-  z-index: 4;
-}
-.scale {
+.map-complications {
+  display: flex;
   grid-column: 1/3;
   grid-row: 1/3;
-  margin: auto 7rem 1.8rem auto;
+  margin: auto 0.5rem 1.1rem auto;
   z-index: 4;
 }
+
+.complication {
+  margin: 0rem 0rem 0.1rem 0.5rem;
+}
+
 .buttons-bar {
   display: flex;
   flex-direction: row;
@@ -1120,7 +1133,7 @@ h4 {
 }
 
 .left-panel {
-  grid-column: 1 / 2;
+  grid-column: 1 / 3;
   grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
@@ -1133,8 +1146,10 @@ h4 {
   flex-grow: 1;
 }
 
-.my-hidden {
-  display: none;
+.mapboxgl-popup-content {
+  padding: 0px 20px 0px 0px;
+  opacity: 0.95;
+  box-shadow: 0 0 3px #00000080;
 }
 
 @media only screen and (max-width: 640px) {

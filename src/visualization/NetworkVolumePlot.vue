@@ -1,6 +1,8 @@
 <template lang="pug">
-#zcontainer
-  #mymap
+#container
+  .map-container
+    #mymap
+
   .status-blob(v-if="loadingText"): h2 {{ loadingText }}
 </template>
 
@@ -10,20 +12,10 @@
 import mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
 import Vue from 'vue'
-
-// register component with the shared store
-SharedStore.addVisualizationType({
-  typeName: 'network-volume-plot',
-  prettyName: 'Network Volume Plot',
-  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
-  requiredFileKeys: ['geoJson'],
-  requiredParamKeys: [],
-})
 
 // store is the component data store -- the state of the component.
 const store: any = {
@@ -33,8 +25,7 @@ const store: any = {
   api: FileAPI,
 }
 
-// this export is the Vue Component itself
-export default Vue.extend({
+const networkVolumePlot = Vue.extend({
   name: 'NetworkViz',
   props: ['fileApi'],
   components: {},
@@ -43,6 +34,10 @@ export default Vue.extend({
   },
   created() {
     store.api = (this as any).fileApi
+    SharedStore.setFullPage(true)
+  },
+  destroyed() {
+    SharedStore.setFullPage(false)
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -53,17 +48,27 @@ export default Vue.extend({
   watch: {},
 })
 
+// register component with the shared store
+SharedStore.addVisualizationType({
+  component: networkVolumePlot,
+  typeName: 'network-volume-plot',
+  prettyName: 'Network Volume Plot',
+  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
+  requiredFileKeys: ['geoJson'],
+  requiredParamKeys: [],
+})
+
+export default networkVolumePlot
+
 async function mounted() {
   await getVizDetails()
-  setBreadcrumb()
-  setupMap()
-}
 
-function setBreadcrumb() {
-  EventBus.$emit('set-breadcrumbs', [
-    { title: store.project.name, link: '/project/' + store.projectId },
-    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
+  SharedStore.setBreadCrumbs([
+    { label: store.visualization.title, url: '/' },
+    { label: store.visualization.project.name, url: '/' },
   ])
+
+  setupMap()
 }
 
 function setupMap() {
@@ -84,7 +89,6 @@ function setupMap() {
 async function getVizDetails() {
   store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
   store.project = await store.api.fetchProject(store.projectId)
-  console.log(Object.assign({}, store.visualization))
 }
 
 let map: mapboxgl.Map
@@ -219,28 +223,24 @@ function clickedOnTaz(e: MapElement) {
 </script>
 
 <style scoped>
-#zcontainer {
-  background-color: black;
+#container {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
-  position: absolute;
-  top: 0;
-  bottom: 0;
   width: 100%;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
-  position: absolute;
-  top: 3rem;
-  bottom: 0;
+  height: 100%;
   width: 100%;
-  background-color: white;
-  overflow: hidden;
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
 }
 
 .status-blob {

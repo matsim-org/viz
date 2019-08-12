@@ -1,5 +1,5 @@
 <template lang="pug">
-#app
+#app(:class=" {'full-page-app' : isFullPage}" )
   system-nav-bar.top-nav-strip(:authStore="authStore")
   router-view.main-content
 </template>
@@ -8,7 +8,7 @@
 import 'bulma/css/bulma.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import * as firebase from 'firebase/app'
 
@@ -43,11 +43,6 @@ import firebaseConfig from '@/firebase-config'
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
 
-interface BreadCrumb {
-  title: string
-  link: string
-}
-
 // Register a global custom directive called `v-focus`
 Vue.directive('focus', {
   // When the bound element is inserted into the DOM...
@@ -59,10 +54,22 @@ Vue.directive('focus', {
 
 @Component({ components: { LoginPanel, SystemNavBar } })
 export default class App extends Vue {
-  private breadcrumbs: BreadCrumb[] = []
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
+  private appState = sharedStore.state
+
+  private get isFullPage() {
+    return this.appState.isFullPageMap
+  }
+
+  @Watch('appState.isFullPageMap')
+  private fullPageUpdated(isFullPage: boolean) {
+    console.log('~~SWITCHING FULL PAGE: ', isFullPage)
+
+    if (isFullPage) document.body.classList.add('full-screen-page')
+    else document.body.classList.remove('full-screen-page')
+  }
 }
 </script>
 
@@ -75,6 +82,14 @@ body {
   margin: 0px 0px;
   padding: 0px 0px;
   overflow-y: auto;
+  height: 100%;
+  overscroll-behavior: contain;
+}
+
+body.full-screen-page {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
+  height: 100%;
 }
 
 h1,
@@ -91,19 +106,16 @@ h6 {
 #app {
   background-color: white;
   display: grid;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
 }
 
-.main-content {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  z-index: 1;
-  margin-top: 3rem;
+.full-page-app {
+  height: 100%;
 }
 
 .top-nav-strip {
@@ -111,11 +123,16 @@ h6 {
   grid-row: 1 / 2;
   padding: 0rem 0.5rem 0rem 0.5rem;
   box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
-  z-index: 5;
-  position: absolute;
-  top: 0;
+  z-index: 10;
   width: 100%;
-  height: 3rem;
+  height: 4rem;
+}
+
+.main-content {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  z-index: 1;
+  margin-top: 4rem;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
@@ -133,23 +150,6 @@ a:focus {
   display: flex;
 }
 
-.breadcrumb-row {
-  grid-row: 1 / 2;
-  grid-column: 2 / 3;
-  display: flex;
-  flex-direction: row;
-  vertical-align: center;
-}
-
-.nav-breadcrumb {
-  color: #ccc;
-  margin: auto 0.25rem auto 0rem;
-  font-size: 0.8rem;
-}
-
-.nav-bread-link {
-  margin-left: 0.5rem;
-}
 a:hover {
   color: #fff;
 }

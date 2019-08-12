@@ -2,8 +2,15 @@
 
 import { VisualizationType } from './entities/Entities'
 
+interface BreadCrumb {
+  label: string
+  url?: string
+}
+
 interface SharedState {
+  breadCrumbs: BreadCrumb[]
   lastNavigation: string
+  isFullPageMap: boolean
   visualizationTypes: Map<string, VisualizationType>
 }
 
@@ -13,6 +20,14 @@ class SharedStore {
 
   constructor() {
     this._state = this.initializeState()
+  }
+
+  public setBreadCrumbs(breadcrumbs: BreadCrumb[]) {
+    this._state.breadCrumbs = breadcrumbs
+  }
+
+  public setFullPage(isFullPage: boolean) {
+    this._state.isFullPageMap = isFullPage
   }
 
   public setLastNavigation(path: string): void {
@@ -42,6 +57,8 @@ class SharedStore {
 
   private defaultState(): SharedState {
     return {
+      breadCrumbs: [],
+      isFullPageMap: false,
       lastNavigation: '',
       visualizationTypes: new Map(),
     }
@@ -61,6 +78,8 @@ class SharedStore {
     if (persistedStateString) {
       const persistedState = JSON.parse(persistedStateString as string)
       return {
+        breadCrumbs: [],
+        isFullPageMap: false,
         lastNavigation: persistedState.lastNavigation,
         visualizationTypes: new Map(),
       }
