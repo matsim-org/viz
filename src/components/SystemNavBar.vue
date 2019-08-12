@@ -5,12 +5,13 @@
 
     .center-area
       .row1(v-if="centerItems.length>0") {{ centerItems[0].label }}
-      .row2(v-if="centerItems.length>1") {{ centerItems[1].label }}
+      .row2(v-if="centerItems.length>1")
+        .bbreadcrumb(v-for="crumb in subtitles") {{ crumb.label }}
+          // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
+          // span(v-else) {{ crumb.label }}
 
-    .nav-item(@click="onLogin()")
+    .nav-item(@click="toggleLogin()")
       .icon-label {{ loginText }}
-    .nav-item.loginout(@click="showFirebaseAuth()")
-      .icon-label Account
 </template>
 
 <script lang="ts">
@@ -36,11 +37,24 @@ export default class SystemNavBar extends Vue {
     return this.isLoggedIn ? 'Log Out' : 'Log In'
   }
 
+  private get subtitles() {
+    const crumbs: any = SharedStore.state.breadCrumbs
+    if (crumbs.length < 1) return []
+
+    // add cute bullets between subtitle elements
+    const elements = crumbs.slice(1)
+    const result = elements.flatMap((value: any, index: any, array: any) =>
+      array.length - 1 !== index ? [value, { label: ' \u2022 ' }] : value
+    )
+
+    return result
+  }
+
   private get isLoggedIn() {
     return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
-  private onLogin() {
+  private toggleLogin() {
     if (this.authStore.state.status === AuthenticationStatus.Authenticated) {
       this.authStore.logOut()
       this.$router.push({ path: '/' })
@@ -70,7 +84,7 @@ export default class SystemNavBar extends Vue {
 
 .nav-item {
   padding: 0rem 0rem 0rem 1rem;
-  margin: auto 0px;
+  margin: auto 0px auto auto;
   text-align: center;
   color: #e8e8e8;
 }
@@ -83,7 +97,7 @@ export default class SystemNavBar extends Vue {
 .center-area {
   display: flex;
   flex-direction: column;
-  margin: auto auto auto 2rem;
+  margin: auto 1rem auto 2rem;
 }
 
 .row1 {
@@ -93,8 +107,14 @@ export default class SystemNavBar extends Vue {
 }
 
 .row2 {
+  display: flex;
+  flex-direction: row;
+}
+
+.bbreadcrumb {
   font-size: 0.75rem;
   color: white;
+  margin: 0rem 0.5rem 0rem 0rem;
 }
 
 .icon-label {

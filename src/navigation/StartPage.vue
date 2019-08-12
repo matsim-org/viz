@@ -18,13 +18,12 @@
         p Technische Universität<br/>Berlin, Germany
         p: a(href="https://vsp.tu-berlin.de") vsp.tu-berlin.de
 
-    .about(v-if="currentUser")
-      h4.title.is-4 My Projects
-      list-header(v-on:btnClicked="onCreateClicked" title="" btnTitle="New Project")
+    .about(v-if="isAuthenticated")
+      h4.title.is-4 Hello, {{ currentUser }}
+      p Jump to your
+        b: router-link(:to='`/${currentUser}`') &nbsp;home page: &raquo; {{ currentUser }}
 
-      div.emptyMessage(v-if="personalProjects.length === 0")
-        p.info You don't have any projects yet. Create one!
-      .projectList(v-else)
+      .projectList
         list-element(v-for="project in personalProjects"
                      :key="project.owner + project.urlslug"
                      @itemClicked="onProjectSelected(project)")
@@ -62,7 +61,7 @@ import ListHeader from '@/components/ListHeader.vue'
 import CreateProject from '@/project/CreateProject.vue'
 import ProjectStore, { ProjectState, ProjectVisibility } from '@/project/ProjectStore'
 import { Visualization, PermissionType, Project } from '@/entities/Entities'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import ListElementVue from '@/components/ListElement.vue'
 
 import * as firebase from 'firebase/app'
@@ -84,13 +83,14 @@ export default class StartPage extends Vue {
 
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
+  private authState = this.authStore.state
 
   private currentUser: string = ''
 
   private personalProjects: ProjectAttributes[] = []
 
-  // this assignment is necessary to make vue watch the state. Later we switch it out with the actual
-  // state of the projectStore
+  // this assignment is necessary to make vue watch the state.
+  // Later we switch it out with the actual state of the projectStore
   private projectState: ProjectState = {
     projects: [],
     selectedProject: {} as Project,
@@ -123,15 +123,22 @@ export default class StartPage extends Vue {
   }
 
   public async mounted() {
-    this.currentUser = await CloudAPI.getCurrentUser()
-    if (!this.currentUser) return
-
-    this.fetchPersonalProjects()
+    if (this.authState.status === AuthenticationStatus.Authenticated) {
+      this.currentUser = this.authState.idToken.sub
+    } else {
+      this.currentUser = ''
+    }
   }
 
-  private async fetchPersonalProjects() {
-    // return this.projectState.projects.filter(project => this.isPersonalProject(project))
-    this.personalProjects = await CloudAPI.getProjectsForUser(this.currentUser)
+  @Watch('authState.status')
+  private authChanged(newStatus: AuthenticationStatus) {
+    if (newStatus === AuthenticationStatus.Authenticated) {
+      CloudAPI.setCurrentUser(this.authStore.state.idToken.sub)
+      this.currentUser = this.authStore.state.idToken.sub
+    } else {
+      CloudAPI.setCurrentUser('')
+      this.currentUser = ''
+    }
   }
 
   private onVizSelected(viz: Visualization) {

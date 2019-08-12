@@ -174,7 +174,7 @@ export default class AccountPage extends Vue {
   }
 
   private async logout() {
-    this.loggedIn = !(await FireBaseAPI.logout())
+    // this.loggedIn = !(await FireBaseAPI.logout())
     window.location.href = '/'
   }
 }

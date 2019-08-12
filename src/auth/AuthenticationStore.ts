@@ -2,6 +2,7 @@ import AuthenticationRequest from '@/auth/AuthenticationRequest'
 import AuthenticationResponse from '@/auth/AuthenticationResponse'
 import ErrorResponse from '@/auth/ErrorResponse'
 import Config from '@/config/Config'
+import CloudAPI from '@/communication/FireBaseAPI'
 import { Method } from '@/communication/Constants'
 import { Url } from 'url'
 
@@ -64,6 +65,7 @@ export default class AuthenticationStore {
     } catch (error) {
       console.log(error)
     }
+    CloudAPI.setCurrentUser('')
   }
 
   public handleAuthenticationResponse(fragment: string) {
@@ -77,6 +79,7 @@ export default class AuthenticationStore {
       this.authState.accessToken = response.accessToken
       this.authState.idToken = response.idToken
       this.authState.status = AuthenticationStatus.Authenticated
+      CloudAPI.setCurrentUser(this.authState.idToken.sub)
     } catch (error) {
       this.authState.status = AuthenticationStatus.Failed
       this.authState.errorMessage = error.message
