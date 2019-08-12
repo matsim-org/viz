@@ -8,7 +8,6 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
-import { Method } from '../communication/Constants'
 
 @Component
 export default class ScaleBox extends Vue {

@@ -1,4 +1,4 @@
-import AggregateOD from '@/visualization/AggregateOD.vue'
+import AggregateOD from '@/visualization/aggregate-od/AggregateOD.vue'
 import EmissionsGrid from '@/visualization/emissions-grid/EmissionsGrid.vue'
 import FrameAnimation from '@/visualization/frame-animation/FrameAnimation.vue'
 import NetworkVolumePlot from '@/visualization/NetworkVolumePlot.vue'
