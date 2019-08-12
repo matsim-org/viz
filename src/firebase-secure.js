@@ -1,5 +1,5 @@
 const firebaseConfig = {
-  apiKey: '{{FIREBASEKEY}}',
+  apiKey: '{{FIREBASE_KEY}}',
   authDomain: 'matsim-viz.firebaseapp.com',
   databaseURL: 'https://matsim-viz.firebaseio.com',
   projectId: 'matsim-viz',

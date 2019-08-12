@@ -17,7 +17,7 @@ branches:
 # travis doesn't have the option to run different builds for different branches, so we have to
 # it with ugly bash if statements
 script:
-  - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASEKEY}}/$FIREBASEKEY/" src/firebase-secure.js; fi
+  - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASE_KEY}}/$FIREBASE_KEY/" src/firebase-secure.js; fi
   - cat src/firebase-secure.js
   - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "staging" ]; then npm run build-staging && npm run unit; fi
@@ -41,6 +41,3 @@ deploy:
     provider: script
     script: bash deploy.sh viz-dev
     skip_cleanup: true
-env:
-  global:
-    - secure: pPDFqFLdehjZVvKBin6eMif04EPv7yRMbpd6xcB5ygLAZImMkLMTrACmVhpT6BR//i2GL7RlmuM6zezMWb/c64WklBHBB+nnjkAY9d93C5345hNr72lhFfZmVP8MDgwzD6nBNyUH9lq+SG3QJBizCg8zyJVPXSVzy1GUzTqb1BgRsvn0nzNoXYr9E9ov/bOaw1xWQifjMCu3a95GcG6GHW6dYsdqVEx/XZMfnogY0s6ANgfP+jU9vro1alnAfB8llG7HRUdy1orZwPeBpNd2jUTxdBbHB9KtdtYBe8hQ2IQ8rhZ3Fo8fDxqc+en9MbINdstmwLg7cawwVje6VBesBufnhgOjB3cA0Zjg5nOt6vir0rsfPP2omiKd6lJlLfmj41nB1S1+plH1/paimmJK5Pa+P0hsMEJcn2cvO6xLMhHIVnELC0z8NTOM+BfUtfvW1zjYZPdStGGt7+Am576+ThOkvAJiSC7CP8uct7wN2lb7zlPyQgYg3c8Zd7LwdsglWhDJd/emDmSkMsNBuJ+MFzveugBrPnC13KwCJ0E4funE7QANPAWx76PqLaoqplLhy+c+HqbpddcrMvJqVkxQxwyni4q5haMhksJLTEJ9dlROLd7JVtb4Q+fMG1Sw3uZunD6ePTS4L2DxYnbMZfEbs03se0P5l+A+2S2vJqgDyPA=
