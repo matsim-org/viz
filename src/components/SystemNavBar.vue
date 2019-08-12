@@ -1,14 +1,11 @@
 <template lang="pug">
 #systembar
     .matsim-logo-panel
-      img.matsim-logo(src='/matsim-logo-white.png' @click="onClick('/')")
-
-    .nav-item(v-for="item in leftItems" :key="item.id" @click="onClick(item.url)")
-      .icon-label {{ item.label }}
+      img.matsim-logo(src='@/assets/matsim-logo-white.png' @click="onClick('/')")
 
     .center-area
-      .row1(v-if="centerItems.length>0") {{centerItems[0].label}}
-      .row2(v-if="centerItems.length>1") {{centerItems[1].label}}
+      .row1(v-if="centerItems.length>0") {{ centerItems[0].label }}
+      .row2(v-if="centerItems.length>1") {{ centerItems[1].label }}
 
     .nav-item(@click="onLogin()")
       .icon-label {{ loginText }}
@@ -92,6 +89,7 @@ export default class SystemNavBar extends Vue {
 .row1 {
   color: white;
   font-weight: bold;
+  margin-top: -0.1rem;
 }
 
 .row2 {
