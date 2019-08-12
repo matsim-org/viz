@@ -1,8 +1,10 @@
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const os = require('os')
+const path = require('path')
 
 module.exports = {
   parallel: false,
+  productionSourceMap: false,
   chainWebpack: config => {
     /*
      * the default loaders for worker files must be disabled. Otherwise both the default and the loaders defined below
@@ -27,16 +29,19 @@ module.exports = {
      */
     output: {
       globalObject: 'self',
+      pathinfo: false,
     },
     // devtool: 'source-map',
     module: {
       rules: [
         {
           test: /\.worker\.js$/,
+          include: path.resolve(__dirname, 'src'),
           use: [{ loader: 'worker-loader' }, { loader: 'babel-loader' }],
         },
         {
           test: /\.worker\.ts$/,
+          include: path.resolve(__dirname, 'src'),
           use: [{ loader: 'worker-loader' }, { loader: 'babel-loader' }, { loader: 'ts-loader' }],
         },
       ],
