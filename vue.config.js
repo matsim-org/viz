@@ -1,3 +1,6 @@
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+const os = require('os')
+
 module.exports = {
   parallel: false,
   chainWebpack: config => {
@@ -7,6 +10,13 @@ module.exports = {
      */
     config.module.rule('js').exclude.add(/\.worker\.js$/)
     config.module.rule('ts').exclude.add(/\.worker\.ts$/)
+
+    config.plugin('fork-ts-checker').tap(args => {
+      let totalmem = Math.floor(os.totalmem() / 1024 / 1024) //get OS mem size
+      let allowUseMem = totalmem > 4096 ? 4096 : 2048
+      args[0].memoryLimit = allowUseMem
+      return args
+    })
   },
   configureWebpack: {
     /*
