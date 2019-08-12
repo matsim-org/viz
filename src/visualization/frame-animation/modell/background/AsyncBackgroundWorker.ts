@@ -80,7 +80,7 @@ export default abstract class AsyncBackgroundWorker {
       type: TYPE_RESULT,
       result: methodResult.data,
     }
-    workerContext.postMessage(asyncResult, methodResult.transferrables as any)
+    workerContext.postMessage(asyncResult, methodResult.transferrables)
   }
 
   private postError(id: string, error: any) {

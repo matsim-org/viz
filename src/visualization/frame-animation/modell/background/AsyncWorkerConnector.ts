@@ -38,7 +38,7 @@ export default class AsyncWorkerConnector {
       },
       id: this.generatePromiseId(),
     }
-    this.worker.postMessage(message, transferrables as any)
+    this.worker.postMessage(message, transferrables)
 
     return new Promise<T>((resolve, reject) => {
       this.promises.set(message.id, { resolve, reject })

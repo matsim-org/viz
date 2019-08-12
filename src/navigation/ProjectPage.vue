@@ -33,6 +33,7 @@ import download from 'downloadjs'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
+import { falsy } from 'vega'
 
 import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
 import sharedStore, { SharedState } from '@/SharedStore'

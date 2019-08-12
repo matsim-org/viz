@@ -49,6 +49,7 @@ import colormap from 'colormap'
 import { debounce } from 'debounce'
 import mapboxgl, { MapMouseEvent, PositionOptions } from 'mapbox-gl'
 import proj4 from 'proj4'
+import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
@@ -69,6 +70,22 @@ import ModalVue from '../components/Modal.vue'
 
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
+
+/*
+const vegaChart: any = {
+  $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
+  description: 'A simple bar chart with embedded data.',
+  data: {
+    values: [{ Hour: 0, 'Trips From': 0, 'Trips To': 0 }],
+  },
+  mark: 'bar',
+  encoding: {
+    x: { field: 'Hour', type: 'ordinal' },
+    y: { field: 'Trips From', type: 'quantitative' },
+  },
+}
+*/
+
 const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
@@ -423,6 +440,15 @@ class AggregateOD extends Vue {
     console.log(this.marginals)
     console.log(this.marginals.rowTotal[id])
     console.log(this.marginals.colTotal[id])
+
+    /* vega chart stuff
+    const values = []
+    for (let i = 0; i < 24; i++) {
+      values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
+    }
+    // vegaChart.data.values = values
+    // vegaEmbed('#mychart', vegaChart)
+    */
 
     this.fadeUnselectedLinks(id)
   }
