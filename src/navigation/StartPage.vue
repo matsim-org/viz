@@ -58,7 +58,6 @@ import CloudAPI, { ProjectAttributes } from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
-import CreateProject from '@/project/CreateProject.vue'
 import ProjectStore, { ProjectState, ProjectVisibility } from '@/project/ProjectStore'
 import { Visualization, PermissionType, Project } from '@/entities/Entities'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
@@ -74,7 +73,6 @@ import * as firebaseui from 'firebaseui'
     'project-list-item': ProjectListItem,
     'list-header': ListHeader,
     'list-element': ListElementVue,
-    'create-project': CreateProject,
   },
 })
 export default class StartPage extends Vue {
