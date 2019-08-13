@@ -198,6 +198,11 @@ export default class FireBaseAPI {
     await doc.update(attributes)
   }
 
+  public static async createDoc(location: string, attributes: any) {
+    const db = firebase.firestore()
+    await db.doc(location).set(attributes)
+  }
+
   public static async addVisualizations(visualizations: VizAttributes[]) {
     const db = firebase.firestore()
 

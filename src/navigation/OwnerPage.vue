@@ -1,11 +1,21 @@
 <template lang="pug">
 #page
+  .user-detail-nag-area
+    h2 Please add your full name to finish account creation:
+    .things(id="form" v-on:submit.prevent="addUser")
+      input.input(type="text" v-model="newUserName" placeholder="Full name")
+      button.button.is-link.account-button(:disabled="!validation.name") Finish
+    ul.errors
+      li(v-show="!validation.name") Name cannot be empty.
+
   .title-strip
     p {{owner}} /
     h3.title.is-3 {{ owner }} &bullet; Home
 
   .content-area
-    p.tagline: i {{ ownerDetails.details ? ownerDetails.details : "&nbsp;" }}
+    p.tagline(v-if="ownerDetails"): i {{ ownerDetails.details }}
+
+    markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
 
     h5.title.is-5 PROJECTS
       button.button.is-rounded.is-danger.is-outlined(
@@ -15,7 +25,7 @@
 
     table.project-list
       tr
-        th(style="min-width: 9rem;") Project
+        th Project
         th Description
 
       tr(v-for="project in myProjects")
@@ -27,17 +37,11 @@
 </template>
 
 <script lang="ts">
-import download from 'downloadjs'
-
 import SharedStore, { SharedState } from '@/SharedStore'
-import VizThumbnail from '@/components/VizThumbnail.vue'
-import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
 import CloudAPI from '@/communication/FireBaseAPI'
 import NewProjectDialog from '@/navigation/NewProjectDialog.vue'
-import { File } from 'babel-types'
-import filesize from 'filesize'
-import { Drag, Drop } from 'vue-drag-drop'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ProjectStore from '@/project/ProjectStore'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
@@ -51,10 +55,9 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
+    MarkdownEditor,
     ProjectSettings,
     NewProjectDialog,
-    Drag,
-    Drop,
   },
   data() {
     return {
@@ -70,14 +73,13 @@ export default class OwnerPage extends vueInstance {
   private showFileUpload = false
   private showCreateProject = false
   private showSettings = false
-  private isDragOver = false
   private editVisualization?: Visualization
-  private selectedFiles: File[] = []
   private selectedRun: string = ''
   private canModify = false
+  private newUserName = ''
 
   private myProjects: any = []
-  private ownerDetails: any = {}
+  private ownerDetails: any = { notes: '' }
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -85,6 +87,10 @@ export default class OwnerPage extends vueInstance {
 
   private get project() {
     return this.projectState.selectedProject
+  }
+
+  private get validation() {
+    return { name: !!this.newUserName.trim() }
   }
 
   private get modelRuns() {
@@ -113,6 +119,7 @@ export default class OwnerPage extends vueInstance {
   private async fetchOwnerDetails() {
     const details = await CloudAPI.getOwner(this.owner)
     if (details) this.ownerDetails = details
+    console.log({ details })
   }
 
   private async fetchProjects() {
@@ -133,11 +140,6 @@ export default class OwnerPage extends vueInstance {
     // toggle, if it's already selected
     if (this.selectedRun === modelRun.name) this.selectedRun = ''
     else this.selectedRun = modelRun.name
-  }
-
-  private async onDrop(files: any) {
-    this.selectedFiles = files
-    this.showFileUpload = true
   }
 
   private clickedNewProject() {
@@ -177,6 +179,14 @@ export default class OwnerPage extends vueInstance {
 
   private async onShareViz(viz: Visualization) {
     console.log('share viz not yet implemented')
+  }
+
+  private async saveNotes(notes: string) {
+    console.log({ notes })
+    this.ownerDetails.notes = notes
+
+    if (!this.ownerDetails.details) await CloudAPI.createDoc(`users/${this.owner}`, this.ownerDetails)
+    else await CloudAPI.updateDoc(`users/${this.owner}`, this.ownerDetails)
   }
 }
 </script>
@@ -224,6 +234,31 @@ a:hover {
 .tagline {
   margin-top: -1.5rem;
   margin-bottom: 2rem;
+}
+
+.readme {
+  padding-bottom: 1rem;
+}
+
+.user-detail-nag-area {
+  padding: 1rem 2rem;
+  width: 100%;
+  background-color: #ec5;
+}
+
+.things {
+  display: flex;
+  flex-direction: row;
+  padding-top: 0.25rem;
+}
+
+.account-button {
+  margin-left: 0.5rem;
+}
+
+.errors {
+  color: #c00;
+  height: 1.5rem;
 }
 
 @media only screen and (max-width: 640px) {

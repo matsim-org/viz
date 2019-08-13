@@ -1,50 +1,75 @@
 <template lang="pug">
 #editor
   .content
-    textarea(:value="input" @input="update" v-if="isEditing")
+    textarea(:value="editorContent" @input="update" v-if="isEditing")
     .preview(v-html="compiledMarkdown")
-    .actions
-      button.button.is-link.is-small.is-outlined(v-if="!isEditing" @click="clickedEdit") Edit
-      button.button.is-link.is-small(v-if="isEditing") Save
-      button.button.is-small(v-if="isEditing" @click="isEditing = !isEditing") Cancel
+    hr(v-if="value")
+
+  .actions
+    button.button.is-gray.is-small(
+      v-if="!isEditing"
+      @click="clickedEdit") {{ value ? "Edit" : "Add Notes" }}
+    button.button.is-link.is-small(v-if="isEditing" @click="clickedSave") Save
+    button.button.is-small(v-if="isEditing" @click="clickedCancel") Cancel
 </template>
 
 <script lang="ts">
 import marked from 'marked'
-import _ from 'lodash'
-import Vue from 'vue'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
-export default Vue.extend({
-  data: () => {
+const vueInstance = Vue.extend({
+  props: { value: String },
+  components: {},
+  data() {
     return {
-      input: '# Hello',
+      editorContent: '',
       previous: '',
       isEditing: false,
     }
   },
-  methods: {
-    update: _.debounce(function(this: any, e) {
-      this.input = e.target.value
-    }, 300),
-    clickedEdit: () => {
-      this.isEditing = !isEditing
-    },
-  },
-
-  computed: {
-    compiledMarkdown: function() {
-      return marked(this.input, { gfm: true })
-    },
-  },
 })
+
+@Component
+export default class MarkdownEditor extends vueInstance {
+  private created() {
+    if (this.value) this.editorContent = this.value
+  }
+
+  private update(e: any) {
+    this.editorContent = e.target.value
+  }
+
+  private clickedEdit(this: any) {
+    this.previous = this.value
+    if (!this.value) this.editorContent = '## Notes\n\nAdd notes to this page using **markdown text**.'
+    else this.editorContent = this.value
+
+    this.isEditing = !this.isEditing
+  }
+
+  private clickedCancel(this: any) {
+    this.editorContent = ''
+    this.isEditing = !this.isEditing
+  }
+
+  private clickedSave(this: any) {
+    this.isEditing = !this.isEditing
+    this.$emit('save', this.editorContent)
+  }
+
+  private get compiledMarkdown() {
+    return marked(this.editorContent || this.value, { gfm: true })
+  }
+}
 </script>
 
 <style scoped>
 #editor {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
   color: #333;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  height: 100%;
+  padding-top: 1rem;
 }
 
 textarea,
@@ -59,14 +84,17 @@ textarea {
   resize: none;
   outline: none;
   background-color: #f6f6f6;
-  font-size: 14px;
+  font-size: 0.8rem;
   font-family: 'Monaco', courier, monospace;
-  padding: 20px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  min-height: 20rem;
+  border: 1px solid #4499cc;
 }
 
 .content {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   width: 100%;
   margin-bottom: 0.5rem;
 }
@@ -77,13 +105,12 @@ code {
 
 .preview {
   flex: 1;
-  padding: 0.5rem;
 }
 
 .actions {
   display: flex;
   flex-direction: column;
-  margin-right: auto;
+  margin-left: 0.5rem;
 }
 
 .button {
