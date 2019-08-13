@@ -4,13 +4,13 @@
       img.matsim-logo(src='@/assets/matsim-logo-white.png' @click="onClick('/')")
 
     .center-area
-      .row1(v-if="centerItems.length>0") {{ centerItems[0].label }}
+      .row1(v-if="centerItems.length>0"): p {{ centerItems[0].label }}
       .row2(v-if="centerItems.length>1")
         .bbreadcrumb(v-for="crumb in subtitles") {{ crumb.label }}
           // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
           // span(v-else) {{ crumb.label }}
 
-    .nav-item(@click="toggleLogin()")
+    .nav-item(@click="toggleLogin()" v-if="!sharedStore.state.isFullPageMap")
       .icon-label {{ loginText }}
 </template>
 
@@ -84,7 +84,7 @@ export default class SystemNavBar extends Vue {
 
 .nav-item {
   padding: 0rem 0rem 0rem 1rem;
-  margin: auto 0px auto auto;
+  margin: auto 0px auto 0.5rem;
   text-align: center;
   color: #e8e8e8;
 }
@@ -97,7 +97,7 @@ export default class SystemNavBar extends Vue {
 .center-area {
   display: flex;
   flex-direction: column;
-  margin: auto 1rem auto 2rem;
+  margin: auto auto auto 2rem;
 }
 
 .row1 {
@@ -142,6 +142,24 @@ export default class SystemNavBar extends Vue {
   #systembar {
     margin: 0px 0px;
     padding: 0rem 1rem 0px;
+  }
+
+  .center-area {
+    margin: auto auto;
+  }
+
+  .matsim-logo {
+    height: 1.25rem;
+  }
+
+  .row1 {
+    margin-left: 0.25rem;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .row2 {
+    display: none;
   }
 }
 </style>

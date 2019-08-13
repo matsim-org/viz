@@ -263,7 +263,7 @@ a:hover {
     display: inherit;
     text-align: right;
     width: 150px;
-    margin: 0rem 1rem 0rem auto;
+    margin: 0.5rem 1rem 0.5rem auto;
   }
 
   .hide-mobile {
