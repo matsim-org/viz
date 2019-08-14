@@ -154,7 +154,7 @@ export default class SystemNavBar extends Vue {
 }
 
 .searchbox:focus {
-  background-color: #eef;
+  background-color: #eee;
 }
 
 @media only screen and (max-width: 640px) {
