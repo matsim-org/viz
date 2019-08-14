@@ -13,13 +13,14 @@
     .search-area(v-if="!sharedStore.state.isFullPageMap")
       .field
         p.control.has-icons-left
-          input.input.is-rounded.is-link.searchbox(type="text" placeholder="Search or jump to...")
+          input.input.is-link.searchbox(type="text" placeholder="Search or jump to...")
           span.icon.is-small.is-left
             i.fas.fa-search
 
-
-    .nav-item(@click="toggleLogin()" v-if="!sharedStore.state.isFullPageMap")
-      .icon-label {{ loginText }}
+    button.button.is-small.nav-item(
+      @click="toggleLogin()"
+      :class="{'is-dark': isLoggedIn, 'is-link': !isLoggedIn}"
+      v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
 </template>
 
 <script lang="ts">
@@ -91,15 +92,8 @@ export default class SystemNavBar extends Vue {
 }
 
 .nav-item {
-  padding: 0rem 0rem 0rem 1rem;
-  margin: auto 0px auto 0.5rem;
-  text-align: center;
-  color: #e8e8e8;
-}
-
-.nav-item:hover {
-  color: #fdfd91;
-  cursor: pointer;
+  margin: auto 0.5rem;
+  padding: 1rem 0.75rem;
 }
 
 .center-area {
@@ -146,15 +140,21 @@ export default class SystemNavBar extends Vue {
 }
 
 .search-area {
-  margin: auto 0.5rem;
+  margin: auto 2rem;
 }
 
 .searchbox {
   background-color: #546d96;
+  font-size: 0.9rem;
+  padding: 1rem 1rem;
 }
 
 .searchbox:focus {
   background-color: #eee;
+}
+
+.searchbox::placeholder {
+  color: rgba(226, 226, 241, 0.7);
 }
 
 @media only screen and (max-width: 640px) {
