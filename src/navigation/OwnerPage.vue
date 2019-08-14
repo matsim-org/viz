@@ -1,10 +1,10 @@
 <template lang="pug">
 #page
-  .user-detail-nag-area
+  .user-detail-nag-area(v-if="nagUser")
     h2 Please add your full name to finish account creation:
     .things(id="form" v-on:submit.prevent="addUser")
       input.input(type="text" v-model="newUserName" placeholder="Full name")
-      button.button.is-link.account-button(:disabled="!validation.name") Finish
+      button.button.is-link.account-button(:disabled="!validation.name" @click="saveUser") Finish
     ul.errors
       li(v-show="!validation.name") Name cannot be empty.
 
@@ -77,10 +77,10 @@ export default class OwnerPage extends vueInstance {
   private selectedRun: string = ''
   private canModify = false
   private newUserName = ''
+  private nagUser = false
 
   private myProjects: any = []
-  private ownerDetails: any = { notes: '' }
-
+  private ownerDetails: any = { notes: '', details: '' }
   private get isFetching() {
     return this.projectState.isFetching
   }
@@ -119,6 +119,8 @@ export default class OwnerPage extends vueInstance {
   private async fetchOwnerDetails() {
     const details = await CloudAPI.getOwner(this.owner)
     if (details) this.ownerDetails = details
+    else this.nagUser = true
+
     console.log({ details })
   }
 
@@ -187,6 +189,20 @@ export default class OwnerPage extends vueInstance {
 
     if (!this.ownerDetails.details) await CloudAPI.createDoc(`users/${this.owner}`, this.ownerDetails)
     else await CloudAPI.updateDoc(`users/${this.owner}`, this.ownerDetails)
+  }
+
+  private async saveUser() {
+    console.log({ SaveUser: this.newUserName })
+
+    this.ownerDetails.details = this.newUserName
+    try {
+      // update existing user record
+      await CloudAPI.updateDoc(`users/${this.owner}`, this.ownerDetails)
+    } catch (e) {
+      // no record yet, create one
+      await CloudAPI.createDoc(`users/${this.owner}`, this.ownerDetails)
+    }
+    this.nagUser = false
   }
 }
 </script>

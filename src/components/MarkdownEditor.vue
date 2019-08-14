@@ -1,14 +1,12 @@
 <template lang="pug">
 #editor
   .content
-    textarea(:value="editorContent" @input="update" v-if="isEditing")
+    textarea(:value="editorContent" @input="update" :class="{'is-hidden': !isEditing, 'bye': isLeaving}")
     .preview(v-html="compiledMarkdown")
-    hr(v-if="value")
+    hr(v-if="value || editorContent")
 
   .actions
-    button.button.is-gray.is-small(
-      v-if="!isEditing"
-      @click="clickedEdit") {{ value ? "Edit" : "Add Notes" }}
+    button.button.is-gray.is-small(v-if="!isEditing" @click="clickedEdit") {{ value ? "&nbsp;Edit&nbsp;" : "Add Notes" }}
     button.button.is-link.is-small(v-if="isEditing" @click="clickedSave") Save
     button.button.is-small(v-if="isEditing" @click="clickedCancel") Cancel
 </template>
@@ -25,6 +23,7 @@ const vueInstance = Vue.extend({
       editorContent: '',
       previous: '',
       isEditing: false,
+      isLeaving: false,
     }
   },
 })
@@ -49,14 +48,21 @@ export default class MarkdownEditor extends vueInstance {
 
   private clickedCancel(this: any) {
     this.editorContent = ''
-    this.isEditing = !this.isEditing
+    this.fadeAway()
   }
 
   private clickedSave(this: any) {
-    this.isEditing = !this.isEditing
     this.$emit('save', this.editorContent)
+    this.fadeAway()
   }
 
+  private fadeAway() {
+    this.isLeaving = true
+    setTimeout(() => {
+      this.isEditing = !this.isEditing
+      this.isLeaving = false
+    }, 300)
+  }
   private get compiledMarkdown() {
     return marked(this.editorContent || this.value, { gfm: true })
   }
@@ -90,6 +96,7 @@ textarea {
   margin-bottom: 1rem;
   min-height: 20rem;
   border: 1px solid #4499cc;
+  animation: 0.3s ease 0s 1 slideInFromLeft;
 }
 
 .content {
@@ -97,6 +104,37 @@ textarea {
   flex-direction: column;
   width: 100%;
   margin-bottom: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.is-hidden {
+  display: none;
+}
+
+.bye {
+  animation: 0.3s ease 0s 1 slideOutToLeft;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
 }
 
 code {
@@ -110,7 +148,7 @@ code {
 .actions {
   display: flex;
   flex-direction: column;
-  margin-left: 0.5rem;
+  margin-left: auto;
 }
 
 .button {
