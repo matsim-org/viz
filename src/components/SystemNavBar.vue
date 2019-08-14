@@ -10,17 +10,18 @@
           // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
           // span(v-else) {{ crumb.label }}
 
-    .search-area(v-if="!sharedStore.state.isFullPageMap")
-      .field
-        p.control.has-icons-left
-          input.input.is-link.searchbox(type="text" placeholder="Search or jump to...")
-          span.icon.is-small.is-left
-            i.fas.fa-search
+    .right-area
+      .search-area(v-if="!sharedStore.state.isFullPageMap")
+        .field
+          p.control.has-icons-left
+            input.input.is-link.searchbox(type="text" placeholder="Search or jump to...")
+            span.icon.is-small.is-left
+              i.fas.fa-search
 
-    button.button.is-small.nav-item(
-      @click="toggleLogin()"
-      :class="{'is-dark': isLoggedIn, 'is-link': !isLoggedIn}"
-      v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
+      button.button.is-small.is-outlined.log-button(
+        @click="toggleLogin()"
+        :class="{'is-light': !isLoggedIn, 'is-link': isLoggedIn}"
+        v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
 </template>
 
 <script lang="ts">
@@ -91,15 +92,16 @@ export default class SystemNavBar extends Vue {
   padding: 0px 2rem 0px 2rem;
 }
 
-.nav-item {
-  margin: auto 0.5rem;
+.log-button {
+  margin: auto 0;
   padding: 1rem 0.75rem;
 }
 
 .center-area {
   display: flex;
   flex-direction: column;
-  margin: auto auto auto 2rem;
+  margin: auto 0px auto 2rem;
+  flex: 1;
 }
 
 .row1 {
@@ -139,8 +141,17 @@ export default class SystemNavBar extends Vue {
   cursor: pointer;
 }
 
+.right-area {
+  width: 22rem;
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
+  margin-right: 0px;
+}
+
 .search-area {
-  margin: auto 2rem;
+  margin: auto 2rem auto 0rem;
+  width: 100%;
 }
 
 .searchbox {

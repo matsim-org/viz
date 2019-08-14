@@ -7,12 +7,19 @@ interface BreadCrumb {
   url?: string
 }
 
+interface SearchResult {
+  title: string
+  subtitle?: string
+  url: string
+}
+
 interface SharedState {
   breadCrumbs: BreadCrumb[]
   currentUser: string
   needToNagUserToLogin: boolean
   lastNavigation: string
   isFullPageMap: boolean
+  searchResults: SearchResult[]
   visualizationTypes: Map<string, VisualizationType>
 }
 
@@ -45,6 +52,10 @@ class SharedStore {
     this.persistState()
   }
 
+  public setSearchResults(results: SearchResult[]): void {
+    this._state.searchResults = results
+  }
+
   public addVisualizationType(type: VisualizationType) {
     this._state.visualizationTypes.set(type.typeName, type)
   }
@@ -72,6 +83,10 @@ class SharedStore {
       isFullPageMap: false,
       lastNavigation: '',
       needToNagUserToLogin: false,
+      searchResults: [
+        { title: 'VSP', subtitle: 'Fachgebiet TU Berlin', url: '/vsp' },
+        { title: 'billyc', url: '/billyc' },
+      ],
       visualizationTypes: new Map(),
     }
   }
@@ -89,14 +104,10 @@ class SharedStore {
     const persistedStateString = sessionStorage.getItem(SharedStore.STATE_KEY)
     if (persistedStateString) {
       const persistedState = JSON.parse(persistedStateString as string)
-      return {
-        breadCrumbs: [],
-        currentUser: '',
-        isFullPageMap: false,
-        lastNavigation: persistedState.lastNavigation,
-        needToNagUserToLogin: false,
-        visualizationTypes: new Map(),
-      }
+
+      const loadedState = this.defaultState()
+      loadedState.lastNavigation = persistedState.lastNavigation
+      return loadedState
     }
     return null
   }
