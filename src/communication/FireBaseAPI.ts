@@ -11,6 +11,7 @@ export interface ProjectAttributes {
   public?: boolean
   mvizkey?: string
   imported?: boolean
+  notes: string
 }
 
 export interface RunAttributes {
@@ -19,6 +20,7 @@ export interface RunAttributes {
   runId: string
   description: string
   public?: boolean
+  notes: string
 }
 
 export interface FileAttributes {
@@ -121,8 +123,11 @@ export default class FireBaseAPI {
     const db = firebase.firestore()
     const project = await db.doc(`users/${owner}/projects/${projectId}`).get()
 
-    console.log({ getproject: project.data() })
-    return project.data()
+    const result = project.data()
+    if (result && !result.notes) result.notes = ''
+
+    console.log({ getproject: result })
+    return result
   }
 
   public static async createProject(props: ProjectAttributes) {
@@ -140,7 +145,10 @@ export default class FireBaseAPI {
     const db = firebase.firestore()
     const run = await db.doc(`users/${owner}/projects/${projectId}/runs/${runId}`).get()
 
-    return run.data()
+    const result = run.data()
+    if (result && !result.notes) result.notes = ''
+
+    return result
   }
 
   public static async getRuns(owner: string, projectId: string) {

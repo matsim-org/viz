@@ -10,6 +10,10 @@
     h4.title.is-3(v-else) &nbsp;
 
   .content-area
+    p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
+
+    markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
+
     h5.title.is-5 VISUALIZATIONS
 
     .viz-table
@@ -43,6 +47,7 @@ import download from 'downloadjs'
 
 import SharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import FileAPI from '@/communication/FileAPI'
@@ -64,6 +69,7 @@ const vueInstance = Vue.extend({
   },
   components: {
     ImageFileThumbnail,
+    MarkdownEditor,
     VizThumbnail,
     ProjectSettings,
     Drag,
@@ -87,7 +93,7 @@ export default class RunPage extends vueInstance {
   private selectedFiles: File[] = []
   private selectedRun: string = ''
   private myProject: any = {}
-  private myRun: any = {}
+  private myRun: any = { notes: '' }
   private myFiles: any[] = []
   private myVisualizations: any[] = []
 
@@ -125,6 +131,12 @@ export default class RunPage extends vueInstance {
   private async onDrop(files: any) {
     this.selectedFiles = files
     this.showFileUpload = true
+  }
+
+  private async saveNotes(notes: string) {
+    console.log({ notes })
+    this.myRun.notes = notes
+    await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}/runs/${this.run}`, this.myRun)
   }
 
   private async onNameChanged(name: string, event: any) {
@@ -165,7 +177,7 @@ export default class RunPage extends vueInstance {
 
 <style scoped>
 .content-area {
-  margin: 2rem 2rem;
+  margin: 0rem 2rem 2rem 2rem;
   background-color: #fff;
 }
 
@@ -215,6 +227,11 @@ td {
 
 a:hover {
   color: purple;
+}
+
+.tagline {
+  margin-top: 0.5rem;
+  margin-bottom: 0rem;
 }
 
 @media only screen and (max-width: 640px) {

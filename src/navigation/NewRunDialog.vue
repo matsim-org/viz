@@ -77,6 +77,7 @@ export default class NewRunDialog extends vueInstance {
         project: this.projectId,
         runId: this.runId,
         description: this.runDescription,
+        notes: '',
       })
       this.close()
     } catch (error) {

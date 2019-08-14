@@ -185,7 +185,7 @@ export default class OwnerPage extends vueInstance {
 
 <style scoped>
 .content-area {
-  margin: 2rem 2rem;
+  margin: 0rem 2rem 2rem 2rem;
   background-color: #fff;
 }
 
@@ -224,8 +224,8 @@ a:hover {
 }
 
 .tagline {
-  margin-top: -1.5rem;
-  margin-bottom: 2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0rem;
 }
 
 .readme {
@@ -240,10 +240,6 @@ a:hover {
   display: flex;
   flex-direction: row;
   padding-top: 0.25rem;
-}
-
-.projects {
-  margin-top: 2rem;
 }
 
 @media only screen and (max-width: 640px) {

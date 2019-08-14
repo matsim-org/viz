@@ -1,14 +1,19 @@
 <template lang="pug">
 #editor
+  .actions
+    button.button.is-rounded.is-gray.is-small(v-if="!isEditing" @click="clickedEdit") {{ value ? "&nbsp;Edit&nbsp;" : "Add Notes" }}
+    button.button.is-rounded.is-link.is-small(v-if="isEditing" @click="clickedSave") Save
+    button.button.is-rounded.is-small(v-if="isEditing" @click="clickedCancel") Cancel
   .content
-    textarea(:value="editorContent" @input="update" :class="{'is-hidden': !isEditing, 'bye': isLeaving}")
+    textarea(
+      :value="editorContent"
+      @input="update"
+      :class="{'is-hidden': !isEditing, 'bye': isLeaving}")
+
     .preview(v-html="compiledMarkdown")
+
     hr(v-if="value || editorContent")
 
-  .actions
-    button.button.is-gray.is-small(v-if="!isEditing" @click="clickedEdit") {{ value ? "&nbsp;Edit&nbsp;" : "Add Notes" }}
-    button.button.is-link.is-small(v-if="isEditing" @click="clickedSave") Save
-    button.button.is-small(v-if="isEditing" @click="clickedCancel") Cancel
 </template>
 
 <script lang="ts">
@@ -73,7 +78,7 @@ export default class MarkdownEditor extends vueInstance {
 #editor {
   color: #333;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   height: 100%;
   padding-top: 1rem;
 }
@@ -81,6 +86,14 @@ export default class MarkdownEditor extends vueInstance {
 textarea,
 #editor div {
   vertical-align: top;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
+  margin-top: -2.5rem;
+  margin-bottom: 0.25rem;
 }
 
 textarea {
@@ -142,17 +155,12 @@ code {
 }
 
 .preview {
+  margin-top: 1rem;
   flex: 1;
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  margin-left: auto;
 }
 
 .button {
   margin-bottom: 0.25rem;
-  font-size: 0.8rem;
+  margin-left: 0.5rem;
 }
 </style>

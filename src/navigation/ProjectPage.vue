@@ -9,6 +9,8 @@
   .content-area
     p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
+    markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
+
     h5.title.is-5 RUNS
       button.button.is-rounded.is-danger.is-outlined(
         style="float:right"
@@ -42,6 +44,7 @@ import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore from '@/project/ProjectStore'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import NewRunDialog from '@/navigation/NewRunDialog.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
@@ -56,6 +59,7 @@ const vueInstance = Vue.extend({
   },
   components: {
     ImageFileThumbnail,
+    MarkdownEditor,
     NewRunDialog,
     ProjectSettings,
     VizThumbnail,
@@ -79,7 +83,13 @@ export default class ProjectPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
-  private myProject: ProjectAttributes = { owner: this.owner, title: '', urlslug: this.urlslug, description: '' }
+  private myProject: ProjectAttributes = {
+    owner: this.owner,
+    title: '',
+    urlslug: this.urlslug,
+    description: '',
+    notes: '',
+  }
   private canModify = false
   private showCreateRun = false
   private myRuns: any[] = []
@@ -151,6 +161,7 @@ export default class ProjectPage extends vueInstance {
         owner: this.owner,
         project: this.urlslug,
         runId: run,
+        notes: '',
         description: run === defaultRun ? 'Uncategorized files were moved here.' : '',
       })
 
@@ -228,6 +239,12 @@ export default class ProjectPage extends vueInstance {
     this.showFileUpload = true
   }
 
+  private async saveNotes(notes: string) {
+    console.log({ notes })
+    this.myProject.notes = notes
+    await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}`, this.myProject)
+  }
+
   private async fetchRuns() {
     const runs: any[] = await CloudAPI.getRuns(this.owner, this.urlslug)
     runs.sort((a: any, b: any) => (a.runId.toLowerCase() < b.runId.toLowerCase() ? -1 : 1))
@@ -268,7 +285,7 @@ export default class ProjectPage extends vueInstance {
 
 <style scoped>
 .content-area {
-  margin: 2rem 2rem;
+  margin: 0rem 2rem 2rem 2rem;
   background-color: #fff;
 }
 
@@ -302,8 +319,12 @@ a:hover {
 }
 
 .tagline {
-  margin-top: -1.5rem;
-  margin-bottom: 2rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0rem;
+}
+
+.readme {
+  padding-bottom: 1rem;
 }
 
 @media only screen and (max-width: 640px) {

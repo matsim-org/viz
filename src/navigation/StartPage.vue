@@ -42,8 +42,6 @@
                         :project-store="projectStore"
                         @viz-selected="onVizSelected") {{ project.name }}
 
-      p.info If you have a MatHub login, you may have access to additional projects and visualizations.
-
     .about
       h4.title.is-4 About MATSim
       p.info You can find out more about MATSim at&nbsp;

@@ -82,6 +82,7 @@ export default class NewProjectDialog extends vueInstance {
         title: this.projectName,
         urlslug: this.projectShortName,
         description: this.projectDescription,
+        notes: '',
       })
       this.close()
     } catch (error) {
