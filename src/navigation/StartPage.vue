@@ -18,10 +18,10 @@
         p Technische Universität<br/>Berlin, Germany
         p: a(href="https://vsp.tu-berlin.de") vsp.tu-berlin.de
 
-    .about(v-if="isAuthenticated")
-      h4.title.is-4 Hello, {{ currentUser }}
+    .about(v-show="appState.currentUser")
+      h4.title.is-4 Hello, {{ appState.currentUser }}
       p Jump to your
-        b: router-link(:to='`/${currentUser}`') &nbsp;home page: &raquo; {{ currentUser }}
+        b: router-link(:to='`/${appState.currentUser}`') &nbsp;home page: &raquo; {{ appState.currentUser }}
 
       .projectList
         list-element(v-for="project in personalProjects"
@@ -52,6 +52,7 @@
 
 <script lang="ts">
 import sharedStore from '@/SharedStore'
+import AccountPanel from '@/components/AccountPanel.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import CloudAPI, { ProjectAttributes } from '@/communication/FireBaseAPI'
@@ -71,10 +72,11 @@ import * as firebaseui from 'firebaseui'
 
 @Component({
   components: {
-    'project-list-item': ProjectListItem,
-    'list-header': ListHeader,
-    'list-element': ListElementVue,
-    'create-project': CreateProject,
+    AccountPanel,
+    ProjectListItem,
+    ListHeader,
+    ListElementVue,
+    CreateProject,
   },
 })
 export default class StartPage extends Vue {
@@ -85,7 +87,7 @@ export default class StartPage extends Vue {
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
 
-  private currentUser: string = ''
+  private appState = sharedStore.state
 
   private personalProjects: ProjectAttributes[] = []
 
@@ -122,24 +124,7 @@ export default class StartPage extends Vue {
     }
   }
 
-  public async mounted() {
-    if (this.authState.status === AuthenticationStatus.Authenticated) {
-      this.currentUser = this.authState.idToken.sub
-    } else {
-      this.currentUser = ''
-    }
-  }
-
-  @Watch('authState.status')
-  private authChanged(newStatus: AuthenticationStatus) {
-    if (newStatus === AuthenticationStatus.Authenticated) {
-      CloudAPI.setCurrentUser(this.authStore.state.idToken.sub)
-      this.currentUser = this.authStore.state.idToken.sub
-    } else {
-      CloudAPI.setCurrentUser('')
-      this.currentUser = ''
-    }
-  }
+  public mounted() {}
 
   private onVizSelected(viz: Visualization) {
     this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })
@@ -250,7 +235,7 @@ a:hover {
 @media only screen and (max-width: 640px) {
   .page-content {
     padding: 0rem 0rem;
-    margin: 3rem 1rem;
+    margin: 0.5rem 1rem;
   }
 
   .masthead {

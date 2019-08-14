@@ -1,7 +1,11 @@
 <template lang="pug">
 #app(:class=" {'full-page-app' : isFullPage}" )
   system-nav-bar.top-nav-strip(:authStore="authStore")
+
+  account-panel.user-nag-area(v-if="needToNagUser" :authStore="authStore")
+
   router-view.main-content
+
 </template>
 
 <script lang="ts">
@@ -15,6 +19,7 @@ import * as firebase from 'firebase/app'
 import sharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
+import AccountPanel from '@/components/AccountPanel.vue'
 import LoginPanel from '@/components/LoginPanel.vue'
 import SystemNavBar from '@/components/SystemNavBar.vue'
 
@@ -24,18 +29,6 @@ import SystemNavBar from '@/components/SystemNavBar.vue'
 const writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
-
-/*  DO NOT CHECK REAL ONE INTO GITHUB:
-const firebaseConfig = {
-  apiKey: '...',
-  authDomain: 'matsim-viz.firebaseapp.com',
-  databaseURL: 'https://matsim-viz.firebaseio.com',
-  projectId: 'matsim-viz',
-  storageBucket: '',
-  messagingSenderId: '...',
-  appId: '...',
-}
-*/
 
 // Firebase API key is in this: (securely)
 import firebaseConfig from '@/firebase-secure'
@@ -52,7 +45,7 @@ Vue.directive('focus', {
   },
 })
 
-@Component({ components: { LoginPanel, SystemNavBar } })
+@Component({ components: { AccountPanel, LoginPanel, SystemNavBar } })
 export default class App extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
@@ -61,6 +54,10 @@ export default class App extends Vue {
 
   private get isFullPage() {
     return this.appState.isFullPageMap
+  }
+
+  private get needToNagUser() {
+    return sharedStore.state.needToNagUserToLogin
   }
 
   @Watch('appState.isFullPageMap')
@@ -103,11 +100,15 @@ h6 {
   color: #363636;
 }
 
+b {
+  font-weight: 700;
+}
+
 #app {
   background-color: white;
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0px 0px 0px 0px;
@@ -128,11 +129,15 @@ h6 {
   height: 4rem;
 }
 
+.user-nag-area {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
 .main-content {
   grid-column: 1 / 2;
-  grid-row: 1 / 3;
+  grid-row: 3 / 4;
   z-index: 1;
-  margin-top: 4rem;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */

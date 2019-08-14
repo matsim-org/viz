@@ -6,7 +6,6 @@ import SankeyDiagram from '@/visualization/SankeyDiagram.vue'
 import TransitSupply from '@/visualization/transit-supply/TransitSupply.vue'
 
 import Authentication from '@/auth/Authentication.vue'
-import AccountPage from '@/navigation/AccountPage.vue'
 import OwnerPage from '@/navigation/OwnerPage.vue'
 import ProjectPage from '@/navigation/ProjectPage.vue'
 import StartPage from '@/navigation/StartPage.vue'
@@ -20,7 +19,7 @@ import UploadStore from './project/UploadStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import FileAPI from './communication/FileAPI'
 
-// Add every viz type here to register the viz url in the router
+// YOU MUST add every viz type here to register the viz url in the router:
 const VIZ_PLUGINS = [AggregateOD, EmissionsGrid, FrameAnimation, NetworkVolumePlot, SankeyDiagram, TransitSupply]
 
 const AUTHENTICATION = '/authentication'
@@ -47,6 +46,28 @@ export default class AppRouter {
       mode: 'history', // 'history' mode produces clean, normal URLs
     })
 
+    this.setDynamicRoutes()
+    this.setStaticRoutes()
+
+    this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
+      // always clear breadcrumbs on navigation, so that we never show wrong breadcrumbs
+      sharedStore.setBreadCrumbs([])
+
+      if (!this.isAuthenticationComponent(to)) {
+        sharedStore.setLastNavigation(to.fullPath)
+      }
+
+      if (this.isAuthRequired(to)) {
+        if (authStore.state.status !== AuthenticationStatus.Authenticated) {
+          next(AUTHENTICATION)
+          return
+        }
+      }
+      next()
+    })
+  }
+
+  private setDynamicRoutes() {
     const newRoutes: RouteConfig[] = []
     for (const viz of sharedStore.state.visualizationTypes) {
       const name = viz[0]
@@ -71,16 +92,18 @@ export default class AppRouter {
       newRoutes.push(newRoute)
     }
     this.vueRouter.addRoutes(newRoutes)
+  }
 
+  private setStaticRoutes() {
     const staticRoutes = [
       {
         path: '/',
         name: 'StartPage',
         component: StartPage,
         props: {
-          authStore: authStore,
-          projectStore: projectStore,
-          fileApi: fileApi,
+          authStore: this.authStore,
+          projectStore: this.projectStore,
+          fileApi: this.fileApi,
         },
       },
       {
@@ -88,17 +111,7 @@ export default class AppRouter {
         name: 'Authentication',
         component: Authentication,
         props: {
-          authStore: authStore,
-        },
-      },
-      {
-        path: '/account',
-        name: 'AccountPage',
-        component: AccountPage,
-        props: (route: Route) => {
-          return {
-            authStore: authStore,
-          }
+          authStore: this.authStore,
         },
       },
       {
@@ -107,10 +120,10 @@ export default class AppRouter {
         component: OwnerPage,
         props: (route: Route) => {
           return {
-            authStore: authStore,
-            fileApi: fileApi,
+            authStore: this.authStore,
+            fileApi: this.fileApi,
             owner: route.params.owner,
-            projectStore: projectStore,
+            projectStore: this.projectStore,
           }
         },
       },
@@ -120,9 +133,9 @@ export default class AppRouter {
         component: ProjectPage,
         props: (route: Route) => {
           return {
-            authStore: authStore,
-            fileApi: fileApi,
-            projectStore: projectStore,
+            authStore: this.authStore,
+            fileApi: this.fileApi,
+            projectStore: this.projectStore,
             owner: route.params.owner,
             urlslug: route.params.project,
           }
@@ -134,9 +147,9 @@ export default class AppRouter {
         component: RunPage,
         props: (route: Route) => {
           return {
-            authStore: authStore,
-            fileApi: fileApi,
-            projectStore: projectStore,
+            authStore: this.authStore,
+            fileApi: this.fileApi,
+            projectStore: this.projectStore,
             owner: route.params.owner,
             urlslug: route.params.project,
             run: route.params.run,
@@ -149,9 +162,9 @@ export default class AppRouter {
         component: RunPage,
         props: (route: Route) => {
           return {
-            authStore: authStore,
-            fileApi: fileApi,
-            projectStore: projectStore,
+            authStore: this.authStore,
+            fileApi: this.fileApi,
+            projectStore: this.projectStore,
             owner: route.params.owner,
             urlslug: route.params.project,
             run: route.params.run,
@@ -162,23 +175,6 @@ export default class AppRouter {
     ]
 
     this.vueRouter.addRoutes(staticRoutes)
-
-    this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
-      // always clear breadcrumbs, so that we never show wrong breadcrumbs
-      sharedStore.setBreadCrumbs([])
-
-      if (!this.isAuthenticationComponent(to)) {
-        sharedStore.setLastNavigation(to.fullPath)
-      }
-
-      if (this.isAuthRequired(to)) {
-        if (authStore.state.status !== AuthenticationStatus.Authenticated) {
-          next(AUTHENTICATION)
-          return
-        }
-      }
-      next()
-    })
   }
 
   private isAuthenticationComponent(to: Route): boolean {

@@ -1,13 +1,5 @@
 <template lang="pug">
 #page
-  .user-detail-nag-area(v-if="nagUser")
-    h2 Please add your full name to finish account creation:
-    .things(id="form" v-on:submit.prevent="addUser")
-      input.input(type="text" v-model="newUserName" placeholder="Full name")
-      button.button.is-link.account-button(:disabled="!validation.name" @click="saveUser") Finish
-    ul.errors
-      li(v-show="!validation.name") Name cannot be empty.
-
   .title-strip
     p {{owner}} /
     h3.title.is-3 {{ owner }} &bullet; Home
@@ -17,7 +9,7 @@
 
     markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
 
-    h5.title.is-5 PROJECTS
+    h5.title.is-5.projects PROJECTS
       button.button.is-rounded.is-danger.is-outlined(
         v-if="canModify"
         style="float:right"
@@ -37,6 +29,7 @@
 </template>
 
 <script lang="ts">
+import AccountPanel from '@/components/AccountPanel.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
 import FileAPI from '@/communication/FileAPI'
 import CloudAPI from '@/communication/FireBaseAPI'
@@ -55,6 +48,7 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
+    AccountPanel,
     MarkdownEditor,
     ProjectSettings,
     NewProjectDialog,
@@ -87,10 +81,6 @@ export default class OwnerPage extends vueInstance {
 
   private get project() {
     return this.projectState.selectedProject
-  }
-
-  private get validation() {
-    return { name: !!this.newUserName.trim() }
   }
 
   private get modelRuns() {
@@ -190,20 +180,6 @@ export default class OwnerPage extends vueInstance {
     if (!this.ownerDetails.details) await CloudAPI.createDoc(`users/${this.owner}`, this.ownerDetails)
     else await CloudAPI.updateDoc(`users/${this.owner}`, this.ownerDetails)
   }
-
-  private async saveUser() {
-    console.log({ SaveUser: this.newUserName })
-
-    this.ownerDetails.details = this.newUserName
-    try {
-      // update existing user record
-      await CloudAPI.updateDoc(`users/${this.owner}`, this.ownerDetails)
-    } catch (e) {
-      // no record yet, create one
-      await CloudAPI.createDoc(`users/${this.owner}`, this.ownerDetails)
-    }
-    this.nagUser = false
-  }
 }
 </script>
 
@@ -256,10 +232,8 @@ a:hover {
   padding-bottom: 1rem;
 }
 
-.user-detail-nag-area {
-  padding: 1rem 2rem;
-  width: 100%;
-  background-color: #ec5;
+.user-nag-area {
+  padding: 2rem 2rem;
 }
 
 .things {
@@ -268,13 +242,8 @@ a:hover {
   padding-top: 0.25rem;
 }
 
-.account-button {
-  margin-left: 0.5rem;
-}
-
-.errors {
-  color: #c00;
-  height: 1.5rem;
+.projects {
+  margin-top: 2rem;
 }
 
 @media only screen and (max-width: 640px) {

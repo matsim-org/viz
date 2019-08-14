@@ -9,6 +9,8 @@ interface BreadCrumb {
 
 interface SharedState {
   breadCrumbs: BreadCrumb[]
+  currentUser: string
+  needToNagUserToLogin: boolean
   lastNavigation: string
   isFullPageMap: boolean
   visualizationTypes: Map<string, VisualizationType>
@@ -24,6 +26,14 @@ class SharedStore {
 
   public setBreadCrumbs(breadcrumbs: BreadCrumb[]) {
     this._state.breadCrumbs = breadcrumbs
+  }
+
+  public setCurrentUser(user: string) {
+    this._state.currentUser = user
+  }
+
+  public setNagUserToLogin(nag: boolean) {
+    this._state.needToNagUserToLogin = nag
   }
 
   public setFullPage(isFullPage: boolean) {
@@ -58,8 +68,10 @@ class SharedStore {
   private defaultState(): SharedState {
     return {
       breadCrumbs: [],
+      currentUser: '',
       isFullPageMap: false,
       lastNavigation: '',
+      needToNagUserToLogin: false,
       visualizationTypes: new Map(),
     }
   }
@@ -79,8 +91,10 @@ class SharedStore {
       const persistedState = JSON.parse(persistedStateString as string)
       return {
         breadCrumbs: [],
+        currentUser: '',
         isFullPageMap: false,
         lastNavigation: persistedState.lastNavigation,
+        needToNagUserToLogin: false,
         visualizationTypes: new Map(),
       }
     }

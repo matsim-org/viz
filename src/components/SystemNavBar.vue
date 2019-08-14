@@ -130,7 +130,6 @@ export default class SystemNavBar extends Vue {
 }
 
 .matsim-logo {
-  flex: 1;
   height: 2.1rem;
 }
 

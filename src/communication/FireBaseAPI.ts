@@ -1,6 +1,8 @@
 import firebase from 'firebase/app'
 import 'firebase/firestore'
 
+import sharedStore from '@/SharedStore.ts'
+
 export interface ProjectAttributes {
   owner: string
   title: string
@@ -37,22 +39,35 @@ export interface VizAttributes {
 }
 
 export default class FireBaseAPI {
-  private static theCurrentUser: string = ''
+  public static async setCurrentUser(userId: string) {
+    console.log('--> setting current user for uid:', userId)
 
-  public static setCurrentUser(userId: string) {
-    console.log('--> setting current user to:', userId)
-    FireBaseAPI.theCurrentUser = userId
-  }
+    const db = firebase.firestore()
 
-  public static async getCurrentUser() {
-    if (FireBaseAPI.theCurrentUser) return this.theCurrentUser
-    return ''
+    const docs = await db
+      .collection('users')
+      .where('uid', '==', userId)
+      .get()
+
+    // perhaps user hasn't created an account yet:
+    if (docs.empty) {
+      console.log('NO ACCOUNT')
+      sharedStore.setNagUserToLogin(true)
+    } else {
+      // get user details
+      let userKey = ''
+      docs.forEach(doc => {
+        userKey = doc.id
+      })
+      sharedStore.setCurrentUser(userKey)
+      console.log('GOT:', userKey)
+    }
   }
 
   public static async canUserModify(ownerId: string) {
     console.log('canUserModify', ownerId)
 
-    const currentUser = await FireBaseAPI.getCurrentUser()
+    const currentUser = sharedStore.state.currentUser
     console.log({ currentUser })
 
     // not logged in?

@@ -5,6 +5,8 @@ import Config from '@/config/Config'
 import CloudAPI from '@/communication/FireBaseAPI'
 import { Method } from '@/communication/Constants'
 import { Url } from 'url'
+import FireBaseAPI from '@/communication/FireBaseAPI'
+import SharedStore from '@/SharedStore'
 
 export enum AuthenticationStatus {
   NotAuthenticated,
@@ -62,10 +64,10 @@ export default class AuthenticationStore {
         credentials: 'include',
         method: Method.POST,
       })
+      SharedStore.setCurrentUser('')
     } catch (error) {
       console.log(error)
     }
-    CloudAPI.setCurrentUser('')
   }
 
   public handleAuthenticationResponse(fragment: string) {
@@ -104,6 +106,9 @@ export default class AuthenticationStore {
     let loaded = this.loadState()
     if (!loaded) loaded = this.createDefaultState()
 
+    if (loaded.status === AuthenticationStatus.Authenticated) {
+      FireBaseAPI.setCurrentUser(loaded.idToken.sub)
+    }
     return loaded
   }
 
