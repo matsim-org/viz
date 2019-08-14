@@ -45,7 +45,7 @@ export default class MarkdownEditor extends vueInstance {
 
   private clickedEdit(this: any) {
     this.previous = this.value
-    if (!this.value) this.editorContent = '## Notes\n\nAdd notes to this page using **markdown text**.'
+    if (!this.value) this.editorContent = '## Notes\n\nAdd notes to this page using **markdown text**.\n'
     else this.editorContent = this.value
 
     this.isEditing = !this.isEditing

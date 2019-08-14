@@ -1,30 +1,36 @@
 <template lang="pug">
 #page
-  .title-strip
-    p {{owner}} /
-    h3.title.is-3 {{ owner }} &bullet; Home
+  .got404(v-if="got404")
+    .title-strip
+      p {{owner}} /
+      h3.title.is-3 404 Not Found
 
-  .content-area
-    p.tagline(v-if="ownerDetails"): i {{ ownerDetails.details }}
+  .stuff(v-else)
+    .title-strip
+      p {{owner}} /
+      h3.title.is-3 {{ owner }} &bullet; Home
 
-    markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
+    .content-area(v-if="!got404")
+      p.tagline(v-if="ownerDetails"): i {{ ownerDetails.details }}
 
-    h5.title.is-5.projects PROJECTS
-      button.button.is-rounded.is-danger.is-outlined(
-        v-if="canModify"
-        style="float:right"
-        @click="clickedNewProject") +New Project
+      markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
 
-    table.project-list
-      tr
-        th Project
-        th Description
+      h5.title.is-5.projects PROJECTS
+        button.button.is-rounded.is-danger.is-outlined(
+          v-if="canModify"
+          style="float:right"
+          @click="clickedNewProject") +New Project
 
-      tr(v-for="project in myProjects")
-        td: b: router-link(:to='`/${project.owner}/${project.urlslug}`') {{ project.title }}
-        td {{ project.description }}
+      table.project-list
+        tr
+          th Project
+          th Description
 
-    new-project-dialog(v-if="showCreateProject" :owner="owner" @close="onCreateProjectClosed")
+        tr(v-for="project in myProjects")
+          td: b: router-link(:to='`/${project.owner}/${project.urlslug}`') {{ project.title }}
+          td {{ project.description }}
+
+      new-project-dialog(v-if="showCreateProject" :owner="owner" @close="onCreateProjectClosed")
 
 </template>
 
@@ -70,11 +76,11 @@ export default class OwnerPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedRun: string = ''
   private canModify = false
-  private newUserName = ''
-  private nagUser = false
 
   private myProjects: any = []
   private ownerDetails: any = { notes: '', details: '' }
+  private got404 = false
+
   private get isFetching() {
     return this.projectState.isFetching
   }
@@ -109,7 +115,10 @@ export default class OwnerPage extends vueInstance {
   private async fetchOwnerDetails() {
     const details = await CloudAPI.getOwner(this.owner)
     if (details) this.ownerDetails = details
-    else this.nagUser = true
+    else {
+      this.got404 = true
+      throw Error('No such page')
+    }
 
     console.log({ details })
   }

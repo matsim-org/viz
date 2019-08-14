@@ -1,32 +1,38 @@
 <template lang="pug">
 #page
-  .title-strip
-    p
-      router-link(:to='`/${owner}`') {{owner}}
-      | &nbsp;/ {{urlslug}}
-    h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
+  .got404(v-if="got404")
+    .title-strip
+      p {{owner}} / {{urlslug}}
+      h3.title.is-3 404 Not Found
 
-  .content-area
-    p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
+  .stuff(v-else)
+    .title-strip
+      p
+        router-link(:to='`/${owner}`') {{owner}}
+        | &nbsp;/ {{urlslug}}
+      h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
-    markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
+    .content-area
+      p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
-    h5.title.is-5 RUNS
-      button.button.is-rounded.is-danger.is-outlined(
-        style="float:right"
-        v-if="canModify"
-        @click="clickedNewRun") +New Run
+      markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
 
-    table.project-list
-      tr
-        th(style="min-width: 9rem;") Run ID
-        th Description
+      h5.title.is-5 RUNS
+        button.button.is-rounded.is-danger.is-outlined(
+          style="float:right"
+          v-if="canModify"
+          @click="clickedNewRun") +New Run
 
-      tr(v-for="run in myRuns")
-        td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
-        td {{ run.description }}
+      table.project-list
+        tr
+          th(style="min-width: 9rem;") Run ID
+          th Description
 
-    new-run-dialog(v-if="showCreateRun" :projectId="urlslug" :owner="owner" @close="onCreateRunClosed")
+        tr(v-for="run in myRuns")
+          td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
+          td {{ run.description }}
+
+      new-run-dialog(v-if="showCreateRun" :projectId="urlslug" :owner="owner" @close="onCreateRunClosed")
 
 </template>
 
@@ -93,6 +99,7 @@ export default class ProjectPage extends vueInstance {
   private canModify = false
   private showCreateRun = false
   private myRuns: any[] = []
+  private got404 = false
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -118,6 +125,7 @@ export default class ProjectPage extends vueInstance {
     const project: any = await CloudAPI.getProject(this.owner, this.urlslug)
     if (project) this.myProject = project
     else {
+      this.got404 = true
       throw Error(`Did not find exactly one project for /${this.owner}/${this.urlslug}`)
     }
 

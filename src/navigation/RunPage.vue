@@ -1,44 +1,50 @@
 <template lang="pug">
 #page
-  .title-strip
-    p
-      router-link(:to='`/${owner}`') {{owner}}
-      router-link(:to='`/${owner}/${urlslug}`') &nbsp;/ {{urlslug}}
-      | &nbsp;/ {{ run }}
+  .got404(v-if="got404")
+    .title-strip
+      p {{owner}} / {{urlslug}} / {{run}}
+      h3.title.is-3 404 Not Found
 
-    h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
-    h4.title.is-3(v-else) &nbsp;
+  .stuff(v-else)
+    .title-strip
+      p
+        router-link(:to='`/${owner}`') {{owner}}
+        router-link(:to='`/${owner}/${urlslug}`') &nbsp;/ {{urlslug}}
+        | &nbsp;/ {{ run }}
 
-  .content-area
-    p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
+      h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
+      h4.title.is-3(v-else) &nbsp;
 
-    markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
+    .content-area
+      p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
 
-    h5.title.is-5 VISUALIZATIONS
+      markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
 
-    .viz-table
-      .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
-        viz-thumbnail(:viz="viz"
-                      :showActionButtons="true"
-                      @edit="onEditViz(viz)"
-                      @remove="onRemoveViz(viz)"
-                      @share="onShareViz(viz)"
-        )
+      h5.title.is-5 VISUALIZATIONS
 
-    hr
+      .viz-table
+        .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
+          viz-thumbnail(:viz="viz"
+                        :showActionButtons="true"
+                        @edit="onEditViz(viz)"
+                        @remove="onRemoveViz(viz)"
+                        @share="onShareViz(viz)"
+          )
 
-    h5.title.is-5 FILES
+      hr
 
-    table.model-runs
-      tr
-        th File
-        th.right Size
-        th.right Actions
-      tr(v-for="file in myFiles" :key="file.filename" @click="clickedFile(file)")
-        td: b {{ file.filename }}
-        td.right {{ readableFileSize(file.sizeinbytes) }}
-        td.right ...
-        // button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+      h5.title.is-5 FILES
+
+      table.model-runs
+        tr
+          th File
+          th.right Size
+          th.right Actions
+        tr(v-for="file in myFiles" :key="file.filename" @click="clickedFile(file)")
+          td: b {{ file.filename }}
+          td.right {{ readableFileSize(file.sizeinbytes) }}
+          td.right ...
+          // button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
 </template>
 
@@ -96,6 +102,7 @@ export default class RunPage extends vueInstance {
   private myRun: any = { notes: '' }
   private myFiles: any[] = []
   private myVisualizations: any[] = []
+  private got404 = false
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -109,10 +116,19 @@ export default class RunPage extends vueInstance {
 
   public async mounted() {
     const project = await CloudAPI.getProject(this.owner, this.urlslug)
-    if (project) this.myProject = project
+    if (!project) {
+      this.got404 = true
+      throw Error('No such page')
+    }
 
     const run = await CloudAPI.getRun(this.owner, this.urlslug, this.run)
-    if (run) this.myRun = run
+    if (!run) {
+      this.got404 = true
+      throw Error('No such page')
+    }
+
+    this.myProject = project
+    this.myRun = run
 
     const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
     if (files) this.myFiles = files

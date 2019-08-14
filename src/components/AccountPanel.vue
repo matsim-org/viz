@@ -1,6 +1,6 @@
 <template lang="pug">
 #user-nag-area
-  h3.title.is-3 Almost done! Choose your username, {{newUserAttributes.uid}}
+  h3.title.is-3 Almost done! Choose your username.
 
   p
    b Username:&nbsp;
@@ -57,6 +57,11 @@ export default class AccountPanel extends Vue {
 
   private mounted() {
     this.newUserAttributes.uid = this.authState.idToken.sub
+    this.nameInput = this.cleanUrlString(this.newUserAttributes.uid)
+  }
+
+  private cleanUrlString(text: string) {
+    return text.replace(/[\W_]+/g, '-').toLowerCase()
   }
 
   private async saveUser() {
