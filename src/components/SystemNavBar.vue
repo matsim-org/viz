@@ -10,6 +10,14 @@
           // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
           // span(v-else) {{ crumb.label }}
 
+    .search-area(v-if="!sharedStore.state.isFullPageMap")
+      .field
+        p.control.has-icons-left
+          input.input.is-rounded.is-link.searchbox(type="text" placeholder="Search or jump to...")
+          span.icon.is-small.is-left
+            i.fas.fa-search
+
+
     .nav-item(@click="toggleLogin()" v-if="!sharedStore.state.isFullPageMap")
       .icon-label {{ loginText }}
 </template>
@@ -137,10 +145,26 @@ export default class SystemNavBar extends Vue {
   cursor: pointer;
 }
 
+.search-area {
+  margin: auto 0.5rem;
+}
+
+.searchbox {
+  background-color: #546d96;
+}
+
+.searchbox:focus {
+  background-color: #eef;
+}
+
 @media only screen and (max-width: 640px) {
   #systembar {
     margin: 0px 0px;
     padding: 0rem 1rem 0px;
+  }
+
+  .search-area {
+    display: none;
   }
 
   .center-area {
