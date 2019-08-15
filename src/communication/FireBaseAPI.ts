@@ -1,7 +1,7 @@
 import firebase from 'firebase/app'
 import 'firebase/firestore'
 
-import sharedStore from '@/SharedStore.ts'
+import sharedStore, { SearchResult } from '@/SharedStore.ts'
 
 export interface ProjectAttributes {
   owner: string
@@ -259,5 +259,46 @@ export default class FireBaseAPI {
     })
 
     return data
+  }
+
+  public static async searchForText(searchTerm: string) {
+    console.log('SEARCH FOR:', searchTerm)
+    const results: SearchResult[] = []
+
+    // 1. Find users
+    const db = firebase.firestore()
+
+    const users = await db.collection('users').get()
+    users.forEach(doc => {
+      const record = doc.data()
+      if (
+        record.username.toLowerCase().indexOf(searchTerm) > -1 ||
+        record.details.toLowerCase().indexOf(searchTerm) > -1
+      ) {
+        results.push({
+          title: record.username,
+          subtitle: record.details,
+          url: `/${record.username}`,
+          collection: 'User',
+        })
+      }
+    })
+
+    // 2. Find projects
+    const projects = await db.collectionGroup('projects').get()
+
+    projects.forEach(doc => {
+      const record = doc.data()
+      if (record.urlslug.indexOf(searchTerm) > -1 || record.title.toLowerCase().indexOf(searchTerm) > -1) {
+        results.push({
+          title: record.title,
+          subtitle: record.description,
+          collection: 'Project',
+          url: `/${record.owner}/${record.urlslug}`,
+        })
+      }
+    })
+
+    return results
   }
 }

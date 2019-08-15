@@ -6,8 +6,8 @@
     button.button.is-rounded.is-small(v-if="isEditing" @click="clickedCancel") Cancel
   .content
     textarea(
-      :value="editorContent"
       @input="update"
+      :value="editorContent"
       :class="{'is-hidden': !isEditing, 'bye': isLeaving}")
 
     .preview(v-html="compiledMarkdown")
@@ -21,7 +21,6 @@ import marked from 'marked'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 const vueInstance = Vue.extend({
-  props: { value: String },
   components: {},
   data() {
     return {
@@ -35,8 +34,21 @@ const vueInstance = Vue.extend({
 
 @Component
 export default class MarkdownEditor extends vueInstance {
+  @Prop({ required: true })
+  private value!: string
+
+  @Watch('$route')
+  private onRouteChanged(to: any, from: any) {
+    // this gets called if we navigate from one user page to another;
+    // e.g. from the search box.
+
+    this.isEditing = false
+    this.previous = ''
+    this.editorContent = this.value
+  }
+
   private created() {
-    if (this.value) this.editorContent = this.value
+    this.editorContent = this.value
   }
 
   private update(e: any) {

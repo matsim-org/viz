@@ -218,6 +218,10 @@ a:hover {
   color: #b50e1f;
 }
 
+.info-left {
+  margin-right: 1rem;
+}
+
 .info-right a {
   color: #c50e1f;
 }

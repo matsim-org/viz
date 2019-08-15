@@ -14,28 +14,33 @@
       .search-area(v-if="!sharedStore.state.isFullPageMap")
         .field
           p.control.has-icons-left
-            input.input.is-link.searchbox(type="text" placeholder="Search or jump to...")
+            input.input.is-link.searchbox(v-model="searchText" type="text" placeholder="Search or jump to...")
             span.icon.is-small.is-left
               i.fas.fa-search
 
-      button.button.is-small.is-outlined.log-button(
+      button.button.is-small.log-button(
         @click="toggleLogin()"
-        :class="{'is-light': !isLoggedIn, 'is-link': isLoggedIn}"
+        :class="{'is-light': !isLoggedIn, 'is-outlined': !isLoggedIn, 'is-link': isLoggedIn, 'is-inverted': isLoggedIn}"
         v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import debounce from 'debounce'
+
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import SharedStore from '@/SharedStore'
+import FireBaseAPI from '../communication/FireBaseAPI'
 
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-
   private sharedStore = SharedStore
+  private searchText = ''
+
+  private debounceStartSearch = debounce(this.startSearch, 250)
 
   private get centerItems() {
     return SharedStore.state.breadCrumbs
@@ -80,6 +85,26 @@ export default class SystemNavBar extends Vue {
   private onClick(url: string) {
     this.$router.push({ path: url })
   }
+
+  private async startSearch(searchTerm: string) {
+    const results = await FireBaseAPI.searchForText(searchTerm)
+    SharedStore.setSearchResults(results)
+  }
+
+  @Watch('$route')
+  private routeChanged() {
+    this.searchText = ''
+  }
+
+  @Watch('searchText')
+  private searchBoxTextChanged() {
+    if (!this.searchText) {
+      this.sharedStore.setSearchResults([])
+      return
+    }
+
+    this.debounceStartSearch(this.searchText)
+  }
 }
 </script>
 
@@ -94,7 +119,7 @@ export default class SystemNavBar extends Vue {
 
 .log-button {
   margin: auto 0;
-  padding: 1rem 0.75rem;
+  padding: 0.95rem 0.75rem;
 }
 
 .center-area {
@@ -166,6 +191,10 @@ export default class SystemNavBar extends Vue {
 
 .searchbox::placeholder {
   color: rgba(226, 226, 241, 0.7);
+}
+
+.searchbox:focus::placeholder {
+  color: rgba(57, 57, 82, 0.7);
 }
 
 @media only screen and (max-width: 640px) {

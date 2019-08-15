@@ -53,6 +53,7 @@ export default class AccountPanel extends Vue {
     details: '',
     isgroup: false,
     notes: '',
+    username: '',
   }
 
   private mounted() {
@@ -68,6 +69,7 @@ export default class AccountPanel extends Vue {
     console.log({ SaveUser: this.nameInput })
     this.isChecking = true
 
+    this.newUserAttributes.username = this.nameInput
     this.newUserAttributes.details = this.details
 
     try {

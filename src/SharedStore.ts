@@ -11,6 +11,7 @@ interface SearchResult {
   title: string
   subtitle?: string
   url: string
+  collection?: string
 }
 
 interface SharedState {
@@ -83,10 +84,7 @@ class SharedStore {
       isFullPageMap: false,
       lastNavigation: '',
       needToNagUserToLogin: false,
-      searchResults: [
-        { title: 'VSP', subtitle: 'Fachgebiet TU Berlin', url: '/vsp' },
-        { title: 'billyc', url: '/billyc' },
-      ],
+      searchResults: [],
       visualizationTypes: new Map(),
     }
   }
@@ -114,4 +112,4 @@ class SharedStore {
 }
 
 export default new SharedStore()
-export { SharedState }
+export { SharedState, SearchResult }

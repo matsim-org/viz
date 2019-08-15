@@ -18,7 +18,7 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import * as firebase from 'firebase/app'
 
-import sharedStore from '@/SharedStore'
+import SharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import AccountPanel from '@/components/AccountPanel.vue'
@@ -53,14 +53,14 @@ export default class App extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
-  private appState = sharedStore.state
+  private appState = SharedStore.state
 
   private get isFullPage() {
     return this.appState.isFullPageMap
   }
 
   private get needToNagUser() {
-    return sharedStore.state.needToNagUserToLogin
+    return SharedStore.state.needToNagUserToLogin
   }
 
   @Watch('appState.isFullPageMap')
