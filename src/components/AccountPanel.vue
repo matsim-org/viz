@@ -8,7 +8,7 @@
   input.input(type="text" v-model="nameInput" placeholder="Username, no special characters")
   ul.errors
     li.error(v-show="!validation.name") Cannot be empty.
-    li.error(v-show="validation.taken") Already taken.
+    li.error(v-show="validation.taken") Already taken. Choose another.
     li.ok(v-show="validation.available") Username available!
 
   p(style="margin-top: 0.75rem;")
@@ -53,6 +53,7 @@ export default class AccountPanel extends Vue {
     details: '',
     isgroup: false,
     notes: '',
+    username: '',
   }
 
   private mounted() {
@@ -68,6 +69,7 @@ export default class AccountPanel extends Vue {
     console.log({ SaveUser: this.nameInput })
     this.isChecking = true
 
+    this.newUserAttributes.username = this.nameInput
     this.newUserAttributes.details = this.details
 
     try {

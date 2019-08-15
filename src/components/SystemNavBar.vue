@@ -10,30 +10,37 @@
           // router-link(v-if="crumb.url" :to="crumb.url") {{ crumb.label }}
           // span(v-else) {{ crumb.label }}
 
-    .search-area(v-if="!sharedStore.state.isFullPageMap")
-      .field
-        p.control.has-icons-left
-          input.input.is-rounded.is-link.searchbox(type="text" placeholder="Search or jump to...")
-          span.icon.is-small.is-left
-            i.fas.fa-search
+    .right-area
+      .search-area(v-if="!sharedStore.state.isFullPageMap")
+        .field
+          p.control.has-icons-left
+            input.input.is-link.searchbox(v-model="searchText" type="text" placeholder="Search or jump to...")
+            span.icon.is-small.is-left
+              i.fas.fa-search
 
-
-    .nav-item(@click="toggleLogin()" v-if="!sharedStore.state.isFullPageMap")
-      .icon-label {{ loginText }}
+      button.button.is-small.log-button(
+        @click="toggleLogin()"
+        :class="{'is-light': !isLoggedIn, 'is-outlined': !isLoggedIn, 'is-link': isLoggedIn, 'is-inverted': isLoggedIn}"
+        v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import debounce from 'debounce'
+
 import ProjectStore from '@/project/ProjectStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import SharedStore from '@/SharedStore'
+import FireBaseAPI from '../communication/FireBaseAPI'
 
 @Component
 export default class SystemNavBar extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-
   private sharedStore = SharedStore
+  private searchText = ''
+
+  private debounceStartSearch = debounce(this.startSearch, 250)
 
   private get centerItems() {
     return SharedStore.state.breadCrumbs
@@ -78,6 +85,26 @@ export default class SystemNavBar extends Vue {
   private onClick(url: string) {
     this.$router.push({ path: url })
   }
+
+  private async startSearch(searchTerm: string) {
+    const results = await FireBaseAPI.searchForText(searchTerm)
+    SharedStore.setSearchResults(results)
+  }
+
+  @Watch('$route')
+  private routeChanged() {
+    this.searchText = ''
+  }
+
+  @Watch('searchText')
+  private searchBoxTextChanged() {
+    if (!this.searchText) {
+      this.sharedStore.setSearchResults([])
+      return
+    }
+
+    this.debounceStartSearch(this.searchText)
+  }
 }
 </script>
 
@@ -90,22 +117,16 @@ export default class SystemNavBar extends Vue {
   padding: 0px 2rem 0px 2rem;
 }
 
-.nav-item {
-  padding: 0rem 0rem 0rem 1rem;
-  margin: auto 0px auto 0.5rem;
-  text-align: center;
-  color: #e8e8e8;
-}
-
-.nav-item:hover {
-  color: #fdfd91;
-  cursor: pointer;
+.log-button {
+  margin: auto 0;
+  padding: 0.95rem 0.75rem;
 }
 
 .center-area {
   display: flex;
   flex-direction: column;
-  margin: auto auto auto 2rem;
+  margin: auto 0px auto 2rem;
+  flex: 1;
 }
 
 .row1 {
@@ -145,16 +166,35 @@ export default class SystemNavBar extends Vue {
   cursor: pointer;
 }
 
+.right-area {
+  width: 22rem;
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
+  margin-right: 0px;
+}
+
 .search-area {
-  margin: auto 0.5rem;
+  margin: auto 2rem auto 0rem;
+  width: 100%;
 }
 
 .searchbox {
   background-color: #546d96;
+  font-size: 0.9rem;
+  padding: 1rem 1rem;
 }
 
 .searchbox:focus {
   background-color: #eee;
+}
+
+.searchbox::placeholder {
+  color: rgba(226, 226, 241, 0.7);
+}
+
+.searchbox:focus::placeholder {
+  color: rgba(57, 57, 82, 0.7);
 }
 
 @media only screen and (max-width: 640px) {

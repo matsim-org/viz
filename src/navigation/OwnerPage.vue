@@ -11,7 +11,7 @@
       h3.title.is-3 {{ owner }} &bullet; Home
 
     .content-area(v-if="!got404")
-      p.tagline(v-if="ownerDetails"): i {{ ownerDetails.details }}
+      p.tagline: i {{ ownerDetails.details ? ownerDetails.details : '&nbsp;' }}
 
       markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
 
@@ -99,9 +99,11 @@ export default class OwnerPage extends vueInstance {
       })
   }
 
-  public async created() {}
+  public mounted() {
+    this.buildPage()
+  }
 
-  public async mounted() {
+  public async buildPage() {
     await this.fetchOwnerDetails()
     await this.fetchProjects()
     this.canModify = await this.determineIfUserCanModify()
@@ -133,7 +135,15 @@ export default class OwnerPage extends vueInstance {
 
   @Watch('$route')
   private onRouteChanged(to: any, from: any) {
+    // this gets called if we navigate from one user page to another;
+    // e.g. from the search box.
     console.log({ to, from })
+
+    this.ownerDetails = { notes: '', details: '' }
+    this.myProjects = []
+    this.got404 = false
+
+    this.buildPage()
   }
 
   private async onSelectModelRun(modelRun: any) {

@@ -6,6 +6,8 @@
 
   router-view.main-content
 
+  search-results.search-panel(v-if="appState.searchResults.length")
+
 </template>
 
 <script lang="ts">
@@ -16,11 +18,12 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import * as firebase from 'firebase/app'
 
-import sharedStore from '@/SharedStore'
+import SharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import AccountPanel from '@/components/AccountPanel.vue'
 import LoginPanel from '@/components/LoginPanel.vue'
+import SearchResults from '@/components/SearchResults.vue'
 import SystemNavBar from '@/components/SystemNavBar.vue'
 
 // MAPBOX TOKEN
@@ -45,19 +48,19 @@ Vue.directive('focus', {
   },
 })
 
-@Component({ components: { AccountPanel, LoginPanel, SystemNavBar } })
+@Component({ components: { AccountPanel, LoginPanel, SearchResults, SystemNavBar } })
 export default class App extends Vue {
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
-  private appState = sharedStore.state
+  private appState = SharedStore.state
 
   private get isFullPage() {
     return this.appState.isFullPageMap
   }
 
   private get needToNagUser() {
-    return sharedStore.state.needToNagUserToLogin
+    return SharedStore.state.needToNagUserToLogin
   }
 
   @Watch('appState.isFullPageMap')
@@ -173,5 +176,14 @@ a:hover {
 
 .medium-zoom-overlay ~ img {
   z-index: 101;
+}
+
+.search-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 4;
+  margin: 4rem 2rem auto auto;
+  z-index: 8;
+  width: 22rem;
+  box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.4);
 }
 </style>

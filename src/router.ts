@@ -52,6 +52,8 @@ export default class AppRouter {
     this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
       // always clear breadcrumbs on navigation, so that we never show wrong breadcrumbs
       sharedStore.setBreadCrumbs([])
+      // always clear search box on navigation
+      // sharedStore.setSearchResults([])
 
       if (!this.isAuthenticationComponent(to)) {
         sharedStore.setLastNavigation(to.fullPath)

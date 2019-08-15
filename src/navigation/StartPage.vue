@@ -192,9 +192,9 @@ export default class StartPage extends Vue {
 .info-right {
   border-left: solid 1px #ddd;
   padding: 0.25rem 0rem 0.25rem 1rem;
-  margin-left: 1rem;
+  margin-left: auto;
   margin-right: 0.25rem;
-  width: 300px;
+  width: 320px;
   text-align: right;
   font-size: 12px;
 }
@@ -216,6 +216,10 @@ a {
 
 a:hover {
   color: #b50e1f;
+}
+
+.info-left {
+  margin-right: 1rem;
 }
 
 .info-right a {

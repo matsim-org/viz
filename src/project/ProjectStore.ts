@@ -180,7 +180,6 @@ export default class ProjectStore {
     this.state.isFetching = true
     try {
       const fetchedVisualizations = await this.api.fetchVizualizationsForProject(project.id)
-      console.log({ fetchedVisualizations })
       const stateProject = this.state.projects.find(p => p.id === project.id)
       if (stateProject) {
         stateProject.visualizations = fetchedVisualizations
