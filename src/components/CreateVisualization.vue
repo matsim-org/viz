@@ -53,13 +53,15 @@ modal(@close-requested="cancel()")
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import Modal from '@/components/Modal.vue'
+
+import { VisualizationType, Project, Visualization } from '@/entities/Entities'
+import CloudAPI from '@/communication/FireBaseAPI'
+import DummyThumbnail from '@/project/DummyThumbnail'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
-import SharedStore, { SharedState } from '../SharedStore'
+import Modal from '@/components/Modal.vue'
 import ProjectStore from '@/project/ProjectStore'
-import { VisualizationType, Project, Visualization } from '@/entities/Entities'
-import DummyThumbnail from '@/project/DummyThumbnail'
+import SharedStore, { SharedState } from '../SharedStore'
 
 @Component({
   components: {
@@ -76,6 +78,15 @@ export default class CreateVisualizationViewModel extends Vue {
 
   @Prop({ required: true })
   private editVisualization?: Visualization
+
+  @Prop({ type: String, required: true })
+  private ownerId!: string
+
+  @Prop({ type: String, required: true })
+  private projectId!: string
+
+  @Prop({ type: String, required: true })
+  private runId!: string
 
   private sharedState = SharedStore.state
 
@@ -172,7 +183,10 @@ export default class CreateVisualizationViewModel extends Vue {
           description: this.description,
         }),
       }
+      // TODO: Two sources of truth! Creating viz on back-end AND on Firebase. Fix!!!
       const viz = await this.fileApi.createVisualization(request)
+      console.log({ GOTVIZ: viz })
+      await CloudAPI.createVisualization(this.ownerId, this.projectId, this.runId, request)
       this.projectStore.addVisualizationToSelectedProject(viz)
 
       // delete old viz, if we edited it

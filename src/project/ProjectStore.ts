@@ -126,6 +126,23 @@ export default class ProjectStore {
     }
   }
 
+  public async filterFilesByTag(tag: string) {
+    const currentProject = this.state.selectedProject
+
+    // TODO -- for now, the 'default' tag is hardcoded to match NON-tagged files.
+    if (tag === 'default') {
+      currentProject.files = currentProject.files.filter(file => file.tags.length === 0)
+    } else {
+      const foundTag = currentProject.tags.find(t => t.name === tag)
+      if (foundTag) currentProject.files = currentProject.files.filter(file => file.tags.includes(foundTag))
+      else currentProject.files = []
+    }
+
+    currentProject.files.sort((a, b) =>
+      a.userFileName.toLocaleLowerCase() < b.userFileName.toLocaleLowerCase() ? -1 : 1
+    )
+  }
+
   public async addTagToSelectedProject(name: string, type: string) {
     this.state.isFetching = true
     try {

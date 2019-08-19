@@ -28,8 +28,9 @@
                         :showActionButtons="true"
                         @edit="onEditViz(viz)"
                         @remove="onRemoveViz(viz)"
-                        @share="onShareViz(viz)"
-          )
+                        @share="onShareViz(viz)")
+        button.button.is-link.is-outlined.new-viz-button(
+            @click="onAddVisualization") + New
 
       hr
 
@@ -46,12 +47,23 @@
           td.right ...
           // button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
 
+  create-visualization(v-if="showCreateVisualization"
+                        @close="onAddVisualizationClosed"
+                        :ownerId = "owner"
+                        :projectId = "urlslug"
+                        :runId = "run"
+                        :projectStore="projectStore"
+                        :fileApi="fileApi"
+                        :editVisualization="editVisualization")
+
+
 </template>
 
 <script lang="ts">
 import download from 'downloadjs'
 
 import SharedStore, { SharedState } from '@/SharedStore'
+import CreateVisualization from '@/components/CreateVisualization.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
@@ -74,6 +86,7 @@ const vueInstance = Vue.extend({
     fileApi: FileAPI,
   },
   components: {
+    CreateVisualization,
     ImageFileThumbnail,
     MarkdownEditor,
     VizThumbnail,
@@ -130,6 +143,9 @@ export default class RunPage extends vueInstance {
     this.myProject = project
     this.myRun = run
 
+    await this.projectStore.selectProject(this.myProject.mvizkey)
+    await this.projectStore.filterFilesByTag(this.run)
+
     const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
     if (files) this.myFiles = files
 
@@ -137,6 +153,7 @@ export default class RunPage extends vueInstance {
     if (viz) this.myVisualizations = viz
 
     console.log({ viz, files })
+    console.log({ PROJECT_STORE: this.projectStore })
   }
 
   @Watch('$route')
@@ -168,7 +185,7 @@ export default class RunPage extends vueInstance {
   }
 
   private onSelectVisualization(viz: any) {
-    this.$router.push({ path: `/${viz.type}/${viz.projectId}/${viz.id}` })
+    this.$router.push({ path: `/${viz.typeKey}/${viz.projectId}/${viz.id}` })
   }
 
   private async onRemoveViz(viz: Visualization) {
@@ -187,6 +204,24 @@ export default class RunPage extends vueInstance {
 
   private async onShareViz(viz: Visualization) {
     console.log('share viz not yet implemented')
+  }
+
+  private onAddVisualization() {
+    console.log('CREATE VIZ')
+    this.editVisualization = undefined
+    this.showCreateVisualization = true
+  }
+
+  private onAddVisualizationClosed() {
+    this.showCreateVisualization = false
+  }
+
+  private async clickedFile(item: FileEntry) {
+    const confirmDownload = confirm(`Download ${item.userFileName}?\nFile is ${filesize(item.sizeInBytes)}.`)
+    if (!confirmDownload) return
+
+    // const blob = await this.fileApi.downloadFile(item.id, this.projectId)
+    // download(blob, item.userFileName, item.contentType)
   }
 }
 </script>
@@ -248,6 +283,10 @@ a:hover {
 .tagline {
   margin-top: 0.5rem;
   margin-bottom: 0rem;
+}
+
+.new-viz-button {
+  margin-right: 1rem;
 }
 
 @media only screen and (max-width: 640px) {

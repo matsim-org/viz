@@ -2,6 +2,7 @@ import firebase from 'firebase/app'
 import 'firebase/firestore'
 
 import sharedStore, { SearchResult } from '@/SharedStore.ts'
+import { CreateVisualizationRequest } from './FileAPI'
 
 export interface ProjectAttributes {
   owner: string
@@ -200,6 +201,31 @@ export default class FireBaseAPI {
 
     const db = firebase.firestore()
     await db.doc(`users/${props.owner}/projects/${props.project}/runs/${props.runId}`).set(props)
+  }
+
+  public static async createVisualization(
+    owner: string,
+    project: string,
+    run: string,
+    request: CreateVisualizationRequest
+  ) {
+    console.log({ createViz: request })
+
+    const db = firebase.firestore()
+
+    const docs = await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(project)
+      .collection('runs')
+      .doc(run)
+      .collection('visualizations')
+      .get()
+
+    const vizId = docs.size + 1
+
+    await db.doc(`users/${owner}/projects/${project}/runs/${run}/visualizations/${vizId}`).set(request)
   }
 
   public static async addFiles(files: FileAttributes[]) {
