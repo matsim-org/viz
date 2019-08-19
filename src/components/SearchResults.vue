@@ -1,7 +1,10 @@
 <template lang="pug">
 #component
   ul
-    li.item(v-for="(item, index) in appState.searchResults" :key="item.url" @click="clickedItem(item)")
+    li.item(v-for="(item, index) in appState.searchResults"
+            :key="item.url"
+            @click="clickedItem(item)"
+            :class="{'is-project': item.collection==='Project'}")
       .stripe(:class="{'is-project': item.collection==='Project'}")
       .details(:class="{'is-active-item': index === activeItem}")
         label.label: b {{ item.title }}
@@ -98,17 +101,21 @@ export default class SearchResults extends Vue {
 }
 
 .item:hover {
-  background-color: #dde;
+  background-color: #ddeedd;
   cursor: pointer;
+}
+
+.item.is-project:hover {
+  background-color: #dde;
 }
 
 .stripe {
   width: 0.75rem;
-  background-color: rgb(103, 155, 103);
+  background-color: #679b67;
 }
 
 .stripe.is-project {
-  background-color: rgb(137, 108, 175);
+  background-color: #896caf;
 }
 
 .details {

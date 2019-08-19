@@ -20,7 +20,7 @@
 
       button.button.is-small.log-button(
         @click="toggleLogin()"
-        :class="{'is-light': !isLoggedIn, 'is-outlined': !isLoggedIn, 'is-link': isLoggedIn, 'is-inverted': isLoggedIn}"
+        :class="{'is-light': !isLoggedIn, 'is-outlined': !isLoggedIn, 'is-link': isLoggedIn}"
         v-if="!sharedStore.state.isFullPageMap") {{ loginText }}
 </template>
 
@@ -78,17 +78,15 @@ export default class SystemNavBar extends Vue {
     }
   }
 
-  private showFirebaseAuth() {
-    this.$router.push({ path: '/account' })
-  }
-
   private onClick(url: string) {
     this.$router.push({ path: url })
   }
 
   private async startSearch(searchTerm: string) {
     const results = await FireBaseAPI.searchForText(searchTerm)
-    SharedStore.setSearchResults(results)
+
+    // only update UI if search term hasn't changed
+    if (searchTerm === this.searchText) SharedStore.setSearchResults(results)
   }
 
   @Watch('$route')
@@ -119,7 +117,6 @@ export default class SystemNavBar extends Vue {
 
 .log-button {
   margin: auto 0;
-  padding: 0.95rem 0.75rem;
 }
 
 .center-area {
@@ -190,11 +187,11 @@ export default class SystemNavBar extends Vue {
 }
 
 .searchbox::placeholder {
-  color: rgba(226, 226, 241, 0.7);
+  color: #9e9eab;
 }
 
 .searchbox:focus::placeholder {
-  color: rgba(57, 57, 82, 0.7);
+  color: #393952b3;
 }
 
 @media only screen and (max-width: 640px) {

@@ -2,6 +2,10 @@
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
+  .map-complications(v-if="!isMobile()")
+    legend-box.complication(:rows="legendRows")
+    scale-box.complication(:rows="scaleRows")
+
   .map-container
     #mymap
 
@@ -32,9 +36,6 @@
         // {{colName}}
         button.button(hint="hide" @click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
-  .map-complications(v-if="!isMobile()")
-    legend-box.complication(:rows="legendRows")
-    scale-box.complication(:rows="scaleRows")
 
 
 </template>
@@ -984,17 +985,17 @@ h4 {
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr auto;
 }
 
 .status-blob {
-  background-color: white;
-  box-shadow: 0 0 8px #00000040;
-  margin: auto 0px auto -10px;
-  padding: 3rem 0px;
-  text-align: center;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
+  background-color: white;
+  box-shadow: 0 0 8px #00000040;
+  margin: auto 0px auto 0px;
+  padding: 3rem 0px;
+  text-align: center;
   z-index: 99;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
@@ -1061,14 +1062,14 @@ h4 {
 
 .map-complications {
   display: flex;
-  grid-column: 1/3;
-  grid-row: 1/3;
-  margin: auto 0.5rem 1.1rem auto;
+  grid-column: 1 / 3;
+  grid-row: 2/3;
+  margin: auto 0.5rem 1.2rem auto;
   z-index: 4;
 }
 
 .complication {
-  margin: 0rem 0rem 0.1rem 0.5rem;
+  margin: 0rem 0rem 0rem 0.5rem;
 }
 
 .buttons-bar {
