@@ -136,10 +136,6 @@ export default class ProjectStore {
       if (foundTag) currentProject.files = currentProject.files.filter(file => file.tags.includes(foundTag))
       else currentProject.files = []
     }
-
-    currentProject.files.sort((a, b) =>
-      a.userFileName.toLocaleLowerCase() < b.userFileName.toLocaleLowerCase() ? -1 : 1
-    )
   }
 
   public async addTagToSelectedProject(name: string, type: string) {

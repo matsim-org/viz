@@ -20,7 +20,10 @@
 
       markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
 
-      h5.title.is-5 VISUALIZATIONS
+      h4.title.is-4 VISUALIZATIONS
+        button.button.is-rounded.is-danger.is-outlined(
+            style="float:right"
+            @click="onAddVisualization") +New Visualization
 
       .viz-table
         .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
@@ -29,12 +32,20 @@
                         @edit="onEditViz(viz)"
                         @remove="onRemoveViz(viz)"
                         @share="onShareViz(viz)")
-        button.button.is-link.is-outlined.new-viz-button(
-            @click="onAddVisualization") + New
 
       hr
+      .upload-area(v-if="uploads.length > 0")
+        h4.title.is-4 UPLOADS
+        .uploads
+          .upload-header
+              .fileItem(v-for="upload in uploads")
+                list-element
+                  .itemTitle(slot="title")
+                    span {{ upload.file.name }}
+                    span {{ toPercentage(upload.progress) }}%
+                  span(slot="content") {{ toStatus(upload.status) }}
 
-      h5.title.is-5 FILES
+      h4.title.is-4 FILES
         button.button.is-rounded.is-danger.is-outlined(
           style="float:right"
           @click="onAddFiles") +Add Files
@@ -44,25 +55,22 @@
           .emptyMessage(v-if="project.files && project.files.length === 0")
             span No files yet.
           .fileList(v-else)
-            .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
-              list-element( v-bind:key="file.id")
-                .itemTitle(slot="title")
-                  span {{file.userFileName}}
-                  span {{readableFileSize(file.sizeInBytes)}}
-                button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
 
-      .upload-area(v-if="uploads.length > 0")
-        hr
-        h5.title.is-5 PENDING UPLOADS
+            drop.drop(
+              :class="{over:isDragOver}"
+              @dragover="isDragOver = true"
+              @dragleave="isDragOver = false"
+              @drop="onDrop"
+              effect-allowed='all'
+            )
+              .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
+                list-element( v-bind:key="file.id")
+                  .itemTitle(slot="title")
+                    span {{file.userFileName}}
+                    span {{readableFileSize(file.sizeInBytes)}}
+                  button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
+              p.drop-hint Drag/Drop files here to upload!
 
-        section.uploads
-            .upload-header
-                .fileItem(v-for="upload in uploads")
-                  list-element
-                    .itemTitle(slot="title")
-                      span {{ upload.file.name }}
-                      span {{ toPercentage(upload.progress) }}%
-                    span(slot="content") {{ toStatus(upload.status) }}
 
   input.fileInput(type="file"
       multiple
@@ -132,7 +140,6 @@ const vueInstance = Vue.extend({
 @Component
 export default class RunPage extends vueInstance {
   private showCreateVisualization = false
-  private showFileUpload = false
   private showSettings = false
   private isDragOver = false
   private editVisualization?: Visualization
@@ -157,7 +164,7 @@ export default class RunPage extends vueInstance {
   }
 
   private get filesToShow() {
-    return this.project.files.filter(f => {
+    const relevantFiles = this.project.files.filter(f => {
       // default run shows untagged files:
       if (this.run === this.defaultRun) return f.tags.length === 0
       // for other runs check if run tag matches
@@ -166,6 +173,9 @@ export default class RunPage extends vueInstance {
       }
       return false
     })
+
+    relevantFiles.sort((a, b) => (a.userFileName.toLocaleLowerCase() < b.userFileName.toLocaleLowerCase() ? -1 : 1))
+    return relevantFiles
   }
 
   public async created() {}
@@ -187,7 +197,6 @@ export default class RunPage extends vueInstance {
     this.myRun = run
 
     await this.projectStore.selectProject(this.myProject.mvizkey)
-    await this.projectStore.filterFilesByTag(this.run)
 
     let vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
     if (vizes) {
@@ -201,9 +210,13 @@ export default class RunPage extends vueInstance {
     console.log({ to, from })
   }
 
-  private async onDrop(files: any) {
-    this.selectedFiles = files
-    this.showFileUpload = true
+  private async onDrop(data: any, event: any) {
+    event.preventDefault()
+    this.isDragOver = false
+    this.selectedFiles = event.dataTransfer.files
+    console.log({ ON_DROP: this.selectedFiles })
+
+    this.uploadSelectedFiles()
   }
 
   private async saveNotes(notes: string) {
@@ -298,7 +311,7 @@ export default class RunPage extends vueInstance {
   }
 
   private onAddFilesClosed() {
-    this.showFileUpload = false
+    // do nothing; used to show fancy tagging UI
   }
 
   private toPercentage(fraction: number): string | undefined {
@@ -320,7 +333,6 @@ export default class RunPage extends vueInstance {
 
   private async uploadSelectedFiles() {
     console.log({ selectedFiles: this.selectedFiles })
-    this.showFileUpload = true
 
     // figure out tag
     const runTags = this.project.tags.filter(t => t.name === this.run)
@@ -435,9 +447,38 @@ a:hover {
 }
 
 .upload-header {
-  border-bottom: 1px solid lightgray;
   width: 100%;
   padding-bottom: 1.5rem;
+}
+
+.about {
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+  border-top: 0.15rem solid #479ccc;
+  color: #479ccc;
+}
+
+.drop {
+  padding: 1rem 0.5rem;
+  margin: 0rem 0rem 1rem 0rem;
+  text-align: center;
+  border: 0.2rem dashed white;
+  border-radius: 0.25rem;
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.drop:hover {
+  border: 0.2rem dashed white;
+  color: #134f75;
+}
+
+.drop.over {
+  border: 0.2rem dashed #097c43;
+}
+
+.drop-hint {
+  margin: 1rem 0rem;
 }
 
 @media only screen and (max-width: 640px) {
