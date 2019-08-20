@@ -186,12 +186,15 @@ export default class CreateVisualizationViewModel extends Vue {
       // TODO: Two sources of truth! Creating viz on back-end AND on Firebase. Fix!!!
       const viz = await this.fileApi.createVisualization(request)
       console.log({ GOTVIZ: viz })
-      await CloudAPI.createVisualization(this.ownerId, this.projectId, this.runId, request)
+      await CloudAPI.createVisualization(viz, this.ownerId, this.projectId, this.runId)
+      console.log('ok1')
       this.projectStore.addVisualizationToSelectedProject(viz)
+      console.log('ok2')
 
       // delete old viz, if we edited it
       if (this.editVisualization) this.projectStore.deleteVisualization(this.editVisualization)
 
+      this.$emit('updated')
       this.close()
     } catch (error) {
       console.log(error)

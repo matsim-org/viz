@@ -38,7 +38,7 @@ export default class VizThumbnail extends Vue {
   private get thumbnail() {
     // if (this.viz.thumbnail) return `url(data:image/png;base64,${this.viz.thumbnail})`
     if (this.viz.type) return `url("/${this.viz.type}.png")`
-    return `url("/${this.viz.typeKey}.png")`
+    return `url("/")`
   }
 }
 </script>

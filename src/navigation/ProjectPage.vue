@@ -32,7 +32,11 @@
           td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
           td {{ run.description }}
 
-      new-run-dialog(v-if="showCreateRun" :projectId="urlslug" :owner="owner" @close="onCreateRunClosed")
+      new-run-dialog(v-if="showCreateRun"
+                     :projectId="urlslug"
+                     :owner="owner"
+                     :fileApi="fileApi"
+                     @close="onCreateRunClosed")
 
 </template>
 

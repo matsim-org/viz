@@ -49,6 +49,7 @@
 
   create-visualization(v-if="showCreateVisualization"
                         @close="onAddVisualizationClosed"
+                        @updated="projectStoreChanged"
                         :ownerId = "owner"
                         :projectId = "urlslug"
                         :runId = "run"
@@ -149,10 +150,13 @@ export default class RunPage extends vueInstance {
     const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
     if (files) this.myFiles = files
 
-    const viz: any[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
-    if (viz) this.myVisualizations = viz
+    let vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
+    if (vizes) {
+      vizes = vizes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+      this.myVisualizations = vizes
+    }
 
-    console.log({ viz, files })
+    console.log({ vizes, files })
     console.log({ PROJECT_STORE: this.projectStore })
   }
 
@@ -185,7 +189,7 @@ export default class RunPage extends vueInstance {
   }
 
   private onSelectVisualization(viz: any) {
-    this.$router.push({ path: `/${viz.typeKey}/${viz.projectId}/${viz.id}` })
+    this.$router.push({ path: `/${viz.type}/${viz.projectId}/${viz.id}` })
   }
 
   private async onRemoveViz(viz: Visualization) {
@@ -222,6 +226,16 @@ export default class RunPage extends vueInstance {
 
     // const blob = await this.fileApi.downloadFile(item.id, this.projectId)
     // download(blob, item.userFileName, item.contentType)
+  }
+
+  private async projectStoreChanged() {
+    console.log('projectStore changed!')
+    const viz: any[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
+    if (viz) {
+      // reverse sort by update timestamp
+      viz.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+      this.myVisualizations = viz
+    }
   }
 }
 </script>

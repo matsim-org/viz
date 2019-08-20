@@ -8,7 +8,7 @@
       input.input.is-medium(v-model="runId" placeholder="run001"
                             v-focus
                             @keyup.esc="cancel")
-      p used in URLs: no ödd characters!
+      p used in URLs: no accents or special characters
 
       .cuteBlueHeading: h1 Description
       input.input.is-medium(v-model="runDescription" placeholder="Description"
@@ -32,13 +32,14 @@ import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import CloudAPI from '@/communication/FireBaseAPI'
+import FileAPI from '../communication/FileAPI'
 
 const vueInstance = Vue.extend({
   components: {
     error: Error,
     modal: Modal,
   },
-  props: { owner: String, projectId: String },
+  props: { owner: String, projectId: String, fileApi: FileAPI },
 })
 
 @Component
@@ -72,17 +73,21 @@ export default class NewRunDialog extends vueInstance {
 
     // then create it
     try {
-      CloudAPI.createRun({
+      await this.fileApi.createTag({ name: this.runId, type: 'run' }, this.projectId)
+
+      await CloudAPI.createRun({
         owner: this.owner,
         project: this.projectId,
         runId: this.runId,
         description: this.runDescription,
         notes: '',
       })
+
       this.close()
     } catch (error) {
       console.log({ error })
-      this.errorMessage = 'Uh oh, Could not create project.'
+      this.errorMessage = 'Could not create run: ' + error
+      return
     }
   }
 

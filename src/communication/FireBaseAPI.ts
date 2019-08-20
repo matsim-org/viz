@@ -3,6 +3,7 @@ import 'firebase/firestore'
 
 import sharedStore, { SearchResult } from '@/SharedStore.ts'
 import { CreateVisualizationRequest } from './FileAPI'
+import { Visualization } from '@/entities/Entities'
 
 export interface ProjectAttributes {
   owner: string
@@ -203,16 +204,8 @@ export default class FireBaseAPI {
     await db.doc(`users/${props.owner}/projects/${props.project}/runs/${props.runId}`).set(props)
   }
 
-  public static async createVisualization(
-    owner: string,
-    project: string,
-    run: string,
-    request: CreateVisualizationRequest
-  ) {
-    console.log({ createViz: request })
-
+  public static async createVisualization(viz: Visualization, owner: string, project: string, run: string) {
     const db = firebase.firestore()
-
     const docs = await db
       .collection('users')
       .doc(owner)
@@ -223,9 +216,27 @@ export default class FireBaseAPI {
       .collection('visualizations')
       .get()
 
-    const vizId = docs.size + 1
+    const vizNumber = docs.size + 1
 
-    await db.doc(`users/${owner}/projects/${project}/runs/${run}/visualizations/${vizId}`).set(request)
+    // make sure we have the server-assigned viz Id stored!
+    const vizDetails = {
+      id: viz.id,
+      createdAt: viz.createdAt,
+      owner: owner,
+      parameters: viz.parameters,
+      project: project,
+      projectId: viz.project.id,
+      properties: viz.properties,
+      runId: run,
+      title: viz.title,
+      type: viz.type,
+      updatedAt: viz.createdAt,
+    }
+
+    console.log({ createViz: vizDetails })
+
+    await db.doc(`users/${owner}/projects/${project}/runs/${run}/visualizations/${vizNumber}`).set(vizDetails)
+    console.log('done adding')
   }
 
   public static async addFiles(files: FileAttributes[]) {
@@ -291,8 +302,17 @@ export default class FireBaseAPI {
     console.log('SEARCH FOR:', searchTerm)
     const results: SearchResult[] = []
 
-    // 1. Find users
     const db = firebase.firestore()
+
+    const allResults = await Promise.all([
+      await FireBaseAPI.searchUsers(db, searchTerm),
+      await FireBaseAPI.searchProjects(db, searchTerm),
+    ])
+    return ([] as any).concat(...allResults)
+  }
+
+  private static async searchUsers(db: firebase.firestore.Firestore, searchTerm: string) {
+    const results: SearchResult[] = []
 
     const users = await db.collection('users').get()
     users.forEach(doc => {
@@ -309,10 +329,13 @@ export default class FireBaseAPI {
         })
       }
     })
+    return results
+  }
 
-    // 2. Find projects
+  private static async searchProjects(db: firebase.firestore.Firestore, searchTerm: string) {
+    const results: SearchResult[] = []
+
     const projects = await db.collectionGroup('projects').get()
-
     projects.forEach(doc => {
       const record = doc.data()
       if (record.urlslug.indexOf(searchTerm) > -1 || record.title.toLowerCase().indexOf(searchTerm) > -1) {
@@ -324,7 +347,6 @@ export default class FireBaseAPI {
         })
       }
     })
-
     return results
   }
 }

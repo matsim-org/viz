@@ -2,7 +2,6 @@ import FileAPI from '@/communication/FileAPI'
 
 import UploadStore from './UploadStore'
 import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
-import { stringify } from 'querystring'
 
 export interface ProjectState {
   projects: Project[]

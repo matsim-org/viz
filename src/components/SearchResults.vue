@@ -1,10 +1,12 @@
 <template lang="pug">
 #component
   ul
-    li.item(v-for="(item, index) in appState.searchResults"
-            :key="item.url"
-            @click="clickedItem(item)"
-            :class="{'is-project': item.collection==='Project'}")
+    li.item(
+      v-for="(item, index) in appState.searchResults"
+      :key="item.url"
+      :class="{'is-project': item.collection==='Project'}"
+      @click="clickedItem(item)"
+    )
       .stripe(:class="{'is-project': item.collection==='Project'}")
       .details(:class="{'is-active-item': index === activeItem}")
         label.label: b {{ item.title }}
@@ -77,7 +79,7 @@ export default class SearchResults extends Vue {
   private onWindowClicked(e: any) {
     setTimeout(() => {
       SharedStore.setSearchResults([])
-    }, 250)
+    }, 200)
   }
 }
 </script>
