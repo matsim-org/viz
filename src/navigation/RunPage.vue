@@ -35,6 +35,9 @@
       hr
 
       h5.title.is-5 FILES
+        button.button.is-rounded.is-danger.is-outlined(
+          style="float:right"
+          @click="onAddFiles") +Add Files
 
       .file-area
         .files
@@ -48,24 +51,24 @@
                   span {{readableFileSize(file.sizeInBytes)}}
                 button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
 
-      section.uploads(v-if="uploads.length > 0")
-        .upload-header
-          h3.title.is-3 Pending Uploads
-        .fileItem(v-for="upload in uploads")
-          list-element
-            .itemTitle(slot="title")
-              span {{ upload.file.name }}
-              span {{ toPercentage(upload.progress) }}%
-            span(slot="content") {{ toStatus(upload.status) }}
+      .upload-area(v-if="uploads.length > 0")
+        hr
+        h5.title.is-5 PENDING UPLOADS
 
-  file-upload(v-if="showFileUpload"
-              @close="onAddFilesClosed"
-              :suggestedRun="selectedRun"
-              :uploadStore="uploadStore"
-              :projectStore="projectStore"
-              :selectedProject="project"
-              :selectedFiles="selectedFiles")
+        section.uploads
+            .upload-header
+                .fileItem(v-for="upload in uploads")
+                  list-element
+                    .itemTitle(slot="title")
+                      span {{ upload.file.name }}
+                      span {{ toPercentage(upload.progress) }}%
+                    span(slot="content") {{ toStatus(upload.status) }}
 
+  input.fileInput(type="file"
+      multiple
+      id="fileInput"
+      ref="fileInput"
+      @change="onFileInput")
 
   create-visualization(v-if="showCreateVisualization"
                         @close="onAddVisualizationClosed"
@@ -81,21 +84,20 @@
 
 <script lang="ts">
 import download from 'downloadjs'
+import filesize from 'filesize'
+import { Drag, Drop } from 'vue-drag-drop'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
 import CloudAPI from '@/communication/FireBaseAPI'
 import CreateVisualization from '@/components/CreateVisualization.vue'
 import FileAPI from '@/communication/FileAPI'
-import { File } from 'babel-types'
-import filesize from 'filesize'
-import { Drag, Drop } from 'vue-drag-drop'
 import ListElement from '@/components/ListElement.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ProjectSettings from '@/project/ProjectSettings.vue'
 import ProjectStore from '@/project/ProjectStore'
 import SharedStore, { SharedState } from '@/SharedStore'
-import UploadStore from '@/project/UploadStore'
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
 import { Visualization, FileEntry } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 
@@ -113,8 +115,8 @@ const vueInstance = Vue.extend({
     ImageFileThumbnail,
     ListElement,
     MarkdownEditor,
-    VizThumbnail,
     ProjectSettings,
+    VizThumbnail,
     Drag,
     Drop,
   },
@@ -282,6 +284,61 @@ export default class RunPage extends vueInstance {
       this.myVisualizations = viz
     }
   }
+
+  private async onFileInput() {
+    const files = (this.$refs.fileInput as any).files
+    console.log(files)
+    this.selectedFiles = files
+    this.uploadSelectedFiles()
+  }
+
+  private onAddFiles() {
+    const input = this.$refs.fileInput as HTMLInputElement
+    input.click()
+  }
+
+  private onAddFilesClosed() {
+    this.showFileUpload = false
+  }
+
+  private toPercentage(fraction: number): string | undefined {
+    return (fraction * 100).toFixed(0)
+  }
+
+  private toStatus(status: number): string {
+    switch (status) {
+      case 0:
+        return 'Waiting'
+      case 1:
+        return 'Uploading'
+      case 2:
+        return 'Finished'
+      default:
+        return 'Failed'
+    }
+  }
+
+  private async uploadSelectedFiles() {
+    console.log({ selectedFiles: this.selectedFiles })
+    this.showFileUpload = true
+
+    // figure out tag
+    const runTags = this.project.tags.filter(t => t.name === this.run)
+
+    const uploads: FileUpload[] = []
+
+    for (const z of Object.values(this.selectedFiles)) {
+      uploads.push({
+        project: this.project,
+        file: z,
+        tags: runTags,
+        status: UploadStatus.NotStarted,
+        progress: 0,
+      })
+    }
+
+    this.uploadStore.uploadFiles(uploads)
+  }
 }
 </script>
 
@@ -371,6 +428,10 @@ a:hover {
   font-size: inherit;
   cursor: pointer;
   transition-duration: 0.2s;
+}
+
+.fileInput {
+  display: none;
 }
 
 .upload-header {
