@@ -40,6 +40,7 @@ export interface VizAttributes {
   owner: string
   project: string
   runId: string
+  startPage?: boolean
 }
 
 export default class FireBaseAPI {
@@ -204,6 +205,21 @@ export default class FireBaseAPI {
     await db.doc(`users/${props.owner}/projects/${props.project}/runs/${props.runId}`).set(props)
   }
 
+  public static async deleteVisualization(owner: string, project: string, run: string, vizId: string) {
+    console.log('deleting viz:', owner, project, run, vizId)
+    const db = firebase.firestore()
+    await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(project)
+      .collection('runs')
+      .doc(run)
+      .collection('visualizations')
+      .doc(vizId)
+      .delete()
+  }
+
   public static async createVisualization(viz: Visualization, owner: string, project: string, run: string) {
     const db = firebase.firestore()
     const docs = await db
@@ -215,8 +231,6 @@ export default class FireBaseAPI {
       .doc(run)
       .collection('visualizations')
       .get()
-
-    const vizNumber = docs.size + 1
 
     // make sure we have the server-assigned viz Id stored!
     const vizDetails = {
@@ -235,7 +249,7 @@ export default class FireBaseAPI {
 
     console.log({ createViz: vizDetails })
 
-    await db.doc(`users/${owner}/projects/${project}/runs/${run}/visualizations/${vizNumber}`).set(vizDetails)
+    await db.doc(`users/${owner}/projects/${project}/runs/${run}/visualizations/${viz.id}`).set(vizDetails)
     console.log('done adding')
   }
 

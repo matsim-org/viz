@@ -187,9 +187,7 @@ export default class CreateVisualizationViewModel extends Vue {
       const viz = await this.fileApi.createVisualization(request)
       console.log({ GOTVIZ: viz })
       await CloudAPI.createVisualization(viz, this.ownerId, this.projectId, this.runId)
-      console.log('ok1')
       this.projectStore.addVisualizationToSelectedProject(viz)
-      console.log('ok2')
 
       // delete old viz, if we edited it
       if (this.editVisualization) this.projectStore.deleteVisualization(this.editVisualization)

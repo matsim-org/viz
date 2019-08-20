@@ -29,9 +29,9 @@
         .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
           viz-thumbnail(:viz="viz"
                         :showActionButtons="true"
-                        @edit="onEditViz(viz)"
                         @remove="onRemoveViz(viz)"
                         @share="onShareViz(viz)")
+                        //  @edit="onEditViz(viz)"
 
       hr
       .upload-area(v-if="uploads.length > 0")
@@ -69,7 +69,7 @@
                     span {{file.userFileName}}
                     span {{readableFileSize(file.sizeInBytes)}}
                   button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
-              p.drop-hint Drag/Drop files here to upload!
+              p.drop-hint &raquo;&raquo; Drag/Drop files here to upload! &laquo;&laquo;
 
 
   input.fileInput(type="file"
@@ -88,6 +88,15 @@
                         :fileApi="fileApi"
                         :editVisualization="editVisualization")
 
+  share-visualization(v-if="showShareVisualization"
+                  :owner="owner"
+                  :projectId="urlslug"
+                  :run="run"
+                  :viz="selectedViz"
+                  :fileApi="fileApi"
+                  @close="onShareVizClosed")
+
+
 </template>
 
 <script lang="ts">
@@ -96,7 +105,7 @@ import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
-import CloudAPI from '@/communication/FireBaseAPI'
+import CloudAPI, { VizAttributes } from '@/communication/FireBaseAPI'
 import CreateVisualization from '@/components/CreateVisualization.vue'
 import FileAPI from '@/communication/FileAPI'
 import ListElement from '@/components/ListElement.vue'
@@ -105,6 +114,7 @@ import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ProjectSettings from '@/project/ProjectSettings.vue'
 import ProjectStore from '@/project/ProjectStore'
 import SharedStore, { SharedState } from '@/SharedStore'
+import ShareVisualization from '@/navigation/ShareVisualization.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
 import { Visualization, FileEntry } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
@@ -124,6 +134,7 @@ const vueInstance = Vue.extend({
     ListElement,
     MarkdownEditor,
     ProjectSettings,
+    ShareVisualization,
     VizThumbnail,
     Drag,
     Drop,
@@ -140,6 +151,7 @@ const vueInstance = Vue.extend({
 @Component
 export default class RunPage extends vueInstance {
   private showCreateVisualization = false
+  private showShareVisualization = false
   private showSettings = false
   private isDragOver = false
   private editVisualization?: Visualization
@@ -148,6 +160,7 @@ export default class RunPage extends vueInstance {
   private myRun: any = { notes: '' }
   private myVisualizations: any[] = []
   private got404 = false
+  private selectedViz!: VizAttributes
 
   private defaultRun = 'default'
 
@@ -197,6 +210,7 @@ export default class RunPage extends vueInstance {
     this.myRun = run
 
     await this.projectStore.selectProject(this.myProject.mvizkey)
+    await this.projectStore.filterFilesByTag(this.run)
 
     let vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
     if (vizes) {
@@ -225,14 +239,6 @@ export default class RunPage extends vueInstance {
     await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}/runs/${this.run}`, this.myRun)
   }
 
-  private async onNameChanged(name: string, event: any) {
-    try {
-      await this.projectStore.changeNameOfSelectedProject(name)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
   private readableFileSize(bytes: number): string {
     return filesize(bytes)
   }
@@ -242,8 +248,14 @@ export default class RunPage extends vueInstance {
   }
 
   private async onRemoveViz(viz: Visualization) {
+    const confirmDelete = confirm(`Delete Visualization?\n${viz.title}`)
+    if (!confirmDelete) return
+
     try {
-      this.projectStore.deleteVisualization(viz)
+      await this.projectStore.deleteVisualization(viz)
+      await CloudAPI.deleteVisualization(this.owner, this.urlslug, this.run, viz.id)
+
+      this.projectStoreChanged()
     } catch (error) {
       console.error(error)
     }
@@ -255,8 +267,16 @@ export default class RunPage extends vueInstance {
     this.showCreateVisualization = true
   }
 
-  private async onShareViz(viz: Visualization) {
-    console.log('share viz not yet implemented')
+  private async onShareViz(viz: VizAttributes) {
+    console.log('Share Viz')
+    this.selectedViz = viz
+    this.showShareVisualization = true
+  }
+
+  private async onShareVizClosed(answer: boolean) {
+    console.log('Share Viz Closed', answer)
+    this.selectedViz.startPage = answer
+    this.showShareVisualization = false
   }
 
   private onAddVisualization() {
