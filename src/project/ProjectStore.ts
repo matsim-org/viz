@@ -200,7 +200,7 @@ export default class ProjectStore {
       if (stateProject) {
         stateProject.visualizations = fetchedVisualizations
       } else {
-        throw new Error('couldn"t find project')
+        throw new Error(`couldn't find project`)
       }
     } finally {
       this.state.isFetching = false

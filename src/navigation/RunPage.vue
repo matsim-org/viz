@@ -36,16 +36,36 @@
 
       h5.title.is-5 FILES
 
-      table.model-runs
-        tr
-          th File
-          th.right Size
-          th.right Actions
-        tr(v-for="file in myFiles" :key="file.filename" @click="clickedFile(file)")
-          td: b {{ file.filename }}
-          td.right {{ readableFileSize(file.sizeinbytes) }}
-          td.right ...
-          // button.delete(slot="accessory" v-on:click="onDeleteFile(file.id)") Delete
+      .file-area
+        .files
+          .emptyMessage(v-if="project.files && project.files.length === 0")
+            span No files yet.
+          .fileList(v-else)
+            .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
+              list-element( v-bind:key="file.id")
+                .itemTitle(slot="title")
+                  span {{file.userFileName}}
+                  span {{readableFileSize(file.sizeInBytes)}}
+                button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
+
+      section.uploads(v-if="uploads.length > 0")
+        .upload-header
+          h3.title.is-3 Pending Uploads
+        .fileItem(v-for="upload in uploads")
+          list-element
+            .itemTitle(slot="title")
+              span {{ upload.file.name }}
+              span {{ toPercentage(upload.progress) }}%
+            span(slot="content") {{ toStatus(upload.status) }}
+
+  file-upload(v-if="showFileUpload"
+              @close="onAddFilesClosed"
+              :suggestedRun="selectedRun"
+              :uploadStore="uploadStore"
+              :projectStore="projectStore"
+              :selectedProject="project"
+              :selectedFiles="selectedFiles")
+
 
   create-visualization(v-if="showCreateVisualization"
                         @close="onAddVisualizationClosed"
@@ -57,30 +77,32 @@
                         :fileApi="fileApi"
                         :editVisualization="editVisualization")
 
-
 </template>
 
 <script lang="ts">
 import download from 'downloadjs'
 
-import SharedStore, { SharedState } from '@/SharedStore'
-import CreateVisualization from '@/components/CreateVisualization.vue'
-import VizThumbnail from '@/components/VizThumbnail.vue'
-import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
-import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
+import CreateVisualization from '@/components/CreateVisualization.vue'
 import FileAPI from '@/communication/FileAPI'
 import { File } from 'babel-types'
 import filesize from 'filesize'
 import { Drag, Drop } from 'vue-drag-drop'
+import ListElement from '@/components/ListElement.vue'
+import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import ProjectSettings from '@/project/ProjectSettings.vue'
 import ProjectStore from '@/project/ProjectStore'
+import SharedStore, { SharedState } from '@/SharedStore'
+import UploadStore from '@/project/UploadStore'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
-import ProjectSettings from '@/project/ProjectSettings.vue'
+import VizThumbnail from '@/components/VizThumbnail.vue'
 
 const vueInstance = Vue.extend({
   props: {
     projectStore: ProjectStore,
+    uploadStore: UploadStore,
     owner: String,
     run: String,
     urlslug: String,
@@ -89,6 +111,7 @@ const vueInstance = Vue.extend({
   components: {
     CreateVisualization,
     ImageFileThumbnail,
+    ListElement,
     MarkdownEditor,
     VizThumbnail,
     ProjectSettings,
@@ -99,6 +122,7 @@ const vueInstance = Vue.extend({
     return {
       projectState: this.projectStore.State,
       sharedState: SharedStore.state,
+      uploadState: this.uploadStore.State,
     }
   },
 })
@@ -111,12 +135,12 @@ export default class RunPage extends vueInstance {
   private isDragOver = false
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
-  private selectedRun: string = ''
   private myProject: any = {}
   private myRun: any = { notes: '' }
-  private myFiles: any[] = []
   private myVisualizations: any[] = []
   private got404 = false
+
+  private defaultRun = 'default'
 
   private get isFetching() {
     return this.projectState.isFetching
@@ -124,6 +148,22 @@ export default class RunPage extends vueInstance {
 
   private get project() {
     return this.projectState.selectedProject
+  }
+
+  private get uploads() {
+    return this.uploadState.uploads.filter(upload => upload.project.id === this.project.id)
+  }
+
+  private get filesToShow() {
+    return this.project.files.filter(f => {
+      // default run shows untagged files:
+      if (this.run === this.defaultRun) return f.tags.length === 0
+      // for other runs check if run tag matches
+      for (const tag of f.tags) {
+        if (tag.name === this.run) return true
+      }
+      return false
+    })
   }
 
   public async created() {}
@@ -147,17 +187,11 @@ export default class RunPage extends vueInstance {
     await this.projectStore.selectProject(this.myProject.mvizkey)
     await this.projectStore.filterFilesByTag(this.run)
 
-    const files = await CloudAPI.getFiles(this.owner, this.urlslug, this.run)
-    if (files) this.myFiles = files
-
     let vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
     if (vizes) {
       vizes = vizes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
       this.myVisualizations = vizes
     }
-
-    console.log({ vizes, files })
-    console.log({ PROJECT_STORE: this.projectStore })
   }
 
   @Watch('$route')
@@ -220,12 +254,23 @@ export default class RunPage extends vueInstance {
     this.showCreateVisualization = false
   }
 
+  private async onDeleteFile(fileId: string, userFileName: string) {
+    const confirmDelete = confirm(`Delete ${userFileName}?`)
+    if (!confirmDelete) return
+
+    try {
+      await this.projectStore.deleteFile(fileId)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   private async clickedFile(item: FileEntry) {
     const confirmDownload = confirm(`Download ${item.userFileName}?\nFile is ${filesize(item.sizeInBytes)}.`)
     if (!confirmDownload) return
 
-    // const blob = await this.fileApi.downloadFile(item.id, this.projectId)
-    // download(blob, item.userFileName, item.contentType)
+    const blob = await this.fileApi.downloadFile(item.id, this.project.id)
+    download(blob, item.userFileName, item.contentType)
   }
 
   private async projectStoreChanged() {
@@ -301,6 +346,37 @@ a:hover {
 
 .new-viz-button {
   margin-right: 1rem;
+}
+
+.itemTitle {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+}
+
+.fileItem {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition-duration: 0.2s;
+}
+
+.upload-header {
+  border-bottom: 1px solid lightgray;
+  width: 100%;
+  padding-bottom: 1.5rem;
 }
 
 @media only screen and (max-width: 640px) {

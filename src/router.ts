@@ -31,6 +31,7 @@ export default class AppRouter {
 
   private authStore: AuthenticationStore
   private projectStore: ProjectStore
+  private uploadStore: UploadStore
   private fileApi: FileAPI
 
   public get VueRouter() {
@@ -40,6 +41,7 @@ export default class AppRouter {
   constructor(authStore: AuthenticationStore, uploadStore: UploadStore, projectStore: ProjectStore, fileApi: FileAPI) {
     this.authStore = authStore
     this.projectStore = projectStore
+    this.uploadStore = uploadStore
     this.fileApi = fileApi
 
     this.vueRouter = new Router({
@@ -152,6 +154,7 @@ export default class AppRouter {
             authStore: this.authStore,
             fileApi: this.fileApi,
             projectStore: this.projectStore,
+            uploadStore: this.uploadStore,
             owner: route.params.owner,
             urlslug: route.params.project,
             run: route.params.run,
