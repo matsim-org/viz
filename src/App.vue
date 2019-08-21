@@ -25,6 +25,7 @@ import AccountPanel from '@/components/AccountPanel.vue'
 import LoginPanel from '@/components/LoginPanel.vue'
 import SearchResults from '@/components/SearchResults.vue'
 import SystemNavBar from '@/components/SystemNavBar.vue'
+import CloudAPI from '@/communication/FireBaseAPI'
 
 // MAPBOX TOKEN
 // this is a required workaround to get the mapbox token assigned in TypeScript
@@ -38,6 +39,7 @@ import firebaseConfig from '@/firebase-secure'
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
+CloudAPI.setDb()
 
 // Register a global custom directive called `v-focus`
 Vue.directive('focus', {

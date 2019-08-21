@@ -23,24 +23,20 @@
       p Jump to your
         b: router-link(:to='`/${appState.currentUser}`') &nbsp;home page: &raquo; {{ appState.currentUser }}
 
-      .projectList
-        list-element(v-for="project in personalProjects"
-                     :key="project.owner + project.urlslug"
-                     @itemClicked="onProjectSelected(project)")
-          span(slot="title") {{project.title}}
-          span(slot="content") {{ project.description ? project.description : '&nbsp;' }}
-          button.button.delete.is-medium(slot="accessory" @click="onDeleteProject(project)")
-
     .about
       h4.title.is-4 Visualization Gallery
       p.info The following example visualizations are available without a login. Note these are for illustrative purposes only. No real scenario data is depicted.
 
       ul.projects
-      .project-row(v-for="project in publicProjects" :key="project.id")
-        project-list-item(v-if="project.visualizations && project.visualizations.length > 0"
-                        :project="project"
-                        :project-store="projectStore"
-                        @viz-selected="onVizSelected") {{ project.name }}
+        li.project(v-for="project in publicProjects" :key="project.id")
+            h5.title.is-5.is-marginless {{ project.title ? project.title : project.urlslug}}
+            p.breadcrumbs.is-3 {{ project.owner ? '/' + project.owner + '/' + project.urlslug : ''}}
+
+            ul.visualizations
+              li.visualization-item(v-for="viz in project.visualizations"
+                  :key="viz.id"
+                  @click="onVizSelected(viz)")
+                viz-thumbnail(:viz="viz")
 
     .about
       h4.title.is-4 About MATSim
@@ -50,10 +46,9 @@
 
 <script lang="ts">
 import sharedStore from '@/SharedStore'
-import AccountPanel from '@/components/AccountPanel.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
-import CloudAPI, { ProjectAttributes } from '@/communication/FireBaseAPI'
+import CloudAPI, { ProjectAttributes, VizAttributes } from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
 import ProjectListItem from '@/components/ProjectListItem.vue'
 import ListHeader from '@/components/ListHeader.vue'
@@ -62,19 +57,15 @@ import ProjectStore, { ProjectState, ProjectVisibility } from '@/project/Project
 import { Visualization, PermissionType, Project } from '@/entities/Entities'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import ListElementVue from '@/components/ListElement.vue'
-
-import * as firebase from 'firebase/app'
-import 'firebase/auth'
-import 'firebaseui/dist/firebaseui.css'
-import * as firebaseui from 'firebaseui'
+import VizThumbnail from '@/components/VizThumbnail.vue'
 
 @Component({
   components: {
-    AccountPanel,
     ProjectListItem,
     ListHeader,
     ListElementVue,
     CreateProject,
+    VizThumbnail,
   },
 })
 export default class StartPage extends Vue {
@@ -83,11 +74,11 @@ export default class StartPage extends Vue {
 
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
-  private authState = this.authStore.state
 
+  private authState = this.authStore.state
   private appState = sharedStore.state
 
-  private personalProjects: ProjectAttributes[] = []
+  private publicProjects: any = []
 
   // this assignment is necessary to make vue watch the state.
   // Later we switch it out with the actual state of the projectStore
@@ -102,30 +93,32 @@ export default class StartPage extends Vue {
     return this.authStore.state.status === AuthenticationStatus.Authenticated
   }
 
-  private get publicProjects() {
-    return this.projectState.projects.filter(project => this.isPublicProject(project))
-  }
-
   public async created() {
-    if (!this.projectStore) return
-
-    this.projectState = this.projectStore.State
-
-    try {
-      const publicProjectsPromise = this.projectStore.fetchPublicProjects()
-      if (this.isAuthenticated) await this.projectStore.fetchPersonalProjects()
-      // start fetching data as soon as possible. Hence do this in 'created' callback
-      await publicProjectsPromise
-      this.publicProjects.forEach((project: any) => this.projectStore.fetchVisualizationsForProject(project))
-    } catch (error) {
-      console.log(error)
-    }
+    this.getPublicVisualizations()
   }
 
-  public mounted() {}
+  private async getPublicVisualizations() {
+    const vizes = await CloudAPI.getPublicVisualizations()
+    const projList = vizes.sort((a: any, b: any) => (a.urlslug < b.urlslug ? -1 : 1))
+    this.publicProjects = projList
 
-  private onVizSelected(viz: Visualization) {
-    this.$router.push({ path: `/${viz.type}/${viz.project.id}/${viz.id}` })
+    this.getFullProjectNames()
+  }
+
+  private async getFullProjectNames() {
+    for (const project of this.publicProjects) {
+      const details = await CloudAPI.getProjectById(project.id)
+      if (details) {
+        project.title = details.title
+        project.owner = details.owner
+      }
+      console.log(project)
+    }
+    console.debug({ thing: this.publicProjects })
+  }
+
+  private onVizSelected(viz: any) {
+    this.$router.push({ path: `/${viz.type}/${viz.projectId}/${viz.id}` })
   }
 
   private onProjectSelected(project: ProjectAttributes) {
@@ -142,12 +135,6 @@ export default class StartPage extends Vue {
 
   private isPublicProject(project: Project) {
     return project.permissions.findIndex(permission => permission.agent.authId === 'allUsers') >= 0
-  }
-
-  private isPersonalProject(project: Project) {
-    return (
-      project.permissions.findIndex(permission => permission.agent.authId === this.authStore.state.idToken.sub) >= 0
-    )
   }
 }
 </script>
@@ -232,6 +219,33 @@ a:hover {
 
 .mobile-logo {
   display: none;
+}
+
+.visualizations {
+  margin-bottom: 2rem;
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: repeat(auto-fill, 325px);
+}
+
+.visualization-item {
+  display: table-cell;
+  vertical-align: top;
+  width: 325px;
+  padding: -20px;
+}
+
+.hoverable:hover {
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 1px 3px 5px rgba(0, 0, 80, 0.3);
+}
+
+.breadcrumbs {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  color: #999;
 }
 
 @media only screen and (max-width: 640px) {

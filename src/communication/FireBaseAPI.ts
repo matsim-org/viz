@@ -2,7 +2,6 @@ import firebase from 'firebase/app'
 import 'firebase/firestore'
 
 import sharedStore, { SearchResult } from '@/SharedStore.ts'
-import { CreateVisualizationRequest } from './FileAPI'
 import { Visualization } from '@/entities/Entities'
 
 export interface ProjectAttributes {
@@ -44,6 +43,12 @@ export interface VizAttributes {
 }
 
 export default class FireBaseAPI {
+  private static db: firebase.firestore.Firestore
+
+  public static async setDb() {
+    FireBaseAPI.db = firebase.firestore()
+  }
+
   public static async setCurrentUser(userId: string) {
     console.log('--> setting current user for uid:', userId)
 
@@ -118,6 +123,23 @@ export default class FireBaseAPI {
     })
 
     return projects
+  }
+
+  public static async getProjectById(projectId: string) {
+    console.log('getProjectById', projectId)
+
+    const docs = await this.db
+      .collectionGroup('projects')
+      .where('mvizkey', '==', projectId)
+      .limit(1)
+      .get()
+
+    const data: any = []
+    docs.forEach(project => {
+      data.push(project.data())
+    })
+    if (data.length) return data[0]
+    return null
   }
 
   public static async getProject(owner: string, projectId: string) {
@@ -312,9 +334,34 @@ export default class FireBaseAPI {
     return data
   }
 
+  public static async getPublicVisualizations() {
+    console.log('getPublicVisualizations')
+
+    // first get startPage'd vizes
+    const docs = await this.db
+      .collectionGroup('visualizations')
+      .where('startPage', '==', true)
+      .get()
+
+    const vizes: any[] = []
+    docs.forEach(doc => {
+      vizes.push(doc.data())
+    })
+
+    // group them by project; i hate firebase sub-collections
+    const projects: any = {}
+    for (const viz of vizes) {
+      if (!projects[viz.projectId]) {
+        projects[viz.projectId] = { title: '', owner: '', urlslug: viz.project, id: viz.projectId, visualizations: [] }
+      }
+      projects[viz.projectId].visualizations.push(viz)
+    }
+
+    return Object.values(projects)
+  }
+
   public static async searchForText(searchTerm: string) {
     console.log('SEARCH FOR:', searchTerm)
-    const results: SearchResult[] = []
 
     const db = firebase.firestore()
 
