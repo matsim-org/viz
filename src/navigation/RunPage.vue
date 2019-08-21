@@ -20,7 +20,7 @@
 
       markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
 
-      h4.title.is-4 VISUALIZATIONS
+      h5.title.is-5 VISUALIZATIONS
         button.button.is-rounded.is-danger.is-outlined(
             style="float:right"
             @click="onAddVisualization") +New Visualization
@@ -35,7 +35,7 @@
 
       hr
       .upload-area(v-if="uploads.length > 0")
-        h4.title.is-4 UPLOADS
+        h5.title.is-5 UPLOADS
         .uploads
           .upload-header
               .fileItem(v-for="upload in uploads")
@@ -45,7 +45,7 @@
                     span {{ toPercentage(upload.progress) }}%
                   span(slot="content") {{ toStatus(upload.status) }}
 
-      h4.title.is-4 FILES
+      h5.title.is-5 FILES
         button.button.is-rounded.is-danger.is-outlined(
           style="float:right"
           @click="onAddFiles") +Add Files

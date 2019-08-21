@@ -26,11 +26,11 @@
 </template>
 
 <script lang="ts">
-import Error from '@/components/Error.vue'
-import Modal from '@/components/Modal.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import CloudAPI, { VizAttributes } from '@/communication/FireBaseAPI'
-import FileAPI from '../communication/FileAPI'
+import Error from '@/components/Error.vue'
+import FileAPI from '@/communication/FileAPI'
+import Modal from '@/components/Modal.vue'
 
 @Component({ components: { error: Error, modal: Modal } })
 export default class ShareVisualization extends Vue {

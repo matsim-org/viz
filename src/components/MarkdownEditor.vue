@@ -1,8 +1,8 @@
 <template lang="pug">
 #editor
   .actions
-    button.button.is-rounded.is-gray.is-small(v-if="!isEditing" @click="clickedEdit") {{ value ? "&nbsp;Edit&nbsp;" : "Add Notes" }}
-    button.button.is-rounded.is-small(v-if="isEditing" @click="clickedCancel") Cancel
+    button.button.is-rounded.is-light.is-small(v-if="!isEditing" @click="clickedEdit") {{ value ? "&nbsp;Edit&nbsp;" : "+Add Notes" }}
+    button.button.is-rounded.is-small.is-text(v-if="isEditing" @click="clickedCancel") Cancel
     button.button.is-rounded.is-link.is-small(v-if="isEditing" @click="clickedSave") Save
   .content
     textarea(

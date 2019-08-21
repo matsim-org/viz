@@ -32,6 +32,12 @@
           td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
           td {{ run.description }}
 
+      hr
+      // .level.level-right(v-if="canModify")
+      .level
+        button.button.is-small.is-rounded.is-light(@click="showSettings=!showSettings") Project Settings...
+      project-settings(v-if="showSettings")
+
       new-run-dialog(v-if="showCreateRun"
                      :projectId="urlslug"
                      :owner="owner"
@@ -58,7 +64,7 @@ import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import NewRunDialog from '@/components/NewRunDialog.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { Visualization, FileEntry } from '@/entities/Entities'
-import ProjectSettings from '@/project/ProjectSettings.vue'
+import ProjectSettings from '@/components/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
   props: {
@@ -93,6 +99,11 @@ export default class ProjectPage extends vueInstance {
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
   private selectedRun: string = ''
+  private canModify = false
+  private showCreateRun = false
+  private myRuns: any[] = []
+  private got404 = false
+
   private myProject: ProjectAttributes = {
     owner: this.owner,
     title: '',
@@ -100,10 +111,6 @@ export default class ProjectPage extends vueInstance {
     description: '',
     notes: '',
   }
-  private canModify = false
-  private showCreateRun = false
-  private myRuns: any[] = []
-  private got404 = false
 
   private get isFetching() {
     return this.projectState.isFetching
