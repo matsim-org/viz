@@ -39,7 +39,7 @@
                 | Write/Modify
         td: .control: a.button.is-link.is-small(:disabled="disableAddButton" @click="clickedAdd") Add
 
-      tr(v-for="actor in accessTable")
+      tr(v-for="actor in shareList.filter(f => !f.markedForDeletion)" :key="actor.authId")
         td: b {{ actor.name }}
         td: .buttons.has-addons
               .button.is-small(
@@ -48,7 +48,8 @@
               .button.is-small(
                 :class="{'is-danger': actor.perm === permWrite, 'is-selected': actor.perm === permWrite}"
                 @click="actor.perm = permWrite") Write/Modify
-        td(style="vertical-align: center; margin-top: 0.5rem;"): .delete.is-pulled-right.is-danger(style="margin-top: 0.25rem;")
+        td(style="vertical-align: center; margin-top: 0.5rem;")
+            .delete.is-pulled-right.is-danger(@click="clickedRemove(actor)" style="margin-top: 0.25rem;")
 
   hr
   .actions
@@ -132,12 +133,25 @@ export default class ProjectSettings extends Vue {
     this.updateUsersWhoCanBeAdded()
   }
 
+  private clickedRemove(user: any) {
+    const toRemove = this.shareList.find(f => f.name === user.name)
+    if (toRemove) toRemove.markedForDeletion = true
+    this.updateUsersWhoCanBeAdded()
+
+    console.log('removed ', user.name)
+    console.log(this.shareList)
+  }
+
   private updateUsersWhoCanBeAdded() {
     const myList = []
     const currentNameList: any = {}
-    for (const user of this.shareList) currentNameList[user.name] = true
+    for (const user of this.shareList) {
+      if (!user.markedForDeletion) currentNameList[user.name] = true
+    }
+    console.log(currentNameList)
 
     for (const user of Object.values(this.systemUsersByName) as any) {
+      console.log(user)
       if (user.uid === this.authStore.state.idToken.sub) continue
       if (currentNameList[user.username] && !currentNameList[user.username].markedForDeletion) continue
       myList.push(user)
@@ -146,6 +160,7 @@ export default class ProjectSettings extends Vue {
   }
 
   private get accessTable() {
+    console.log('boop')
     return this.shareList.filter(f => !f.markedForDeletion)
   }
 
