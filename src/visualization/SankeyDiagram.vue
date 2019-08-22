@@ -43,7 +43,7 @@ class SankeyDiagram extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
 
-  @Prop({ type: AuthenticationStore, required: true })
+  @Prop({ type: AuthenticationStore })
   private authStore!: AuthenticationStore
 
   private loadingText: string = 'Flow Diagram'
@@ -66,7 +66,6 @@ class SankeyDiagram extends Vue {
   private async getVizDetails() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
-    if (SharedStore.debug) console.log(this.visualization)
 
     SharedStore.setBreadCrumbs([
       { label: this.visualization.title, url: '/' },

@@ -374,12 +374,27 @@ export default class FireBaseAPI {
     const projects: any = {}
     for (const viz of vizes) {
       if (!projects[viz.projectId]) {
-        projects[viz.projectId] = { title: '', owner: '', urlslug: viz.project, id: viz.projectId, visualizations: [] }
+        projects[viz.projectId] = {
+          title: '',
+          owner: '',
+          urlslug: viz.project,
+          id: viz.projectId,
+          visualizations: [],
+        }
       }
       projects[viz.projectId].visualizations.push(viz)
     }
 
-    return Object.values(projects)
+    // filter out projects which are not public
+    // (this can happen if user adds a viz, and later hides the project)
+    const promises = []
+    for (const id of Object.keys(projects)) promises.push(FireBaseAPI.getProjectById(id))
+    const projDetails = await Promise.all(promises)
+
+    for (const proj of projDetails) projects[proj.mvizkey].public = proj.public ? true : false
+
+    const finalAnswer: any[] = Object.values(projects).filter((pz: any) => pz.public)
+    return finalAnswer
   }
 
   public static async searchForText(searchTerm: string) {

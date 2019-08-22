@@ -229,6 +229,11 @@ export default class ProjectSettings extends Vue {
         }
       }
 
+      // store deets in cloud too
+      await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.projectId}`, {
+        public: this.vizButton === 'Public',
+      })
+
       this.close()
     } catch (error) {
       console.log({ MUGWUMP: error })

@@ -26,7 +26,10 @@
           project-settings.project-settings(
               v-if="showSettings"
               @close="showSettings=false"
-              :projectStore="projectStore" :authStore="authStore")
+              :projectStore="projectStore"
+              :authStore="authStore"
+              :owner="owner"
+              :projectId="urlslug")
 
       .run-space
 

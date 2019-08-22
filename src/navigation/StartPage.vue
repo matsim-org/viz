@@ -30,7 +30,8 @@
       ul.projects
         li.project(v-for="project in publicProjects" :key="project.id")
             h5.title.is-5.is-marginless {{ project.title ? project.title : project.urlslug}}
-            p.breadcrumbs.is-3 {{ project.owner ? '/' + project.owner + '/' + project.urlslug : ''}}
+            .project-link(v-if="project.owner")
+              router-link.breadcrumbs(:to="`/${project.owner}/${project.urlslug}`") {{ '/' + project.owner + '/' + project.urlslug }}
 
             ul.visualizations
               li.visualization-item(v-for="viz in project.visualizations"
@@ -160,6 +161,9 @@ export default class StartPage extends Vue {
   border-top: 0.2rem solid #479ccc;
 }
 
+.project {
+  padding-top: 1rem;
+}
 .projects {
   margin-top: 2rem;
 }
@@ -243,9 +247,13 @@ a:hover {
 
 .breadcrumbs {
   font-size: 0.75rem;
-  margin-top: 0.25rem;
   margin-bottom: 1rem;
   color: #999;
+}
+
+.project-link {
+  margin-top: -0.25rem;
+  margin-bottom: 0.75rem;
 }
 
 @media only screen and (max-width: 640px) {
