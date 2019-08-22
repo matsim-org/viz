@@ -36,13 +36,14 @@ import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import CloudAPI from '@/communication/FireBaseAPI'
+import ProjectStore from '../project/ProjectStore'
 
 const vueInstance = Vue.extend({
   components: {
     error: Error,
     modal: Modal,
   },
-  props: { owner: String },
+  props: { owner: String, projectStore: ProjectStore },
 })
 
 @Component
@@ -75,19 +76,23 @@ export default class NewProjectDialog extends vueInstance {
       return
     }
 
-    // then create it
     try {
+      // create project on fileserver
+      const fileServerProject = await this.projectStore.createProject(this.projectName)
+
+      // then create it on cloudserver
       CloudAPI.createProject({
         owner: this.owner,
         title: this.projectName,
         urlslug: this.projectShortName,
         description: this.projectDescription,
         notes: '',
+        mvizkey: fileServerProject.id,
       })
       this.close()
     } catch (error) {
       console.log({ error })
-      this.errorMessage = 'Uh oh, Could not create project.'
+      this.errorMessage = 'Error creating project: ' + error
     }
   }
 

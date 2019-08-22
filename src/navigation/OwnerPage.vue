@@ -30,7 +30,10 @@
           td: b: router-link(:to='`/${project.owner}/${project.urlslug}`') {{ project.title }}
           td {{ project.description }}
 
-      new-project-dialog(v-if="showCreateProject" :owner="owner" @close="onCreateProjectClosed")
+      new-project-dialog(v-if="showCreateProject"
+                         :owner="owner"
+                         :projectStore="projectStore"
+                         @close="onCreateProjectClosed")
 
 </template>
 

@@ -39,7 +39,7 @@ const vueInstance = Vue.extend({
     error: Error,
     modal: Modal,
   },
-  props: { owner: String, projectId: String, fileApi: FileAPI },
+  props: { owner: String, projectId: String, mvizkey: String, fileApi: FileAPI },
 })
 
 @Component
@@ -73,7 +73,7 @@ export default class NewRunDialog extends vueInstance {
 
     // then create it
     try {
-      await this.fileApi.createTag({ name: this.runId, type: 'run' }, this.projectId)
+      await this.fileApi.createTag({ name: this.runId, type: 'run' }, this.mvizkey)
 
       await CloudAPI.createRun({
         owner: this.owner,

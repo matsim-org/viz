@@ -42,6 +42,7 @@
 
       new-run-dialog(v-if="showCreateRun"
                      :projectId="urlslug"
+                     :mvizkey="project.id"
                      :owner="owner"
                      :fileApi="fileApi"
                      @close="onCreateRunClosed")
@@ -147,7 +148,6 @@ export default class ProjectPage extends vueInstance {
     // handle MATSim-Viz FileServer projects
     if (this.myProject.mvizkey) {
       await this.projectStore.selectProject(this.myProject.mvizkey)
-
       // upgrade from old server?
       if (!this.myProject.imported) {
         await this.importMVizProject()
