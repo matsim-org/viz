@@ -39,6 +39,7 @@ export interface Permission extends Entity {
   agent: Agent
   resource: Resource
   type: PermissionType
+  owner?: boolean
 }
 
 export interface Tag extends Entity {

@@ -21,7 +21,7 @@
       project-settings.project-settings(
           v-if="showSettings"
           @close="showSettings=false"
-          :projectStore="projectStore")
+          :projectStore="projectStore" :authStore="authStore")
 
       markdown-editor.readme(v-if="!showSettings" v-model="myProject.notes" @save="saveNotes")
 
@@ -56,6 +56,7 @@ import { Drag, Drop } from 'vue-drag-drop'
 import { falsy } from 'vega'
 
 import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
+import AuthenticationStore from '@/auth/AuthenticationStore'
 import sharedStore, { SharedState } from '@/SharedStore'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
@@ -70,6 +71,7 @@ import ProjectSettings from '@/components/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
   props: {
+    authStore: AuthenticationStore,
     projectStore: ProjectStore,
     owner: String,
     urlslug: String,

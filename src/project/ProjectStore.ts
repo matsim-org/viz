@@ -1,7 +1,7 @@
 import FileAPI from '@/communication/FileAPI'
 
 import UploadStore from './UploadStore'
-import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
+import { Project, FileEntry, Visualization, PermissionType, Permission } from '@/entities/Entities'
 
 export interface ProjectState {
   projects: Project[]
@@ -79,6 +79,36 @@ export default class ProjectStore {
       const currentProject = this.state.selectedProject
       await this.api.patchProject(currentProject.id, newName)
       currentProject.name = newName
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async removePermissionForUser(authId: string) {
+    const currentProject = this.state.selectedProject
+    const existingPermission = currentProject.permissions.find(permission => permission.agent.authId === authId)
+    try {
+      this.state.isFetching = true
+      if (existingPermission) {
+        await this.api.removePermission(currentProject.id, authId)
+        currentProject.permissions = currentProject.permissions.filter(p => p !== existingPermission)
+      }
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async setPermissionForUser(authId: string, requestedPermission: PermissionType) {
+    const currentProject = this.state.selectedProject
+    const existingPermission = currentProject.permissions.find(permission => permission.agent.authId === authId)
+    try {
+      this.state.isFetching = true
+      if (existingPermission) {
+        await this.api.removePermission(currentProject.id, authId)
+        currentProject.permissions = currentProject.permissions.filter(p => p !== existingPermission)
+      }
+      const permission = await this.api.addPermission(currentProject.id, authId, requestedPermission)
+      currentProject.permissions.push(permission)
     } finally {
       this.state.isFetching = false
     }

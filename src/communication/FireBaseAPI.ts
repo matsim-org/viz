@@ -176,6 +176,19 @@ export default class FireBaseAPI {
     return result
   }
 
+  public static async getOwners() {
+    console.log('getOwners')
+
+    const docs = await this.db.collection('users').get()
+
+    const owners: any[] = []
+    docs.forEach(doc => {
+      owners.push(doc.data())
+    })
+
+    return owners
+  }
+
   public static async getRuns(owner: string, projectId: string) {
     console.log('getRuns', owner, projectId)
 

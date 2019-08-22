@@ -49,7 +49,6 @@ export default class AccountPanel extends Vue {
   private dbCheck = debounce(this.isNameUnique, 500)
 
   private newUserAttributes = {
-    authKey: '',
     uid: '',
     details: '',
     isgroup: false,
@@ -72,7 +71,6 @@ export default class AccountPanel extends Vue {
 
     this.newUserAttributes.username = this.nameInput
     this.newUserAttributes.details = this.details
-    this.newUserAttributes.authKey = this.authState.idToken.jti
 
     try {
       // update existing user record

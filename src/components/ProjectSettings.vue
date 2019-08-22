@@ -1,7 +1,8 @@
 <template lang="pug">
 #container
-  B PROJECT SETTINGS DO NOT WORK YET! DON'T PUT ANYTHING SENSITIVE ON THE DEV SITE !!!
-  // p These settings affect every run, file, and visualization that is part of this project.
+  p
+    b PROJECT SETTINGS.&nbsp;
+    | These settings affect every run, file, and visualization that is part of this project.
 
   .cuteBlueHeading: h1 Project Visibility
 
@@ -23,16 +24,22 @@
   table.table.share-table
     tbody
       tr
-        td: .field.has-addons
-          .control.has-icons-left
-            input.input.is-link.is-marginless(type="text" placeholder="Add user or group")
-            .icon.is-small.is-left: i.fas.fa-users
-          .control: a.button.is-link(disabled) Add
-        td: .buttons.has-addons(style="margin-top: 4px")
-            .button.is-small.is-static View Only
-            .button.is-small.is-static Write/Modify
+        td: .control: .select.is-small
+          select(v-model="addUserName")
+            option(disabled value="") Select...
+            option(v-for="user in usersWhoCanBeAdded") {{ user.username }}
+        td: .buttons.has-addons
+            .button.is-small(
+                @click="addUserPerm = permRead"
+                :class="{'is-static': disableAddButton, 'is-selected': addUserPerm === permRead, 'is-link': addUserPerm === permRead}")
+                | View Only
+            .button.is-small(
+                @click="addUserPerm = permWrite"
+                :class="{'is-static': disableAddButton, 'is-selected': addUserPerm === permWrite, 'is-danger': addUserPerm === permWrite}")
+                | Write/Modify
+        td: .control: a.button.is-link.is-small(:disabled="disableAddButton" @click="clickedAdd") Add
 
-      tr(v-for="actor in shareList")
+      tr(v-for="actor in accessTable")
         td: b {{ actor.name }}
         td: .buttons.has-addons
               .button.is-small(
@@ -41,7 +48,7 @@
               .button.is-small(
                 :class="{'is-danger': actor.perm === permWrite, 'is-selected': actor.perm === permWrite}"
                 @click="actor.perm = permWrite") Write/Modify
-        td(style="vertical-align: center; margin-top: 0.5rem;"): .delete.is-danger(style="margin-top: 0.25rem;")
+        td(style="vertical-align: center; margin-top: 0.5rem;"): .delete.is-pulled-right.is-danger(style="margin-top: 0.25rem;")
 
   hr
   .actions
@@ -58,20 +65,37 @@ import Error from '@/components/Error.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore, { ProjectVisibility } from '@/project/ProjectStore'
 import { PermissionType } from '@/entities/Entities'
+import AuthenticationStore from '../auth/AuthenticationStore'
+
+interface UserAccess {
+  authId: string
+  name: string
+  perm: PermissionType
+  markedForDeletion?: boolean
+}
 
 @Component({ components: { error: Error } })
 export default class ProjectSettings extends Vue {
   private errorMessage = ''
   private isFetching = false
-  private shareList: any = [{ name: 'billyc', perm: PermissionType.Read }, { name: 'vsp', perm: PermissionType.Write }]
+  private shareList: UserAccess[] = []
 
   private permRead = PermissionType.Read
-  private permWrite = PermissionType.Write
-
+  private permWrite = PermissionType.Owner
   private vizButton = 'Private'
+
+  private systemUsersByName: any = {}
+  private systemUsersByAuthId: any = {}
+  private addUserName: string = ''
+  private addUserPerm = PermissionType.Read
+  private disableAddButton = true
+  private usersWhoCanBeAdded: UserAccess[] = []
 
   @Prop()
   private projectStore!: ProjectStore
+
+  @Prop()
+  private authStore!: AuthenticationStore
 
   @Prop()
   private owner!: string
@@ -86,12 +110,80 @@ export default class ProjectSettings extends Vue {
     return 'close'
   }
 
+  @Watch('addUserName')
+  private userNameChanged() {
+    this.disableAddButton = this.addUserName ? false : true
+  }
+
+  private clickedAdd() {
+    console.log('clicked add', this.addUserName, this.addUserPerm)
+
+    const newACL: UserAccess = {
+      name: this.addUserName,
+      authId: this.systemUsersByName[this.addUserName].uid,
+      perm: this.addUserPerm,
+    }
+
+    this.shareList.push(newACL)
+    this.shareList.sort((a, b) => (a.name < b.name ? -1 : 1))
+
+    // clear the add box
+    this.addUserName = ''
+    this.updateUsersWhoCanBeAdded()
+  }
+
+  private updateUsersWhoCanBeAdded() {
+    const myList = []
+    const currentNameList: any = {}
+    for (const user of this.shareList) currentNameList[user.name] = true
+
+    for (const user of Object.values(this.systemUsersByName) as any) {
+      if (user.uid === this.authStore.state.idToken.sub) continue
+      if (currentNameList[user.username] && !currentNameList[user.username].markedForDeletion) continue
+      myList.push(user)
+    }
+    this.usersWhoCanBeAdded = myList
+  }
+
+  private get accessTable() {
+    return this.shareList.filter(f => !f.markedForDeletion)
+  }
+
   private get isError() {
     return this.errorMessage && this.errorMessage.length !== 0
   }
 
-  private created() {
+  private async created() {
     this.vizButton = this.getPublicPermission()
+    await this.getSystemUsers()
+    await this.processCurrentPermissions()
+    this.updateUsersWhoCanBeAdded()
+  }
+
+  private async processCurrentPermissions() {
+    const permissions: any = this.projectStore.State.selectedProject.permissions
+    for (const permission of permissions) {
+      const authId = permission.agent.authId
+      console.log({ agent: authId, type: permission.type, owner: permission.owner })
+      // system stuff handled elsewhere
+      if (authId === 'allUsers') continue
+      if (authId === 'allServices') continue
+      // cannot remove myself
+      if (authId === this.authStore.state.idToken.sub) continue
+
+      if (this.systemUsersByAuthId[authId]) {
+        this.shareList.push({ authId, perm: permission.type, name: this.systemUsersByAuthId[authId].username })
+      }
+    }
+  }
+
+  private async getSystemUsers() {
+    const users = await CloudAPI.getOwners()
+    for (const user of users) {
+      this.systemUsersByAuthId[user.uid] = user
+      this.systemUsersByName[user.username] = user
+    }
+    console.log({ sysusers: this.systemUsersByAuthId })
   }
 
   private getPublicPermission() {
@@ -106,9 +198,22 @@ export default class ProjectSettings extends Vue {
     try {
       this.isFetching = true
       this.errorMessage = ''
+
+      // save project visibility
       await this.projectStore.changeVisibilityOfSelectedProject(
         this.vizButton === 'Public' ? ProjectVisibility.Public : ProjectVisibility.Private
       )
+
+      // save access list
+      for (const acl of this.shareList) {
+        console.log(acl)
+        if (acl.markedForDeletion) {
+          await this.projectStore.removePermissionForUser(acl.authId)
+        } else {
+          await this.projectStore.setPermissionForUser(acl.authId, acl.perm)
+        }
+      }
+
       this.close()
     } catch (error) {
       console.log({ MUGWUMP: error })
