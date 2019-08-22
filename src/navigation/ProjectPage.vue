@@ -15,7 +15,15 @@
     .content-area
       p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
-      markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
+      // .level.level-right(v-if="canModify")
+      .level.level-right
+        button.button.is-small.is-rounded.is-light(@click="showSettings=!showSettings") Project Settings...
+      project-settings.project-settings(
+          v-if="showSettings"
+          @close="showSettings=false"
+          :projectStore="projectStore")
+
+      markdown-editor.readme(v-if="!showSettings" v-model="myProject.notes" @save="saveNotes")
 
       h5.title.is-5 RUNS
         button.button.is-rounded.is-danger.is-outlined(
@@ -31,12 +39,6 @@
         tr(v-for="run in myRuns")
           td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
           td {{ run.description }}
-
-      hr
-      // .level.level-right(v-if="canModify")
-      .level
-        button.button.is-small.is-rounded.is-light(@click="showSettings=!showSettings") Project Settings...
-      project-settings(v-if="showSettings")
 
       new-run-dialog(v-if="showCreateRun"
                      :projectId="urlslug"
@@ -335,6 +337,7 @@ a:hover {
 .title-strip {
   padding: 1.5rem 2rem 2rem 2rem;
   background-color: #f4f4f4;
+  /* border-bottom: solid 1px #ccf; */
 }
 
 .tagline {
@@ -343,7 +346,11 @@ a:hover {
 }
 
 .readme {
-  padding-bottom: 1rem;
+  margin: 2rem 0rem;
+}
+
+.project-settings {
+  margin-bottom: 1rem;
 }
 
 @media only screen and (max-width: 640px) {
