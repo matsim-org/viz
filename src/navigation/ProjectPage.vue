@@ -15,15 +15,20 @@
     .content-area
       p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
-      // .level.level-right(v-if="canModify")
-      .level.level-right
-        button.button.is-small.is-rounded.is-light(@click="showSettings=!showSettings") Project Settings...
-      project-settings.project-settings(
-          v-if="showSettings"
-          @close="showSettings=false"
-          :projectStore="projectStore" :authStore="authStore")
+      .p-area(v-if="canModify")
+        .notes(v-if="!showSettings" :class="{'flex-wide': !showSettings}")
+          markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
 
-      markdown-editor.readme(v-if="!showSettings" v-model="myProject.notes" @save="saveNotes")
+        .settings(:class="{'flex-wide': showSettings}")
+          button.button.is-small.is-rounded.is-light.is-pulled-right.project-settings-button(
+            v-if="!showSettings"
+            @click="showSettings=!showSettings") Project Settings...
+          project-settings.project-settings(
+              v-if="showSettings"
+              @close="showSettings=false"
+              :projectStore="projectStore" :authStore="authStore")
+
+      .run-space
 
       h5.title.is-5 RUNS
         button.button.is-rounded.is-danger.is-outlined(
@@ -67,7 +72,7 @@ import ProjectStore from '@/project/ProjectStore'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import NewRunDialog from '@/components/NewRunDialog.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { Visualization, FileEntry } from '@/entities/Entities'
+import { Visualization, FileEntry, PermissionType } from '@/entities/Entities'
 import ProjectSettings from '@/components/ProjectSettings.vue'
 
 const vueInstance = Vue.extend({
@@ -233,8 +238,12 @@ export default class ProjectPage extends vueInstance {
     }
   }
 
-  private async determineIfUserCanModify() {
-    return await CloudAPI.canUserModify(this.owner)
+  private determineIfUserCanModify() {
+    const perm = this.projectState.selectedProject.permissions.find(
+      p => p.agent.authId === this.authStore.state.idToken.sub
+    )
+    if (!perm) return false
+    return perm.type === PermissionType.Owner
   }
 
   @Watch('$route')
@@ -347,12 +356,34 @@ a:hover {
   margin-bottom: 0rem;
 }
 
-.readme {
-  margin: 2rem 0rem;
+.p-area {
+  display: flex;
+  flex-direction: row;
+}
+
+.notes {
+  flex: 1;
+  margin-right: 1rem;
+}
+.project-config {
+  display: flex;
+  flex-direction: row;
+}
+
+.project-settings-button {
+  margin-top: -1.5rem;
+}
+
+.flex-wide {
+  flex: 1;
+}
+
+.run-space {
+  margin-top: 2rem;
 }
 
 .project-settings {
-  margin-bottom: 1rem;
+  margin: 0.5rem 0rem;
 }
 
 @media only screen and (max-width: 640px) {

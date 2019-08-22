@@ -35,19 +35,19 @@
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import CloudAPI from '@/communication/FireBaseAPI'
+import CloudAPI, { OwnerAttributes } from '@/communication/FireBaseAPI'
 import ProjectStore from '../project/ProjectStore'
+import { PermissionType } from '../entities/Entities'
 
-const vueInstance = Vue.extend({
-  components: {
-    error: Error,
-    modal: Modal,
-  },
-  props: { owner: String, projectStore: ProjectStore },
-})
+@Component({ components: { error: Error, modal: Modal } })
+export default class NewProjectDialog extends Vue {
+  @Prop()
+  private owner!: string
+  @Prop()
+  private ownerDetails!: OwnerAttributes
+  @Prop()
+  private projectStore!: ProjectStore
 
-@Component
-export default class NewProjectDialog extends vueInstance {
   private projectName = ''
   private projectShortName = ''
   private projectDescription = ''
@@ -80,7 +80,7 @@ export default class NewProjectDialog extends vueInstance {
       // create project on fileserver
       const fileServerProject = await this.projectStore.createProject(this.projectName)
 
-      // then create it on cloudserver
+      // create it on cloudserver
       CloudAPI.createProject({
         owner: this.owner,
         title: this.projectName,
@@ -89,6 +89,20 @@ export default class NewProjectDialog extends vueInstance {
         notes: '',
         mvizkey: fileServerProject.id,
       })
+
+      // give everyone in the group access to it
+      if (this.ownerDetails.members) {
+        await this.projectStore.selectProject(fileServerProject.id)
+        const owners = await CloudAPI.getOwners()
+
+        const promises = []
+        for (const userName of this.ownerDetails.members) {
+          const owner = owners.find(f => f.username === userName)
+          if (owner) promises.push(this.projectStore.setPermissionForUser(owner.uid, PermissionType.Owner))
+        }
+        await Promise.all(promises)
+      }
+
       this.close()
     } catch (error) {
       console.log({ error })

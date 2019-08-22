@@ -18,17 +18,17 @@
     .content-area
       p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
 
-      markdown-editor.readme(v-model="myRun.notes" @save="saveNotes")
+      markdown-editor.readme(v-if="canModify" v-model="myRun.notes" @save="saveNotes")
 
-      h5.title.is-5 VISUALIZATIONS
-        button.button.is-rounded.is-danger.is-outlined(
-            style="float:right"
+      h5.title.is-5.run-space VISUALIZATIONS
+        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
+            v-if="canModify"
             @click="onAddVisualization") +New Visualization
 
       .viz-table
         .viz-item(v-for="viz in myVisualizations" @click="onSelectVisualization(viz)" :key="viz.id")
           viz-thumbnail(:viz="viz"
-                        :showActionButtons="true"
+                        :showActionButtons="canModify"
                         @remove="onRemoveViz(viz)"
                         @share="onShareViz(viz)")
                         //  @edit="onEditViz(viz)"
@@ -46,8 +46,8 @@
                   span(slot="content") {{ toStatus(upload.status) }}
 
       h5.title.is-5 FILES
-        button.button.is-rounded.is-danger.is-outlined(
-          style="float:right"
+        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
+          v-if="canModify"
           @click="onAddFiles") +Add Files
 
       .file-area
@@ -56,7 +56,7 @@
             span No files yet.
           .fileList(v-else)
 
-            drop.drop(
+            drop.drop(v-if="canModify"
               :class="{over:isDragOver}"
               @dragover="isDragOver = true"
               @dragleave="isDragOver = false"
@@ -68,9 +68,17 @@
                   .itemTitle(slot="title")
                     span {{file.userFileName}}
                     span {{readableFileSize(file.sizeInBytes)}}
-                  button.delete(slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)") Delete
-              p.drop-hint &raquo;&raquo; Drag/Drop files here to upload! &laquo;&laquo;
+                  button.delete(v-if="canModify" slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)")
+              p.drop-hint(v-if="canModify") &raquo;&raquo; Drag/Drop files here to upload! &laquo;&laquo;
 
+            .drop(v-else)
+              .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
+                list-element( v-bind:key="file.id")
+                  .itemTitle(slot="title")
+                    span {{file.userFileName}}
+                    span {{readableFileSize(file.sizeInBytes)}}
+                  button.delete(v-if="canModify" slot="accessory" v-on:click.stop="onDeleteFile(file.id, file.userFileName)")
+              p.drop-hint(v-if="canModify") &raquo;&raquo; Drag/Drop files here to upload! &laquo;&laquo;
 
   input.fileInput(type="file"
       multiple
@@ -116,11 +124,13 @@ import ProjectStore from '@/project/ProjectStore'
 import SharedStore, { SharedState } from '@/SharedStore'
 import ShareVisualization from '@/components/ShareVisualization.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
-import { Visualization, FileEntry } from '@/entities/Entities'
+import { Visualization, FileEntry, PermissionType } from '@/entities/Entities'
 import VizThumbnail from '@/components/VizThumbnail.vue'
+import AuthenticationStore from '../auth/AuthenticationStore'
 
 const vueInstance = Vue.extend({
   props: {
+    authStore: AuthenticationStore,
     projectStore: ProjectStore,
     uploadStore: UploadStore,
     owner: String,
@@ -141,6 +151,7 @@ const vueInstance = Vue.extend({
   },
   data() {
     return {
+      authState: this.authStore.state,
       projectState: this.projectStore.State,
       sharedState: SharedStore.state,
       uploadState: this.uploadStore.State,
@@ -153,6 +164,7 @@ export default class RunPage extends vueInstance {
   private showCreateVisualization = false
   private showShareVisualization = false
   private showSettings = false
+  private canModify = false
   private isDragOver = false
   private editVisualization?: Visualization
   private selectedFiles: File[] = []
@@ -201,6 +213,7 @@ export default class RunPage extends vueInstance {
     }
 
     const run = await CloudAPI.getRun(this.owner, this.urlslug, this.run)
+
     if (!run) {
       this.got404 = true
       throw Error('No such page')
@@ -212,11 +225,19 @@ export default class RunPage extends vueInstance {
     await this.projectStore.selectProject(this.myProject.mvizkey)
     await this.projectStore.filterFilesByTag(this.run)
 
+    this.canModify = this.determineCanModify()
+
     let vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, this.run)
     if (vizes) {
       vizes = vizes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
       this.myVisualizations = vizes
     }
+  }
+
+  private determineCanModify() {
+    const perm = this.projectState.selectedProject.permissions.find(p => p.agent.authId === this.authState.idToken.sub)
+    if (!perm) return false
+    return perm.type === PermissionType.Owner
   }
 
   @Watch('$route')
@@ -499,6 +520,10 @@ a:hover {
 
 .drop-hint {
   margin: 1rem 0rem;
+}
+
+.run-space {
+  margin-top: 2rem;
 }
 
 @media only screen and (max-width: 640px) {

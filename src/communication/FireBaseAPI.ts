@@ -42,6 +42,15 @@ export interface VizAttributes {
   startPage?: boolean
 }
 
+export interface OwnerAttributes {
+  uid: string
+  username: string
+  notes: string
+  details: string
+  isGroup?: boolean
+  members?: string[]
+}
+
 export default class FireBaseAPI {
   private static db: firebase.firestore.Firestore
 
@@ -186,7 +195,7 @@ export default class FireBaseAPI {
       owners.push(doc.data())
     })
 
-    return owners
+    return owners as OwnerAttributes[]
   }
 
   public static async getRuns(owner: string, projectId: string) {

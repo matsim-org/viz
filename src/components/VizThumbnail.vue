@@ -10,7 +10,7 @@
   .card-actions(v-if="showActionButtons")
     a(title="Remove" @click.stop="$emit('remove')"): i.fas.fa-times
     a(title="Share..." @click.stop="$emit('share')"): i.fas.fa-share
-    a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
+    // a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
 
 </template>
 

@@ -13,12 +13,11 @@
     .content-area(v-if="!got404")
       p.tagline: i {{ ownerDetails.details ? ownerDetails.details : '&nbsp;' }}
 
-      markdown-editor.readme(v-model="ownerDetails.notes" @save="saveNotes")
+      markdown-editor.readme(v-if="canModify" v-model="ownerDetails.notes" @save="saveNotes")
 
-      h5.title.is-5.projects PROJECTS
-        button.button.is-rounded.is-danger.is-outlined(
+      h5.title.is-5.projects.run-space PROJECTS
+        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
           v-if="canModify"
-          style="float:right"
           @click="clickedNewProject") +New Project
 
       table.project-list
@@ -32,6 +31,7 @@
 
       new-project-dialog(v-if="showCreateProject"
                          :owner="owner"
+                         :ownerDetails="ownerDetails"
                          :projectStore="projectStore"
                          @close="onCreateProjectClosed")
 
@@ -41,7 +41,7 @@
 import AccountPanel from '@/components/AccountPanel.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
 import FileAPI from '@/communication/FileAPI'
-import CloudAPI from '@/communication/FireBaseAPI'
+import CloudAPI, { OwnerAttributes } from '@/communication/FireBaseAPI'
 import NewProjectDialog from '@/components/NewProjectDialog.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ProjectStore from '@/project/ProjectStore'
@@ -81,7 +81,7 @@ export default class OwnerPage extends vueInstance {
   private canModify = false
 
   private myProjects: any = []
-  private ownerDetails: any = { notes: '', details: '' }
+  private ownerDetails: OwnerAttributes = { notes: '', details: '', uid: '', username: '' }
   private got404 = false
 
   private get isFetching() {
@@ -114,12 +114,18 @@ export default class OwnerPage extends vueInstance {
   }
 
   private async determineIfUserCanModify() {
-    return await CloudAPI.canUserModify(this.owner)
+    if (!this.ownerDetails.isGroup) return await CloudAPI.canUserModify(this.owner)
+    if (this.ownerDetails.members) {
+      for (const member of this.ownerDetails.members) {
+        if (this.sharedState.currentUser === member) return true
+      }
+    }
+    return false
   }
 
   private async fetchOwnerDetails() {
     const details = await CloudAPI.getOwner(this.owner)
-    if (details) this.ownerDetails = details
+    if (details) Object.assign(this.ownerDetails, details)
     else {
       this.got404 = true
       throw Error('No such page')
@@ -142,7 +148,7 @@ export default class OwnerPage extends vueInstance {
     // e.g. from the search box.
     console.log({ to, from })
 
-    this.ownerDetails = { notes: '', details: '' }
+    this.ownerDetails = { notes: '', details: '', uid: '', username: '' }
     this.myProjects = []
     this.got404 = false
 
@@ -262,6 +268,10 @@ a:hover {
   display: flex;
   flex-direction: row;
   padding-top: 0.25rem;
+}
+
+.run-space {
+  margin-top: 2rem;
 }
 
 @media only screen and (max-width: 640px) {

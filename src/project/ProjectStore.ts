@@ -100,13 +100,8 @@ export default class ProjectStore {
 
   public async setPermissionForUser(authId: string, requestedPermission: PermissionType) {
     const currentProject = this.state.selectedProject
-    const existingPermission = currentProject.permissions.find(permission => permission.agent.authId === authId)
     try {
       this.state.isFetching = true
-      if (existingPermission) {
-        await this.api.removePermission(currentProject.id, authId)
-        currentProject.permissions = currentProject.permissions.filter(p => p !== existingPermission)
-      }
       const permission = await this.api.addPermission(currentProject.id, authId, requestedPermission)
       currentProject.permissions.push(permission)
     } finally {
