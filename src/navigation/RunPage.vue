@@ -54,8 +54,8 @@
         .files
           .emptyMessage(v-if="project.files && project.files.length === 0")
             span No files yet.
-          .fileList(v-else)
 
+          .fileList
             drop.drop(v-if="canModify"
               :class="{over:isDragOver}"
               @dragover="isDragOver = true"
@@ -63,8 +63,8 @@
               @drop="onDrop"
               effect-allowed='all'
             )
-              .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
-                list-element( v-bind:key="file.id")
+              .fileItem(v-for="file in filesToShow" v-bind:key="file.id" @click="clickedFile(file)")
+                list-element
                   .itemTitle(slot="title")
                     span {{file.userFileName}}
                     span {{readableFileSize(file.sizeInBytes)}}
@@ -72,8 +72,8 @@
               p.drop-hint(v-if="canModify") &raquo;&raquo; Drag/Drop files here to upload! &laquo;&laquo;
 
             .drop(v-else)
-              .fileItem(v-for="file in filesToShow" @click="clickedFile(file)")
-                list-element( v-bind:key="file.id")
+              .fileItem(v-for="file in filesToShow"  v-bind:key="file.id" @click="clickedFile(file)")
+                list-element
                   .itemTitle(slot="title")
                     span {{file.userFileName}}
                     span {{readableFileSize(file.sizeInBytes)}}
