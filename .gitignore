@@ -4,6 +4,7 @@ node_modules
 _dist
 
 firebase-config.js
+firebase-config-prod.js
 
 # local env files
 .env.local

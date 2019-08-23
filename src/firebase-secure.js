@@ -1,11 +1,11 @@
 const firebaseConfig = {
   apiKey: '{{FIREBASE_KEY}}',
-  authDomain: 'matsim-viz.firebaseapp.com',
-  databaseURL: 'https://matsim-viz.firebaseio.com',
-  projectId: 'matsim-viz',
+  authDomain: 'mathub-prod.firebaseapp.com',
+  databaseURL: 'https://mathub-prod.firebaseio.com',
+  projectId: 'mathub-prod',
   storageBucket: '',
-  messagingSenderId: '70827808203',
-  appId: '1:70827808203:web:8542c6aecedb0daf',
+  messagingSenderId: '1088224826201',
+  appId: '1:1088224826201:web:09f4a3cedc1477c4',
 }
 
 export default firebaseConfig
