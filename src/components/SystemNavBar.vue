@@ -215,11 +215,16 @@ export default class SystemNavBar extends Vue {
   .row1 {
     margin-left: 0.25rem;
     font-size: 0.8rem;
+    font-weight: normal;
     text-align: center;
   }
 
   .row2 {
     display: none;
+  }
+
+  .right-area {
+    width: auto;
   }
 }
 </style>
