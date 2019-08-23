@@ -98,15 +98,14 @@ class FrameAnimation extends Vue {
     return this.progress === Progress.Failed
   }
 
-  public created() {
-    SharedStore.setFullPage(true)
-  }
+  public created() {}
 
   public destroyed() {
     SharedStore.setFullPage(false)
   }
 
   public mounted() {
+    SharedStore.setFullPage(true)
     const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({
       canvasId: canvas.id,
