@@ -59,7 +59,7 @@ export default class Config {
     return this._accessToken
   }
 
-  private _listeners: Array<() => void> = []
+  private _listeners: Array<(() => void)> = []
 
   private _vizId = ''
   private _canvasId = ''
@@ -123,8 +123,8 @@ export default class Config {
 
   private setColors(colors: ConfigColors) {
     this._colors = {
-      background: colors.background || 0xa3b1b9,
-      network: colors.network || 0x5e60aa,
+      background: colors.background || 0xecf0f1,
+      network: colors.network || 0x2c3e50,
       agents: colors.agents || 0x3498db,
       selectedAgent: colors.selectedAgent || 0xe74c3c,
       selectedPlan: colors.selectedPlan || 0xe74c3c,
