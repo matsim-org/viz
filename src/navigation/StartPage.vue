@@ -29,9 +29,10 @@
 
       ul.projects
         li.project(v-for="project in publicProjects" :key="project.id")
-            h5.title.is-5.is-marginless {{ project.title ? project.title : project.urlslug}}
+            h5.title.is-5.is-marginless
+              router-link(:to="`/${project.owner}/${project.urlslug}`") {{ project.title ? project.title : project.urlslug}}
             .project-link(v-if="project.owner")
-              router-link.breadcrumbs(:to="`/${project.owner}/${project.urlslug}`") {{ '/' + project.owner + '/' + project.urlslug }}
+              .breadcrumbs {{ '/' + project.owner + '/' + project.urlslug }}
 
             ul.visualizations
               li.visualization-item(v-for="viz in project.visualizations"
@@ -247,6 +248,7 @@ a:hover {
 
 .breadcrumbs {
   font-size: 0.75rem;
+  margin-top: 0.25rem;
   margin-bottom: 1rem;
   color: #999;
 }
@@ -254,6 +256,14 @@ a:hover {
 .project-link {
   margin-top: -0.25rem;
   margin-bottom: 0.75rem;
+}
+
+.title a {
+  color: #444;
+}
+
+.title a:hover {
+  color: #444dd4;
 }
 
 @media only screen and (max-width: 640px) {
