@@ -1,12 +1,11 @@
 <template lang="pug">
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-  project-summary-block.project-summary-block(
-    :project="project" :projectId="projectId")
-  .info-blob(v-if="routesOnLink.length > 0" )
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-    .info-header
-      h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") Transit routes on selected link:
+
+  left-data-panel.left-panel(v-if="routesOnLink.length > 0"
+    title="Transit routes on selected link:")
+   .dashboard-panel
+
     p.details.help-text(style="margin-top:20px" v-if="routesOnLink.length === 0") Select a link to see the routes traversing it.
 
     .routeList
@@ -18,10 +17,13 @@
         p.details: b {{route.departures}} departures
         p.details First: {{route.firstDeparture}}
         p.details Last: {{route.lastDeparture}}
-  #mymap
-    .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
-      v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
-    )
+
+  .map-container
+    #mymap
+      .stop-marker(v-for="stop in stopMarkers" :key="stop.i"
+        v-bind:style="{transform: 'translate(-50%,-50%) rotate('+stop.bearing+'deg)', left: stop.xy.x + 'px', top: stop.xy.y+'px'}"
+      )
+
   legend-box.legend(:rows="legendRows")
 </template>
 
@@ -39,6 +41,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import SharedStore from '@/SharedStore'
 import { Visualization } from '@/entities/Entities'
 
@@ -53,7 +56,6 @@ import XmlFetcher from '@/visualization/transit-supply/XmlFetcher'
 import TransitSupplyHelper from '@/visualization/transit-supply/TransitSupplyHelper'
 import TransitSupplyHelperWorker from '@/visualization/transit-supply/TransitSupplyHelper.worker'
 import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
 
 const DEFAULT_PROJECTION = 'EPSG:31468' // 31468' // 2048'
 
@@ -65,17 +67,8 @@ class Departure {
   public routes: Set<string> = new Set()
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'transit-supply',
-  prettyName: 'Transit Supply',
-  description: 'Depicts the scheduled transit routes on a network.',
-  requiredFileKeys: ['Transit Schedule', 'Network'],
-  requiredParamKeys: ['Projection'],
-})
-
-@Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
-export default class TransitSupply extends Vue {
+@Component({ components: { LeftDataPanel, LegendBox } })
+class TransitSupply extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -113,6 +106,8 @@ export default class TransitSupply extends Vue {
   private _transitHelper!: TransitSupplyHelper
 
   public created() {
+    SharedStore.setFullPage(true)
+
     this._attachedRouteLayers = []
     this._departures = {}
     this._mapExtentXYXY = [180, 90, -180, -90]
@@ -122,6 +117,10 @@ export default class TransitSupply extends Vue {
     this._stopFacilities = {}
     this._transitLines = {}
     this.selectedRoute = null
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
   }
 
   public beforeDestroy() {
@@ -135,7 +134,12 @@ export default class TransitSupply extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
-    this.setBreadcrumb()
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     this.setupMap()
   }
 
@@ -152,33 +156,28 @@ export default class TransitSupply extends Vue {
   private get legendRows() {
     return [['#a03919', 'Rail'], ['#448', 'Bus']]
   }
-  private setBreadcrumb() {
-    EventBus.$emit('set-breadcrumbs', [
-      { title: this.project.name, link: '/project/' + this.projectId },
-      { title: 'viz-' + this.vizId.substring(0, 4), link: '#' },
-    ])
-  }
 
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      // center: [18.5, -33.8], // lnglat, not latlng
       container: 'mymap',
-      logoPosition: 'bottom-left',
-      style: 'mapbox://styles/mapbox/dark-v9',
+      logoPosition: 'top-left',
+      style: 'mapbox://styles/mapbox/light-v9',
       pitch: 0,
-      // zoom: 9,
     })
 
-    const extent = cookie.getJSON(this.vizId + '-bounds')
+    try {
+      const extent = cookie.getJSON(this.vizId + '-bounds')
 
-    if (extent) {
-      this.mymap.fitBounds(extent, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
-        animate: false,
-      })
+      if (extent) {
+        this.mymap.fitBounds(extent, {
+          padding: { top: 2, bottom: 2, right: 2, left: 2 },
+          animate: false,
+        })
+      }
+    } catch (E) {
+      // no worries
     }
-
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
 
@@ -280,7 +279,6 @@ export default class TransitSupply extends Vue {
 
   private async processInputs(networks: NetworkInputs) {
     this.loadingText = 'Preparing...'
-
     // spawn transit helper web worker
     this._transitHelper = await TransitSupplyHelper.create({ xml: networks, projection: this.projection })
 
@@ -311,7 +309,7 @@ export default class TransitSupply extends Vue {
     cookie.set(this.vizId + '-bounds', this._mapExtentXYXY, { expires: 365 })
 
     this.mymap.fitBounds(this._mapExtentXYXY, {
-      padding: { top: 50, bottom: 100, right: 100, left: 300 },
+      padding: { top: 2, bottom: 2, right: 2, left: 2 },
       animate: false,
     })
     this.loadingText = ''
@@ -636,6 +634,18 @@ export default class TransitSupply extends Vue {
   }
 }
 
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: TransitSupply,
+  typeName: 'transit-supply',
+  prettyName: 'Transit Supply',
+  description: 'Depicts the scheduled transit routes on a network.',
+  requiredFileKeys: ['Transit Schedule', 'Network'],
+  requiredParamKeys: ['Projection'],
+})
+
+export default TransitSupply
+
 const _colorScale = colormap({ colormap: 'viridis', nshades: COLOR_CATEGORIES })
 
 const nodeReadAsync = function(filename: string) {
@@ -669,17 +679,29 @@ p {
 }
 
 #container {
-  height: 100vh;
-  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr;
+  width: 100%;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
+#mymap {
+  height: 100%;
+  width: 100%;
 }
 
 .status-blob {
-  background-color: #222;
+  background-color: #fff;
   box-shadow: 0 0 8px #00000040;
-  opacity: 0.9;
+  opacity: 0.97;
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
@@ -690,25 +712,18 @@ p {
   border-bottom: solid 1px #479ccc;
 }
 
-#mymap {
-  width: 100%;
-  height: 100%;
-  background-color: black;
-  overflow: hidden;
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-}
-
 .route {
-  background-color: #363a45;
+  background-color: #eee;
   margin: 0px 0px;
-  padding: 5px 5px;
+  padding: 5px 0px;
   text-align: left;
-  color: #bbb;
+  color: #444;
+  border-left: solid 5px #00000000;
+  border-right: solid 5px #00000000;
 }
 
 .route:hover {
-  background-color: #445;
+  background-color: white;
   cursor: pointer;
 }
 
@@ -719,7 +734,7 @@ h3 {
 
 .mytitle {
   margin-left: 10px;
-  color: white;
+  color: rgb(39, 117, 148);
 }
 
 .details {
@@ -740,8 +755,8 @@ h3 {
 }
 
 .highlightedRoute {
-  background-color: #556;
-  border-right: solid 5px #ff8;
+  background-color: white;
+  border-left: solid 5px #606aff;
 }
 
 .bigtitle {
@@ -752,6 +767,7 @@ h3 {
 }
 
 .info-header {
+  text-align: center;
   background-color: #097c43;
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
@@ -770,13 +786,11 @@ h3 {
   display: flex;
   flex-direction: column;
   width: 16rem;
-  height: 100vh;
+  height: 100%;
   background-color: #363a45;
   margin: 0px 0px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   text-align: center;
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
   opacity: 0.95;
   z-index: 5;
   animation: 0.3s ease 0s 1 slideInFromLeft;
@@ -791,12 +805,6 @@ h3 {
   }
 }
 
-.routeList {
-  width: 16rem;
-  height: 100%;
-  overflow-y: auto;
-}
-
 .stop-marker {
   position: absolute;
   width: 12px;
@@ -806,18 +814,32 @@ h3 {
   background-size: 100%;
   cursor: pointer;
 }
+
 .help-text {
   color: #ccc;
 }
 
 .status-blob p {
-  color: #ffa;
+  color: #224;
 }
 
 .legend {
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
   margin: auto 0.5rem 2rem auto;
   z-index: 10;
+}
+
+.left-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
 }
 </style>

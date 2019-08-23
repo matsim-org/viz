@@ -57,21 +57,12 @@ import ProjectStore from '@/project/ProjectStore'
 import Spinner from '@/components/Spinner.vue'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 
-// register frame animation with shared store
-SharedStore.addVisualizationType({
-  typeName: 'frame-animation',
-  prettyName: 'Traffic Animation',
-  description: 'Depict vehicles traveling in real time on the network.',
-  requiredFileKeys: ['events', 'network', 'plans'],
-  requiredParamKeys: ['snapshotInterval'],
-})
-
 @Component({
   components: {
     spinner: Spinner,
   },
 })
-export default class FrameAnimation extends Vue {
+class FrameAnimation extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
   @Prop({ type: ProjectStore, required: true })
@@ -107,7 +98,14 @@ export default class FrameAnimation extends Vue {
     return this.progress === Progress.Failed
   }
 
+  public created() {}
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
+  }
+
   public mounted() {
+    SharedStore.setFullPage(true)
     const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({
       canvasId: canvas.id,
@@ -180,6 +178,17 @@ export default class FrameAnimation extends Vue {
     this.isFetchingData = value
   }
 }
+// register frame animation with shared store
+SharedStore.addVisualizationType({
+  component: FrameAnimation,
+  typeName: 'frame-animation',
+  prettyName: 'Traffic Animation',
+  description: 'Depict vehicles traveling in real time on the network.',
+  requiredFileKeys: ['events', 'network', 'plans'],
+  requiredParamKeys: ['snapshotInterval'],
+})
+
+export default FrameAnimation
 </script>
 
 <style scoped>
@@ -193,6 +202,7 @@ export default class FrameAnimation extends Vue {
 }
 
 .mainContainer {
+  height: 100%;
   flex: 1;
   display: grid;
   grid-template: 1fr 1fr 1fr / 1fr 1fr 1fr;

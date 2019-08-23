@@ -1,3 +1,5 @@
+import { VueConfiguration } from 'vue/types/vue'
+
 export interface Entity {
   id: string
 }
@@ -37,6 +39,7 @@ export interface Permission extends Entity {
   agent: Agent
   resource: Resource
   type: PermissionType
+  owner?: boolean
 }
 
 export interface Tag extends Entity {
@@ -46,6 +49,7 @@ export interface Tag extends Entity {
 }
 
 export interface VisualizationType {
+  component?: Vue.VueConstructor
   typeName: string
   prettyName: string
   description?: string
@@ -62,6 +66,8 @@ export interface InputFile extends Entity {
 export interface Visualization extends Entity {
   type: string
   title: string
+  createdAt: number
+  updatedAt: number
   thumbnail: string // supposed to be a base64 encoded image
   properties: { [id: string]: string }
   inputFiles: { [id: string]: InputFile }

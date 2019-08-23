@@ -16,16 +16,38 @@ The recommended editor is [Visual Studio Code](https://code.visualstudio.com/Dow
 
 # install
 
-### prerequisites
+You'll need to install Node.js and NPM to build locally. Instructions for each platform are below.
+
+##### windows
+
+We've found that using the WSL "Windows 10 Subsystem for Linux" makes web development easiest on Windows. So first, install WSL following instructions here:
+
+- https://docs.microsoft.com/en-us/windows/wsl/install-win10
+- I installed Ubuntu but if you have a linux of choice, use that.
+
+Now you can install node:
+
+```
+sudo apt update
+sudo apt install nodejs npm git
+```
+
+and then follow the instructions for getting the viz code, below.
 
 ##### macports
+
+Install MacPorts - https://www.macports.org/
+
+- Note that MacPorts requires XCode! Which can take a long time to install.
+
+and then:
 
 ```
 sudo port install nodejs8
 sudo port install npm6
 ```
 
-### code itself
+### Get the code from GitHub
 
 ```
 git clone https://github.com/matsim-org/viz

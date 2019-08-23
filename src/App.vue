@@ -1,19 +1,31 @@
 <template lang="pug">
-#app
-  system-left-bar.left-nav-strip(:authStore="authStore")
+#app(:class=" {'full-page-app' : isFullPage}" )
+  system-nav-bar.top-nav-strip(:authStore="authStore")
+
+  account-panel.user-nag-area(v-if="needToNagUser" :authStore="authStore")
+
   router-view.main-content
+
+  search-results.search-panel(v-if="appState.searchResults.length")
+
 </template>
 
 <script lang="ts">
 import 'bulma/css/bulma.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import mapboxgl from 'mapbox-gl'
-import { Vue, Component, Prop } from 'vue-property-decorator'
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
-import sharedStore from '@/SharedStore'
+import * as firebase from 'firebase/app'
+
+import SharedStore from '@/SharedStore'
 import EventBus from '@/EventBus.vue'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
-import SystemLeftBar from '@/components/SystemLeftBar.vue'
+import AccountPanel from '@/components/AccountPanel.vue'
+import LoginPanel from '@/components/LoginPanel.vue'
+import SearchResults from '@/components/SearchResults.vue'
+import SystemNavBar from '@/components/SystemNavBar.vue'
+import CloudAPI from '@/communication/FireBaseAPI'
 
 // MAPBOX TOKEN
 // this is a required workaround to get the mapbox token assigned in TypeScript
@@ -22,10 +34,12 @@ const writableMapBox: any = mapboxgl
 writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
-interface BreadCrumb {
-  title: string
-  link: string
-}
+// Firebase API key is in this: (securely)
+import firebaseConfig from '@/firebase-secure'
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig)
+CloudAPI.setDb()
 
 // Register a global custom directive called `v-focus`
 Vue.directive('focus', {
@@ -36,14 +50,28 @@ Vue.directive('focus', {
   },
 })
 
-@Component({ components: { 'system-left-bar': SystemLeftBar } })
+@Component({ components: { AccountPanel, LoginPanel, SearchResults, SystemNavBar } })
 export default class App extends Vue {
-  private breadcrumbs: BreadCrumb[] = []
   @Prop({ type: AuthenticationStore, required: true })
   private authStore!: AuthenticationStore
   private authState = this.authStore.state
+  private appState = SharedStore.state
 
-  public mounted() {}
+  private get isFullPage() {
+    return this.appState.isFullPageMap
+  }
+
+  private get needToNagUser() {
+    return SharedStore.state.needToNagUserToLogin
+  }
+
+  @Watch('appState.isFullPageMap')
+  private fullPageUpdated(isFullPage: boolean) {
+    console.log('~~SWITCHING FULL PAGE: ', isFullPage)
+
+    if (isFullPage) document.body.classList.add('full-screen-page')
+    else document.body.classList.remove('full-screen-page')
+  }
 }
 </script>
 
@@ -51,12 +79,19 @@ export default class App extends Vue {
 html,
 body {
   background-color: white;
-  height: 100vh;
-  min-height: 100vh;
-  overflow-y: auto;
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', 'Open Sans', Helvetica, Arial, sans-serif;
+  font-weight: 300;
   margin: 0px 0px;
   padding: 0px 0px;
+  overflow-y: auto;
+  height: 100%;
+  overscroll-behavior: contain;
+}
+
+body.full-screen-page {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
+  height: 100%;
 }
 
 h1,
@@ -65,42 +100,49 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', 'Open Sans', Helvetica, Arial, sans-serif;
   font-weight: 700;
   color: #363636;
+}
+
+b {
+  font-weight: 700;
 }
 
 #app {
   background-color: white;
   display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr;
-  height: 100%;
-  max-height: 100%;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
 }
 
-.main-content {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  z-index: 1;
+.full-page-app {
   height: 100%;
-  max-height: 100vh;
-  overflow-y: auto;
 }
 
-.left-nav-strip {
-  width: 3.75rem;
+.top-nav-strip {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  padding: 0.5rem 0rem 0.5rem 0rem;
-  background-color: #242831;
+  padding: 0rem 0.5rem 0rem 0.5rem;
   box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
-  /*  background-image: linear-gradient(-150deg, black, #052040); /* linear-gradient(-150deg, #479ccc, #114d72); */
-  z-index: 5;
+  z-index: 10;
+  width: 100%;
+  height: 4rem;
+}
+
+.user-nag-area {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.main-content {
+  grid-column: 1 / 2;
+  grid-row: 3 / 4;
+  z-index: 1;
 }
 
 /* `:focus` is linked to `:hover` for basic accessibility */
@@ -118,28 +160,6 @@ a:focus {
   display: flex;
 }
 
-.nav-logo {
-  margin-right: 0.7rem;
-  height: 26px;
-}
-
-.breadcrumb-row {
-  grid-row: 1 / 2;
-  grid-column: 2 / 3;
-  display: flex;
-  flex-direction: row;
-  vertical-align: center;
-}
-
-.nav-breadcrumb {
-  color: #ccc;
-  margin: auto 0.25rem auto 0rem;
-  font-size: 0.8rem;
-}
-
-.nav-bread-link {
-  margin-left: 0.5rem;
-}
 a:hover {
   color: #fff;
 }
@@ -158,5 +178,14 @@ a:hover {
 
 .medium-zoom-overlay ~ img {
   z-index: 101;
+}
+
+.search-panel {
+  grid-column: 1 / 2;
+  grid-row: 1 / 4;
+  margin: 4rem 2rem auto auto;
+  z-index: 8;
+  width: 22rem;
+  box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.4);
 }
 </style>

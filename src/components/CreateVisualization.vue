@@ -53,13 +53,15 @@ modal(@close-requested="cancel()")
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import Modal from '@/components/Modal.vue'
+
+import { VisualizationType, Project, Visualization } from '@/entities/Entities'
+import CloudAPI from '@/communication/FireBaseAPI'
+import DummyThumbnail from '@/project/DummyThumbnail'
 import Error from '@/components/Error.vue'
 import FileAPI, { CreateVisualizationRequest } from '../communication/FileAPI'
-import SharedStore, { SharedState } from '../SharedStore'
+import Modal from '@/components/Modal.vue'
 import ProjectStore from '@/project/ProjectStore'
-import { VisualizationType, Project, Visualization } from '@/entities/Entities'
-import DummyThumbnail from '@/project/DummyThumbnail'
+import SharedStore, { SharedState } from '../SharedStore'
 
 @Component({
   components: {
@@ -77,12 +79,21 @@ export default class CreateVisualizationViewModel extends Vue {
   @Prop({ required: true })
   private editVisualization?: Visualization
 
+  @Prop({ type: String, required: true })
+  private ownerId!: string
+
+  @Prop({ type: String, required: true })
+  private projectId!: string
+
+  @Prop({ type: String, required: true })
+  private runId!: string
+
   private sharedState = SharedStore.state
 
   private isVizListOpen = false
   private isRequesting = false
   private errorMessage = ''
-  private selectedVizType: VisualizationType = this.createEmtpyVisualizationType()
+  private selectedVizType: VisualizationType = this.createEmptyVisualizationType()
   private openDropdown = ''
   private fileLookup: Map<string, string> = new Map()
 
@@ -168,14 +179,20 @@ export default class CreateVisualizationViewModel extends Vue {
           description: this.description,
         },
         inputFiles: this.inputFiles,
-        inputParameters: this.parameters,
+        inputParameters: Object.assign(this.parameters, {
+          description: this.description,
+        }),
       }
+      // TODO: Two sources of truth! Creating viz on back-end AND on Firebase. Fix!!!
       const viz = await this.fileApi.createVisualization(request)
+      await CloudAPI.createVisualization(viz, this.ownerId, this.projectId, this.runId)
+      console.log({ CREATED_VIZ: viz })
       this.projectStore.addVisualizationToSelectedProject(viz)
 
       // delete old viz, if we edited it
       if (this.editVisualization) this.projectStore.deleteVisualization(this.editVisualization)
 
+      this.$emit('updated')
       this.close()
     } catch (error) {
       console.log(error)
@@ -208,7 +225,7 @@ export default class CreateVisualizationViewModel extends Vue {
     this.inputFiles = {}
   }
 
-  private createEmtpyVisualizationType(): VisualizationType {
+  private createEmptyVisualizationType(): VisualizationType {
     return {
       typeName: '',
       prettyName: '',

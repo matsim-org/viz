@@ -1,30 +1,29 @@
 <template lang="pug">
-.main-content
-  #mymap
-  .status-blob(v-if="loadingText"): p {{ loadingText }}
-  project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  .info-blob(v-if="!loadingText")
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-    .info-header
-      h3(style="padding: 0rem 3rem 0.5rem 3rem; font-weight: normal;color: white;") Emissions Grid
-    .buttons-bar
-      h4.heading Pollutant
-      .pollutants
-        .hey(v-for="p in pollutants")
-          button.button.pollutant(
-            :class="{'is-warning': p===pollutant, 'is-gray': p!==pollutant}"
-            @click="clickedPollutant(p)") {{p}}
-      h4.heading Time of Day
-      .slider-box
-        time-slider.time-slider(:bind="currentTime"
-                                :initialTime="currentTime"
-                                @change="changedSlider")
+#container
+  .map-container
+    #mymap
 
-    .theme-choices
-      img.theme-button(v-for="theme in themes"
-                       :class="{'selected-theme': theme.name === chosenTheme.name}"
-                       :src="theme.icon"
-                       @click="clickedTheme(theme)")
+  .status-blob(v-if="loadingText"): p {{ loadingText }}
+
+  left-data-panel.left-panel(v-if="!loadingText" title="Emissions Grid")
+    .dashboard-panel
+      .pollution-settings
+        h4.heading Pollutant
+        .pollutants
+          .hey(v-for="p in pollutants")
+            button.button.pollutant(
+              :class="{'is-warning': p===pollutant, 'is-gray': p!==pollutant}"
+              @click="clickedPollutant(p)") {{p}}
+        h4.heading Time of Day
+        .slider-box
+          time-slider.time-slider(:bind="currentTime"
+                                  :initialTime="currentTime"
+                                  @change="changedSlider")
+      .theme-choices
+        img.theme-button(v-for="theme in themes"
+                        :class="{'selected-theme': theme.name === chosenTheme.name}"
+                        :src="theme.icon"
+                        @click="clickedTheme(theme)")
 </template>
 
 <script lang="ts">
@@ -41,20 +40,12 @@ import Config from '@/config/Config'
 import EventBus from '@/EventBus.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore from '@/project/ProjectStore'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import sharedStore from '@/SharedStore'
 import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
-
-sharedStore.addVisualizationType({
-  typeName: 'emissions',
-  prettyName: 'Emissions Grid',
-  description: 'Show emissions at gridpoints',
-  requiredFileKeys: ['Events', 'Network'],
-  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
-})
 
 interface MapElement {
   lngLat: LngLat
@@ -76,11 +67,11 @@ interface Point {
 
 @Component({
   components: {
-    'time-slider': TimeSlider,
-    'project-summary-block': ProjectSummaryBlock,
+    TimeSlider,
+    LeftDataPanel,
   },
 })
-export default class EmissionsGrid extends Vue {
+class EmissionsGrid extends Vue {
   @Prop({ type: String, required: true })
   private projectId!: string
 
@@ -155,8 +146,13 @@ export default class EmissionsGrid extends Vue {
     if (this._myWorker) this._myWorker.destroy()
   }
 
-  public created() {}
+  public created() {
+    sharedStore.setFullPage(true)
+  }
 
+  public destroyed() {
+    sharedStore.setFullPage(false)
+  }
   public async fetchEmissionsBins(): Promise<any> {
     const result = await fetch(`${Config.emissionsServer}/${this.vizId}/startTimes`, {
       mode: 'cors',
@@ -182,6 +178,12 @@ export default class EmissionsGrid extends Vue {
   public async mounted() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
+
+    sharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
+
     if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
 
     // do things that can only be done after MapBox is fully initialized
@@ -189,7 +191,7 @@ export default class EmissionsGrid extends Vue {
       bearing: 0,
       // center: [x,y], // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
-      logoPosition: 'bottom-right',
+      logoPosition: 'top-left',
       style: this.chosenTheme.style,
       pitch: 0,
       zoom: 14,
@@ -199,8 +201,12 @@ export default class EmissionsGrid extends Vue {
       this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
       if (this.initialMapExtent) {
         const lnglat = JSON.parse(this.initialMapExtent)
+
+        const mFac = this.isMobile ? 0 : 1
+        const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
+
         this.mymap.fitBounds(lnglat, {
-          padding: { top: 50, bottom: 100, right: 100, left: 300 },
+          padding,
           animate: false,
         })
       }
@@ -208,6 +214,17 @@ export default class EmissionsGrid extends Vue {
       console.log(e)
     }
     this.mymap.on('style.load', this.mapIsReady)
+  }
+
+  private isMobile() {
+    const w = window
+    const d = document
+    const e = d.documentElement
+    const g = d.getElementsByTagName('body')[0]
+    const x = w.innerWidth || e.clientWidth || g.clientWidth
+    const y = w.innerHeight || e.clientHeight || g.clientHeight
+
+    return x < 640
   }
 
   private clickedTheme(theme: any) {
@@ -333,25 +350,38 @@ export default class EmissionsGrid extends Vue {
     this.loadingText = ''
   }
 }
+
+sharedStore.addVisualizationType({
+  component: EmissionsGrid,
+  typeName: 'emissions',
+  prettyName: 'Emissions Grid',
+  description: 'Show emissions at gridpoints',
+  requiredFileKeys: ['Events', 'Network'],
+  requiredParamKeys: ['Projection', 'Cell size', 'Smoothing radius', 'Time bin size'],
+})
+
+export default EmissionsGrid
 </script>
 
 <style scoped>
-/* this is the initial start page layout */
-.main-content {
+#container {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: 1fr auto;
-  height: 100%;
-  padding: 0px;
+  width: 100%;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 4;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
   height: 100%;
   width: 100%;
-  grid-row: 1 / 3;
-  grid-column: 1 / 4;
-  overflow: hidden;
-  background: #fff;
 }
 
 .loading-message {
@@ -359,13 +389,6 @@ export default class EmissionsGrid extends Vue {
   grid-column: 1 / 4;
   overflow: hidden;
   opacity: 0.8;
-}
-
-.left-overlay {
-  grid-row: 1 / 3;
-  grid-column: 1 / 2;
-  z-index: 5000;
-  pointer-events: none;
 }
 
 .slider-box {
@@ -408,7 +431,7 @@ a:focus {
   text-align: center;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  z-index: 2;
+  z-index: 8;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
 }
@@ -417,28 +440,13 @@ a:focus {
   color: #0066a2; /* #ffa; /* #0066a1; */
 }
 
-.project-summary-block {
-  width: 16rem;
+.left-panel {
   grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  margin: 0px auto auto 0px;
-  z-index: 10;
-}
-
-.info-blob {
+  grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
   width: 16rem;
-  height: 100vh;
-  background-color: #eeeeffee;
-  margin: 0px 0px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  text-align: center;
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  opacity: 1;
-  z-index: 5;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
+  overflow-y: auto;
 }
 
 .info-header {
@@ -446,12 +454,13 @@ a:focus {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
+  text-align: center;
 }
 
-.buttons-bar {
-  margin: 0.5rem 0.5rem 0.5rem 0.5rem;
+.pollution-settings {
+  margin: 0rem 0.5rem 0.5rem 0.5rem;
   padding: 0rem 0.25rem;
-  height: 100%;
+  flex-grow: 1;
 }
 
 .pollutant {
@@ -463,15 +472,6 @@ a:focus {
   text-align: left;
   color: black;
   margin-top: 2rem;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
 }
 
 .theme-choices {
@@ -494,6 +494,12 @@ a:focus {
 
 .selected-theme {
   background-color: #6f6;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .selected-theme:hover {

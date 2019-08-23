@@ -1,9 +1,9 @@
 <template lang="pug">
-  div.authentication
+.authentication
     .requesting(v-if="isRequesting")
       spinner
       span {{message}}
-    div.authError(v-if="isFailed")
+    .authError(v-if="isFailed")
       span.errorMessage {{message}}
       button.button.is-link(v-on:click="onTryAgainClicked") Try again
 </template>
@@ -14,11 +14,18 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin: auto auto;
 }
+
+.requesting {
+  flex: 1;
+}
+
 .authError {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
 }
 
 .errorMessage {
@@ -65,11 +72,16 @@ export default class Authentication extends Vue {
   }
 
   public created() {
+    sharedStore.setFullPage(true)
     if (this.isRequesting) {
       this.handleAuthenticationResponse(this.$route, this.authStore)
     } else if (this.isNotAuthenticated) {
       this.authStore.requestAuthentication()
     }
+  }
+
+  public destroyed() {
+    sharedStore.setFullPage(false)
   }
 
   public beforeMount() {

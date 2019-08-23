@@ -1,13 +1,12 @@
 <template lang="pug">
 #container
-  .status-blob(v-if="loadingText"): p {{ loadingText }}
   project-summary-block.project-summary-block(:project="project" :projectId="projectId")
   .main-area
     h1.center {{ project.name }}
     h3.center Flow Diagram
     p.center {{ totalTrips.toLocaleString() }} total trips
 
-    svg#chart.chart
+    svg#chart
 </template>
 
 <script lang="ts">
@@ -33,17 +32,8 @@ const INPUTS = {
   FLOWS: 'Flows (.csv)',
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'sankey',
-  prettyName: 'Sankey Flow Diagram',
-  description: 'Depicts flows between choices',
-  requiredFileKeys: [INPUTS.FLOWS],
-  requiredParamKeys: [],
-})
-
 @Component({ components: { 'legend-box': LegendBox, 'project-summary-block': ProjectSummaryBlock } })
-export default class SankeyDiagram extends Vue {
+class SankeyDiagram extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -53,10 +43,8 @@ export default class SankeyDiagram extends Vue {
   @Prop({ type: FileAPI, required: true })
   private fileApi!: FileAPI
 
-  @Prop({ type: AuthenticationStore, required: true })
+  @Prop({ type: AuthenticationStore })
   private authStore!: AuthenticationStore
-
-  // -------------------------- //
 
   private loadingText: string = 'Flow Diagram'
   private project: any = {}
@@ -78,7 +66,11 @@ export default class SankeyDiagram extends Vue {
   private async getVizDetails() {
     this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
     this.project = await this.fileApi.fetchProject(this.projectId)
-    if (SharedStore.debug) console.log(this.visualization)
+
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
   }
 
   private get legendRows() {
@@ -166,7 +158,7 @@ export default class SankeyDiagram extends Vue {
     data.alignLinkTypes = true
 
     const layout = sankey()
-      .extent([[100, 100], [700, 700]])
+      .extent([[100, 100], [700, 600]])
       .nodeWidth(3)
 
     // layout.ordering(data.order)
@@ -184,9 +176,28 @@ export default class SankeyDiagram extends Vue {
       .attr('viewBox', '0 0 800 800')
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: SankeyDiagram,
+  typeName: 'sankey',
+  prettyName: 'Sankey Flow Diagram',
+  description: 'Depicts flows between choices',
+  requiredFileKeys: [INPUTS.FLOWS],
+  requiredParamKeys: [],
+})
+
+export default SankeyDiagram
 </script>
 
 <style scoped>
+#container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+}
+
 h1 {
   margin: 0px auto;
   font-size: 1.5rem;
@@ -199,28 +210,6 @@ h3 {
 h4,
 p {
   margin: 1rem 1rem;
-}
-
-#container {
-  height: auto;
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-}
-
-.status-blob {
-  background-color: white;
-  box-shadow: 0 0 8px #00000040;
-  opacity: 0.9;
-  margin: auto 0px auto -10px;
-  padding: 3rem 0px;
-  text-align: center;
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-  z-index: 2;
-  border-top: solid 1px #479ccc;
-  border-bottom: solid 1px #479ccc;
 }
 
 .details {
@@ -250,49 +239,6 @@ p {
   z-index: 10;
 }
 
-.info-blob {
-  display: flex;
-  flex-direction: column;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
-  background-color: #363a45;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  height: 100vh;
-  margin: 0px 0px;
-  opacity: 0.95;
-  text-align: center;
-  width: 16rem;
-  z-index: 5;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.routeList {
-  width: 16rem;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.status-blob p {
-  color: #444;
-  font-size: 0.9rem;
-}
-
-.legend {
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
-  margin: auto 0.5rem 2rem auto;
-  z-index: 10;
-}
-
 /* from sankey example */
 .node rect {
   cursor: move;
@@ -316,11 +262,10 @@ p {
 }
 
 .main-area {
-  padding-top: 6rem;
+  padding-top: 4rem;
   grid-row: 1/3;
   grid-column: 1/3;
   width: 100%;
-  height: auto;
   display: flex;
   flex-direction: column;
   margin-bottom: auto;

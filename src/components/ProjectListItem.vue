@@ -92,6 +92,22 @@ export default class ProjectListItem extends Vue {
   font-size: 14px;
   font-style: italic;
 }
+
+@media only screen and (max-width: 640px) {
+  .visualizations {
+    margin-bottom: 2rem;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(auto-fill, 300px);
+  }
+
+  .visualization-item {
+    display: table-cell;
+    vertical-align: top;
+    width: 300px;
+    padding: -20px;
+  }
+}
 </style>
 
 

@@ -3,7 +3,7 @@
     button.clickContent(v-on:click="$emit('itemClicked')")
       .title.is-6
         slot(name="title")
-      .subtitle.is-6
+      .subtitle.is-7
         slot(name="content")
     .accessory
       slot(name="accessory")

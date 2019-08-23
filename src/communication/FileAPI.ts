@@ -193,6 +193,7 @@ export default class FileAPI {
   private async generateError(response: Response): Promise<Error> {
     const error = await response.json()
     console.error(error)
+    if (error.message) return new Error(error.message)
     return new Error(error.error_description)
   }
 }

@@ -1,8 +1,7 @@
 import FileAPI from '@/communication/FileAPI'
 
 import UploadStore from './UploadStore'
-import { Project, FileEntry, Visualization, PermissionType } from '@/entities/Entities'
-import { stringify } from 'querystring'
+import { Project, FileEntry, Visualization, PermissionType, Permission } from '@/entities/Entities'
 
 export interface ProjectState {
   projects: Project[]
@@ -85,6 +84,31 @@ export default class ProjectStore {
     }
   }
 
+  public async removePermissionForUser(authId: string) {
+    const currentProject = this.state.selectedProject
+    const existingPermission = currentProject.permissions.find(permission => permission.agent.authId === authId)
+    try {
+      this.state.isFetching = true
+      if (existingPermission) {
+        await this.api.removePermission(currentProject.id, authId)
+        currentProject.permissions = currentProject.permissions.filter(p => p !== existingPermission)
+      }
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
+  public async setPermissionForUser(authId: string, requestedPermission: PermissionType) {
+    const currentProject = this.state.selectedProject
+    try {
+      this.state.isFetching = true
+      const permission = await this.api.addPermission(currentProject.id, authId, requestedPermission)
+      currentProject.permissions.push(permission)
+    } finally {
+      this.state.isFetching = false
+    }
+  }
+
   public async changeVisibilityOfSelectedProject(visibility: ProjectVisibility) {
     const currentProject = this.state.selectedProject
     const publicPermission = currentProject.permissions.find(permission => permission.agent.authId === 'allUsers')
@@ -123,6 +147,19 @@ export default class ProjectStore {
       currentProject.files = currentProject.files.filter(file => file.id !== id)
     } finally {
       this.state.isFetching = false
+    }
+  }
+
+  public async filterFilesByTag(tag: string) {
+    const currentProject = this.state.selectedProject
+
+    // TODO -- for now, the 'default' tag is hardcoded to match NON-tagged files.
+    if (tag === 'default') {
+      currentProject.files = currentProject.files.filter(file => file.tags.length === 0)
+    } else {
+      const foundTag = currentProject.tags.find(t => t.name === tag)
+      if (foundTag) currentProject.files = currentProject.files.filter(file => file.tags.includes(foundTag))
+      else currentProject.files = []
     }
   }
 
@@ -180,12 +217,11 @@ export default class ProjectStore {
     this.state.isFetching = true
     try {
       const fetchedVisualizations = await this.api.fetchVizualizationsForProject(project.id)
-      console.log({ fetchedVisualizations })
       const stateProject = this.state.projects.find(p => p.id === project.id)
       if (stateProject) {
         stateProject.visualizations = fetchedVisualizations
       } else {
-        throw new Error('couldn"t find project')
+        throw new Error(`couldn't find project`)
       }
     } finally {
       this.state.isFetching = false

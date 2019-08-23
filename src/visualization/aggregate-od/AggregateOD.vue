@@ -1,31 +1,43 @@
 <template lang="pug">
 #container
   .status-blob(v-if="loadingText"): p {{ loadingText }}
-  project-summary-block.project-summary-block(:project="project" :projectId="projectId")
-  .info-blob(v-if="!loadingText")
-    project-summary-block.project-summary-block(:project="project" :projectId="projectId")
+
+  .map-complications(v-if="!isMobile()")
+    legend-box.complication(:rows="legendRows")
+    scale-box.complication(:rows="scaleRows")
+
+  .map-container
+    #mymap
+
+  left-data-panel.left-panel(v-if="!loadingText")
+   .dashboard-panel
     .info-header
-      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ visualization.title }}
+      h3(style="text-align: center; padding: 0.5rem 3rem; font-weight: normal;color: white;")
+        | {{this.visualization.title ? this.visualization.title : this.visualization.type.toUpperCase()}}
+
+    .info-description(style="padding: 0px 0.5rem;" v-if="this.visualization.parameters.description")
+      p.description {{ this.visualization.parameters.description.value }}
+
     .widgets
       h4.heading Time of day:
-      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='changedSlider')
+      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='bounceTimeSlider')
       span.checkbox
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
-      h4.heading Scale:
-      time-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='changedScale')
+      h4.heading Line scale:
+
+      scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='bounceScaleSlider')
 
       h4.heading Show totals for:
       .buttons-bar
         // {{rowName}}
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
-        button.button(@click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
+        button.button(hint="hide" @click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
 
-    // p#mychart.details(style="margin-top:20px") Click any link or center for more details.
-  #mymap
-  // legend-box.legend(:rows="legendRows")
+
+
 </template>
 
 <script lang="ts">
@@ -35,7 +47,8 @@ import * as BlobUtil from 'blob-util'
 import * as shapefile from 'shapefile'
 import * as turf from '@turf/turf'
 import colormap from 'colormap'
-import mapboxgl, { MapMouseEvent } from 'mapbox-gl'
+import { debounce } from 'debounce'
+import mapboxgl, { MapMouseEvent, PositionOptions } from 'mapbox-gl'
 import proj4 from 'proj4'
 import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
@@ -44,13 +57,17 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
-import LegendBox from '@/visualization/transit-supply/LegendBox.vue'
-import ProjectSummaryBlock from '@/visualization/transit-supply/ProjectSummaryBlock.vue'
+import LeftDataPanel from '@/components/LeftDataPanel.vue'
+import LegendBox from '@/visualization/aggregate-od/LegendBoxOD.vue'
+import ScaleBox from '@/visualization/aggregate-od/ScaleBoxOD.vue'
+import TimeSlider from '@/visualization/aggregate-od/TimeSlider2.vue'
 import SharedStore from '@/SharedStore'
-import TimeSlider from '@/components/TimeSlider2.vue'
+import ScaleSlider from '@/components/ScaleSlider.vue'
 import { Visualization } from '@/entities/Entities'
 import { multiPolygon } from '@turf/turf'
 import { FeatureCollection, Feature } from 'geojson'
+import SystemLeftBar from '../components/SystemLeftBar.vue'
+import ModalVue from '../components/Modal.vue'
 
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
@@ -70,7 +87,7 @@ const vegaChart: any = {
 }
 */
 
-const SCALE = [1, 5, 10, 50, 100, 500]
+const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -78,23 +95,16 @@ const INPUTS = {
   DBF_FILE: 'Shapefile .DBF',
 }
 
-// register component with the SharedStore
-SharedStore.addVisualizationType({
-  typeName: 'aggregate-od',
-  prettyName: 'Origin/Destination Patterns',
-  description: 'Depicts aggregate O/D flows between areas.',
-  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
-  requiredParamKeys: ['Projection'],
-})
-
 @Component({
   components: {
-    'legend-box': LegendBox,
-    'project-summary-block': ProjectSummaryBlock,
-    'time-slider': TimeSlider,
+    LeftDataPanel,
+    LegendBox,
+    ScaleBox,
+    ScaleSlider,
+    TimeSlider,
   },
 })
-export default class AggregateOD extends Vue {
+class AggregateOD extends Vue {
   @Prop({ type: String, required: true })
   private vizId!: string
 
@@ -109,6 +119,7 @@ export default class AggregateOD extends Vue {
 
   // -------------------------- //
 
+  private mySharedState = SharedStore
   private centroids: any = {}
   private centroidSource: any = {}
   private linkData: any = {}
@@ -123,6 +134,8 @@ export default class AggregateOD extends Vue {
   private colName: string = ''
   private headers: string[] = []
 
+  private geojson: any = {}
+
   private showTimeRange = false
 
   private isOrigin: boolean = true
@@ -134,7 +147,8 @@ export default class AggregateOD extends Vue {
   private project: any = {}
   private visualization!: Visualization
 
-  private sliderValue: number[] = [0, 5]
+  private scaleFactor: any = 1
+  private sliderValue: number[] = [1, 500]
   private scaleValues = SCALE
   private currentScale = SCALE[0]
   private currentTimeBin = TOTAL_MSG
@@ -145,9 +159,20 @@ export default class AggregateOD extends Vue {
   private _mapExtentXYXY!: any
   private _maximum!: number
 
-  public created() {
+  private dailyFrom: any
+  private dailyTo: any
+
+  private bounceTimeSlider = debounce(this.changedTimeSlider, 100)
+  private bounceScaleSlider = debounce(this.changedScale, 50)
+
+  public async created() {
+    SharedStore.setFullPage(true)
     this._mapExtentXYXY = [180, 90, -180, -90]
     this._maximum = 0
+  }
+
+  public destroyed() {
+    SharedStore.setFullPage(false)
   }
 
   public async mounted() {
@@ -155,6 +180,10 @@ export default class AggregateOD extends Vue {
     this.vizId = (this as any).$route.params.vizId
 
     await this.getVizDetails()
+    SharedStore.setBreadCrumbs([
+      { label: this.visualization.title, url: '/' },
+      { label: this.visualization.project.name, url: '/' },
+    ])
     this.setupMap()
   }
 
@@ -170,54 +199,89 @@ export default class AggregateOD extends Vue {
     if (this.visualization.parameters.Projection) {
       this.projection = this.visualization.parameters.Projection.value
     }
+    if (this.visualization.parameters['Scale Factor']) {
+      this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor'].value)
+    }
   }
 
   private get legendRows() {
-    return [['#a03919', 'Rail'], ['#448', 'Bus']]
+    return ['#00aa66', '#880033', '↓', '↑']
   }
 
   private setupMap() {
     this.mymap = new mapboxgl.Map({
       container: 'mymap',
-      logoPosition: 'bottom-left',
+      logoPosition: 'top-left',
       style: 'mapbox://styles/mapbox/outdoors-v9',
     })
 
-    const extent = localStorage.getItem(this.vizId + '-bounds')
-    if (extent) {
-      const lnglat = JSON.parse(extent)
-      this.mymap.fitBounds(lnglat, {
-        padding: { top: 50, bottom: 100, right: 100, left: 300 },
-        animate: false,
-      })
+    try {
+      const extent = localStorage.getItem(this.vizId + '-bounds')
+      if (extent) {
+        const lnglat = JSON.parse(extent)
+
+        const mFac = this.isMobile ? 0 : 1
+        const padding = { top: 50 * mFac, bottom: 100 * mFac, right: 100 * mFac, left: 300 * mFac }
+
+        this.mymap.fitBounds(lnglat, {
+          padding,
+          animate: false,
+        })
+      }
+    } catch (e) {
+      // no consequence if json was weird, just drop it
     }
 
-    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
     this.mymap.on('click', this.handleEmptyClick)
     // Start doing stuff AFTER the MapBox library has fully initialized
     this.mymap.on('load', this.mapIsReady)
+    // this.mymap.addControl(new mapboxgl.ScaleControl(), 'bottom-right')
+    this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
   }
 
   private handleEmptyClick(e: mapboxgl.MapMouseEvent) {
     this.fadeUnselectedLinks(-1)
+    if (this.isMobile()) {
+      // do something
+    }
   }
 
   private async mapIsReady() {
     const files = await this.loadFiles()
     if (files) {
       this.setMapExtent()
-      const geojson = await this.processInputs(files)
+      this.geojson = await this.processInputs(files)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
-      this.addCentroids(geojson)
-      this.convertRegionColors(geojson)
-      this.addGeojsonToMap(geojson)
+      this.buildCentroids(this.geojson)
+      this.convertRegionColors(this.geojson)
+      this.addGeojsonToMap(this.geojson)
       this.setMapExtent()
       this.buildSpiderLinks()
       this.setupKeyListeners()
     }
 
     this.loadingText = ''
+  }
+
+  private isMobile() {
+    const w = window
+    const d = document
+    const e = d.documentElement
+    const g = d.getElementsByTagName('body')[0]
+    const x = w.innerWidth || e.clientWidth || g.clientWidth
+    const y = w.innerHeight || e.clientHeight || g.clientHeight
+
+    return x < 640
+  }
+
+  private get scaleRows() {
+    return [
+      Math.min(
+        Math.round((1200 * Math.pow(this.currentScale, -1) + 20) * Math.sqrt(this.scaleFactor)),
+        1000 * this.scaleFactor
+      ),
+    ]
   }
 
   private buildSpiderLinks() {
@@ -232,7 +296,6 @@ export default class AggregateOD extends Vue {
         const destCoord = this.centroids[link.dest].geometry.coordinates
         const color = origCoord[1] - destCoord[1] > 0 ? '#00aa66' : '#880033'
         const fade = 0.7
-
         const properties: any = {
           id: id,
           orig: link.orig,
@@ -272,13 +335,15 @@ export default class AggregateOD extends Vue {
         type: 'line',
         paint: {
           'line-color': ['get', 'color'],
-          'line-width': ['*', 1, ['get', 'daily']],
+          'line-width': ['*', (1 / 500) * this.scaleFactor, ['get', 'daily']],
           'line-offset': ['*', 0.5, ['get', 'daily']],
           'line-opacity': ['get', 'fade'],
         },
       },
       'centroid-layer'
     )
+
+    this.changedScale(this.currentScale)
 
     const parent = this
     this.mymap.on('click', 'spider-layer', function(e: mapboxgl.MapMouseEvent) {
@@ -299,17 +364,46 @@ export default class AggregateOD extends Vue {
   private clickedOrigins() {
     this.isOrigin = true
     this.updateCentroidLabels()
+
+    this.convertRegionColors(this.geojson)
+
+    // avoiding mapbox typescript bug:
+    const tsMap = this.mymap as any
+    tsMap.getSource('shpsource').setData(this.geojson)
   }
 
   private clickedDestinations() {
     this.isOrigin = false
     this.updateCentroidLabels()
+
+    this.convertRegionColors(this.geojson)
+
+    // avoiding mapbox typescript bug:
+    const tsMap = this.mymap as any
+    tsMap.getSource('shpsource').setData(this.geojson)
   }
 
   private updateCentroidLabels() {
     const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
+    const radiusField = this.isOrigin ? 'widthFrom' : 'widthTo'
 
-    this.mymap.removeLayer('centroid-label-layer')
+    if (this.mymap.getLayer('centroid-layer')) {
+      this.mymap.removeLayer('centroid-label-layer')
+      this.mymap.removeLayer('centroid-layer')
+    }
+
+    this.mymap.addLayer({
+      id: 'centroid-layer',
+      source: 'centroids',
+      type: 'circle',
+      paint: {
+        'circle-color': '#ec0',
+        'circle-radius': ['get', radiusField],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white',
+      },
+    })
+
     this.mymap.addLayer({
       id: 'centroid-label-layer',
       source: 'centroids',
@@ -348,13 +442,14 @@ export default class AggregateOD extends Vue {
     console.log(this.marginals.rowTotal[id])
     console.log(this.marginals.colTotal[id])
 
+    /* vega chart stuff
     const values = []
-
     for (let i = 0; i < 24; i++) {
       values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
     }
     // vegaChart.data.values = values
     // vegaEmbed('#mychart', vegaChart)
+    */
 
     this.fadeUnselectedLinks(id)
   }
@@ -379,16 +474,17 @@ export default class AggregateOD extends Vue {
     const props = e.features[0].properties
     console.log(props)
 
-    const trips = props.daily
+    const trips = props.daily * this.scaleFactor
     let revTrips = 0
     const reverseDir = '' + props.dest + ':' + props.orig
 
-    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily
+    if (this.linkData[reverseDir]) revTrips = this.linkData[reverseDir].daily * this.scaleFactor
 
     const totalTrips = trips + revTrips
 
     let html = `<h1>${totalTrips} Bidirectional Trips</h1><br/>`
-    html += `<p>${trips} trips // ${revTrips} trips</p>`
+    html += `<p> -----------------------------</p>`
+    html += `<p>${trips} trips : ${revTrips} reverse trips</p>`
 
     new mapboxgl.Popup({ closeOnClick: true })
       .setLngLat(e.lngLat)
@@ -410,7 +506,83 @@ export default class AggregateOD extends Vue {
     }
   }
 
-  private addCentroids(geojson: FeatureCollection) {
+  private handleCentroidsForTimeOfDayChange(timePeriod: any) {
+    const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+    for (const feature of this.geojson.features) {
+      const centroid: any = turf.centerOfMass(feature as any)
+
+      centroid.properties.id = feature.id
+
+      const values = this.calculateCentroidValuesForZone(timePeriod, feature)
+
+      centroid.properties.dailyFrom = values.from * this.scaleFactor
+      centroid.properties.dailyTo = values.to * this.scaleFactor
+
+      this.dailyFrom = centroid.properties.dailyFrom
+      this.dailyTo = centroid.properties.dailyTo
+
+      centroid.properties.widthFrom = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
+      centroid.properties.widthTo = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
+
+      if (!feature.properties) feature.properties = {}
+
+      // bc/ is this correct?
+      feature.properties.dailyFrom = values.from
+      feature.properties.dailyTo = values.to
+
+      if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
+        centroids.features.push(centroid)
+        if (feature.properties) this.centroids[feature.properties.NO] = centroid
+      }
+    }
+
+    this.centroidSource = centroids
+
+    const tsMap = this.mymap as any
+    tsMap.getSource('centroids').setData(this.centroidSource)
+    this.updateCentroidLabels()
+  }
+
+  private calculateCentroidValuesForZone(timePeriod: any, feature: any) {
+    let from = 0
+    let to = 0
+
+    // daily
+    if (timePeriod === 'All >>') {
+      from = Math.round(this.marginals.rowTotal[feature.id as any])
+      to = Math.round(this.marginals.colTotal[feature.id as any])
+      return { from, to }
+    }
+
+    // time range
+    if (timePeriod.constructor === Array) {
+      let hourFrom = parseInt(timePeriod[0], 10)
+      if (!hourFrom) hourFrom = 1
+
+      const hourTo = parseInt(timePeriod[1], 10)
+
+      for (let i = hourFrom; i <= hourTo; i++) {
+        from += Math.round(this.marginals.from[feature.id as any][i])
+        to += Math.round(this.marginals.to[feature.id as any][i])
+      }
+      return { from, to }
+    }
+
+    // single point in time
+    const hour = parseInt(timePeriod, 10)
+    from = Math.round(this.marginals.from[feature.id as any][hour])
+    to = Math.round(this.marginals.to[feature.id as any][hour])
+    return { from, to }
+  }
+
+  private buildCentroids(geojson: FeatureCollection) {
     const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
     for (const feature of geojson.features) {
@@ -419,10 +591,21 @@ export default class AggregateOD extends Vue {
       centroid.properties.id = feature.id
       const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
       const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
-      centroid.properties.dailyFrom = dailyFrom
-      centroid.properties.dailyTo = dailyTo
-      centroid.properties.totalFromTo = centroid.properties.dailyFrom + centroid.properties.dailyTo
-      centroid.properties.width = Math.min(30, Math.max(10, Math.sqrt(centroid.properties.totalFromTo)))
+
+      centroid.properties.dailyFrom = dailyFrom * this.scaleFactor
+      centroid.properties.dailyTo = dailyTo * this.scaleFactor
+
+      this.dailyFrom = centroid.properties.dailyFrom
+      this.dailyTo = centroid.properties.dailyTo
+
+      centroid.properties.widthFrom = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
+      centroid.properties.widthTo = Math.min(
+        70,
+        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+      )
 
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
       if (dailyTo) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyTo)
@@ -447,27 +630,7 @@ export default class AggregateOD extends Vue {
       type: 'geojson',
     } as any)
 
-    this.mymap.addLayer({
-      id: 'centroid-layer',
-      source: 'centroids',
-      type: 'circle',
-      paint: {
-        'circle-color': '#ec0',
-        'circle-radius': ['get', 'width'],
-        'circle-stroke-width': 3,
-        'circle-stroke-color': 'white',
-      },
-    })
-
-    this.mymap.addLayer({
-      id: 'centroid-label-layer',
-      source: 'centroids',
-      type: 'symbol',
-      layout: {
-        'text-field': '{dailyFrom}',
-        'text-size': 11,
-      },
-    })
+    this.updateCentroidLabels()
 
     const parent = this
 
@@ -601,8 +764,13 @@ export default class AggregateOD extends Vue {
 
     for (const row in this.zoneData) {
       if (!this.zoneData.hasOwnProperty(row)) continue
+      if (!row) continue
+
+      fromCentroid[row] = []
+
       for (const col in this.zoneData[row]) {
         if (!this.zoneData[row].hasOwnProperty(col)) continue
+        if (!col) continue
 
         // daily totals
         if (!rowTotals[row]) rowTotals[row] = 0
@@ -611,20 +779,15 @@ export default class AggregateOD extends Vue {
         if (!colTotals[col]) colTotals[col] = 0
         colTotals[col] += this.dailyData[row][col]
 
+        if (!toCentroid[col]) toCentroid[col] = []
+
         // time-of-day details
-        if (!fromCentroid[row]) {
-          fromCentroid[row] = this.zoneData[row][col]
-        } else {
-          for (let i = 0; i++; i < 24) {
-            fromCentroid[row][i] += this.zoneData[row][col][i]
-          }
-        }
-        if (!toCentroid[col]) {
-          toCentroid[col] = this.zoneData[row][col]
-        } else {
-          for (let i = 0; i++; i < 24) {
-            toCentroid[col][i] += this.zoneData[row][col][i]
-          }
+        for (let i = 0; i < 24; i++) {
+          if (!fromCentroid[row][i + 1]) fromCentroid[row][i + 1] = 0
+          fromCentroid[row][i + 1] += this.zoneData[row][col][i]
+
+          if (!toCentroid[col][i + 1]) toCentroid[col][i + 1] = 0
+          toCentroid[col][i + 1] += this.zoneData[row][col][i]
         }
       }
     }
@@ -678,6 +841,11 @@ export default class AggregateOD extends Vue {
   }
 
   private addGeojsonToMap(geojson: any) {
+    this.addGeojsonLayers(geojson)
+    this.addNeighborhoodHoverEffects()
+  }
+
+  private addGeojsonLayers(geojson: any) {
     this.mymap.addSource('shpsource', {
       data: geojson,
       type: 'geojson',
@@ -709,10 +877,10 @@ export default class AggregateOD extends Vue {
       },
       'centroid-layer'
     )
+  }
 
-    // HOVER effects
+  private addNeighborhoodHoverEffects() {
     const parent = this
-
     this.mymap.on('mousemove', 'shplayer-fill', function(e: any) {
       // typescript definitions and mapbox-gl are out of sync at the moment :-(
       // so setFeatureState is missing
@@ -753,9 +921,9 @@ export default class AggregateOD extends Vue {
 
   private pressedArrowKey(delta: number) {}
 
-  private changedSlider(value: any) {
+  private changedTimeSlider(value: any) {
     this.currentTimeBin = value
-    const widthFactor = this.currentScale
+    const widthFactor = (this.currentScale / 500) * this.scaleFactor
 
     if (!this.showTimeRange) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
@@ -779,23 +947,31 @@ export default class AggregateOD extends Vue {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, sumElements])
       this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 0.5 * widthFactor, sumElements])
     }
+
+    this.handleCentroidsForTimeOfDayChange(value)
   }
 
   private changedScale(value: any) {
     console.log({ slider: value, timebin: this.currentTimeBin })
-    this.currentScale = 1.0 / value
-    this.changedSlider(this.currentTimeBin)
+    this.currentScale = value
+    this.changedTimeSlider(this.currentTimeBin)
   }
 }
+
+// register component with the SharedStore
+SharedStore.addVisualizationType({
+  component: AggregateOD,
+  typeName: 'aggregate-od',
+  prettyName: 'Origin/Destination Patterns',
+  description: 'Depicts aggregate O/D flows between areas.',
+  requiredFileKeys: [INPUTS.OD_FLOWS, INPUTS.SHP_FILE, INPUTS.DBF_FILE],
+  requiredParamKeys: ['Projection', 'Scale Factor'],
+})
+
+export default AggregateOD
 </script>
 
 <style scoped>
-.mapboxgl-popup-content {
-  padding: 0px 20px 0px 0px;
-  opacity: 0.95;
-  box-shadow: 0 0 3px #00000080;
-}
-
 h3 {
   margin: 0px 0px;
   font-size: 16px;
@@ -806,34 +982,36 @@ h4 {
 }
 
 #container {
-  height: 100vh;
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr auto;
 }
 
 .status-blob {
-  background-color: white;
-  box-shadow: 0 0 8px #00000040;
-  opacity: 0.9;
-  margin: auto 0px auto -10px;
-  padding: 3rem 0px;
-  text-align: center;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
+  background-color: white;
+  box-shadow: 0 0 8px #00000040;
+  margin: auto 0px auto 0px;
+  padding: 3rem 0px;
+  text-align: center;
   z-index: 99;
   border-top: solid 1px #479ccc;
   border-bottom: solid 1px #479ccc;
 }
 
-#mymap {
-  width: 100%;
-  height: 100%;
+.map-container {
   background-color: #eee;
-  overflow: hidden;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+}
+
+#mymap {
+  height: 100%;
+  width: 100%;
 }
 
 .mytitle {
@@ -859,7 +1037,7 @@ h4 {
   padding: 0.5rem 0rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .project-summary-block {
@@ -870,47 +1048,28 @@ h4 {
   z-index: 10;
 }
 
-.info-blob {
-  display: flex;
-  flex-direction: column;
-  width: 16rem;
-  height: 100vh;
-  background-color: #eeeeffdd;
-  margin: 0px 0px;
-  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  opacity: 1;
-  z-index: 5;
-  animation: 0.3s ease 0s 1 slideInFromLeft;
-}
-
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
 .widgets {
   display: flex;
   flex-direction: column;
   padding: 0px 0.5rem;
   margin-top: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .status-blob p {
   color: #555;
 }
 
-.legend {
+.map-complications {
+  display: flex;
   grid-column: 1 / 3;
-  grid-row: 1 / 3;
-  margin: auto 0.5rem 2rem auto;
-  z-index: 10;
+  grid-row: 2/3;
+  margin: auto 0.5rem 1.2rem auto;
+  z-index: 4;
+}
+
+.complication {
+  margin: 0rem 0rem 0rem 0.5rem;
 }
 
 .buttons-bar {
@@ -952,6 +1111,48 @@ h4 {
   margin-top: 0.25rem;
   margin-left: auto;
   margin-right: 0.5rem;
-  color: #24c;
+  color: rgba(31, 151, 199, 0.932);
+}
+
+.description {
+  text-align: center;
+  margin-top: 0rem;
+  padding: 0rem 0.25rem;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.hide-button {
+  grid-column: 1/2;
+  grid-row: 2/3;
+  margin: auto auto 0.5rem 16.5rem;
+  z-index: 20;
+}
+
+.hide-toggle-button {
+  margin-left: 0.25rem;
+}
+
+.left-panel {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  width: 16rem;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.mapboxgl-popup-content {
+  padding: 0px 20px 0px 0px;
+  opacity: 0.95;
+  box-shadow: 0 0 3px #00000080;
+}
+
+@media only screen and (max-width: 640px) {
 }
 </style>

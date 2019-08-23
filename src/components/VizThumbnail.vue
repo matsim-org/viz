@@ -9,8 +9,8 @@
     .card-endnotes {{timestamp}}
   .card-actions(v-if="showActionButtons")
     a(title="Remove" @click.stop="$emit('remove')"): i.fas.fa-times
-    a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
-    // a(title="Share..." @click.stop="$emit('share')"): i.fas.fa-share
+    a(title="Share..." @click.stop="$emit('share')"): i.fas.fa-share
+    // a(style="margin-top: auto;" title="Edit..." @click.stop="$emit('edit')"): i.fas.fa-edit
 
 </template>
 
@@ -37,7 +37,8 @@ export default class VizThumbnail extends Vue {
 
   private get thumbnail() {
     // if (this.viz.thumbnail) return `url(data:image/png;base64,${this.viz.thumbnail})`
-    return `url("/${this.viz.type}.png")`
+    if (this.viz.type) return `url("/${this.viz.type}.png")`
+    return `url("/")`
   }
 }
 </script>
@@ -133,5 +134,16 @@ export default class VizThumbnail extends Vue {
 
 .thumbnail-pic {
   background-size: cover;
+}
+
+@media only screen and (max-width: 640px) {
+  .card {
+    display: grid;
+    grid-template-columns: 3rem 1fr 2rem;
+    grid-template-rows: 1fr auto;
+    border-top: solid 2px #479ccc;
+    background-color: #f4f4f4;
+    min-height: 8rem;
+  }
 }
 </style>

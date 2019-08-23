@@ -17,6 +17,7 @@ branches:
 # travis doesn't have the option to run different builds for different branches, so we have to
 # it with ugly bash if statements
 script:
+  - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASE_KEY}}/$FIREBASE_KEY/" src/firebase-secure.js; fi
   - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "staging" ]; then npm run build-staging && npm run unit; fi
   - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-dev && npm run unit; fi

@@ -1,10 +1,26 @@
 'use strict'
 
-import Vue from 'vue'
 import { VisualizationType } from './entities/Entities'
 
+interface BreadCrumb {
+  label: string
+  url?: string
+}
+
+interface SearchResult {
+  title: string
+  subtitle?: string
+  url: string
+  collection?: string
+}
+
 interface SharedState {
+  breadCrumbs: BreadCrumb[]
+  currentUser: string
+  needToNagUserToLogin: boolean
   lastNavigation: string
+  isFullPageMap: boolean
+  searchResults: SearchResult[]
   visualizationTypes: Map<string, VisualizationType>
 }
 
@@ -16,9 +32,29 @@ class SharedStore {
     this._state = this.initializeState()
   }
 
+  public setBreadCrumbs(breadcrumbs: BreadCrumb[]) {
+    this._state.breadCrumbs = breadcrumbs
+  }
+
+  public setCurrentUser(user: string) {
+    this._state.currentUser = user
+  }
+
+  public setNagUserToLogin(nag: boolean) {
+    this._state.needToNagUserToLogin = nag
+  }
+
+  public setFullPage(isFullPage: boolean) {
+    this._state.isFullPageMap = isFullPage
+  }
+
   public setLastNavigation(path: string): void {
     this._state.lastNavigation = path
     this.persistState()
+  }
+
+  public setSearchResults(results: SearchResult[]): void {
+    this._state.searchResults = results
   }
 
   public addVisualizationType(type: VisualizationType) {
@@ -43,7 +79,12 @@ class SharedStore {
 
   private defaultState(): SharedState {
     return {
+      breadCrumbs: [],
+      currentUser: '',
+      isFullPageMap: false,
       lastNavigation: '',
+      needToNagUserToLogin: false,
+      searchResults: [],
       visualizationTypes: new Map(),
     }
   }
@@ -61,14 +102,14 @@ class SharedStore {
     const persistedStateString = sessionStorage.getItem(SharedStore.STATE_KEY)
     if (persistedStateString) {
       const persistedState = JSON.parse(persistedStateString as string)
-      return {
-        lastNavigation: persistedState.lastNavigation,
-        visualizationTypes: new Map(),
-      }
+
+      const loadedState = this.defaultState()
+      loadedState.lastNavigation = persistedState.lastNavigation
+      return loadedState
     }
     return null
   }
 }
 
 export default new SharedStore()
-export { SharedState }
+export { SharedState, SearchResult }

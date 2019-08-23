@@ -1,6 +1,8 @@
 <template lang="pug">
 #container
-  #mymap
+  .map-container
+    #mymap
+
   .status-blob(v-if="loadingText"): h2 {{ loadingText }}
 </template>
 
@@ -10,20 +12,10 @@
 import mapboxgl from 'mapbox-gl'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
-import EventBus from '@/EventBus.vue'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
 import Vue from 'vue'
-
-// register component with the shared store
-SharedStore.addVisualizationType({
-  typeName: 'network-volume-plot',
-  prettyName: 'Network Volume Plot',
-  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
-  requiredFileKeys: ['geoJson'],
-  requiredParamKeys: [],
-})
 
 // store is the component data store -- the state of the component.
 const store: any = {
@@ -33,8 +25,7 @@ const store: any = {
   api: FileAPI,
 }
 
-// this export is the Vue Component itself
-export default Vue.extend({
+const networkVolumePlot = Vue.extend({
   name: 'NetworkViz',
   props: ['fileApi'],
   components: {},
@@ -43,6 +34,10 @@ export default Vue.extend({
   },
   created() {
     store.api = (this as any).fileApi
+    SharedStore.setFullPage(true)
+  },
+  destroyed() {
+    SharedStore.setFullPage(false)
   },
   mounted: function() {
     store.projectId = (this as any).$route.params.projectId
@@ -53,17 +48,27 @@ export default Vue.extend({
   watch: {},
 })
 
+// register component with the shared store
+SharedStore.addVisualizationType({
+  component: networkVolumePlot,
+  typeName: 'network-volume-plot',
+  prettyName: 'Network Volume Plot',
+  description: 'Depicting volumes, V/C ratios, etc on a network plot.',
+  requiredFileKeys: ['geoJson'],
+  requiredParamKeys: [],
+})
+
+export default networkVolumePlot
+
 async function mounted() {
   await getVizDetails()
-  setBreadcrumb()
-  setupMap()
-}
 
-function setBreadcrumb() {
-  EventBus.$emit('set-breadcrumbs', [
-    { title: store.project.name, link: '/project/' + store.projectId },
-    { title: 'viz-' + store.vizId.substring(0, 4), link: '#' },
+  SharedStore.setBreadCrumbs([
+    { label: store.visualization.title, url: '/' },
+    { label: store.visualization.project.name, url: '/' },
   ])
+
+  setupMap()
 }
 
 function setupMap() {
@@ -72,7 +77,7 @@ function setupMap() {
     center: [13.4, 52.5], // lnglat, not latlng
     container: 'mymap',
     logoPosition: 'bottom-left',
-    style: 'mapbox://styles/mapbox/dark-v9',
+    style: 'mapbox://styles/mapbox/light-v9',
     pitch: 0,
     zoom: 11,
   })
@@ -84,7 +89,6 @@ function setupMap() {
 async function getVizDetails() {
   store.visualization = await store.api.fetchVisualization(store.projectId, store.vizId)
   store.project = await store.api.fetchProject(store.projectId)
-  console.log(Object.assign({}, store.visualization))
 }
 
 let map: mapboxgl.Map
@@ -220,42 +224,42 @@ function clickedOnTaz(e: MapElement) {
 
 <style scoped>
 #container {
-  background-color: black;
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto;
-  height: 100%;
-  max-height: 100vh;
-  margin: 0px 0px 0px 0px;
-  padding: 0px 0px 0px 0px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  width: 100%;
+}
+
+.map-container {
+  background-color: #eee;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  display: flex;
+  flex-direction: column;
 }
 
 #mymap {
-  width: 100%;
   height: 100%;
-  background-color: black;
-  overflow: hidden;
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  z-index: 1;
+  width: 100%;
 }
 
 .status-blob {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  background-color: #222;
-  border-top: solid 1px #479ccc;
-  border-bottom: solid 1px #479ccc;
+  background-color: white;
   box-shadow: 0 0 8px #00000040;
   opacity: 0.9;
   margin: auto 0px auto -10px;
   padding: 3rem 0px;
   text-align: center;
-  z-index: 2;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  z-index: 99;
+  border-top: solid 1px #479ccc;
+  border-bottom: solid 1px #479ccc;
 }
 
-.status-blob h2 {
-  color: #ffa;
+.status-blob p,
+h2 {
+  color: #555;
   font-weight: normal;
 }
 </style>
