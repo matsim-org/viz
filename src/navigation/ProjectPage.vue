@@ -25,10 +25,11 @@
             @click="showSettings=!showSettings") Project Settings...
           project-settings.project-settings(
               v-if="showSettings"
-              @close="showSettings=false"
+              @close="closedSettings()"
               :projectStore="projectStore"
               :authStore="authStore"
               :owner="owner"
+              :attributes="myProject"
               :projectId="urlslug")
 
       .run-space
@@ -165,6 +166,13 @@ export default class ProjectPage extends vueInstance {
 
     this.fetchRuns()
     this.canModify = await this.determineIfUserCanModify()
+  }
+
+  private async closedSettings() {
+    this.showSettings = false
+
+    const project: any = await CloudAPI.getProject(this.owner, this.urlslug)
+    if (project) this.myProject = project
   }
 
   private async importMVizProject() {
