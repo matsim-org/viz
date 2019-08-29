@@ -12,11 +12,14 @@
         router-link(:to='`/${owner}/${urlslug}`') &nbsp;/ {{urlslug}}
         | &nbsp;/ {{ run }}
 
-      h4.title.is-3(v-if="myProject.title") {{myProject.title}} &bullet; {{run}}
+      h4.title.is-3(v-if="myProject.title") {{ myProject.title }} &bullet; {{run}}
       h4.title.is-3(v-else) &nbsp;
 
     .content-area
-      p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
+      .description-area(style="display: flex;")
+        p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
+        .control(v-if="canModify")
+          a.button.is-small.is-light.is-rounded(@click="clickedEditDescription()" style="margin: 0.5rem 0 0 0.5rem;") Edit
 
       markdown-editor.readme(v-if="canModify" v-model="myRun.notes" @save="saveNotes")
 
@@ -231,6 +234,15 @@ export default class RunPage extends vueInstance {
     if (vizes) {
       vizes = vizes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
       this.myVisualizations = vizes
+    }
+  }
+
+  private async clickedEditDescription() {
+    const desc = prompt(`Run "${this.myRun.runId}" description:\n\n`, this.myRun.description)
+
+    if (desc) {
+      this.myRun.description = desc
+      await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}/runs/${this.run}`, { description: desc })
     }
   }
 

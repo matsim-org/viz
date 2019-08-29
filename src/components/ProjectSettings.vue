@@ -1,8 +1,19 @@
 <template lang="pug">
 #container
-  p
-    b PROJECT SETTINGS.&nbsp;
-    | These settings affect every run, file, and visualization that is part of this project.
+  .cuteBlueHeading: h1.is-marginless.is-paddingless Project Settings
+
+  p These settings affect every run, file, and visualization that is part of this project.
+  br
+
+  .field
+    label.label Project Name
+    .control
+      input.input(type="text" v-model="editProjectName" placeholder="Project Name" width=100)
+
+  .field
+    label.label Description
+    .control
+      input.input(type="text" v-model="editProjectDescription" placeholder="Description")
 
   .cuteBlueHeading: h1 Project Visibility
 
@@ -61,7 +72,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import CloudAPI, { VizAttributes } from '@/communication/FireBaseAPI'
+import CloudAPI, { VizAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
 import Error from '@/components/Error.vue'
 import FileAPI from '@/communication/FileAPI'
 import ProjectStore, { ProjectVisibility } from '@/project/ProjectStore'
@@ -91,21 +102,21 @@ export default class ProjectSettings extends Vue {
   private addUserPerm = PermissionType.Read
   private disableAddButton = true
   private usersWhoCanBeAdded: UserAccess[] = []
+  private editProjectName: string = ''
+  private editProjectDescription: string = ''
 
   @Prop()
   private projectStore!: ProjectStore
-
   @Prop()
   private authStore!: AuthenticationStore
-
   @Prop()
   private owner!: string
-
   @Prop()
   private projectId!: string
-
   @Prop()
   private fileApi!: FileAPI
+  @Prop()
+  private attributes!: ProjectAttributes
 
   public static Close() {
     return 'close'
@@ -173,6 +184,9 @@ export default class ProjectSettings extends Vue {
     await this.getSystemUsers()
     await this.processCurrentPermissions()
     this.updateUsersWhoCanBeAdded()
+
+    this.editProjectName = this.attributes.title
+    this.editProjectDescription = this.attributes.description
   }
 
   private async processCurrentPermissions() {
@@ -232,6 +246,8 @@ export default class ProjectSettings extends Vue {
       // store deets in cloud too
       await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.projectId}`, {
         public: this.vizButton === 'Public',
+        title: this.editProjectName,
+        description: this.editProjectDescription,
       })
 
       this.close()
@@ -283,10 +299,6 @@ h4.title {
   min-width: max-content;
   margin-top: 2rem;
   margin-bottom: 0.5rem;
-}
-
-.input {
-  margin-top: 1rem;
 }
 
 .actions {
