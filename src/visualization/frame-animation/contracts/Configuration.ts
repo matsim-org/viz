@@ -123,11 +123,11 @@ export default class Config {
 
   private setColors(colors: ConfigColors) {
     this._colors = {
-      background: colors.background || 0xa3b1b9,
-      network: colors.network || 0x5e60aa,
-      agents: colors.agents || 0x3498db,
+      background: colors.background || 0xe0f0e0,
+      network: colors.network || 0x084c9e,
+      agents: colors.agents || 0x9a1e32,
       selectedAgent: colors.selectedAgent || 0xe74c3c,
-      selectedPlan: colors.selectedPlan || 0xe74c3c,
+      selectedPlan: colors.selectedPlan || 0x33ff66,
     }
   }
 
