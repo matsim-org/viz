@@ -33,8 +33,16 @@
           viz-thumbnail(:viz="viz"
                         :showActionButtons="canModify"
                         @remove="onRemoveViz(viz)"
-                        @share="onShareViz(viz)")
-                        //  @edit="onEditViz(viz)"
+                        @share="onShareViz(viz)"
+                        @edit="onEditViz(viz)")
+
+
+      h5.title.is-5.run-space RUN DASHBOARD
+      section.images(v-if="imageFiles.length>0")
+        .viz-table
+          .viz-item(v-for="image in imageFiles" :key="image.userFileName")
+            image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="project.id")
+            p.center {{image.userFileName}}
 
       hr
       .upload-area(v-if="uploads.length > 0")
@@ -113,6 +121,7 @@
 <script lang="ts">
 import download from 'downloadjs'
 import filesize from 'filesize'
+import mediumZoom from 'medium-zoom'
 import { Drag, Drop } from 'vue-drag-drop'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
@@ -235,6 +244,8 @@ export default class RunPage extends vueInstance {
       vizes = vizes.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
       this.myVisualizations = vizes
     }
+
+    mediumZoom('.medium-zoom', { background: '#444450' })
   }
 
   private async clickedEditDescription() {
@@ -244,6 +255,15 @@ export default class RunPage extends vueInstance {
       this.myRun.description = desc
       await CloudAPI.updateDoc(`users/${this.owner}/projects/${this.urlslug}/runs/${this.run}`, { description: desc })
     }
+  }
+
+  private get imageFiles() {
+    const imageTypePrefix = 'image/'
+    const files = this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    files.sort((a, b) => {
+      return a.userFileName > b.userFileName ? 1 : -1
+    })
+    return files
   }
 
   private determineCanModify() {
@@ -436,7 +456,7 @@ export default class RunPage extends vueInstance {
 .viz-table {
   display: grid;
   grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, 25rem);
+  grid-template-columns: repeat(auto-fill, 30%);
   list-style: none;
   padding-left: 0px;
   margin-top: 2rem;
@@ -446,10 +466,7 @@ export default class RunPage extends vueInstance {
 
 .viz-item {
   display: table-cell;
-  padding: 0 0 0 0;
   vertical-align: top;
-  margin-right: 1rem;
-  margin-bottom: 1rem;
 }
 
 th,
@@ -545,6 +562,10 @@ a:hover {
 
   .content-area {
     margin: 2rem 1rem;
+  }
+
+  .viz-table {
+    grid-template-columns: 1fr;
   }
 }
 </style>
