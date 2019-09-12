@@ -43,6 +43,9 @@
           .viz-item(v-for="image in imageFiles" :key="image.userFileName")
             image-file-thumbnail(:fileEntry="image" :fileApi="fileApi" :projectId="project.id")
             p.center {{image.userFileName}}
+          .viz-item(v-for="tsv in tsvFiles" :key="tsv.userFileName")
+            vega-chart-embedder(:fileEntry="tsv" :fileApi="fileApi" :projectId="project.id")
+            p.center {{tsv.userFileName}}
 
       hr
       .upload-area(v-if="uploads.length > 0")
@@ -137,6 +140,7 @@ import SharedStore, { SharedState } from '@/SharedStore'
 import ShareVisualization from '@/components/ShareVisualization.vue'
 import UploadStore, { FileUpload, UploadStatus } from '@/project/UploadStore'
 import { Visualization, FileEntry, PermissionType } from '@/entities/Entities'
+import VegaChartEmbedder from '@/components/VegaChartEmbedder.vue'
 import VizThumbnail from '@/components/VizThumbnail.vue'
 import AuthenticationStore from '../auth/AuthenticationStore'
 
@@ -157,6 +161,7 @@ const vueInstance = Vue.extend({
     MarkdownEditor,
     ProjectSettings,
     ShareVisualization,
+    VegaChartEmbedder,
     VizThumbnail,
     Drag,
     Drop,
@@ -260,6 +265,16 @@ export default class RunPage extends vueInstance {
   private get imageFiles() {
     const imageTypePrefix = 'image/'
     const files = this.filesToShow.filter(f => f.contentType.startsWith(imageTypePrefix))
+    files.sort((a, b) => {
+      return a.userFileName > b.userFileName ? 1 : -1
+    })
+    return files
+  }
+
+  private get tsvFiles() {
+    const standardTSVs = ['stopwatch.txt']
+
+    const files = this.filesToShow.filter(f => standardTSVs.indexOf(f.userFileName) > -1)
     files.sort((a, b) => {
       return a.userFileName > b.userFileName ? 1 : -1
     })
