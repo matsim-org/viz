@@ -19,6 +19,8 @@ import UploadStore from './project/UploadStore'
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import FileAPI from './communication/FileAPI'
 
+import nprogress from 'nprogress'
+
 // YOU MUST add every viz type here to register the viz url in the router:
 const VIZ_PLUGINS = [AggregateOD, EmissionsGrid, FrameAnimation, NetworkVolumePlot, SankeyDiagram, TransitSupply]
 
@@ -52,6 +54,8 @@ export default class AppRouter {
     this.setStaticRoutes()
 
     this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
+      // begin nav progress-meter
+      nprogress.start()
       // always clear breadcrumbs on navigation, so that we never show wrong breadcrumbs
       sharedStore.setBreadCrumbs([])
       // always clear search box on navigation

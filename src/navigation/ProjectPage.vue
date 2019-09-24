@@ -62,6 +62,7 @@
 import download from 'downloadjs'
 import { File } from 'babel-types'
 import filesize from 'filesize'
+import nprogress from 'nprogress'
 import { Drag, Drop } from 'vue-drag-drop'
 
 import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
@@ -291,6 +292,8 @@ export default class ProjectPage extends vueInstance {
     const runs: any[] = await CloudAPI.getRuns(this.owner, this.urlslug)
     runs.sort((a: any, b: any) => (a.runId.toLowerCase() < b.runId.toLowerCase() ? -1 : 1))
     this.myRuns = runs
+
+    nprogress.done()
   }
 
   private async onNameChanged(name: string, event: any) {

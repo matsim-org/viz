@@ -10,6 +10,7 @@
 'use strict'
 
 import mapboxgl from 'mapbox-gl'
+import nprogress from 'nprogress'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
@@ -126,7 +127,9 @@ async function mapIsReady() {
   calculateLinkProperties(json)
   addJsonToMap(json)
   setupMapListeners()
+
   store.loadingText = ''
+  nprogress.done()
 }
 
 function calculateLinkProperties(json: any) {

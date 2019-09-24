@@ -125,6 +125,7 @@
 import download from 'downloadjs'
 import filesize from 'filesize'
 import mediumZoom from 'medium-zoom'
+import nprogress from 'nprogress'
 import { Drag, Drop } from 'vue-drag-drop'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
@@ -251,6 +252,9 @@ export default class RunPage extends vueInstance {
     }
 
     mediumZoom('.medium-zoom', { background: '#444450' })
+
+    // end nav progress-meter
+    nprogress.done()
   }
 
   private async clickedEditDescription() {

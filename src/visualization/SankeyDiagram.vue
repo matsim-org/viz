@@ -19,6 +19,7 @@ import { sankey, sankeyDiagram } from 'd3-sankey-diagram'
 import { select } from 'd3-selection'
 import { scaleOrdinal } from 'd3-scale'
 import { schemeCategory10 } from 'd3-scale-chromatic'
+import nprogress from 'nprogress'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -83,6 +84,7 @@ class SankeyDiagram extends Vue {
 
     this.loadingText = ''
     this.doD3()
+    nprogress.done()
   }
 
   private async loadFiles() {

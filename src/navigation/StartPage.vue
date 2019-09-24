@@ -48,6 +48,8 @@
 
 <script lang="ts">
 import sharedStore from '@/SharedStore'
+import nprogress from 'nprogress'
+
 import AuthenticationStore, { AuthenticationStatus } from '@/auth/AuthenticationStore'
 import EventBus from '@/EventBus.vue'
 import CloudAPI, { ProjectAttributes, VizAttributes } from '@/communication/FireBaseAPI'
@@ -117,6 +119,8 @@ export default class StartPage extends Vue {
       console.log(project)
     }
     console.debug({ thing: this.publicProjects })
+
+    nprogress.done()
   }
 
   private onVizSelected(viz: any) {
