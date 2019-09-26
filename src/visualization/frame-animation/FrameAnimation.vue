@@ -105,7 +105,6 @@ class FrameAnimation extends Vue {
   }
 
   public mounted() {
-    SharedStore.setFullPage(true)
     const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({
       canvasId: canvas.id,
@@ -116,6 +115,7 @@ class FrameAnimation extends Vue {
     this.webvis.onServerConfigChanged = () => this.onConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.onFetchingDataChanged(value)
     this.webvis.onTimestepChanged = (value: number) => this.onTimestepChanged(value)
+    SharedStore.setFullPage(true)
   }
 
   public beforeDestroy() {
