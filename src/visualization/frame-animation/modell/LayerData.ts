@@ -3,11 +3,13 @@ class LayerData {
     return this._layers
   }
 
+  private _layers: any[] = []
+
   constructor() {
     this._layers = []
   }
 
-  static createLayer(name, z, color, data) {
+  public static createLayer(name: any, z: any, color: any, data: any) {
     return {
       name: name,
       z: z,
@@ -19,10 +21,10 @@ class LayerData {
     }
   }
 
-  addLayer(layer) {
+  public addLayer(layer: any) {
     // check whether a layer with the name exists
     let foundIndex = -1
-    this._layers.find((entry, index) => {
+    this._layers.find((entry: any, index) => {
       if (entry.name === layer.name) {
         foundIndex = index
         return true
@@ -36,9 +38,9 @@ class LayerData {
     }
   }
 
-  removeLayer(layerName) {
+  public removeLayer(layerName: any) {
     let foundIndex = -1
-    this._layers.find((entry, index) => {
+    this._layers.find((entry: any, index) => {
       if (entry.name === layerName) {
         foundIndex = index
         return true
@@ -50,12 +52,12 @@ class LayerData {
     }
   }
 
-  getLayer(layerName) {
-    let layer = this._layers.find(entry => {
+  public getLayer(layerName: any) {
+    const layer = this._layers.find((entry: any) => {
       return layerName === entry.name
     })
     return layer
   }
 }
 
-export { LayerData }
+export default LayerData

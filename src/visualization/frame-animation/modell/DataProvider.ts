@@ -1,5 +1,5 @@
 import GeoJsonParser from './background/GeoJsonParser.worker'
-import { LayerData } from './LayerData.js'
+import LayerData from './LayerData'
 import Configuration from '../contracts/Configuration'
 import FrameAnimationAPI, { Progress, ServerConfiguration } from '../communication/FrameAnimationAPI'
 import SnapshotCache from '@/visualization/frame-animation/modell/SnapshotCache'

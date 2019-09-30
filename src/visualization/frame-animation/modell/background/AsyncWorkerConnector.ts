@@ -30,7 +30,7 @@ export default class AsyncWorkerConnector {
     }
   }
 
-  public async postAsyncWorkerMessage<T>(methodName: string, data: any, transferrables?: any[]) {
+  public async postAsyncWorkerMessage<T>(methodName: string, data: any, transferrables?: Transferable[]) {
     const message = {
       call: {
         method: methodName,
@@ -38,7 +38,9 @@ export default class AsyncWorkerConnector {
       },
       id: this.generatePromiseId(),
     }
-    this.worker.postMessage(message, transferrables)
+
+    if (transferrables) this.worker.postMessage(message, transferrables)
+    else this.worker.postMessage(message, [])
 
     return new Promise<T>((resolve, reject) => {
       this.promises.set(message.id, { resolve, reject })

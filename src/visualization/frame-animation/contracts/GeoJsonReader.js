@@ -115,4 +115,4 @@ class GeoJsonReader {
   }
 }
 
-export { GeoJsonReader }
+export default GeoJsonReader

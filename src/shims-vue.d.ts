@@ -4,7 +4,7 @@ declare module '*.vue' {
 }
 
 // this keeps typescript / semantic / jquery happy together:
-declare var $: any
+// declare var $: any
 
 declare module 'colormap'
 declare module 'convert-seconds'
@@ -17,6 +17,9 @@ declare module 'fast-json-stable-stringify'
 declare module '@turf/nearest-point-to-line'
 declare module '@turf/point-to-line-distance'
 
+declare module '@/visualization/frame-animation/contracts/GeoJsonReader'
+declare module '@/visualization/frame-animation/view/DrawingController.js'
+
 declare module '*.worker' {
   class WebpackWorker extends Worker {
     constructor()
@@ -24,5 +27,3 @@ declare module '*.worker' {
 
   export default WebpackWorker
 }
-
-declare const __webpack_public_path__: string

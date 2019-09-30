@@ -1,4 +1,4 @@
-import Rectangle from '../contracts/Rectangle.js'
+import Rectangle from '../contracts/Rectangle'
 import { OrthographicCamera } from 'three'
 
 class MapState {

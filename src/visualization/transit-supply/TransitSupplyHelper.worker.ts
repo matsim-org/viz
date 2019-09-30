@@ -76,7 +76,7 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
       const attr = link.$
       this._network.links[attr.id] = attr
     }
-    return { data: {} }
+    return { data: {}, transferrables: [] }
   }
 
   private convertCoords() {
@@ -90,7 +90,7 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
         node.y = z.y
       }
     }
-    return { data: {} }
+    return { data: {}, transferrables: [] }
   }
 
   private async processTransit() {
@@ -121,6 +121,7 @@ class TransitSupplyHelper extends AsyncBackgroundWorker {
         transitLines: this._transitLines,
         mapExtent: this._mapExtentXYXY,
       },
+      transferrables: [],
     }
   }
 

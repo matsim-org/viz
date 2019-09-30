@@ -8,8 +8,7 @@ import {
   MethodNames,
   PlanRequestParams,
 } from '@/visualization/frame-animation/modell/background/PlanFetcherContract'
-import GeoJsonParser from '@/visualization/frame-animation/modell/background/GeoJsonParser'
-import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
+import GeoJsonReader from '@/visualization/frame-animation/contracts/GeoJsonReader'
 
 class PlanFetcher extends AsyncBackgroundWorker {
   private api!: FrameAnimationAPI

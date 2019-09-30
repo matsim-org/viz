@@ -15,25 +15,22 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import FileAPI from '../communication/FileAPI'
 import Error from '@/components/Error.vue'
 import Modal from '@/components/Modal.vue'
 import ProjectStore from '@/project/ProjectStore'
-import Component from 'vue-class-component'
+import { Vue, Prop, Component, Watch } from 'vue-property-decorator'
 
-const vueInstance = Vue.extend({
+@Component({
   components: {
-    error: Error,
     modal: Modal,
-  },
-  props: {
-    projectStore: ProjectStore,
+    error: Error,
   },
 })
+export default class CreateProjectViewModel extends Vue {
+  @Prop()
+  private projectStore!: ProjectStore
 
-@Component
-export default class CreateProjectViewModel extends vueInstance {
   private projectName = ''
   private errorMessage = ''
 

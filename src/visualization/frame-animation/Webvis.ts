@@ -1,4 +1,4 @@
-import { DrawingController } from './view/DrawingController.js'
+import DrawingController from '@/visualization/frame-animation/view/DrawingController.js'
 import Playback from './modell/Playback'
 import DataProvider from './modell/DataProvider'
 import Configuration, { ConfigParams } from './contracts/Configuration'
@@ -8,7 +8,7 @@ export default class Webvis {
   private _config: Configuration
   private _playback: Playback
   private _dataProvider: DataProvider
-  private _drawingController: DrawingController
+  private _drawingController: any
   private _onServerConfigChanged?: () => void
   private _onFetchingData?: (isFetching: boolean) => void
 

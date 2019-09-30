@@ -35,7 +35,7 @@ writableMapBox.accessToken =
   'pk.eyJ1IjoidnNwLXR1LWJlcmxpbiIsImEiOiJjamNpemh1bmEzNmF0MndudHI5aGFmeXpoIn0.u9f04rjFo7ZbWiSceTTXyA'
 
 // Firebase API key is in this: (securely)
-import firebaseConfig from '@/firebase-secure'
+import firebaseConfig from '@/firebase-secure.ts'
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig)
