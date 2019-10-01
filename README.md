@@ -1,6 +1,12 @@
-# Set up development environment
+# MatHub: web-based data viz platform for MATSim outputs
 
-The project is a browser application which uses the following techniques:
+This experimental platform for storing and visualizing MATSim model outputs is being developed by the Institute for Sea and Land Transport at the Technische Universität Berlin.
+
+It is not generally useful just yet; so if you're here, you're probably interested in helping build and develop it! Thanks for your interest!
+
+# Setting up your developer environment
+
+This is a browser application which uses the following techniques:
 
 - [Typescript](http://www.typescriptlang.org/docs/home.html) as programming language
 - [VueJS](https://vuejs.org/) as a view framework
