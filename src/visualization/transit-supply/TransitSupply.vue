@@ -33,7 +33,7 @@
 import * as turf from '@turf/turf'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
-import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
+import mapboxgl, { LngLatLike } from 'mapbox-gl'
 import nprogress from 'nprogress'
 import pako from 'pako'
 import xml2js from 'xml2js'
@@ -503,7 +503,7 @@ class TransitSupply extends Vue {
     let bearing
 
     for (const [i, stop] of route.routeProfile.entries()) {
-      const coord = [this._stopFacilities[stop.refId].x, this._stopFacilities[stop.refId].y]
+      const coord: LngLatLike = [this._stopFacilities[stop.refId].x, this._stopFacilities[stop.refId].y]
       // recalc bearing for every node except the last
       if (i < route.routeProfile.length - 1) {
         const point1 = turf.point(coord)

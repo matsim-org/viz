@@ -29,11 +29,11 @@
 <script lang="ts">
 'use strict'
 import * as timeConvert from 'convert-seconds'
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { LngLat, GeoJSONSource, VectorSource } from 'mapbox-gl'
 import nprogress from 'nprogress'
-import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import pako from 'pako'
 import readBlob from 'read-blob'
+import * as turf from '@turf/turf'
 
 import AuthenticationStore from '@/auth/AuthenticationStore'
 import Coords from '@/components/Coords'

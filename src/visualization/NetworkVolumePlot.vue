@@ -9,11 +9,10 @@
 <script lang="ts">
 'use strict'
 
-import mapboxgl from 'mapbox-gl'
+import mapboxgl, { MapMouseEvent, LngLat } from 'mapbox-gl'
 import nprogress from 'nprogress'
 import FileAPI from '@/communication/FileAPI'
 import sharedStore from '@/SharedStore'
-import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import readBlob from 'read-blob'
 import SharedStore from '../SharedStore'
 import Vue from 'vue'
@@ -166,12 +165,12 @@ function addJsonToMap(json: any) {
 }
 
 function setupMapListeners() {
-  map.on('click', 'my-layer', function(e: MapElement) {
+  map.on('click', 'my-layer', function(e: MapMouseEvent) {
     clickedOnTaz(e)
   })
 
   // turn "hover cursor" into a pointer, so user knows they can click.
-  map.on('mousemove', 'my-layer', function(e: MapElement) {
+  map.on('mousemove', 'my-layer', function(e: MapMouseEvent) {
     map.getCanvas().style.cursor = e ? 'pointer' : '-webkit-grab'
   })
 
@@ -184,7 +183,7 @@ function setupMapListeners() {
 let _popup
 
 // clickedOnTaz: called when user... clicks on the taz
-function clickedOnTaz(e: MapElement) {
+function clickedOnTaz(e: any) {
   console.log(e)
 
   // cancel old close-popup event because it messes with event ordering

@@ -2530,10 +2530,10 @@
   resolved "https://registry.yarnpkg.com/@types/long/-/long-4.0.0.tgz#719551d2352d301ac8b81db732acb6bdc28dbdef"
   integrity sha512-1w52Nyx4Gq47uuu0EVcsHBxZFJgurQ+rTKS3qMHxR1GY2T8c2AJYd6vZoZ9q1rupaDjU0yT+Jc2XTyXkjeMA+Q==
 
-"@types/mapbox-gl@^0.44.2":
-  version "0.44.4"
-  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-0.44.4.tgz#3bccd8460038cc857cbe610c92f6a54e4d16b873"
-  integrity sha512-8KyQMKfToSgsbfgGpnk0TTxIveot72P/aExh+2s2EYFvW1SQEHEIqaj68HmQWQTdyWSfTNXx6ZSkqnBsiw5V7A==
+"@types/mapbox-gl@^0.54.4":
+  version "0.54.4"
+  resolved "https://registry.yarnpkg.com/@types/mapbox-gl/-/mapbox-gl-0.54.4.tgz#d2aba33cdeab914f0a26097a2b927f4110555c97"
+  integrity sha512-DaStZl6hNLfFhwMQ+WZzMihJtgfJM0mSBP+QbJlx9T11PIRjEE8uZOe0gp09r0ZS+TNOt10z7wEutcENI2ReNQ==
   dependencies:
     "@types/geojson" "*"
 
