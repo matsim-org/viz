@@ -1,6 +1,8 @@
 module.exports = {
   root: true,
   env: {
+    browser: true,
+    jest: true,
     node: true,
   },
   extends: ['plugin:vue/essential', 'eslint:recommended', '@vue/typescript'],
@@ -9,7 +11,10 @@ module.exports = {
   },
   parserOptions: {
     parser: '@typescript-eslint/parser',
+    ecmaVersion: 2018,
+    sourceType: 'module',
   },
+  plugins: ['@typescript-eslint'],
   overrides: [
     {
       files: ['**/__tests__/*.{j,t}s?(x)'],
