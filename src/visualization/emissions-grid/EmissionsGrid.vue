@@ -19,6 +19,10 @@
           time-slider.time-slider(:bind="currentTime"
                                   :initialTime="currentTime"
                                   @change="changedSlider")
+
+        h4.heading Current Zoom
+        b {{ currentZoom }}
+
       .theme-choices
         img.theme-button(v-for="theme in themes"
                         :class="{'selected-theme': theme.name === chosenTheme.name}"
@@ -73,21 +77,6 @@ interface Point {
   },
 })
 class EmissionsGrid extends Vue {
-  @Prop({ type: String, required: true })
-  private projectId!: string
-
-  @Prop({ type: String, required: true })
-  private vizId!: string
-
-  @Prop({ type: ProjectStore, required: true })
-  private projectStore!: ProjectStore
-
-  @Prop({ type: AuthenticationStore, required: true })
-  private authStore!: AuthenticationStore
-
-  @Prop({ type: FileAPI, required: true })
-  private fileApi!: FileAPI
-
   private currentTime: number = 0
   private firstEventTime: number = 0
   private firstLoad: boolean = true
@@ -101,6 +90,9 @@ class EmissionsGrid extends Vue {
   private visualization: any = null
   private project: any = {}
   private projection!: string
+  private vizId: string = 'local'
+
+  private currentZoom = 0
 
   private pollutant: string = ''
   private pollutantsMaxValue: { [id: string]: number } = {}
@@ -110,9 +102,23 @@ class EmissionsGrid extends Vue {
   private timeBins: any = []
   private selectedTimeBin = 0
 
+  private previousZoom = 0
+
   private _myWorker: any
 
   private themes: any = [
+    {
+      name: 'Indarko',
+      colorRamp: 'colorInferno',
+      icon: '/inferno.png',
+      style: 'mapbox://styles/mapbox/light-v9',
+    },
+    {
+      name: 'Viridark',
+      colorRamp: 'colorViridis',
+      icon: '/viridis.png',
+      style: 'mapbox://styles/mapbox/light-v9',
+    },
     {
       name: 'Inferno',
       colorRamp: 'revInferno',
@@ -124,18 +130,6 @@ class EmissionsGrid extends Vue {
       colorRamp: 'revViridis',
       icon: '/viriwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
-    },
-    {
-      name: 'Indarko',
-      colorRamp: 'colorInferno',
-      icon: '/inferno.png',
-      style: 'mapbox://styles/mapbox/dark-v9',
-    },
-    {
-      name: 'Viridark',
-      colorRamp: 'colorViridis',
-      icon: '/viridis.png',
-      style: 'mapbox://styles/mapbox/dark-v9',
     },
   ]
 
@@ -154,43 +148,21 @@ class EmissionsGrid extends Vue {
   public destroyed() {
     sharedStore.setFullPage(false)
   }
-  public async fetchEmissionsBins(): Promise<any> {
-    const result = await fetch(`${Config.emissionsServer}/${this.vizId}/startTimes`, {
-      mode: 'cors',
-      headers: { Authorization: 'Bearer ' + this.authStore.state.accessToken },
-    })
-
-    if (result.ok) {
-      try {
-        const json = await result.json()
-        console.log({ json })
-        return json
-      } catch (e) {
-        throw new Error(e)
-      }
-    } else if (result.status === 401) {
-      throw new Error('Unauthorized: ' + (await result.text()))
-    } else {
-      throw new Error(await result.text())
-    }
-  }
 
   // VUE LIFECYCLE: mounted
   public async mounted() {
-    this.visualization = await this.fileApi.fetchVisualization(this.projectId, this.vizId)
-    this.project = await this.fileApi.fetchProject(this.projectId)
+    sharedStore.setBreadCrumbs([{ label: 'Emissions Grid', url: '/' }])
 
-    sharedStore.setBreadCrumbs([
-      { label: this.visualization.title, url: '/' },
-      { label: this.visualization.project.name, url: '/' },
-    ])
+    // if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
+    // this.projection = 'EPSG:25832' // 'GK4'
+    this.projection = 'GK4'
 
-    if (this.visualization.parameters.Projection) this.projection = this.visualization.parameters.Projection.value
+    const x = 14.4
+    const y = 52.5
 
-    // do things that can only be done after MapBox is fully initialized
     this.mymap = new mapboxgl.Map({
       bearing: 0,
-      // center: [x,y], // lnglat, not latlng (think of it as: x,y)
+      // lnglat, not latlng (think of it as: x,y)
       container: 'mymap',
       logoPosition: 'top-left',
       style: this.chosenTheme.style,
@@ -199,7 +171,7 @@ class EmissionsGrid extends Vue {
     })
 
     try {
-      this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
+      // this.initialMapExtent = localStorage.getItem(this.vizId + '-bounds')
       if (this.initialMapExtent) {
         const lnglat = JSON.parse(this.initialMapExtent)
 
@@ -214,7 +186,10 @@ class EmissionsGrid extends Vue {
     } catch (e) {
       console.log(e)
     }
+
+    // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
+    this.mymap.on('moveend', this.mapMoved)
   }
 
   private isMobile() {
@@ -237,18 +212,15 @@ class EmissionsGrid extends Vue {
     }
 
     this.chosenTheme = theme
-    this.mymap.setPaintProperty('hex-layer', 'fill-color', ['get', theme.colorRamp]) // fill-extrusion-color
+    this.mymap.setPaintProperty('voronoi-layer', 'fill-color', ['get', this.chosenTheme.colorRamp])
   }
 
   private setJsonSource() {
-    const p = this.pollutant ? this.pollutant : this.pollutants[0]
-    const storageKey = p + ':' + this.timeBins[this.selectedTimeBin]
-
-    const jsonData = this.dataLookup[storageKey]
     try {
-      this.mymap.addSource('hexagons', {
-        data: jsonData,
+      this.mymap.addSource('voronoi', {
+        data: { type: 'FeatureCollection', features: [] },
         type: 'geojson',
+        cluster: false,
       })
     } catch (e) {
       console.log(e)
@@ -258,8 +230,8 @@ class EmissionsGrid extends Vue {
   private addJsonToMap() {
     this.mymap.addLayer(
       {
-        id: 'hex-layer',
-        source: 'hexagons',
+        id: 'voronoi-layer',
+        source: 'voronoi',
         type: 'fill',
         paint: {
           'fill-color': ['get', this.chosenTheme.colorRamp],
@@ -277,6 +249,74 @@ class EmissionsGrid extends Vue {
       padding: { top: 50, bottom: 100, right: 100, left: 300 },
       animate: false,
     })
+  }
+
+  private async mapMoved(e: any) {
+    const zoom = this.mymap.getZoom()
+    console.log('zoom', zoom)
+    this.currentZoom = zoom
+
+    const source: any = this.mymap.getSource('voronoi')
+    if (!source) return
+
+    const mapExtent = this.mymap.getBounds()
+
+    let bbox = turf.bboxPolygon([mapExtent.getWest(), mapExtent.getSouth(), mapExtent.getEast(), mapExtent.getNorth()])
+    bbox = turf.transformScale(bbox, zoom < 12 ? 1.05 : 1.5)
+
+    const p = this.pollutant ? this.pollutant : this.pollutants[0]
+    const storageKey = this.timeBins[this.selectedTimeBin]
+
+    const allFeatures = this.dataLookup[storageKey].features
+    const windowFeatures = allFeatures.filter((f: any) => {
+      // sample subset of points if we're zoomed out far
+      if (zoom < 9 && f.properties.id % 8) return false
+      if (zoom < 11 && f.properties.id % 5) return false
+      if (zoom < 12 && f.properties.id % 3) return false
+      return turf.booleanContains(bbox, f)
+    })
+
+    // generate voronoi for this set of dots
+    const voronoi = turf.voronoi({ type: 'FeatureCollection', features: windowFeatures }, bbox.bbox as any)
+
+    for (const [i, feature] of Object.entries(voronoi.features)) {
+      // fetch all props
+      feature.properties = windowFeatures[i].properties
+      if (!feature.properties) continue
+
+      const area = turf.area(feature)
+      feature.properties.show = area < 5000000
+
+      // and set the correct color
+      /*
+      switch (this.chosenTheme.colorRamp) {
+        case 'colorInferno':
+          feature.properties.color = inferno(feature.properties.value)
+          break
+        case 'revInferno':
+          feature.properties.color = inferno(1.0 - feature.properties.value)
+          break
+        case 'colorViridis':
+          feature.properties.color = viridis(feature.properties.value)
+          break
+        case 'revViridis':
+          feature.properties.color = inferno(1.0 - feature.properties.value)
+          break
+        default:
+          break
+      }
+      */
+    }
+
+    // remove giant edge voronoi
+    voronoi.features = voronoi.features.filter(f => (f.properties ? f.properties.show : false))
+
+    console.log({ voronoi })
+    console.log('Setting data:', voronoi.features.length, 'features')
+
+    // hello
+    const things: any = this.mymap.getSource('voronoi')
+    things.setData(voronoi)
   }
 
   private clickedPollutant(p: string) {
@@ -306,21 +346,16 @@ class EmissionsGrid extends Vue {
   }
 
   private async loadData() {
-    const bins = await this.fetchEmissionsBins()
-    const sortedBins = bins.sort((a: number, b: number) => a - b)
-
     // spawn transit helper web worker
     this._myWorker = await MyWorker.create({
-      accessToken: this.authStore.state.accessToken,
-      bins: sortedBins,
-      cellSize: this.visualization.parameters['Cell size'].value,
-      projectId: this.projectId,
       projection: this.projection,
-      url: `${Config.emissionsServer}/${this.vizId}/bin?startTime=`,
+      colormap: 'viridis',
     })
 
     this.loadingText = 'Loading Emissions Grid Data...'
     const data = await this._myWorker.loadData()
+
+    console.log('BOOP! Got the data!')
 
     this.dataLookup = data.dataLookup
     this.pollutantsMaxValue = data.pollutantsMaxValue
@@ -337,16 +372,12 @@ class EmissionsGrid extends Vue {
     if (this.firstLoad) {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
-
       await this.loadData()
-
-      if (!this.initialMapExtent) {
-        this.mymap.jumpTo({ center: [this.mapExtentXYXY[0], this.mapExtentXYXY[1]], zoom: 13 })
-        this.mymap.fitBounds(this.mapExtentXYXY, { padding: 150 })
-      }
     }
+
     this.setJsonSource()
     this.addJsonToMap()
+    this.mapMoved(this.pollutant)
 
     this.loadingText = ''
     nprogress.done()

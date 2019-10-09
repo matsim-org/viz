@@ -1,13 +1,6 @@
 <template lang="pug">
 #app(:class=" {'full-page-app' : isFullPage}" )
-  system-nav-bar.top-nav-strip(:authStore="authStore")
-
-  account-panel.user-nag-area(v-if="needToNagUser" :authStore="authStore")
-
   router-view.main-content
-
-  search-results.search-panel(v-if="appState.searchResults.length")
-
 </template>
 
 <script lang="ts">
@@ -118,6 +111,7 @@ b {
   -moz-osx-font-smoothing: grayscale;
   margin: 0px 0px 0px 0px;
   padding: 0px 0px 0px 0px;
+  height: 100%;
 }
 
 .full-page-app {
@@ -125,6 +119,7 @@ b {
 }
 
 .top-nav-strip {
+  display: none;
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   padding: 0rem 0.5rem 0rem 0.5rem;
@@ -200,7 +195,7 @@ a:hover {
 
   position: fixed;
   z-index: 1031;
-  top: 3.9rem;
+  top: 0rem; /* 3.9rem */
   left: 0;
 
   width: 100%;

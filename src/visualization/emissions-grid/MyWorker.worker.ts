@@ -1,4 +1,5 @@
 import { inferno, viridis } from 'scale-color-perceptual'
+import csv from 'csvtojson'
 
 import AsyncBackgroundWorker, {
   MethodCall,
@@ -8,13 +9,20 @@ import AsyncBackgroundWorker, {
 import Coords from '@/components/Coords'
 import { InitParams, MethodNames } from './MyWorkerContract'
 
+interface CsvRow {
+  timebin: number
+  x: number
+  y: number
+  value: number
+}
+
 class MyWorker extends AsyncBackgroundWorker {
   private params!: InitParams
 
   private dataLookup: any = {}
   private mapExtentXYXY: number[] = [180, 90, -180, -90]
   private pollutants: any = []
-  private pollutantsMaxValue: { [id: string]: number } = {}
+  private pollutantsMaxValue = 0
   private timeBins: any = []
 
   public handleInitialize(call: MethodCall) {
@@ -32,22 +40,19 @@ class MyWorker extends AsyncBackgroundWorker {
 
   private async loadData() {
     console.log('Fetching')
-    const jsonData = await this.fetchEmissionsData()
+    const csvData = await this.fetchEmissionsData()
 
-    console.log('Ranges')
+    console.log('Sorting pollutants into time bins')
+    this.calculateMaxValues(csvData)
+    this.buildLookupForTimeBins(csvData)
 
-    await this.calculateMaxValues(jsonData)
-
-    console.log('Time bins')
-    this.buildLookupForTimeBins(jsonData)
-
-    console.log({ dataLookup: this.dataLookup })
+    console.log({ lookup: this.dataLookup })
     console.log(this.mapExtentXYXY)
 
     return {
       data: {
         dataLookup: this.dataLookup,
-        pollutants: this.pollutants,
+        pollutants: ['NOx'], // this.pollutants,
         pollutantsMaxValue: this.pollutantsMaxValue,
         mapExtentXYXY: this.mapExtentXYXY,
         timeBins: this.timeBins,
@@ -61,80 +66,51 @@ class MyWorker extends AsyncBackgroundWorker {
 
     const allResults: any = { timeBins: [] }
 
-    for (const startTime of this.params.bins) {
-      const result = await this.fetchEmissionsDataForStartTime(startTime)
-      const bin = { startTime, value: result }
-      allResults.timeBins.push(bin)
-    }
-    console.log({ allResults })
-    return allResults
+    console.log('fetching')
+    // const csvFilePath = './berlin.csv'
+    const csvFilePath = './berlin-v5.4-1pct.NOx.csv'
+    // const csvFilePath = './ruhrgebiet-v1.0-1pct.NOx.csv'
+
+    const results = await fetch(csvFilePath)
+    if (!results.ok) throw new Error(results.statusText)
+
+    const rawText = await results.text()
+
+    const csvArray = await csv({
+      headers: ['timebin', 'x', 'y', 'value'],
+      delimiter: [',', ';', '\t'],
+      noheader: false,
+      checkType: true,
+    }).fromString(rawText)
+
+    return csvArray as CsvRow[]
   }
 
-  private async fetchEmissionsDataForStartTime(startTime: number): Promise<any> {
-    console.log('fetching startTime ' + startTime)
+  private buildLookupForTimeBins(data: CsvRow[]) {
+    for (const [i, row] of data.entries()) {
+      if (i % 8127 === 0) console.log(i)
+      // if (i % 3) continue
 
-    const result = await fetch(this.params.url + startTime, {
-      mode: 'cors',
-      headers: { Authorization: 'Bearer ' + this.params.accessToken },
-    })
-
-    if (result.ok) {
-      try {
-        const thing = await result.json()
-        return thing
-      } catch (e) {
-        throw new Error(e)
+      if (!this.dataLookup[row.timebin]) {
+        console.log('found timebin starting at:', row.timebin)
+        this.dataLookup[row.timebin] = { type: 'FeatureCollection', features: [] }
+        this.timeBins.push(row.timebin)
       }
-    } else if (result.status === 401) {
-      throw new Error('Unauthorized: ' + (await result.text()))
-    } else {
-      throw new Error(await result.text())
+
+      const fullRadius = 10000 // 0.5 * parseFloat(this.params.cellSize)
+
+      const pollutantHex = this.getHexagonValuesForPollutant(i, row, 'NOx', fullRadius)
+      if (pollutantHex) this.dataLookup[row.timebin].features.push(pollutantHex)
     }
   }
 
-  private buildLookupForTimeBins(data: any) {
-    for (const bin of data.timeBins) {
-      const startTime = bin.startTime
-      const hexesByPollutant = this.calculateHexValuesForCells(bin.value.cells)
-
-      for (const p of Object.keys(hexesByPollutant)) {
-        const key = p + ':' + startTime
-        console.log(key)
-        const output = hexesByPollutant[p]
-
-        this.dataLookup[key] = output
-      }
-    }
-  }
-
-  private calculateHexValuesForCells(cells: any) {
-    const hexesByPollutant: any = {}
-    const fullRadius = 0.5 * parseFloat(this.params.cellSize)
-
-    for (const p of this.pollutants) hexesByPollutant[p] = { type: 'FeatureCollection', features: [] }
-
-    for (const point of cells) {
-      if (point.value === {}) continue
-
-      for (const p of this.pollutants) {
-        const pollutantHex = this.getHexagonValuesForPollutant(point, p, fullRadius)
-        if (pollutantHex) hexesByPollutant[p].features.push(pollutantHex)
-      }
-    }
-    console.log({ hexesByPollutant })
-    return hexesByPollutant
-  }
-
-  private getHexagonValuesForPollutant(point: any, p: string, fullRadius: number) {
-    let value = point.value[p] / this.pollutantsMaxValue[p]
+  private getHexagonValuesForPollutant(i: number, point: CsvRow, p: string, fullRadius: number) {
+    let value = point.value / this.pollutantsMaxValue
 
     if (!value) return null
     if (value < 0.01) return null
 
     if (value > 1) value = 1
-
-    const hexwidth = fullRadius * Math.min(1.0, value * 10)
-    const hexheight = hexwidth * 1.1547005 // which is 2/sqrt(3)
 
     // Rapidly scale up opacity when rel.value is 0-20%; anything > 20% gets full opacity
     const op = Math.min(0.95, value * 5)
@@ -144,67 +120,36 @@ class MyWorker extends AsyncBackgroundWorker {
     const revInferno = inferno(1.0 - value)
     const revViridis = viridis(1.0 - value)
 
-    const id = point.coordinate.x.toString() + '/' + point.coordinate.y.toString()
-    const height = 2000 * value
+    const properties = {
+      id: i,
+      //       value,
+      op,
+      colorInferno,
+      colorViridis,
+      revInferno,
+      revViridis,
+    }
 
-    const properties = { id, value, height, op, colorInferno, colorViridis, revInferno, revViridis }
-    const hexagon = this.getHexagon(point, hexwidth, hexheight, properties)
-
-    return hexagon
-  }
-
-  private getHexagon(point: any, hexwidth: number, hexheight: number, properties: any) {
-    // HEXagons
-    const coord = point.coordinate
-    const hexPoints = []
-
-    const halfhexheight = 0.5 * hexheight
-
-    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-    hexPoints.push({ x: coord.x + hexwidth, y: coord.y + halfhexheight })
-    hexPoints.push({ x: coord.x + hexwidth, y: coord.y - halfhexheight })
-    hexPoints.push({ x: coord.x, y: coord.y - hexheight })
-    hexPoints.push({ x: coord.x - hexwidth, y: coord.y - halfhexheight })
-    hexPoints.push({ x: coord.x - hexwidth, y: coord.y + halfhexheight })
-    hexPoints.push({ x: coord.x, y: coord.y + hexheight })
-
-    const z = hexPoints.map(mm => {
-      const longlat = Coords.toLngLat(this.params.projection, mm)
-      return [longlat.x, longlat.y]
-    })
-
+    // point
+    const longlat = Coords.toLngLat(this.params.projection, point)
     return {
       type: 'Feature',
-      geometry: { type: 'Polygon', coordinates: [z] },
+      geometry: { type: 'Point', coordinates: [longlat.x, longlat.y] },
       properties: properties,
     }
   }
 
-  private async calculateMaxValues(data: any) {
-    console.log(data.timeBins)
-    for (const bin of data.timeBins) {
-      // save the start times of all time bins
-      this.timeBins.push(bin.startTime)
+  private async calculateMaxValues(data: any[]) {
+    let maxValue = 0
+    for (const row of data) {
+      maxValue = Math.max(maxValue, row.value)
 
-      for (const point of bin.value.cells) {
-        if (!point.value) continue
-
-        // set pollutant max-extent
-        for (const pollutant of Object.keys(point.value)) {
-          if (!this.pollutantsMaxValue.hasOwnProperty(pollutant)) {
-            this.pollutantsMaxValue[pollutant] = point.value[pollutant]
-          }
-          this.pollutantsMaxValue[pollutant] = Math.max(this.pollutantsMaxValue[pollutant], point.value[pollutant])
-        }
-
-        // set map extent
-        const coordinates = Coords.toLngLat(this.params.projection, { x: point.coordinate.x, y: point.coordinate.y })
-        this.updateMapExtent([coordinates.x, coordinates.y])
-      }
+      // set map extent
+      const coordinates = Coords.toLngLat(this.params.projection, { x: row.x, y: row.y })
+      this.updateMapExtent([coordinates.x, coordinates.y])
     }
 
-    this.pollutants = Object.keys(this.pollutantsMaxValue).sort()
-
+    this.pollutantsMaxValue = maxValue
     console.log({ MAX_VALUE: this.pollutantsMaxValue })
   }
 

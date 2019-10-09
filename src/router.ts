@@ -50,7 +50,7 @@ export default class AppRouter {
       mode: 'history', // 'history' mode produces clean, normal URLs
     })
 
-    this.setDynamicRoutes()
+    // this.setDynamicRoutes()
     this.setStaticRoutes()
 
     this.vueRouter.beforeEach((to: Route, from: Route, next: (auth?: string) => any) => {
@@ -106,12 +106,12 @@ export default class AppRouter {
     const staticRoutes = [
       {
         path: '/',
-        name: 'StartPage',
-        component: StartPage,
+        name: 'Emissions',
+        component: EmissionsGrid,
         props: {
-          authStore: this.authStore,
-          projectStore: this.projectStore,
-          fileApi: this.fileApi,
+          // authStore: this.authStore,
+          // projectStore: this.projectStore,
+          // fileApi: this.fileApi,
         },
       },
       {
