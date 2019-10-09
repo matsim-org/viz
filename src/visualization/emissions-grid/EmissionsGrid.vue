@@ -20,8 +20,10 @@
                                   :initialTime="currentTime"
                                   @change="changedSlider")
 
+      .zoomer
         h4.heading Current Zoom
-        b {{ currentZoom }}
+        p {{ currentZoom }}
+        h4.heading Color Scheme
 
       .theme-choices
         img.theme-button(v-for="theme in themes"
@@ -51,6 +53,7 @@ import TimeSlider from '@/components/TimeSlider.vue'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import { inferno, viridis } from 'scale-color-perceptual'
 import MyWorker from './MyWorker'
+import { BBox } from 'geojson'
 
 interface MapElement {
   lngLat: LngLat
@@ -113,24 +116,28 @@ class EmissionsGrid extends Vue {
       icon: '/inferno.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
+    /*
     {
       name: 'Viridark',
       colorRamp: 'colorViridis',
       icon: '/viridis.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
+    */
     {
       name: 'Inferno',
       colorRamp: 'revInferno',
       icon: '/infernwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
+    /*
     {
       name: 'Viridis',
       colorRamp: 'revViridis',
       icon: '/viriwhite.png',
       style: 'mapbox://styles/mapbox/light-v9',
     },
+    */
   ]
 
   // choose your colormap: for emissions we'll use inferno
@@ -251,10 +258,41 @@ class EmissionsGrid extends Vue {
     })
   }
 
-  private async mapMoved(e: any) {
+  private voronoiFeatures: any = {}
+
+  private calcZoomSample(zoom: number) {
+    if (zoom < 10) return 7
+    if (zoom < 11) return 5
+    if (zoom < 12) return 3
+    return 1
+  }
+
+  private generateVoronoi(bucket: number, allFeatures: any[]) {
+    // sample features when we're zoomed out
+    const sampledFeatures = allFeatures.filter(f => !(f.properties.id % bucket))
+
+    const voronoi = turf.voronoi({ type: 'FeatureCollection', features: sampledFeatures }, {} as any)
+
+    for (const [i, feature] of Object.entries(voronoi.features)) {
+      // fetch all props
+      feature.properties = sampledFeatures[i as any].properties
+      if (!feature.properties) continue
+
+      const area = turf.area(feature)
+      feature.properties.show = area < 5000000
+    }
+
+    // remove giant edge shapes
+    voronoi.features = voronoi.features.filter(f => (f.properties ? f.properties.show : false))
+
+    return voronoi
+  }
+
+  private mapMoved(e: any) {
     const zoom = this.mymap.getZoom()
     console.log('zoom', zoom)
     this.currentZoom = zoom
+    const zoomBucket = this.calcZoomSample(zoom)
 
     const source: any = this.mymap.getSource('voronoi')
     if (!source) return
@@ -262,61 +300,28 @@ class EmissionsGrid extends Vue {
     const mapExtent = this.mymap.getBounds()
 
     let bbox = turf.bboxPolygon([mapExtent.getWest(), mapExtent.getSouth(), mapExtent.getEast(), mapExtent.getNorth()])
-    bbox = turf.transformScale(bbox, zoom < 12 ? 1.05 : 1.5)
+    bbox = turf.transformScale(bbox, 1.05)
 
     const p = this.pollutant ? this.pollutant : this.pollutants[0]
     const storageKey = this.timeBins[this.selectedTimeBin]
 
     const allFeatures = this.dataLookup[storageKey].features
-    const windowFeatures = allFeatures.filter((f: any) => {
-      // sample subset of points if we're zoomed out far
-      if (zoom < 9 && f.properties.id % 8) return false
-      if (zoom < 11 && f.properties.id % 5) return false
-      if (zoom < 12 && f.properties.id % 3) return false
+
+    if (!this.voronoiFeatures[zoomBucket])
+      this.voronoiFeatures[zoomBucket] = this.generateVoronoi(zoomBucket, allFeatures)
+
+    const allVoronoi = this.voronoiFeatures[zoomBucket]
+    console.log({ allVoronoi })
+
+    const filteredFeatures = allVoronoi.features.filter((f: any) => {
       return turf.booleanContains(bbox, f)
     })
 
-    // generate voronoi for this set of dots
-    const voronoi = turf.voronoi({ type: 'FeatureCollection', features: windowFeatures }, bbox.bbox as any)
-
-    for (const [i, feature] of Object.entries(voronoi.features)) {
-      // fetch all props
-      feature.properties = windowFeatures[i].properties
-      if (!feature.properties) continue
-
-      const area = turf.area(feature)
-      feature.properties.show = area < 5000000
-
-      // and set the correct color
-      /*
-      switch (this.chosenTheme.colorRamp) {
-        case 'colorInferno':
-          feature.properties.color = inferno(feature.properties.value)
-          break
-        case 'revInferno':
-          feature.properties.color = inferno(1.0 - feature.properties.value)
-          break
-        case 'colorViridis':
-          feature.properties.color = viridis(feature.properties.value)
-          break
-        case 'revViridis':
-          feature.properties.color = inferno(1.0 - feature.properties.value)
-          break
-        default:
-          break
-      }
-      */
-    }
-
-    // remove giant edge voronoi
-    voronoi.features = voronoi.features.filter(f => (f.properties ? f.properties.show : false))
-
-    console.log({ voronoi })
-    console.log('Setting data:', voronoi.features.length, 'features')
+    console.log('Setting data:', filteredFeatures.length, 'features')
 
     // hello
     const things: any = this.mymap.getSource('voronoi')
-    things.setData(voronoi)
+    things.setData({ type: 'FeatureCollection', features: filteredFeatures })
   }
 
   private clickedPollutant(p: string) {

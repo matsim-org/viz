@@ -122,12 +122,11 @@ class MyWorker extends AsyncBackgroundWorker {
 
     const properties = {
       id: i,
-      //       value,
       op,
       colorInferno,
-      colorViridis,
+      // colorViridis,
       revInferno,
-      revViridis,
+      // revViridis,
     }
 
     // point
