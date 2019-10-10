@@ -1,11 +1,44 @@
 <template lang="pug">
 #container
+  nav.navbar.is-fixed-top(role="navigation" aria-label="main navigation" style="box-shadow: 0px 0px 3px #00000080;")
+    .navbar-brand
+      a.navbar-item(href="https://matsim.org")
+        img(src='@/assets/matsim-logo-blue.png' height="28")
+
+      a.navbar-burger.burger(role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample")
+        span(aria-hidden="true")
+        span(aria-hidden="true")
+        span(aria-hidden="true")
+
+    .navbar-menu(id="emissionsNavbar")
+      .navbar-start
+        a.navbar-item
+          strong Emissions Explorer
+
+      .navbar-end
+        .navbar-item.has-dropdown.is-hoverable
+          a.navbar-link Projection {{ projection ? ': ' + projection : '' }}
+          .navbar-dropdown(@click="changedProjection")
+            a.navbar-item GK4
+            a.navbar-item EPSG:2048
+            a.navbar-item EPSG:25832
+            a.navbar-item EPSG:25833
+            a.navbar-item EPSG:31468
+
+        a.navbar-item URL:&nbsp;
+          input.input(size="40" v-model="myUrl")
+
+        .navbar-item
+          .buttons
+            a.button.is-link(@click="clickedGo")
+              strong &nbsp;Go!&nbsp;
+
   .map-container
     #mymap
 
   .status-blob(v-if="loadingText"): p {{ loadingText }}
 
-  left-data-panel.left-panel(v-if="!loadingText" title="Emissions Grid")
+  left-data-panel.left-panel(v-if="!loadingText" title="Emissions Explorer")
     .dashboard-panel
       .pollution-settings
         h4.heading Pollutant
@@ -89,10 +122,10 @@ class EmissionsGrid extends Vue {
   private noxLocations: any
   private sharedState: any = sharedStore.state
 
-  private loadingText: string = 'Emissions Grid'
+  private loadingText: string = 'MATSim Emissions Explorer. Set fields above, then click GO.'
   private visualization: any = null
   private project: any = {}
-  private projection!: string
+  private projection: string = ''
   private vizId: string = 'local'
 
   private currentZoom = 0
@@ -106,6 +139,8 @@ class EmissionsGrid extends Vue {
   private selectedTimeBin = 0
 
   private previousZoom = 0
+
+  private myUrl = 'http://localhost:8080/berlin.csv'
 
   private _myWorker: any
 
@@ -194,9 +229,35 @@ class EmissionsGrid extends Vue {
       console.log(e)
     }
 
-    // do things that can only be done after MapBox is fully initialized
     this.mymap.on('style.load', this.mapIsReady)
     this.mymap.on('moveend', this.mapMoved)
+  }
+
+  private async clickedGo() {
+    // do things that can only be done after MapBox is fully initialized
+
+    if (this.mymap.getLayer('voronoi-layer')) this.mymap.removeLayer('voronoi-layer')
+
+    this.loadingText = 'Loading data...'
+    await this.loadData()
+
+    this.loadingText = 'Crunching numbers...'
+    await this.setJsonSource()
+
+    this.loadingText = 'Building map...'
+    await this.addJsonToMap()
+
+    this.loadingText = 'Chunking polygons...'
+    await this.mapMoved(this.pollutant)
+
+    this.loadingText = ''
+    nprogress.done()
+  }
+
+  private changedProjection(e: any) {
+    console.log(e.originalTarget.innerText)
+    this.projection = e.originalTarget.innerText
+    // TODO: reload!
   }
 
   private isMobile() {
@@ -354,7 +415,7 @@ class EmissionsGrid extends Vue {
     // spawn transit helper web worker
     this._myWorker = await MyWorker.create({
       projection: this.projection,
-      colormap: 'viridis',
+      url: this.myUrl,
     })
 
     this.loadingText = 'Loading Emissions Grid Data...'
@@ -377,14 +438,8 @@ class EmissionsGrid extends Vue {
     if (this.firstLoad) {
       this.firstLoad = false
       this.mymap.addControl(new mapboxgl.NavigationControl(), 'top-right')
-      await this.loadData()
     }
 
-    this.setJsonSource()
-    this.addJsonToMap()
-    this.mapMoved(this.pollutant)
-
-    this.loadingText = ''
     nprogress.done()
   }
 }

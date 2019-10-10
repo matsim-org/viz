@@ -1,6 +1,6 @@
 export interface InitParams {
   projection: string
-  colormap: string
+  url: string
 }
 
 export enum MethodNames {
