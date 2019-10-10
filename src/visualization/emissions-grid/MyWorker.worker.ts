@@ -19,6 +19,7 @@ interface CsvRow {
 class MyWorker extends AsyncBackgroundWorker {
   private params!: InitParams
 
+  private defaultServer = 'http://localhost:8080/'
   private dataLookup: any = {}
   private mapExtentXYXY: number[] = [180, 90, -180, -90]
   private pollutants: any = []
@@ -64,14 +65,11 @@ class MyWorker extends AsyncBackgroundWorker {
   private async fetchEmissionsData() {
     console.log({ WORKER_STARTING_UP: this.params })
 
-    const allResults: any = { timeBins: [] }
+    // be smart about url
+    let url = this.params.url
+    if (!url.startsWith('http')) url = this.defaultServer + url
 
-    console.log('fetching')
-    const url = this.params.url
-    // const csvFilePath = './berlin.csv'
-    // const csvFilePath = './berlin-v5.4-1pct.NOx.csv'
-    // const csvFilePath = './ruhrgebiet-v1.0-1pct.NOx.csv'
-
+    console.log('fetching', url)
     const results = await fetch(url, { mode: 'cors' })
 
     if (!results.ok) {

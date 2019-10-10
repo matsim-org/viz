@@ -26,11 +26,11 @@
             a.navbar-item EPSG:31468
 
         a.navbar-item URL:&nbsp;
-          input.input(size="40" v-model="myUrl")
+          input.input(size="40" v-model="myUrl" @keyup.enter="clickedGo")
 
         .navbar-item
           .buttons
-            a.button.is-link(@click="clickedGo")
+            a.button.is-link(@click="clickedGo" @keyup.enter="clickedGo")
               strong &nbsp;Go!&nbsp;
 
   .map-container
@@ -235,8 +235,9 @@ class EmissionsGrid extends Vue {
   }
 
   private async clickedGo() {
-    // do things that can only be done after MapBox is fully initialized
-
+    // zap old data
+    this.dataLookup = {}
+    this.voronoiFeatures = {}
     if (this.mymap.getLayer('voronoi-layer')) this.mymap.removeLayer('voronoi-layer')
 
     this.loadingText = 'Loading data...'
@@ -256,8 +257,8 @@ class EmissionsGrid extends Vue {
   }
 
   private changedProjection(e: any) {
-    console.log(e.originalTarget.innerText)
-    this.projection = e.originalTarget.innerText
+    console.log(e.target.innerText)
+    this.projection = e.target.innerText
     // TODO: reload!
   }
 
@@ -296,7 +297,7 @@ class EmissionsGrid extends Vue {
     }
   }
 
-  private addJsonToMap() {
+  private async addJsonToMap() {
     this.mymap.addLayer(
       {
         id: 'voronoi-layer',
@@ -350,7 +351,7 @@ class EmissionsGrid extends Vue {
     return voronoi
   }
 
-  private mapMoved(e: any) {
+  private async mapMoved(e: any) {
     const zoom = this.mymap.getZoom()
     console.log('zoom', zoom)
     this.currentZoom = zoom
