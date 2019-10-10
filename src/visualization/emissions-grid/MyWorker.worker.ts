@@ -72,8 +72,14 @@ class MyWorker extends AsyncBackgroundWorker {
     // const csvFilePath = './berlin-v5.4-1pct.NOx.csv'
     // const csvFilePath = './ruhrgebiet-v1.0-1pct.NOx.csv'
 
-    const results = await fetch(url)
-    if (!results.ok) throw new Error(results.statusText)
+    const results = await fetch(url, { mode: 'cors' })
+
+    if (!results.ok) {
+      console.log(results.status)
+      console.log(results.statusText)
+      console.log({ results })
+      throw new Error(results.statusText)
+    }
 
     const rawText = await results.text()
 

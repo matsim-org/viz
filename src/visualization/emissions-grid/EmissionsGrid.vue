@@ -36,7 +36,7 @@
   .map-container
     #mymap
 
-  .status-blob(v-if="loadingText"): p {{ loadingText }}
+  .status-blob(v-if="loadingText" v-html="loadingText")
 
   left-data-panel.left-panel(v-if="!loadingText" title="Emissions Explorer")
     .dashboard-panel
@@ -122,7 +122,8 @@ class EmissionsGrid extends Vue {
   private noxLocations: any
   private sharedState: any = sharedStore.state
 
-  private loadingText: string = 'MATSim Emissions Explorer. Set fields above, then click GO.'
+  private loadingText: string =
+    'MATSim Emissions Explorer. Set fields above, then click GO.</br/>To serve local files: <i>http-server --cors="Access-Control-Allow-Origin: *"</i>'
   private visualization: any = null
   private project: any = {}
   private projection: string = ''
@@ -140,7 +141,7 @@ class EmissionsGrid extends Vue {
 
   private previousZoom = 0
 
-  private myUrl = 'http://localhost:8080/berlin.csv'
+  private myUrl = 'http://localhost:8080/'
 
   private _myWorker: any
 
@@ -559,6 +560,10 @@ a:focus {
 .pollutant {
   width: 100%;
   margin-bottom: 0.25rem;
+}
+
+.zoomer {
+  margin: 0rem 0.5rem 0.5rem 0.5rem;
 }
 
 .heading {
