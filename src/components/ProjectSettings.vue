@@ -63,9 +63,11 @@
             .delete.is-pulled-right.is-danger(@click="clickedRemove(actor)" style="margin-top: 0.25rem;")
 
   hr
-  .actions
-    button.button.is-rounded.is-link.action-button(@click="clickedSave" :class="{'is-loading': isFetching}") Save
-    button.button.is-rounded.is-text.action-button(@click="cancel") Cancel
+  .actions(style="width:100%;")
+      button.button.is-rounded.is-link.action-button(@click="clickedSave" :class="{'is-loading': isFetching}") Save
+      button.button.is-rounded.is-text.action-button(@click="cancel") Cancel
+      .spacer(style="flex:1;")
+      button.button.is-rounded.is-warning.action-button(@click="deleteProject") Delete Project
   p.help.is-danger(v-if="errorMessage") {{ errorMessage }}
 
 </template>
@@ -304,7 +306,6 @@ h4.title {
 .actions {
   display: flex;
   flex-direction: row;
-  margin-left: auto;
 }
 
 .share-table {
