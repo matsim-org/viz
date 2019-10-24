@@ -155,6 +155,10 @@ export default class ProjectSettings extends Vue {
     console.log(this.shareList)
   }
 
+  private deleteProject() {
+    this.$emit('deleteProject')
+  }
+
   private updateUsersWhoCanBeAdded() {
     const myList = []
     const currentNameList: any = {}

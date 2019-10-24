@@ -173,6 +173,17 @@ export default class FireBaseAPI {
     await db.doc(`users/${props.owner}/projects/${props.urlslug}`).set(props)
   }
 
+  public static async deleteProject(owner: string, project: string) {
+    console.log('--deleting project:', owner, project)
+    const db = firebase.firestore()
+    await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(project)
+      .delete()
+  }
+
   public static async getRun(owner: string, projectId: string, runId: string) {
     console.log('getRun', owner, projectId, runId)
 
@@ -308,6 +319,19 @@ export default class FireBaseAPI {
       batch.set(doc, props)
     }
     await batch.commit()
+  }
+
+  public static async deleteRun(owner: string, project: string, run: string) {
+    console.log('deleting run:', owner, project, run)
+    const db = firebase.firestore()
+    await db
+      .collection('users')
+      .doc(owner)
+      .collection('projects')
+      .doc(project)
+      .collection('runs')
+      .doc(run)
+      .delete()
   }
 
   public static async updateDoc(location: string, attributes: any) {
