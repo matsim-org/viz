@@ -44,4 +44,7 @@ export default class ImageFileThumbnail extends Vue {
 </script>
 
 <style scoped>
+.medium-zoom {
+  padding: 0.5rem 0.5rem;
+}
 </style>

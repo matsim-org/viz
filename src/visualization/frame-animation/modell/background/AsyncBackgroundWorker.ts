@@ -17,7 +17,7 @@ export interface AsyncMethodCall extends AsyncMessage {
 
 export interface MethodResult {
   data: any
-  transferrables?: any[]
+  transferrables: Transferable[]
 }
 
 export interface AsyncMethodResult extends AsyncResult {
@@ -56,7 +56,7 @@ export default abstract class AsyncBackgroundWorker {
 
     if (message.call.method === INITIALIZE) {
       this.handleInitialize(message.call)
-      this.postResult(message.id, { data: {} })
+      this.postResult(message.id, { data: {}, transferrables: [] })
       this.isInitialized = true
       return
     }

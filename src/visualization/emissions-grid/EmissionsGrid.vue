@@ -30,6 +30,7 @@
 'use strict'
 import * as timeConvert from 'convert-seconds'
 import mapboxgl from 'mapbox-gl'
+import nprogress from 'nprogress'
 import { LngLat } from 'mapbox-gl/dist/mapbox-gl'
 import pako from 'pako'
 import readBlob from 'read-blob'
@@ -348,6 +349,7 @@ class EmissionsGrid extends Vue {
     this.addJsonToMap()
 
     this.loadingText = ''
+    nprogress.done()
   }
 }
 

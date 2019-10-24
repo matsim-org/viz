@@ -47,6 +47,7 @@
 </template>
 
 <script lang="ts">
+import nprogress from 'nprogress'
 import { Vue, Component, Prop } from 'vue-property-decorator'
 import Webvis from './Webvis'
 import Config from '../../config/Config'
@@ -105,7 +106,6 @@ class FrameAnimation extends Vue {
   }
 
   public mounted() {
-    SharedStore.setFullPage(true)
     const canvas = this.$refs.canvas as HTMLElement
     this.webvis = new Webvis({
       canvasId: canvas.id,
@@ -116,6 +116,9 @@ class FrameAnimation extends Vue {
     this.webvis.onServerConfigChanged = () => this.onConfigChanged()
     this.webvis.onFetchingData = (value: boolean) => this.onFetchingDataChanged(value)
     this.webvis.onTimestepChanged = (value: number) => this.onTimestepChanged(value)
+
+    SharedStore.setFullPage(true)
+    nprogress.done()
   }
 
   public beforeDestroy() {

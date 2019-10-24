@@ -168,4 +168,4 @@ class DrawingController {
   }
 }
 
-export { DrawingController }
+export default DrawingController

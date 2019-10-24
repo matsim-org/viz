@@ -34,16 +34,20 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '../communication/FileAPI'
 
-const vueInstance = Vue.extend({
-  components: {
-    error: Error,
-    modal: Modal,
-  },
-  props: { owner: String, projectId: String, mvizkey: String, fileApi: FileAPI },
-})
+@Component({ components: { error: Error, modal: Modal } })
+export default class NewRunDialog extends Vue {
+  @Prop()
+  private owner!: string
 
-@Component
-export default class NewRunDialog extends vueInstance {
+  @Prop()
+  private projectId!: string
+
+  @Prop()
+  private mvizkey!: string
+
+  @Prop()
+  private fileApi!: FileAPI
+
   private runId = ''
   private runDescription = ''
   private errorMessage = ''

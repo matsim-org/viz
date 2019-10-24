@@ -1,4 +1,4 @@
-import * as JWT from 'jwt-decode'
+import JWT from 'jwt-decode'
 import { AuthenticationRequestVars } from '@/auth/AuthenticationRequest'
 import { IdToken } from './AuthenticationStore'
 

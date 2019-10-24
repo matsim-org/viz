@@ -1,6 +1,12 @@
-# Set up development environment
+# MatHub: web-based data viz platform for MATSim outputs
 
-The project is a browser application which uses the following techniques:
+This experimental platform for storing and visualizing MATSim model outputs is being developed by the Institute for Sea and Land Transport at the Technische Universität Berlin.
+
+It is not generally useful just yet; so if you're here, you're probably interested in helping build and develop it! Thanks for your interest!
+
+# Setting up your developer environment
+
+This is a browser application which uses the following techniques:
 
 - [Typescript](http://www.typescriptlang.org/docs/home.html) as programming language
 - [VueJS](https://vuejs.org/) as a view framework
@@ -14,11 +20,11 @@ The recommended editor is [Visual Studio Code](https://code.visualstudio.com/Dow
 - Prettier to auto format code according to the linting rules.
 - To enable auto formatting on save add `"editor.formatOnSave": true` in the user settings
 
-# install
+## 1. Install development tools
 
-You'll need to install Node.js and NPM to build locally. Instructions for each platform are below.
+You'll need to install Node.js and `yarn` to build locally. Instructions for each platform are below.
 
-##### windows
+##### 1a. windows/linux
 
 We've found that using the WSL "Windows 10 Subsystem for Linux" makes web development easiest on Windows. So first, install WSL following instructions here:
 
@@ -29,12 +35,12 @@ Now you can install node:
 
 ```
 sudo apt update
-sudo apt install nodejs npm git
+sudo apt install nodejs git yarn
 ```
 
 and then follow the instructions for getting the viz code, below.
 
-##### macports
+##### 1b. macports
 
 Install MacPorts - https://www.macports.org/
 
@@ -47,13 +53,22 @@ sudo port install nodejs8
 sudo port install npm6
 ```
 
-### Get the code from GitHub
+## 2. Get the code and dependencies
+
+Yarn is a javascript dependency manager, very similar to maven in the Java universe. Yarn uses the `npm` package manager internally, which is part of Node. The `yarn install` command below will fetch all js dependencies and place them in the `node_modules` project folder, which you should never need to delve into.
 
 ```
 git clone https://github.com/matsim-org/viz
 cd viz
-npm install
-npm run serve
+yarn install
 ```
 
-open browser at `https://localhost:8080`
+## 3. Build and run!
+
+You can build the site and run a local copy for development with one command:
+
+```
+yarn serve
+```
+
+and then open your browser to `https://localhost:8080`

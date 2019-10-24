@@ -38,6 +38,7 @@
 </template>
 
 <script lang="ts">
+import nprogress from 'nprogress'
 import AccountPanel from '@/components/AccountPanel.vue'
 import SharedStore, { SharedState } from '@/SharedStore'
 import FileAPI from '@/communication/FileAPI'
@@ -102,8 +103,10 @@ export default class OwnerPage extends vueInstance {
       })
   }
 
-  public mounted() {
-    this.buildPage()
+  public async mounted() {
+    await this.buildPage()
+    // end nav progress-meter
+    nprogress.done()
   }
 
   public async buildPage() {

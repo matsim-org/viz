@@ -34,6 +34,7 @@ import * as turf from '@turf/turf'
 import colormap from 'colormap'
 import cookie from 'js-cookie'
 import mapboxgl, { LngLatBoundsLike } from 'mapbox-gl'
+import nprogress from 'nprogress'
 import pako from 'pako'
 import xml2js from 'xml2js'
 import { Vue, Component, Prop } from 'vue-property-decorator'
@@ -312,7 +313,9 @@ class TransitSupply extends Vue {
       padding: { top: 2, bottom: 2, right: 2, left: 2 },
       animate: false,
     })
+
     this.loadingText = ''
+    nprogress.done()
   }
 
   private async addLinksToMap() {

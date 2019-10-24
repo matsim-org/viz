@@ -18,9 +18,9 @@ branches:
 # it with ugly bash if statements
 script:
   - if [ -f src/firebase-secure.js ]; then sed -i "s/{{FIREBASE_KEY}}/$FIREBASE_KEY/" src/firebase-secure.js; fi
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then npm run build && npm run unit; fi
-  - if [ "$TRAVIS_BRANCH" == "staging" ]; then npm run build-staging && npm run unit; fi
-  - if [ "$TRAVIS_BRANCH" == "dev" ]; then npm run build-dev && npm run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then yarn run build && yarn run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "staging" ]; then yarn run build-staging && yarn run unit; fi
+  - if [ "$TRAVIS_BRANCH" == "dev" ]; then yarn run build-dev && yarn run unit; fi
 
 # the script statement for each deploy refer to the deploy.sh script because the script tag in the deploy section
 # only supports one command...

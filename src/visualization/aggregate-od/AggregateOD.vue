@@ -49,6 +49,7 @@ import * as turf from '@turf/turf'
 import colormap from 'colormap'
 import { debounce } from 'debounce'
 import mapboxgl, { MapMouseEvent, PositionOptions } from 'mapbox-gl'
+import nprogress from 'nprogress'
 import proj4 from 'proj4'
 import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
@@ -262,6 +263,7 @@ class AggregateOD extends Vue {
     }
 
     this.loadingText = ''
+    nprogress.done()
   }
 
   private isMobile() {

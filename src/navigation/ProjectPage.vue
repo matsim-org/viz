@@ -12,6 +12,9 @@
         | &nbsp;/ {{urlslug}}
       h4.title.is-3 {{myProject.title ? myProject.title : '&nbsp;'}}
 
+    .notification.is-warning(v-if="statusMessage.length > 0")
+      b.message-area {{ statusMessage }}
+
     .content-area
       p.tagline: i {{ myProject.description ? myProject.description : "&nbsp;" }}
 
@@ -26,6 +29,7 @@
           project-settings.project-settings(
               v-if="showSettings"
               @close="closedSettings()"
+              @deleteProject="deleteProject()"
               :projectStore="projectStore"
               :authStore="authStore"
               :owner="owner"
@@ -40,14 +44,16 @@
           v-if="canModify"
           @click="clickedNewRun") +New Run
 
-      table.project-list
-        tr
-          th(style="min-width: 9rem;") Run ID
-          th Description
+      .file-area
+        .files
+          .fileList
+            .fileItem(v-for="run in myRuns" v-bind:key="run.runId" @click="clickedRun(run)")
+              list-element
+                .itemTitle(slot="title")
+                  span {{ run.runId }}
+                  span.plain {{ run.description }}
+                button.delete(v-if="canModify" slot="accessory" v-on:click.stop="clickedDeleteRun(run)")
 
-        tr(v-for="run in myRuns")
-          td: b: router-link(:to='`/${owner}/${urlslug}/${run.runId}`') {{ run.runId }}
-          td {{ run.description }}
 
       new-run-dialog(v-if="showCreateRun"
                      :projectId="urlslug"
@@ -62,8 +68,8 @@
 import download from 'downloadjs'
 import { File } from 'babel-types'
 import filesize from 'filesize'
+import nprogress from 'nprogress'
 import { Drag, Drop } from 'vue-drag-drop'
-import { falsy } from 'vega'
 
 import { FileAttributes, RunAttributes, ProjectAttributes } from '@/communication/FireBaseAPI'
 import AuthenticationStore from '@/auth/AuthenticationStore'
@@ -72,6 +78,7 @@ import VizThumbnail from '@/components/VizThumbnail.vue'
 import ImageFileThumbnail from '@/components/ImageFileThumbnail.vue'
 import CloudAPI from '@/communication/FireBaseAPI'
 import FileAPI from '@/communication/FileAPI'
+import ListElement from '@/components/ListElement.vue'
 import ProjectStore from '@/project/ProjectStore'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import NewRunDialog from '@/components/NewRunDialog.vue'
@@ -89,6 +96,7 @@ const vueInstance = Vue.extend({
   },
   components: {
     ImageFileThumbnail,
+    ListElement,
     MarkdownEditor,
     NewRunDialog,
     ProjectSettings,
@@ -117,6 +125,7 @@ export default class ProjectPage extends vueInstance {
   private showCreateRun = false
   private myRuns: any[] = []
   private got404 = false
+  private statusMessage = ''
 
   private myProject: ProjectAttributes = {
     owner: this.owner,
@@ -262,6 +271,64 @@ export default class ProjectPage extends vueInstance {
     console.log({ to, from })
   }
 
+  private clickedRun(run: RunAttributes) {
+    this.$router.push({ path: `/${this.owner}/${this.urlslug}/${run.runId}` })
+  }
+
+  private async clickedDeleteRun(run: RunAttributes) {
+    const confirmDelete = confirm(`Really DELETE run "${run.runId}", including all of its files and visualizations?`)
+    if (!confirmDelete) return
+
+    try {
+      this.statusMessage = 'Deleting run ' + run.runId + ', please wait...'
+
+      // delete all visualizations
+      const vizes: Visualization[] = await CloudAPI.getVisualizations(this.owner, this.urlslug, run.runId)
+      for (const viz of vizes) {
+        await this.projectStore.deleteVisualization(viz)
+        await CloudAPI.deleteVisualization(this.owner, this.urlslug, run.runId, viz.id)
+        console.log('-- deleted viz ', viz.id)
+      }
+
+      // delete all files
+      await this.projectStore.filterFilesByTag(run.runId)
+      console.log({ FILES: this.project.files })
+
+      for (const f of this.project.files) {
+        await this.projectStore.deleteFile(f.id)
+        console.log('-- deleted ', f.userFileName)
+      }
+      await CloudAPI.deleteRun(this.owner, this.urlslug, run.runId)
+      console.log('-- deleted ', run.runId)
+    } catch (error) {
+      console.log({ error })
+    }
+    await this.fetchRuns()
+    this.statusMessage = ''
+  }
+
+  private async deleteProject() {
+    console.log('delete me')
+
+    if (this.myRuns.length > 0) {
+      alert('Cannot delete a project that contains runs. Delete all runs first.')
+      return
+    }
+
+    const confirmDelete = confirm(`Really DELETE project "${this.urlslug}"?`)
+    if (!confirmDelete) return
+
+    this.statusMessage = 'Deleting project, please wait...'
+    try {
+      await CloudAPI.deleteProject(this.owner, this.urlslug)
+      console.log('-- deleted ', this.urlslug)
+    } catch (e) {
+      console.log({ e })
+    }
+    this.statusMessage = ''
+    this.$router.replace(`/${this.owner}`)
+  }
+
   private clickedNewRun() {
     this.showCreateRun = true
   }
@@ -292,6 +359,8 @@ export default class ProjectPage extends vueInstance {
     const runs: any[] = await CloudAPI.getRuns(this.owner, this.urlslug)
     runs.sort((a: any, b: any) => (a.runId.toLowerCase() < b.runId.toLowerCase() ? -1 : 1))
     this.myRuns = runs
+
+    nprogress.done()
   }
 
   private async onNameChanged(name: string, event: any) {
@@ -395,6 +464,34 @@ a:hover {
 
 .project-settings {
   margin: 0.5rem 0rem;
+}
+
+.fileItem {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition-duration: 0.2s;
+}
+
+.itemTitle {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.plain {
+  font-weight: normal;
+}
+
+.message-area {
+  margin: 0rem 0.5rem;
 }
 
 @media only screen and (max-width: 640px) {

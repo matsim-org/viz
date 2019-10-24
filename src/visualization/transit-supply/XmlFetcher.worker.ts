@@ -43,7 +43,7 @@ class XmlFetcher extends AsyncBackgroundWorker {
     const xml = await this.parseXML(data)
 
     console.log({ WORKER_DONE: xml })
-    return { data: xml }
+    return { data: xml, transferrables: [] }
   }
 
   private async getDataFromBlob(blob: Blob) {

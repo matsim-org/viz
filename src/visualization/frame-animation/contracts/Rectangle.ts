@@ -31,34 +31,39 @@ export default class Rectangle {
     return (this.top + this.bottom) / 2
   }
 
-  constructor(left, right, top, bottom) {
+  private _left: number
+  private _right: number
+  private _top: number
+  private _bottom: number
+
+  constructor(left: number, right: number, top: number, bottom: number) {
     this._left = left
     this._right = right
     this._top = top
     this._bottom = bottom
   }
 
-  static createRectFromCenterDimensions(centerX, centerY, width, height) {
-    let left = centerX - width / 2
-    let right = centerX + width / 2
-    let top = centerY + height / 2
-    let bottom = centerY - height / 2
+  public static createRectFromCenterDimensions(centerX: number, centerY: number, width: number, height: number) {
+    const left = centerX - width / 2
+    const right = centerX + width / 2
+    const top = centerY + height / 2
+    const bottom = centerY - height / 2
     return new Rectangle(left, right, top, bottom)
   }
 
-  static createRectFromOffset(rectangle, offsetX, offsetY) {
-    let left = rectangle.left + offsetX
-    let right = rectangle.right + offsetX
-    let top = rectangle.top + offsetY
-    let bottom = rectangle.bottom + offsetY
+  public static createRectFromOffset(rectangle: Rectangle, offsetX: number, offsetY: number) {
+    const left = rectangle.left + offsetX
+    const right = rectangle.right + offsetX
+    const top = rectangle.top + offsetY
+    const bottom = rectangle.bottom + offsetY
     return new Rectangle(left, right, top, bottom)
   }
 
-  static createRectVerticallyFlipped(rectangle) {
+  public static createRectVerticallyFlipped(rectangle: Rectangle) {
     return new Rectangle(rectangle.left, rectangle.right, -rectangle.top, -rectangle.bottom)
   }
 
-  toJSON() {
+  public toJSON() {
     return {
       left: this._left,
       right: this._right,

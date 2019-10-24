@@ -1,4 +1,4 @@
-import { GeoJsonReader } from '@/visualization/frame-animation/contracts/GeoJsonReader'
+import GeoJsonReader from '@/visualization/frame-animation/contracts/GeoJsonReader'
 import AsyncBackgroundWorker, {
   MethodCall,
   MethodResult,

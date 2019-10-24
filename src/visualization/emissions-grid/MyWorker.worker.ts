@@ -52,6 +52,7 @@ class MyWorker extends AsyncBackgroundWorker {
         mapExtentXYXY: this.mapExtentXYXY,
         timeBins: this.timeBins,
       },
+      transferrables: [],
     }
   }
 
