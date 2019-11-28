@@ -525,12 +525,18 @@ class AggregateOD extends Vue {
       this.dailyTo = centroid.properties.dailyTo
 
       centroid.properties.widthFrom = Math.min(
-        70,
-        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+        35,
+        Math.max(
+          12,
+          Math.pow(this.dailyFrom / this.scaleFactor, 0.3) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
+        )
       )
       centroid.properties.widthTo = Math.min(
-        70,
-        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+        35,
+        Math.max(
+          12,
+          Math.pow(this.dailyTo / this.scaleFactor, 0.3) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
+        )
       )
 
       if (!feature.properties) feature.properties = {}
