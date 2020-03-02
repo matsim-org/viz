@@ -64,10 +64,10 @@
 
   hr
   .actions(style="width:100%;")
-      button.button.is-rounded.is-link.action-button(@click="clickedSave" :class="{'is-loading': isFetching}") Save
-      button.button.is-rounded.is-text.action-button(@click="cancel") Cancel
+      button.button.is-link.action-button(@click="clickedSave" :class="{'is-loading': isFetching}") Save
+      button.button.is-text.action-button(@click="cancel") Cancel
       .spacer(style="flex:1;")
-      button.button.is-rounded.is-warning.action-button(@click="deleteProject") Delete Project
+      button.button.is-warning.action-button(@click="deleteProject") Delete Project
   p.help.is-danger(v-if="errorMessage") {{ errorMessage }}
 
 </template>

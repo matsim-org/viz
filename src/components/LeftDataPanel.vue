@@ -8,11 +8,11 @@
       slot
 
     .bottom-nav-bar
-      button.button.is-small.is-rounded.is-outlined(@click="toggleHidePanel")
+      button.button.is-small.is-outlined(@click="toggleHidePanel")
         i.fa.fa-arrow-left
 
   .restore-button(v-if="isHidden")
-    button.button.is-small.is-rounded.is-link(@click="toggleHidePanel")
+    button.button.is-small.is-link(@click="toggleHidePanel")
         i.fa.fa-arrow-right
 
 </template>

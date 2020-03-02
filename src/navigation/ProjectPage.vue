@@ -23,7 +23,7 @@
           markdown-editor.readme(v-model="myProject.notes" @save="saveNotes")
 
         .settings(:class="{'flex-wide': showSettings}")
-          button.button.is-small.is-rounded.is-light.is-pulled-right.project-settings-button(
+          button.button.is-small.is-light.is-pulled-right.project-settings-button(
             v-if="!showSettings"
             @click="showSettings=!showSettings") Project Settings...
           project-settings.project-settings(
@@ -39,7 +39,7 @@
       .run-space
 
       h5.title.is-5 RUNS
-        button.button.is-rounded.is-danger.is-outlined(
+        button.button.is-danger.is-outlined(
           style="float:right"
           v-if="canModify"
           @click="clickedNewRun") +New Run
