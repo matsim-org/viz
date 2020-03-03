@@ -20,7 +20,10 @@
 
     .widgets
       h4.heading Time of day:
-      time-slider.time-slider(v-if="headers.length>0" :useRange='showTimeRange' :stops='headers' @change='bounceTimeSlider')
+      time-slider.time-slider(v-if="headers.length > 0"
+        :useRange='showTimeRange'
+        :stops='headers'
+        @change='bounceTimeSlider')
       span.checkbox
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
@@ -51,7 +54,6 @@ import { debounce } from 'debounce'
 import mapboxgl, { MapMouseEvent, PositionOptions } from 'mapbox-gl'
 import nprogress from 'nprogress'
 import proj4 from 'proj4'
-import vegaEmbed from 'vega-embed'
 import VueSlider from 'vue-slider-component'
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
 
@@ -188,6 +190,7 @@ class AggregateOD extends Vue {
     }
     if (this.visualization.parameters['Scale Factor']) {
       this.scaleFactor = parseFloat(this.visualization.parameters['Scale Factor'].value)
+      if (!this.scaleFactor) this.scaleFactor = 1.0
     }
   }
 
@@ -236,8 +239,7 @@ class AggregateOD extends Vue {
   private async mapIsReady() {
     const files = await this.loadFiles()
     if (files) {
-      this.setMapExtent()
-      this.geojson = await this.processInputs(files)
+      this.geojson = await this.processShapefile(files)
       this.processHourlyData(files.odFlows)
       this.marginals = this.getDailyDataSummary()
       this.buildCentroids(this.geojson)
@@ -275,9 +277,7 @@ class AggregateOD extends Vue {
   private buildSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
 
-    for (const id in this.linkData) {
-      if (!this.linkData.hasOwnProperty(id)) continue
-
+    for (const id of Object.keys(this.linkData)) {
       const link: any = this.linkData[id]
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
@@ -310,6 +310,8 @@ class AggregateOD extends Vue {
         // some dests aren't on map: z.b. 'other'
       }
     }
+
+    console.log({spiders: this.spiderLinkFeatureCollection})
 
     this.mymap.addSource('spider-source', {
       data: this.spiderLinkFeatureCollection,
@@ -417,7 +419,7 @@ class AggregateOD extends Vue {
     console.log(centroid)
 
     const id = centroid.id
-
+    console.log('clicked on id', id)
     // a second click on a centroid UNselects it.
     if (id === this.selectedCentroid) {
       this.unselectAllCentroids()
@@ -429,15 +431,6 @@ class AggregateOD extends Vue {
     console.log(this.marginals)
     console.log(this.marginals.rowTotal[id])
     console.log(this.marginals.colTotal[id])
-
-    /* vega chart stuff
-    const values = []
-    for (let i = 0; i < 24; i++) {
-      values.push({ Hour: i + 1, 'Trips From': this.marginals.from[id][i], 'Trips To': this.marginals.to[id][i] })
-    }
-    // vegaChart.data.values = values
-    // vegaEmbed('#mychart', vegaChart)
-    */
 
     this.fadeUnselectedLinks(id)
   }
@@ -550,8 +543,8 @@ class AggregateOD extends Vue {
 
     // daily
     if (timePeriod === 'All >>') {
-      from = Math.round(this.marginals.rowTotal[feature.id as any])
-      to = Math.round(this.marginals.colTotal[feature.id as any])
+      from = Math.round(this.marginals.rowTotal[feature.id])
+      to = Math.round(this.marginals.colTotal[feature.id])
       return { from, to }
     }
 
@@ -571,8 +564,11 @@ class AggregateOD extends Vue {
 
     // single point in time
     const hour = parseInt(timePeriod, 10)
-    from = Math.round(this.marginals.from[feature.id as any][hour])
-    to = Math.round(this.marginals.to[feature.id as any][hour])
+    const fromMarginal = this.marginals.from[feature.id]
+    const toMarginal = this.marginals.to[feature.id]
+    from = fromMarginal ? Math.round(fromMarginal[hour]) : 0
+    to = toMarginal ? Math.round(toMarginal[hour]) : 0
+
     return { from, to }
   }
 
@@ -580,10 +576,17 @@ class AggregateOD extends Vue {
     const centroids: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
     for (const feature of geojson.features) {
+      if (!feature.id) continue
+
       const centroid: any = turf.centerOfMass(feature as any)
       centroid.properties.id = feature.id
-      const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
-      const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
+      centroid.id = feature.id
+
+      let dailyFrom = Math.round(this.marginals.rowTotal[feature.id])
+      let dailyTo = Math.round(this.marginals.colTotal[feature.id])
+
+      if (!dailyFrom) dailyFrom = 0
+      if (!dailyTo) dailyTo = 0
 
       centroid.properties.dailyFrom = dailyFrom * this.scaleFactor
       centroid.properties.dailyTo = dailyTo * this.scaleFactor
@@ -593,11 +596,15 @@ class AggregateOD extends Vue {
 
       centroid.properties.widthFrom = Math.min(
         70,
-        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+        Math.max(12, Math.sqrt(
+          this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
+        )
       )
       centroid.properties.widthTo = Math.min(
         70,
-        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
+        Math.max(12, Math.sqrt(
+          this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
+        )
       )
 
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
@@ -609,7 +616,7 @@ class AggregateOD extends Vue {
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
-        if (feature.properties) this.centroids[feature.properties[this.idColumn]] = centroid
+        if (feature.properties) this.centroids[feature.id] = centroid
         this.updateMapExtent(centroid.geometry.coordinates)
       }
     }
@@ -617,6 +624,7 @@ class AggregateOD extends Vue {
     this.centroidSource = centroids
 
     console.log({ CENTROIDS: this.centroids })
+    console.log({ CENTROIDSOURCE: this.centroidSource })
 
     this.mymap.addSource('centroids', {
       data: this.centroidSource,
@@ -696,7 +704,7 @@ class AggregateOD extends Vue {
     }
   }
 
-  private async processInputs(files: any) {
+  private async processShapefile(files: any) {
     this.loadingText = 'Converting to GeoJSON...'
     const geojson = await shapefile.read(files.shpFile, files.dbfFile)
 
@@ -720,7 +728,6 @@ class AggregateOD extends Vue {
       }
     }
 
-    // console.log(geojson)
     return geojson
   }
 
@@ -738,7 +745,7 @@ class AggregateOD extends Vue {
     }
   }
 
-  private convertMultiPolygonCoordinatesToWGS84(multipolygon: any) {
+  private origConvertMultiPolygonCoordinatesToWGS84(multipolygon: any) {
     for (const origCoords of multipolygon.geometry.coordinates) {
       const coordinates = origCoords[0] // multipolygons have an extra array[0] added
 
@@ -752,9 +759,26 @@ class AggregateOD extends Vue {
     }
   }
 
+  private convertMultiPolygonCoordinatesToWGS84(multipolygon: any) {
+    multipolygon.geometry.coordinates = this.recurseWGS84(multipolygon.geometry.coordinates)
+  }
+
+  private recurseWGS84(coords: any[]) : any {
+    const newCoords = []
+
+    for (let coordArray of coords) {
+      if (Array.isArray(coordArray[0])) {
+        newCoords.push(this.recurseWGS84(coordArray))
+      } else {
+        newCoords.push(proj4(this.projection, 'WGS84', coordArray))
+      }
+    }
+    return newCoords
+  }
+
   private getDailyDataSummary() {
-    const rowTotals: any = []
-    const colTotals: any = []
+    const rowTotal: any = {}
+    const colTotal: any = {}
     const fromCentroid: any = {}
     const toCentroid: any = {}
 
@@ -762,39 +786,41 @@ class AggregateOD extends Vue {
       if (!this.zoneData.hasOwnProperty(row)) continue
       if (!row) continue
 
-      fromCentroid[row] = []
+      fromCentroid[row] = [0]
 
       for (const col in this.zoneData[row]) {
         if (!this.zoneData[row].hasOwnProperty(col)) continue
         if (!col) continue
 
         // daily totals
-        if (!rowTotals[row]) rowTotals[row] = 0
-        rowTotals[row] += this.dailyData[row][col]
+        if (!rowTotal[row]) rowTotal[row] = 0
+        if (!colTotal[col]) colTotal[col] = 0
 
-        if (!colTotals[col]) colTotals[col] = 0
-        colTotals[col] += this.dailyData[row][col]
+        if (this.dailyData[row][col]) {
+          rowTotal[row] += this.dailyData[row][col]
+          colTotal[col] += this.dailyData[row][col]
+        }
 
-        if (!toCentroid[col]) toCentroid[col] = []
+        if (!toCentroid[col]) toCentroid[col] = [0]
 
         // time-of-day details
-        for (let i = 0; i < 24; i++) {
+        for (let i = 0; i < this.headers.length - 1; i++) { // number of time periods
           if (!fromCentroid[row][i + 1]) fromCentroid[row][i + 1] = 0
-          fromCentroid[row][i + 1] += this.zoneData[row][col][i]
-
           if (!toCentroid[col][i + 1]) toCentroid[col][i + 1] = 0
+
+          fromCentroid[row][i + 1] += this.zoneData[row][col][i]
           toCentroid[col][i + 1] += this.zoneData[row][col][i]
         }
       }
     }
-    return { rowTotal: rowTotals, colTotal: colTotals, from: fromCentroid, to: toCentroid }
+    return { rowTotal, colTotal, from: fromCentroid, to: toCentroid }
   }
 
   private processHourlyData(csvData: string) {
+    this.loadingText = 'Processing hourly data...'
+
     const lines = csvData.split('\n')
     const separator = lines[0].indexOf(';') > 0 ? ';' : ','
-
-    this.loadingText = 'Processing hourly data...'
 
     // data is in format: o,d, value[1], value[2], value[3]...
     const headers = lines[0].split(separator).map(a => a.trim())
@@ -804,13 +830,14 @@ class AggregateOD extends Vue {
 
     console.log(this.headers)
 
-    for (const row of lines.slice(1)) {
+    for (const row of lines.slice(1)) { // skip header row
       const columns = row.split(separator)
-      const values = columns.slice(2).map(a => parseFloat(a))
+      const values = columns.slice(2).map(a => parseFloat(a)) // .filter(a => a > 20)
 
       // build zone matrix
       const i = columns[0]
       const j = columns[1]
+
       if (!this.zoneData[i]) this.zoneData[i] = {}
       this.zoneData[i][j] = values
 
@@ -826,7 +853,7 @@ class AggregateOD extends Vue {
         this.linkData[rowName] = { orig: columns[0], dest: columns[1], daily, values }
       }
     }
-    console.log({ LINKS: this.linkData, ZONES: this.zoneData })
+    console.log({ DAILY: this.dailyData, LINKS: this.linkData, ZONES: this.zoneData })
   }
 
   private updateMapExtent(coordinates: any) {
