@@ -73,21 +73,6 @@ import ModalVue from '../components/Modal.vue'
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
 
-/*
-const vegaChart: any = {
-  $schema: 'https://vega.github.io/schema/vega-lite/v3.json',
-  description: 'A simple bar chart with embedded data.',
-  data: {
-    values: [{ Hour: 0, 'Trips From': 0, 'Trips To': 0 }],
-  },
-  mark: 'bar',
-  encoding: {
-    x: { field: 'Hour', type: 'ordinal' },
-    y: { field: 'Trips From', type: 'quantitative' },
-  },
-}
-*/
-
 const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
@@ -136,6 +121,7 @@ class AggregateOD extends Vue {
   private headers: string[] = []
 
   private geojson: any = {}
+  private idColumn: string = ''
 
   private showTimeRange = false
 
@@ -547,7 +533,7 @@ class AggregateOD extends Vue {
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
-        if (feature.properties) this.centroids[feature.properties.NO] = centroid
+        if (feature.properties) this.centroids[feature.properties[this.idColumn]] = centroid
       }
     }
 
@@ -595,7 +581,6 @@ class AggregateOD extends Vue {
 
     for (const feature of geojson.features) {
       const centroid: any = turf.centerOfMass(feature as any)
-
       centroid.properties.id = feature.id
       const dailyFrom = Math.round(this.marginals.rowTotal[feature.id as any])
       const dailyTo = Math.round(this.marginals.colTotal[feature.id as any])
@@ -624,7 +609,7 @@ class AggregateOD extends Vue {
 
       if (centroid.properties.dailyFrom + centroid.properties.dailyTo > 0) {
         centroids.features.push(centroid)
-        if (feature.properties) this.centroids[feature.properties.NO] = centroid
+        if (feature.properties) this.centroids[feature.properties[this.idColumn]] = centroid
         this.updateMapExtent(centroid.geometry.coordinates)
       }
     }
@@ -717,8 +702,11 @@ class AggregateOD extends Vue {
 
     this.loadingText = 'Converting coordinates...'
     for (const feature of geojson.features) {
-      // save id
-      if (feature.properties) feature.id = feature.properties.NO
+      // Assumption: zone ID must be the first column of the DBF.
+      if (!this.idColumn && feature.properties) this.idColumn = Object.keys(feature.properties)[0]
+
+      // Save id somewhere helpful
+      if (feature.properties) feature.id = feature.properties[this.idColumn]
 
       try {
         if (feature.geometry.type === 'MultiPolygon') {
@@ -732,7 +720,7 @@ class AggregateOD extends Vue {
       }
     }
 
-    console.log(geojson)
+    // console.log(geojson)
     return geojson
   }
 
@@ -897,7 +885,7 @@ class AggregateOD extends Vue {
         if (parent.hoveredStateId) {
           tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: false })
         }
-        parent.hoveredStateId = e.features[0].properties.NO
+        parent.hoveredStateId = e.features[0].properties[parent.idColumn]
         tsMap.setFeatureState({ source: 'shpsource', id: parent.hoveredStateId }, { hover: true })
       }
     })
