@@ -520,7 +520,6 @@ class AggregateOD extends Vue {
 
       if (!feature.properties) feature.properties = {}
 
-      // bc/ is this correct?
       feature.properties.dailyFrom = values.from
       feature.properties.dailyTo = values.to
 
@@ -548,24 +547,26 @@ class AggregateOD extends Vue {
       return { from, to }
     }
 
-    // time range
-    if (timePeriod.constructor === Array) {
-      let hourFrom = parseInt(timePeriod[0], 10)
-      if (!hourFrom) hourFrom = 1
+    const fromMarginal = this.marginals.from[feature.id]
+    const toMarginal = this.marginals.to[feature.id]
 
-      const hourTo = parseInt(timePeriod[1], 10)
+    // time range
+    if (Array.isArray(timePeriod)) {
+      let hourFrom = this.headers.indexOf(timePeriod[0]) - 1
+      if (hourFrom < 0) hourFrom = 0
+
+      const hourTo = this.headers.indexOf(timePeriod[1]) - 1
 
       for (let i = hourFrom; i <= hourTo; i++) {
-        from += Math.round(this.marginals.from[feature.id as any][i])
-        to += Math.round(this.marginals.to[feature.id as any][i])
+        from += fromMarginal ? Math.round(fromMarginal[i]) : 0
+        to += toMarginal ? Math.round(toMarginal[i]) : 0
       }
       return { from, to }
     }
 
-    // single point in time
-    const hour = parseInt(timePeriod, 10)
-    const fromMarginal = this.marginals.from[feature.id]
-    const toMarginal = this.marginals.to[feature.id]
+    // one time period
+    const hour = this.headers.indexOf(timePeriod) - 1
+
     from = fromMarginal ? Math.round(fromMarginal[hour]) : 0
     to = toMarginal ? Math.round(toMarginal[hour]) : 0
 
@@ -786,7 +787,8 @@ class AggregateOD extends Vue {
       if (!this.zoneData.hasOwnProperty(row)) continue
       if (!row) continue
 
-      fromCentroid[row] = [0]
+      // store number of time periods (no totals here)
+      fromCentroid[row] = Array(this.headers.length - 1).fill(0)
 
       for (const col in this.zoneData[row]) {
         if (!this.zoneData[row].hasOwnProperty(col)) continue
@@ -801,15 +803,14 @@ class AggregateOD extends Vue {
           colTotal[col] += this.dailyData[row][col]
         }
 
-        if (!toCentroid[col]) toCentroid[col] = [0]
+        if (!toCentroid[col]) toCentroid[col] = Array(this.headers.length - 1).fill(0)
 
         // time-of-day details
         for (let i = 0; i < this.headers.length - 1; i++) { // number of time periods
-          if (!fromCentroid[row][i + 1]) fromCentroid[row][i + 1] = 0
-          if (!toCentroid[col][i + 1]) toCentroid[col][i + 1] = 0
-
-          fromCentroid[row][i + 1] += this.zoneData[row][col][i]
-          toCentroid[col][i + 1] += this.zoneData[row][col][i]
+          if (this.zoneData[row][col][i]) {
+            fromCentroid[row][i] += this.zoneData[row][col][i]
+            toCentroid[col][i] += this.zoneData[row][col][i]
+          }
         }
       }
     }
@@ -832,7 +833,7 @@ class AggregateOD extends Vue {
 
     for (const row of lines.slice(1)) { // skip header row
       const columns = row.split(separator)
-      const values = columns.slice(2).map(a => parseFloat(a)) // .filter(a => a > 20)
+      const values = columns.slice(2).map(a => parseFloat(a))
 
       // build zone matrix
       const i = columns[0]
@@ -946,11 +947,13 @@ class AggregateOD extends Vue {
 
   private changedTimeSlider(value: any) {
     this.currentTimeBin = value
+
     const widthFactor = (this.currentScale / 500) * this.scaleFactor
 
-    if (!this.showTimeRange) {
+    if (this.showTimeRange == false) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
       this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 0.5 * widthFactor, ['get', value]])
+
     } else {
       const sumElements: any = ['+']
 
