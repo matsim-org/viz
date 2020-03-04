@@ -4,16 +4,12 @@
     .info-header(v-if="title")
       h3(style="padding: 0.5rem 3rem; font-weight: normal;color: white;") {{ title }}
     .top-area
-
       slot
 
-    .bottom-nav-bar
-      button.button.is-small.is-outlined(@click="toggleHidePanel")
-        i.fa.fa-arrow-left
-
-  .restore-button(v-if="isHidden")
-    button.button.is-small.is-link(@click="toggleHidePanel")
-        i.fa.fa-arrow-right
+  .restore-button(:class="{'add-margin': !isHidden}")
+    button.button.is-small.hide-button(@click="toggleHidePanel")
+      i.fa.fa-arrow-left(v-if="!isHidden")
+      i.fa.fa-arrow-right(v-if="isHidden")
 
 </template>
 
@@ -44,7 +40,7 @@ export default class LeftDataPanel extends Vue {
 <style scoped>
 #datapanel {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   z-index: 7;
   margin: 0.5rem 0rem 0.5rem 0.5rem;
   pointer-events: none;
@@ -90,6 +86,7 @@ export default class LeftDataPanel extends Vue {
 .restore-button {
   margin: auto 0rem 0rem 0rem;
   pointer-events: auto;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.1);
 }
 
 .info-header {
@@ -100,6 +97,14 @@ export default class LeftDataPanel extends Vue {
   border-top-right-radius: 0.25rem;
   border-top: solid 1px #888;
   border-bottom: solid 1px #888;
+}
+
+.add-margin {
+  margin-left: 0.4rem;
+}
+
+.hide-button {
+  background-color: #eeeefff4;
 }
 
 @keyframes slideInFromLeft {
@@ -138,11 +143,6 @@ export default class LeftDataPanel extends Vue {
   .bottom-nav-bar {
     border-bottom-left-radius: 0rem;
     border-bottom-right-radius: 0rem;
-  }
-
-  .restore-button {
-    margin-left: 0.5rem;
-    margin-bottom: 0.5rem;
   }
 }
 </style>

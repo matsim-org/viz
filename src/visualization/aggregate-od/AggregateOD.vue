@@ -1222,7 +1222,7 @@ h4 {
   grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
-  width: 16rem;
+  width: 17rem;
 }
 
 .dashboard-panel {
