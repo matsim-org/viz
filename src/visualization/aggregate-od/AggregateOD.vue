@@ -19,7 +19,7 @@
       p.description {{ this.visualization.parameters.description.value }}
 
     .widgets
-      h4.heading Time of day:
+      h4.heading Time of day
       time-slider.time-slider(v-if="headers.length > 0"
         :useRange='showTimeRange'
         :stops='headers'
@@ -28,9 +28,13 @@
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
-      h4.heading Line scale:
-
+      h4.heading Lines: scale width
       scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='bounceScaleSlider')
+
+      h4.heading Lines: hide below
+      line-filter-slider.scale-slider(
+        :initialValue="lineFilter"
+        @change='bounceLineFilter')
 
       h4.heading Show totals for:
       .buttons-bar
@@ -38,8 +42,6 @@
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
         // {{colName}}
         button.button(hint="hide" @click='clickedDestinations' :class='{"is-link": !isOrigin,"is-active": !isOrigin}') Destinations
-
-
 
 </template>
 
@@ -62,6 +64,7 @@ import Coords from '@/components/Coords'
 import FileAPI from '@/communication/FileAPI'
 import LeftDataPanel from '@/components/LeftDataPanel.vue'
 import LegendBox from '@/visualization/aggregate-od/LegendBoxOD.vue'
+import LineFilterSlider from '@/visualization/aggregate-od/LineFilterSlider.vue'
 import ScaleBox from '@/visualization/aggregate-od/ScaleBoxOD.vue'
 import TimeSlider from '@/visualization/aggregate-od/TimeSlider2.vue'
 import SharedStore from '@/SharedStore'
@@ -75,7 +78,7 @@ import ModalVue from '../components/Modal.vue'
 const TOTAL_MSG = 'All >>'
 const FADED = 0.0 // 0.15
 
-const SCALE = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
+const SCALE_WIDTH = [1, 3, 5, 10, 25, 50, 100, 150, 200, 300, 400, 450, 500]
 
 const INPUTS = {
   OD_FLOWS: 'O/D Flows (.csv)',
@@ -87,6 +90,7 @@ const INPUTS = {
   components: {
     LeftDataPanel,
     LegendBox,
+    LineFilterSlider,
     ScaleBox,
     ScaleSlider,
     TimeSlider,
@@ -138,9 +142,11 @@ class AggregateOD extends Vue {
 
   private scaleFactor: any = 1
   private sliderValue: number[] = [1, 500]
-  private scaleValues = SCALE
-  private currentScale = SCALE[0]
+  private scaleValues = SCALE_WIDTH
+  private currentScale = SCALE_WIDTH[0]
   private currentTimeBin = TOTAL_MSG
+
+  private lineFilter = 0
 
   private projection!: string
   private hoverId: any
@@ -153,6 +159,7 @@ class AggregateOD extends Vue {
 
   private bounceTimeSlider = debounce(this.changedTimeSlider, 100)
   private bounceScaleSlider = debounce(this.changedScale, 50)
+  private bounceLineFilter = debounce(this.changedLineFilter, 250)
 
   public async created() {
     SharedStore.setFullPage(true)
@@ -274,11 +281,14 @@ class AggregateOD extends Vue {
     ]
   }
 
-  private buildSpiderLinks() {
+  private createSpiderLinks() {
     this.spiderLinkFeatureCollection = { type: 'FeatureCollection', features: [] }
 
     for (const id of Object.keys(this.linkData)) {
       const link: any = this.linkData[id]
+
+      if (link.daily <= this.lineFilter) continue
+
       try {
         const origCoord = this.centroids[link.orig].geometry.coordinates
         const destCoord = this.centroids[link.dest].geometry.coordinates
@@ -310,8 +320,19 @@ class AggregateOD extends Vue {
         // some dests aren't on map: z.b. 'other'
       }
     }
+  }
 
-    console.log({spiders: this.spiderLinkFeatureCollection})
+  private updateSpiderLinks() {
+    this.createSpiderLinks()
+
+    // avoiding mapbox typescript bug:
+    const tsMap = this.mymap as any
+    tsMap.getSource('spider-source').setData(this.spiderLinkFeatureCollection)
+  }
+
+  private buildSpiderLinks() {
+    this.createSpiderLinks()
+    console.log({ spiders: this.spiderLinkFeatureCollection })
 
     this.mymap.addSource('spider-source', {
       data: this.spiderLinkFeatureCollection,
@@ -597,15 +618,11 @@ class AggregateOD extends Vue {
 
       centroid.properties.widthFrom = Math.min(
         70,
-        Math.max(12, Math.sqrt(
-          this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
-        )
+        Math.max(12, Math.sqrt(this.dailyFrom / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
       )
       centroid.properties.widthTo = Math.min(
         70,
-        Math.max(12, Math.sqrt(
-          this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50))
-        )
+        Math.max(12, Math.sqrt(this.dailyTo / this.scaleFactor) * (1.5 + this.scaleFactor / (this.scaleFactor + 50)))
       )
 
       if (dailyFrom) this.maxZonalTotal = Math.max(this.maxZonalTotal, dailyFrom)
@@ -709,6 +726,9 @@ class AggregateOD extends Vue {
     this.loadingText = 'Converting to GeoJSON...'
     const geojson = await shapefile.read(files.shpFile, files.dbfFile)
 
+    // if we have lots of features, then we should filter the LINES for performance
+    if (geojson.features.length > 150) this.lineFilter = 10
+
     this.loadingText = 'Converting coordinates...'
     for (const feature of geojson.features) {
       // Assumption: zone ID must be the first column of the DBF.
@@ -764,7 +784,7 @@ class AggregateOD extends Vue {
     multipolygon.geometry.coordinates = this.recurseWGS84(multipolygon.geometry.coordinates)
   }
 
-  private recurseWGS84(coords: any[]) : any {
+  private recurseWGS84(coords: any[]): any {
     const newCoords = []
 
     for (let coordArray of coords) {
@@ -806,7 +826,8 @@ class AggregateOD extends Vue {
         if (!toCentroid[col]) toCentroid[col] = Array(this.headers.length - 1).fill(0)
 
         // time-of-day details
-        for (let i = 0; i < this.headers.length - 1; i++) { // number of time periods
+        for (let i = 0; i < this.headers.length - 1; i++) {
+          // number of time periods
           if (this.zoneData[row][col][i]) {
             fromCentroid[row][i] += this.zoneData[row][col][i]
             toCentroid[col][i] += this.zoneData[row][col][i]
@@ -831,7 +852,8 @@ class AggregateOD extends Vue {
 
     console.log(this.headers)
 
-    for (const row of lines.slice(1)) { // skip header row
+    for (const row of lines.slice(1)) {
+      // skip header row
       const columns = row.split(separator)
       const values = columns.slice(2).map(a => parseFloat(a))
 
@@ -953,7 +975,6 @@ class AggregateOD extends Vue {
     if (this.showTimeRange == false) {
       this.mymap.setPaintProperty('spider-layer', 'line-width', ['*', widthFactor, ['get', value]])
       this.mymap.setPaintProperty('spider-layer', 'line-offset', ['*', 0.5 * widthFactor, ['get', value]])
-
     } else {
       const sumElements: any = ['+']
 
@@ -981,6 +1002,14 @@ class AggregateOD extends Vue {
     console.log({ slider: value, timebin: this.currentTimeBin })
     this.currentScale = value
     this.changedTimeSlider(this.currentTimeBin)
+  }
+
+  private changedLineFilter(value: any) {
+    if (value === 'None') this.lineFilter = 0
+    else if (value === 'All') this.lineFilter = 1e25
+    else this.lineFilter = value
+
+    this.updateSpiderLinks()
   }
 }
 
