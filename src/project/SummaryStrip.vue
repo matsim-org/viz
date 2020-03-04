@@ -10,7 +10,7 @@
     //  p No description.
 
   .add-viz
-    button.button.is-info.is-rounded.accent(@click="$emit('onAddVisualization')") Create Visualization
+    button.button.is-info.accent(@click="$emit('onAddVisualization')") Create Visualization
 
   .summary-category.modelTab
     h3.section-head Model Runs
@@ -30,7 +30,7 @@
       effect-allowed='all'
     ) Drag/drop files here to upload!
     .add-files
-      button.button.is-info.is-rounded.accent(@click="$emit('onAddFiles')") Upload Files
+      button.button.is-info.accent(@click="$emit('onAddFiles')") Upload Files
 
 </template>
 <script lang="ts">

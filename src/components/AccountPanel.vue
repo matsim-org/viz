@@ -16,7 +16,7 @@
    | so people can identify you.
   input.input(type="text" v-model="details" placeholder="Full name")
 
-  button.button.is-link.is-rounded.account-button(
+  button.button.is-link.account-button(
     :class="{'is-loading': isChecking}"
     :disabled="!validation.available"
     @click="saveUser") Save Details

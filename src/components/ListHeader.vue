@@ -1,7 +1,7 @@
 <template lang="pug">
   .listHeader
     h3.title.is-3 {{ title || '&nbsp;' }}
-    a.button.is-rounded.accent(v-on:click="$emit('btnClicked')") {{btnTitle}}
+    a.button.accent(v-on:click="$emit('btnClicked')") {{btnTitle}}
 </template>
 
 <style scoped>

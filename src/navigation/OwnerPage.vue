@@ -16,7 +16,7 @@
       markdown-editor.readme(v-if="canModify" v-model="ownerDetails.notes" @save="saveNotes")
 
       h5.title.is-5.projects.run-space PROJECTS
-        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
+        button.button.is-danger.is-outlined.is-pulled-right(
           v-if="canModify"
           @click="clickedNewProject") +New Project
 
