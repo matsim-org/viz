@@ -349,8 +349,12 @@ class AggregateOD extends Vue {
     this.createSpiderLinks()
 
     // avoiding mapbox typescript bug:
-    const tsMap = this.mymap as any
-    tsMap.getSource('spider-source').setData(this.spiderLinkFeatureCollection)
+    if (this.selectedCentroid) {
+      this.fadeUnselectedLinks(this.selectedCentroid)
+    } else {
+      const tsMap = this.mymap as any
+      tsMap.getSource('spider-source').setData(this.spiderLinkFeatureCollection)
+    }
   }
 
   private buildSpiderLinks() {
