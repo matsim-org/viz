@@ -24,19 +24,30 @@
         :useRange='showTimeRange'
         :stops='headers'
         @change='bounceTimeSlider')
-      span.checkbox
+      label.checkbox
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
-      h4.heading Lines: scale width
-      scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='bounceScaleSlider')
+      h4.heading Lines
+      .white-box
+        .subheading Scale width:
+        scale-slider.scale-slider(:stops='scaleValues' :initialTime='1' @change='bounceScaleSlider')
 
-      h4.heading Lines: hide below
-      line-filter-slider.scale-slider(
-        :initialValue="lineFilter"
-        @change='bounceLineFilter')
+        .subheading Hide lines below:
+        line-filter-slider.scale-slider(
+          :initialValue="lineFilter"
+          @change='bounceLineFilter')
 
-      h4.heading Show totals for:
+      h4.heading Bubbles
+      .white-box
+        label.checkbox
+          input(type="checkbox" v-model="showCentroids")
+          | &nbsp;Show centroid bubbles
+        label.checkbox
+          input(type="checkbox" v-model="showCentroidLabels")
+          | &nbsp;Show labels
+
+      h4.heading Show totals for
       .buttons-bar
         // {{rowName}}
         button.button(@click='clickedOrigins' :class='{"is-link": isOrigin ,"is-active": isOrigin}') Origins
@@ -130,6 +141,8 @@ class AggregateOD extends Vue {
   private idColumn: string = ''
 
   private showTimeRange = false
+  private showCentroids: boolean = true
+  private showCentroidLabels: boolean = true
 
   private isOrigin: boolean = true
   private selectedCentroid = 0
@@ -186,6 +199,16 @@ class AggregateOD extends Vue {
   @Watch('showTimeRange')
   private clickedRange(useRange: boolean) {
     console.log(useRange)
+  }
+
+  @Watch('showCentroids')
+  private clickedShowCentroids() {
+    this.updateCentroidLabels()
+  }
+
+  @Watch('showCentroidLabels')
+  private clickedShowCentroidBubbles() {
+    this.updateCentroidLabels()
   }
 
   private async getVizDetails() {
@@ -398,32 +421,35 @@ class AggregateOD extends Vue {
     const labels = this.isOrigin ? '{dailyFrom}' : '{dailyTo}'
     const radiusField = this.isOrigin ? 'widthFrom' : 'widthTo'
 
-    if (this.mymap.getLayer('centroid-layer')) {
-      this.mymap.removeLayer('centroid-label-layer')
-      this.mymap.removeLayer('centroid-layer')
+    if (this.mymap.getLayer('centroid-layer')) this.mymap.removeLayer('centroid-layer')
+    if (this.mymap.getLayer('centroid-label-layer')) this.mymap.removeLayer('centroid-label-layer')
+
+    if (this.showCentroids) {
+      this.mymap.addLayer({
+        id: 'centroid-layer',
+        source: 'centroids',
+        type: 'circle',
+        paint: {
+          'circle-color': '#ec0',
+          'circle-radius': ['get', radiusField],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': 'white',
+        },
+      })
     }
 
-    this.mymap.addLayer({
-      id: 'centroid-layer',
-      source: 'centroids',
-      type: 'circle',
-      paint: {
-        'circle-color': '#ec0',
-        'circle-radius': ['get', radiusField],
-        'circle-stroke-width': 3,
-        'circle-stroke-color': 'white',
-      },
-    })
-
-    this.mymap.addLayer({
-      id: 'centroid-label-layer',
-      source: 'centroids',
-      type: 'symbol',
-      layout: {
-        'text-field': labels,
-        'text-size': 11,
-      },
-    })
+    if (this.showCentroidLabels) {
+      this.mymap.addLayer({
+        id: 'centroid-label-layer',
+        source: 'centroids',
+        type: 'symbol',
+        layout: {
+          'text-field': labels,
+          'text-size': 11,
+        },
+        paint: this.showCentroids ? {} : { 'text-halo-color': 'white', 'text-halo-width': 2 },
+      })
+    }
   }
 
   private unselectAllCentroids() {
@@ -1136,7 +1162,7 @@ h4 {
 .buttons-bar button {
   flex-grow: 1;
   width: 50%;
-  margin: 0px 2px;
+  margin: 0px 1px;
 }
 
 .time-slider {
@@ -1149,9 +1175,6 @@ h4 {
 
 .scale-slider {
   background-color: white;
-  border: solid 1px;
-  border-color: #ccc;
-  border-radius: 4px;
   margin: 0rem 0px auto 0px;
 }
 
@@ -1161,12 +1184,18 @@ h4 {
   margin-top: 2rem;
 }
 
+.subheading {
+  font-size: 0.8rem;
+  text-align: left;
+  color: black;
+  margin: 0.75rem 0 0rem 0.5rem;
+}
+
 .checkbox {
-  font-size: 12px;
+  font-size: 0.8rem;
   margin-top: 0.25rem;
   margin-left: auto;
   margin-right: 0.5rem;
-  color: rgba(31, 151, 199, 0.932);
 }
 
 .description {
@@ -1206,6 +1235,14 @@ h4 {
   padding: 0px 20px 0px 0px;
   opacity: 0.95;
   box-shadow: 0 0 3px #00000080;
+}
+
+.white-box {
+  padding: 0.5rem 0.25rem 0.5rem 0.25rem;
+  background-color: white;
+  border: solid 1px;
+  border-color: #ccc;
+  border-radius: 4px;
 }
 
 @media only screen and (max-width: 640px) {
