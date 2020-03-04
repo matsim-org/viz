@@ -19,12 +19,12 @@
       .description-area(style="display: flex;")
         p.tagline: i {{ myRun.description ? myRun.description : "&nbsp;" }}
         .control(v-if="canModify")
-          a.button.is-small.is-light.is-rounded(@click="clickedEditDescription()" style="margin: 0.5rem 0 0 0.5rem;") Edit
+          a.button.is-small.is-light(@click="clickedEditDescription()" style="margin: 0.5rem 0 0 0.5rem;") Edit
 
       markdown-editor.readme(v-if="canModify" v-model="myRun.notes" @save="saveNotes")
 
       h5.title.is-5.run-space VISUALIZATIONS
-        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
+        button.button.is-danger.is-outlined.is-pulled-right(
             v-if="canModify"
             @click="onAddVisualization") +New Visualization
 
@@ -60,7 +60,7 @@
                   span(slot="content") {{ toStatus(upload.status) }}
 
       h5.title.is-5 FILES
-        button.button.is-rounded.is-danger.is-outlined.is-pulled-right(
+        button.button.is-danger.is-outlined.is-pulled-right(
           v-if="canModify"
           @click="onAddFiles") +Add Files
 

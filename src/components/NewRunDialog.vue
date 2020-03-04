@@ -19,8 +19,8 @@
     .actions(slot="actions")
       p.pathHint Path:
         b &nbsp;/{{ owner }}/{{ projectId }}/{{ cleanUrlSlug }}
-      button.button.negative.is-rounded(v-on:click="cancel") Cancel
-      button.button.is-rounded.accent(
+      button.button.negative(v-on:click="cancel") Cancel
+      button.button.accent(
         @click="handleCreateClicked()"
         :disabled="!runId"
         :class="{'is-success': runId}"

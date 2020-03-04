@@ -12,7 +12,7 @@ modal(v-on:close-requested="close()")
               p Public visualizations can be viewed by anybody on the web.
               .dropdown.is-right.right-align(:class="{'is-active': showVisibility}")
                 .dropdown-trigger
-                    button.button.is-rounded.left-space(@click="showVisibility = !showVisibility")
+                    button.button.left-space(@click="showVisibility = !showVisibility")
                         p.title-is-5 {{ chosenVisibility ? 'Private' : 'Public' }}
                         span.icon.is-small
                             i.fas.fa-angle-down
@@ -25,8 +25,8 @@ modal(v-on:close-requested="close()")
         error(v-if="errorMessage.length > 0" v-bind:message="errorMessage")
 
     .actions(slot="actions")
-        button.button.negative.is-rounded(@click="cancel()") Cancel
-        button.button.is-link.is-rounded.accent(@click="close()") Save
+        button.button.negative(@click="cancel()") Cancel
+        button.button.is-link.accent(@click="close()") Save
 </template>
 
 <script lang="ts">

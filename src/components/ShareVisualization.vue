@@ -19,8 +19,8 @@
       error(v-if="isError" v-bind:message="errorMessage")
 
     .actions(slot="actions")
-      button.button.negative.is-rounded(v-if="!isFetching" @click="cancel") Cancel
-      button.button.is-rounded.accent(
+      button.button.negative(v-if="!isFetching" @click="cancel") Cancel
+      button.button.accent(
         :class="{'is-loading':isFetching}"
         @click="handleCreateClicked()") Save
 </template>
