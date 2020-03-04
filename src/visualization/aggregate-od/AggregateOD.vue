@@ -28,6 +28,15 @@
          input(type="checkbox" v-model="showTimeRange")
          | &nbsp;Show range
 
+      h4.heading Bubbles
+      .white-box
+        label.checkbox
+          input(type="checkbox" v-model="showCentroids")
+          | &nbsp;Show centroid bubbles
+        label.checkbox
+          input(type="checkbox" v-model="showCentroidLabels")
+          | &nbsp;Show labels
+
       h4.heading Lines
       .white-box
         .subheading Scale width:
@@ -37,15 +46,6 @@
         line-filter-slider.scale-slider(
           :initialValue="lineFilter"
           @change='bounceLineFilter')
-
-      h4.heading Bubbles
-      .white-box
-        label.checkbox
-          input(type="checkbox" v-model="showCentroids")
-          | &nbsp;Show centroid bubbles
-        label.checkbox
-          input(type="checkbox" v-model="showCentroidLabels")
-          | &nbsp;Show labels
 
       h4.heading Show totals for
       .buttons-bar
