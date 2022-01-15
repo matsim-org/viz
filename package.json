@@ -34,7 +34,7 @@
     "jwt-decode": "^2.2.0",
     "keyword-extractor": "0.0.17",
     "mapbox-gl": "^0.52.0",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "medium-zoom": "^1.0.3",
     "nprogress": "^0.2.0",
     "pako": "^1.0.8",
