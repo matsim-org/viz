@@ -43,7 +43,7 @@
     "sax": "^1.2.4",
     "scale-color-perceptual": "^1.1.2",
     "shapefile": "^0.6.6",
-    "three": "^0.85.2",
+    "three": "^0.137.0",
     "underscore.string": "^3.3.5",
     "vega": "^5.6.0",
     "vega-embed": "^5.1.3",
